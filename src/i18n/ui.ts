@@ -43,6 +43,26 @@ const en = {
   "category.goalkeeping.desc": "Positioning, reflex drills, fast-break starts",
   "category.goalkeeping.intro":
     "The keeper is the first attacker. These sessions work on angle and positioning in the goal, reflex saves from close range, reading the shooter, and launching the fast break with the first pass out.",
+  "tactics.title": "Handball tactics and drills with diagrams | Handball Coachboard",
+  "tactics.description":
+    "Free handball tactics and drills with diagrams: attack, defense, youth and goalkeeping. Open every play straight in the tactics board.",
+  "tactics.heading": "Tactics library",
+  "tactics.lead":
+    "Free, ready-to-use plays and drills. Open any of them in the board and adapt it for your team.",
+  "tactics.categories": "Categories",
+  "tactics.all": "All tactics",
+  "tactics.soon": "Soon",
+  "category.title": "{label}: handball tactics and drills | Handball Coachboard",
+  "category.others": "Other categories",
+  "category.cta": "Draw your own play",
+  "category.ctaBody": "Free, no account needed. Share it with your team as a link or QR code.",
+  "tactic.title": "{title} | Handball Coachboard",
+  "tactic.breadcrumb": "Breadcrumb",
+  "tactic.open": "Open in the board",
+  "tactic.openHint": "Adapt it, then share it with your team as a link or QR code.",
+  "tactic.steps": "Step by step",
+  "tactic.coachingPoints": "Coaching points",
+  "tactic.related": "Related tactics",
   "notFound.title": "Page not found | Handball Coachboard",
   "notFound.description": "This page doesn't exist.",
   "notFound.heading": "Page not found",
@@ -88,8 +108,10 @@ export type BoardStrings = Record<BoardKey, string>;
 /** Other languages may leave keys out; those fall back to English. */
 const ui: Record<string, Partial<Record<UiKey, string>>> = { en };
 
-export function t(locale: string, key: UiKey): string {
-  return ui[locale]?.[key] ?? en[key];
+/** Fills `{name}` placeholders from vars. */
+export function t(locale: string, key: UiKey, vars?: Record<string, string>): string {
+  const text: string = ui[locale]?.[key] ?? en[key];
+  return vars ? text.replace(/\{(\w+)\}/g, (match, name: string) => vars[name] ?? match) : text;
 }
 
 /** The board editor's strings, passed as a prop so no dictionary ships to the browser. */

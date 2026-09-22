@@ -1,0 +1,163 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import Icon from "../../../../components/Icon.astro";
+import TacticCards from "../../../../components/TacticCards.astro";
+import { categoryInfo, categorySlugs } from "../../../../data/categories";
+import { boardPath } from "../../../../data/nav";
+import { tacticsFor } from "../../../../data/tactics";
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import { locales } from "../../../../i18n/locales";
+import { t } from "../../../../i18n/ui";
+
+// Only categories with at least one tactic get a page, so search engines
+// never index an empty one. CategoryCards shows the rest as "Soon".
+export async function getStaticPaths() {
+  const paths = [];
+  for (const lang of locales) {
+    const tactics = await tacticsFor(lang);
+    const used = categorySlugs.filter((c) => tactics.some((tc) => tc.entry.data.category === c));
+    for (const category of used) {
+      paths.push({
+        params: { lang, category },
+        props: {
+          tactics: tactics.filter((tc) => tc.entry.data.category === category),
+          others: used.filter((c) => c !== category),
+        },
+      });
+    }
+  }
+  return paths;
+}
+
+const { lang, category } = Astro.params;
+const { tactics, others } = Astro.props;
+const info = categoryInfo(lang, category);
+---
+
+<BaseLayout title={t(lang, "category.title", { label: info.label })} description={info.intro}>
+  <div class="intro">
+    <div class="container">
+      <nav aria-label={t(lang, "tactic.breadcrumb")} class="crumbs">
+        <a href={getRelativeLocaleUrl(lang, "tactics/")}>{t(lang, "tactics.heading")}</a>
+      </nav>
+      <h1><span class="tile"><Icon name={info.icon} /></span>{info.label}</h1>
+      <p>{info.intro}</p>
+    </div>
+  </div>
+
+  <section class="container">
+    <h2 class="visually-hidden">{t(lang, "tactics.all")}</h2>
+    <TacticCards lang={lang} tactics={tactics} />
+
+    {
+      others.length > 0 && (
+        <nav class="others" aria-labelledby="others">
+          <h2 id="others">{t(lang, "category.others")}</h2>
+          <ul>
+            {others.map((c) => (
+              <li>
+                <a href={getRelativeLocaleUrl(lang, `tactics/${c}/`)}>
+                  <Icon name={categoryInfo(lang, c).icon} />
+                  {categoryInfo(lang, c).label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+  </section>
+
+  <section class="cta">
+    <div class="container">
+      <h2>{t(lang, "category.cta")}</h2>
+      <p>{t(lang, "category.ctaBody")}</p>
+      <a class="btn btn-primary" href={getRelativeLocaleUrl(lang, boardPath)}>{t(lang, "cta.board")}</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .intro {
+    padding: 24px 0 32px;
+    background: var(--color-bg-soft);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .crumbs a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
+
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: clamp(2rem, 6vw, 2.75rem);
+  }
+
+  .tile {
+    display: grid;
+    place-items: center;
+    width: var(--tap);
+    height: var(--tap);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-soft);
+    color: var(--color-accent-dark);
+    font-size: 19px;
+  }
+
+  .intro p {
+    max-width: 680px;
+    font-size: 1.125rem;
+    color: var(--color-text-muted);
+  }
+
+  section {
+    margin-top: 32px;
+  }
+
+  .others {
+    margin-top: 40px;
+  }
+
+  .others h2 {
+    margin-bottom: 8px;
+    font-size: 1.125rem;
+  }
+
+  .others ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .others a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--tap);
+    font-weight: 600;
+  }
+
+  .cta {
+    margin-top: 56px;
+    padding-block: 40px;
+    background: var(--color-bg-soft);
+    border-block: 1px solid var(--color-border);
+    text-align: center;
+  }
+
+  .cta h2 {
+    margin-bottom: 8px;
+  }
+
+  .cta p {
+    margin-bottom: 20px;
+    color: var(--color-text-muted);
+  }
+</style>

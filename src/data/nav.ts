@@ -12,6 +12,7 @@ export interface NavItem {
 export const nav: NavItem[] = [
   { path: "", label: "nav.home" },
   { path: "board/", label: "nav.board" },
+  { path: "tactics/", label: "nav.tactics" },
 ];
 
 /** The header's call to action. */

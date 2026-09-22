@@ -12,6 +12,7 @@
   --color-accent: #16a34a; /* green: fills and icons, not behind text */
   --color-accent-dark: #15803d; /* green behind or as text, ≥ 4.5:1 on white */
   --color-accent-darker: #166534;
+  --color-accent-soft: #dcfce7; /* tile behind a green icon */
   --color-bg: #ffffff;
   --color-bg-soft: #f8fafc;
   --color-border: #e2e8f0;
