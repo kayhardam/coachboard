@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import sitemap from "@astrojs/sitemap";
+import svelte from "@astrojs/svelte";
 
 // URL prefix → hreflang. Adding a language starts here.
 const locales = { en: "en" };
@@ -15,5 +16,5 @@ export default defineConfig({
     defaultLocale,
     routing: { prefixDefaultLocale: true },
   },
-  integrations: [sitemap({ i18n: { defaultLocale, locales } })],
+  integrations: [sitemap({ i18n: { defaultLocale, locales } }), svelte()],
 });
