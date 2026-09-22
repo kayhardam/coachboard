@@ -3,7 +3,9 @@
 // no adapter. Without it, Wrangler reconfigures the project on every deploy.
 {
   "name": "coachboard",
-  "compatibility_date": "2026-09-22",
+  // Keep this in the past: Cloudflare rejects a date newer than its runtime.
+  // Nothing here depends on it; the Worker only serves files.
+  "compatibility_date": "2026-09-01",
   "assets": {
     "directory": "./dist",
     // /en/privacy → /en/privacy/, as trailingSlash: "always" expects.
