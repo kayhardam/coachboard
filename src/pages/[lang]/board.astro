@@ -1,0 +1,39 @@
+---
+import BoardEditor from "../../components/board/BoardEditor.svelte";
+import Court from "../../components/board/Court.svelte";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { localeParams } from "../../i18n/locales";
+import { boardStrings, t } from "../../i18n/ui";
+import { defaultBoard } from "../../lib/board/defaults";
+
+export const getStaticPaths = localeParams;
+
+const { lang } = Astro.params;
+---
+
+<BaseLayout title={t(lang, "board.title")} description={t(lang, "board.description")} fullscreen>
+  <h1 class="visually-hidden">{t(lang, "board.heading")}</h1>
+  <BoardEditor client:only="svelte" strings={boardStrings(lang)}>
+    <div slot="fallback" class="fallback">
+      <Court board={defaultBoard} label={t(lang, "board.court")} />
+      <noscript><p>{t(lang, "board.noscript")}</p></noscript>
+    </div>
+  </BoardEditor>
+</BaseLayout>
+
+<style>
+  .fallback {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    max-width: 720px;
+    width: 100%;
+    margin-inline: auto;
+    padding: 8px;
+  }
+
+  p {
+    padding: 8px;
+    text-align: center;
+    color: var(--color-text-muted);
+  }
+</style>

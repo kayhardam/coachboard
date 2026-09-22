@@ -28,15 +28,53 @@ const en = {
   "notFound.heading": "Page not found",
   "notFound.body": "The page you were looking for doesn't exist or has moved.",
   "notFound.home": "Go to the home page",
+  "board.title": "Handball tactics board: draw and share plays | Handball Coachboard",
+  "board.description":
+    "Free handball tactics board for your phone. Drag players, draw runs, passes and dribbles, and share the play as a link or QR code.",
+  "board.heading": "Handball tactics board",
+  "board.court": "Handball court",
+  "board.noscript": "The board needs JavaScript. Here is the default lineup.",
+  "board.tools": "Tools",
+  "board.actions": "Actions",
+  "board.tool.move": "Move",
+  "board.tool.attack": "Attack",
+  "board.tool.defence": "Defence",
+  "board.tool.ball": "Ball",
+  "board.tool.run": "Run",
+  "board.tool.pass": "Pass",
+  "board.tool.dribble": "Dribble",
+  "board.undo": "Undo",
+  "board.delete": "Delete",
+  "board.clear": "Clear",
+  "board.clearArrows": "Clear arrows and ball",
+  "board.resetLineup": "Default lineup",
+  "board.emptyCourt": "Empty court",
+  "board.fullCourt": "Full court",
+  "board.halfCourt": "Half court",
+  "board.share": "Share",
+  "board.qr": "QR code",
+  "board.close": "Close",
+  "board.invalidLink": "This link couldn't be opened. Showing the default lineup.",
+  "board.linkCopied": "Link copied.",
+  "board.copyManually": "Copy this link:",
+  "board.dismiss": "Dismiss",
 } as const;
 
 export type UiKey = keyof typeof en;
+export type BoardKey = Extract<UiKey, `board.${string}`>;
+export type BoardStrings = Record<BoardKey, string>;
 
 /** Other languages may leave keys out; those fall back to English. */
 const ui: Record<string, Partial<Record<UiKey, string>>> = { en };
 
 export function t(locale: string, key: UiKey): string {
   return ui[locale]?.[key] ?? en[key];
+}
+
+/** The board editor's strings, passed as a prop so no dictionary ships to the browser. */
+export function boardStrings(locale: string): BoardStrings {
+  const keys = (Object.keys(en) as UiKey[]).filter((k): k is BoardKey => k.startsWith("board."));
+  return Object.fromEntries(keys.map((k) => [k, t(locale, k)])) as BoardStrings;
 }
 
 /** Open Graph wants language_TERRITORY. */

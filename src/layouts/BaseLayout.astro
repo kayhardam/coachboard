@@ -15,6 +15,8 @@ interface Props {
   alternates?: Record<string, string>;
   /** Keep the page out of search results (404). Drops canonical and og:url too. */
   noindex?: boolean;
+  /** An app page (the board): no footer, and <main> fills the screen below the header. */
+  fullscreen?: boolean;
 }
 
 const {
@@ -23,6 +25,7 @@ const {
   image = "/og-default.png",
   alternates = {},
   noindex = false,
+  fullscreen = false,
 } = Astro.props;
 
 const siteName = "Handball Coachboard";
@@ -66,11 +69,26 @@ const xDefault = alternates[defaultLocale];
     <meta property="og:image" content={abs(image)} />
     <meta name="twitter:card" content="summary_large_image" />
   </head>
-  <body>
+  <body class:list={{ fullscreen }}>
     <Header />
     <main id="main">
       <slot />
     </main>
-    <Footer />
+    {!fullscreen && <Footer />}
   </body>
 </html>
+
+<style>
+  .fullscreen {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .fullscreen main {
+    display: grid;
+    flex: 1;
+    min-height: 0;
+  }
+</style>
