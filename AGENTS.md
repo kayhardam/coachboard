@@ -33,6 +33,7 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
 - Menu and footer links come from `src/data/nav.ts`. Labels and short page texts come from `t(locale, key)` in `src/i18n/ui.ts`.
 - English is the source dictionary. Another language may leave keys out; they fall back to English per key.
 - Long page text (privacy) is still English in the `.astro` file. A new locale needs a plan for translating it, or `/nl/privacy/` will show English.
+- Astro's HTML compression drops a line break between text and an inline tag on the next line ("See the" + newline + `<a>` renders as "See the<a>"). Start the tag on the same line as the text before it.
 
 ## Styling
 
