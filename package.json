@@ -10,19 +10,22 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "check": "astro check",
+    "check": "astro check && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
     "verify": "npm run check && npm run test && npm run build && node scripts/check-links.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
-    "astro": "^7.3.3"
+    "@astrojs/svelte": "^9.0.1",
+    "astro": "^7.3.3",
+    "svelte": "^5.57.1"
   },
   "allowScripts": {
     "esbuild": true
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "svelte-check": "^4.7.6",
     "typescript": "^6.0.3",
     "vitest": "^5.0.1"
   }
