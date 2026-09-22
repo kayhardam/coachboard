@@ -1,0 +1,60 @@
+---
+import CategoryCards from "../../../components/CategoryCards.astro";
+import TacticCards from "../../../components/TacticCards.astro";
+import { tacticsFor } from "../../../data/tactics";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { localeParams } from "../../../i18n/locales";
+import { t } from "../../../i18n/ui";
+
+export const getStaticPaths = localeParams;
+
+const { lang } = Astro.params;
+const tactics = await tacticsFor(lang);
+---
+
+<BaseLayout title={t(lang, "tactics.title")} description={t(lang, "tactics.description")}>
+  <div class="intro">
+    <div class="container">
+      <h1>{t(lang, "tactics.heading")}</h1>
+      <p>{t(lang, "tactics.lead")}</p>
+    </div>
+  </div>
+
+  <section class="container">
+    <h2>{t(lang, "tactics.categories")}</h2>
+    <CategoryCards lang={lang} />
+  </section>
+
+  <section class="container">
+    <h2>{t(lang, "tactics.all")}</h2>
+    <TacticCards lang={lang} tactics={tactics} />
+  </section>
+</BaseLayout>
+
+<style>
+  .intro {
+    padding: 40px 0 32px;
+    background: var(--color-bg-soft);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  h1 {
+    margin-bottom: 8px;
+    font-size: clamp(2rem, 6vw, 2.75rem);
+  }
+
+  .intro p {
+    max-width: 640px;
+    font-size: 1.125rem;
+    color: var(--color-text-muted);
+  }
+
+  section {
+    margin-top: 40px;
+  }
+
+  h2 {
+    margin-bottom: 16px;
+    font-size: 1.5rem;
+  }
+</style>

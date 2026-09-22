@@ -1,0 +1,119 @@
+---
+// One card per category. A category without tactics in this language has no
+// page yet, so its card says "Soon" and doesn't link anywhere.
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { categoryInfo, categorySlugs } from "../data/categories";
+import { tacticsFor } from "../data/tactics";
+import { t } from "../i18n/ui";
+import Icon from "./Icon.astro";
+
+interface Props {
+  lang: string;
+}
+
+const { lang } = Astro.props;
+const tactics = await tacticsFor(lang);
+const cards = categorySlugs.map((slug) => ({
+  ...categoryInfo(lang, slug),
+  href: tactics.some((tactic) => tactic.entry.data.category === slug)
+    ? getRelativeLocaleUrl(lang, `tactics/${slug}/`)
+    : undefined,
+}));
+---
+
+<ul class="cards">
+  {
+    cards.map((c) => {
+      const Tag = c.href ? "a" : "div";
+      return (
+        <li>
+          <Tag class:list={["card", { soon: !c.href }]} href={c.href}>
+            <span class="tile">
+              <Icon name={c.icon} />
+            </span>
+            <div class="text">
+              <h3>{c.label}</h3>
+              <p class="desc">{c.desc}</p>
+            </div>
+            {!c.href && <span class="badge">{t(lang, "tactics.soon")}</span>}
+          </Tag>
+        </li>
+      );
+    })
+  }
+</ul>
+
+<style>
+  .cards {
+    display: grid;
+    gap: 12px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 100%;
+    padding: 16px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    color: var(--color-text);
+  }
+  a.card:hover {
+    text-decoration: none;
+    border-color: var(--color-accent-dark);
+    box-shadow: var(--shadow);
+  }
+
+  .tile {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: var(--tap);
+    height: var(--tap);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-soft);
+    color: var(--color-accent-dark);
+    font-size: 19px;
+  }
+
+  .text {
+    display: grid;
+    gap: 2px;
+    flex: 1;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+  }
+
+  .desc {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+  }
+
+  .soon .tile {
+    background: var(--color-bg-soft);
+    color: var(--color-text-muted);
+  }
+
+  .badge {
+    flex-shrink: 0;
+    padding: 2px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+  }
+
+  @media (min-width: 560px) {
+    .cards {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+  }
+</style>
