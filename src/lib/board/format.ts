@@ -41,8 +41,8 @@ export interface Board {
 export const COURT_WIDTH = 200;
 export const COURT_LENGTH = 400;
 
-const MAX_PLAYERS = 30;
-const MAX_ARROWS = 30;
+export const MAX_PLAYERS = 30;
+export const MAX_ARROWS = 30;
 const MAX_FRAMES = 20;
 const MAX_LABEL = 3;
 const MAX_PAYLOAD = 4000; // characters of base64url
