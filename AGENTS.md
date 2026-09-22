@@ -10,6 +10,7 @@ Static Astro 7 site for handball trainers. The product is the tactics board at `
 | `npm run verify` | What CI runs: `astro check` + `svelte-check` → `vitest run` → `astro build` → `node scripts/check-links.mjs`. Must be green before every commit. |
 | `npm run check` / `test` / `build` | The separate steps. `astro check` doesn't type-check `.svelte` files, so `check` also runs `svelte-check --fail-on-warnings`. |
 | `node scripts/og-default.mjs` | Re-renders `public/og-default.png`. One-off; commit the PNG. |
+| `node scripts/favicons.mjs` | Renders `public/favicon.ico` and `public/apple-touch-icon.png` from `public/favicon.svg` (the brand mark). One-off; commit the results. |
 
 When starting the dev server as an agent, use background mode: `npx astro dev --background`, and manage it with `astro dev stop`, `astro dev status` and `astro dev logs`.
 
