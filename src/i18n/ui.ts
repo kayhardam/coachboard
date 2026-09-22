@@ -14,7 +14,7 @@ const en = {
   "footer.tagline":
     "The free digital coachboard for handball trainers. Draw a play, share a link or QR code, and your whole team has it on their phone.",
   "footer.site": "Site",
-  "footer.madeBy": "Made by a handball trainer 🤝",
+  "footer.madeBy": "Made by a handball trainer",
   "footer.language": "Language",
   "home.title": "Handball Coachboard: draw and share handball tactics",
   "home.description":
