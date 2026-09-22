@@ -1,0 +1,215 @@
+{
+  "link": "1.VVA7FsMwCLuLZw2A44Ss7dAhHfqyZMjr_a9R4U_TMkkCCexTcbIEKoLsjvTY0hsUHBPZ82hsKlANfms8xjUL0n0IpU_sQ1itJuzH5VjIX0G10u82hRmyVERP8YpcMM9t2C5YbPSVcTQFVuabEfXkOK1f9HedToKV0BxLX9cbzUTJhhQWqrPB7foRK3SCMS6_z1K1SIz6AA",
+  "board": {
+    "v": 1,
+    "court": "full",
+    "frames": [
+      {
+        "players": [
+          {
+            "team": "a",
+            "label": "GK",
+            "at": [
+              100,
+              388
+            ]
+          },
+          {
+            "team": "a",
+            "label": "LW",
+            "at": [
+              8,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "LB",
+            "at": [
+              45,
+              118
+            ]
+          },
+          {
+            "team": "a",
+            "label": "CB",
+            "at": [
+              100,
+              130
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RB",
+            "at": [
+              155,
+              118
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RW",
+            "at": [
+              192,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "P",
+            "at": [
+              100,
+              78
+            ]
+          },
+          {
+            "team": "d",
+            "label": "GK",
+            "at": [
+              100,
+              8
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              22,
+              30
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              48,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              80,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              120,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              152,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              178,
+              30
+            ]
+          }
+        ],
+        "ball": [
+          110,
+          122
+        ],
+        "arrows": [
+          {
+            "kind": "pass",
+            "pts": [
+              [
+                100,
+                130
+              ],
+              [
+                155,
+                118
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "pts": [
+              [
+                155,
+                118
+              ],
+              [
+                140,
+                95
+              ],
+              [
+                128,
+                70
+              ]
+            ]
+          },
+          {
+            "kind": "pass",
+            "pts": [
+              [
+                45,
+                118
+              ],
+              [
+                100,
+                130
+              ]
+            ]
+          },
+          {
+            "kind": "dribble",
+            "pts": [
+              [
+                45,
+                118
+              ],
+              [
+                55,
+                100
+              ],
+              [
+                62,
+                82
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "pts": [
+              [
+                8,
+                48
+              ],
+              [
+                25,
+                70
+              ],
+              [
+                40,
+                80
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "pts": [
+              [
+                100,
+                78
+              ],
+              [
+                112,
+                70
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
