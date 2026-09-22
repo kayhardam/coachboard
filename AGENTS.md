@@ -25,14 +25,15 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
 
 - Every page renders through `src/layouts/BaseLayout.astro` with a real `title` and `description`. It owns the whole `<head>`:
   - canonical and `og:url` from `site` + the page path;
-  - absolute `og:image` (default `/og-default.png`, 1200×630);
+  - absolute `og:image`, always a 1200×630 PNG: `/og-default.png` by default, a tactic's own `og.png` on its page;
   - `lang` and `og:locale` from the page's locale;
   - hreflang + `x-default` once `alternates` lists more than one translation;
   - `noindex` (for the 404) drops canonical and `og:url`.
 - `BaseLayout` renders `Header`, `<main id="main">` and `Footer`.
-- Menu and footer links come from `src/data/nav.ts`. Labels and short page texts come from `t(locale, key)` in `src/i18n/ui.ts`.
+- Menu and footer links come from `src/data/nav.ts`. Labels and short page texts come from `t(locale, key)` in `src/i18n/ui.ts`; `t(locale, key, { title })` fills `{title}` placeholders.
+- The site owner's name and contact address are in `src/data/site.ts` (about and privacy pages).
 - English is the source dictionary. Another language may leave keys out; they fall back to English per key.
-- Long page text (privacy) is still English in the `.astro` file. A new locale needs a plan for translating it, or `/nl/privacy/` will show English.
+- Long page text (privacy, about) is still English in the `.astro` file. A new locale needs a plan for translating it, or `/nl/privacy/` will show English.
 - Astro's HTML compression drops a line break between text and an inline tag on the next line ("See the" + newline + `<a>` renders as "See the<a>"). Start the tag on the same line as the text before it.
 
 ## Styling
@@ -45,6 +46,10 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
 - **Green behind or as text** uses `--color-accent-dark` (5.0:1 on white). `--color-accent` is for fills and icons only (3.3:1).
 - **Touch targets** are at least `var(--tap)` (44px) high.
 - **The narrow-screen menu** is a `<details>` element, without JavaScript. Content pages ship no JS.
+- **Icons** come from one set in `src/lib/icons.ts` (24×24, 2-unit stroke, round caps, `currentColor`), drawn with `Icon.astro` on content pages and inline in `BoardEditor`. No emoji anywhere in the UI.
+  - An icon next to visible text is decorative (`aria-hidden`, which `Icon.astro` sets). An icon-only button needs `aria-label` and `title`.
+  - Icons take their colour from the text: `--color-accent-dark` when they carry meaning. In cards they sit on a 44×44 tile with `--color-accent-soft` behind them.
+  - Size an icon with `font-size` on its wrapper; it is 1.25em.
 
 ## The board
 
@@ -56,15 +61,36 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
   - A change to the format gets a new prefix (`2.`) and its own reader in `decode()`, next to the v1 reader.
   - To add a fixture, write `{ link: await encode(board), board }` once and commit it.
   - The budget test keeps a full lineup (7+7 players, ball, 6 arrows) at ≤ 300 characters.
-  - `isBoard()` is hand-written so the client bundle needs no Zod; Fase 2's content schema reuses it.
+  - `isBoard()` is hand-written so the client bundle needs no Zod; the content schema reuses it.
 - **`edit.ts` is pure:** every operation returns a new board. The editor keeps the board in `$state.raw`, and undo is a list of earlier boards.
-- **`Court.svelte` stays pure SVG**, with no browser APIs, so Astro can render it without JS (the home page, the board's fallback, and tactic pages later). Pieces carry `data-kind` and `data-index`; the editor finds them with event delegation. Colours are SVG attributes, not CSS variables, so a server-side PNG render works too.
+- **`Court.svelte` stays pure SVG**, with no browser APIs, so Astro can render it without JS (the home page, the board's fallback, tactic pages and their thumbnails). Pieces carry `data-kind` and `data-index`; the editor finds them with event delegation. Colours are SVG attributes, not CSS variables, so `courtPng()` can render it to a PNG on the server.
 - **`BoardEditor.svelte`:**
   - it runs `client:only` on `/[lang]/board/` only, the one page that ships JS;
   - its strings come in as a prop from `boardStrings()` in `ui.ts`;
   - it loads `#t=` first, then `localStorage` (`coachboard.board`), then the default lineup;
-  - every change is written to both (300 ms debounce), so the address bar is always a shareable link.
+  - every change is written to both (300 ms debounce), so the address bar is always a shareable link;
+  - a board that came from a `#t=` link reaches `localStorage` only after its first edit, so opening a shared play or a tactic doesn't replace your own saved board.
 - **Testing in a browser:** the Chrome extension, or headless Chrome over the DevTools protocol with `Emulation.setTouchEmulationEnabled` and `Input.dispatchTouchEvent`. Call `Page.bringToFront` first; a background tab ignores touch input.
+
+## Tactics content
+
+- **One Markdown file per tactic and language:** `src/content/tactics/<lang>/<slug>.md`. The entry id is `<lang>/<slug>` and the page is `/<lang>/tactics/<category>/<slug>/`. A translation later gets the same file name in another language folder.
+- **The schema** is in `src/content.config.ts`:
+  - `title`, `theme`, `level`;
+  - `summary`: at least 50 characters, and also the meta description;
+  - `category`: one of `categorySlugs`;
+  - `steps` (at least one), `coachingPoints`;
+  - `related`: full ids in the same language, e.g. `en/fast-break-second-wave`;
+  - `board`: checked with `isBoard()`.
+  - The Markdown body is optional extra text below the steps.
+- **The build fails** on:
+  - an invalid board or an unknown category (the schema);
+  - a `related` id that doesn't exist (`reference()`);
+  - a `related` that points at itself or another language, or a file outside a language folder (`checkTactics()` in `src/lib/tactics.ts`, called by `src/data/tactics.ts`).
+- **Diagrams:** draw the play at `/en/board/` in `npm run dev`, press "JSON" (dev only) and paste the output as `board:`. JSON is valid YAML. The existing files write it in YAML flow style, one player or arrow per line, which is easier to review. Tactic pages show `frames[0]`.
+- **Categories:** `categorySlugs` in `src/data/categories.ts` is the only list. Their texts are the `category.<slug>.*` keys in `ui.ts`, and each has an icon of the same name in `icons.ts`. A category page exists only when that language has a tactic in it; otherwise its card says "Soon" and has no link, so no empty pages get indexed.
+- **Links into the board:** "Open in the board" carries the diagram in `#t=`, encoded at build time.
+- **Share image:** `src/pages/[lang]/tactics/[category]/[slug]/og.png.ts` renders the diagram with `courtPng()` (`svelte/server` + `sharp`) as a 1200×630 PNG next to the page. The only text in it is the player labels; without a font they drop out, and the build still passes.
 
 ## Hosting
 
@@ -73,7 +99,6 @@ Cloudflare Pages via Git integration: build `npm run build`, output `dist`. `pub
 ## Not yet
 
 Don't add these without a plan:
-- links to `/tactics/` or `/about/` before those pages exist;
 - sponsor blocks, an "Install app" button or a "Works offline" claim before there is a PWA;
 - `/blog`, `/premium` or `/sponsor`.
 

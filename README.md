@@ -14,4 +14,4 @@ npm run dev      # http://localhost:4321/en/
 npm run verify   # type check, tests, build and link check, the same as CI
 ```
 
-Conventions for routing, SEO, text and styling are in [AGENTS.md](AGENTS.md).
+Conventions for routing, SEO, text, styling, the board and the tactics content are in [AGENTS.md](AGENTS.md).
