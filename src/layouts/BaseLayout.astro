@@ -1,0 +1,76 @@
+---
+import "../styles/tokens.css";
+import "../styles/base.css";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import { ogLocale } from "../i18n/ui";
+import { defaultLocale } from "../i18n/locales";
+
+interface Props {
+  title: string;
+  description: string;
+  /** Site-relative path to a 1200×630 image. */
+  image?: string;
+  /** Locale → pathname of each translation of this page, itself included. */
+  alternates?: Record<string, string>;
+  /** Keep the page out of search results (404). Drops canonical and og:url too. */
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description,
+  image = "/og-default.png",
+  alternates = {},
+  noindex = false,
+} = Astro.props;
+
+const siteName = "Handball Coachboard";
+const locale = Astro.currentLocale ?? defaultLocale;
+const abs = (path: string) => new URL(path, Astro.site).href;
+const canonical = abs(Astro.url.pathname);
+const translations = Object.entries(alternates);
+const xDefault = alternates[defaultLocale];
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    {
+      translations.length > 1 &&
+        translations.map(([hreflang, path]) => (
+          <link rel="alternate" hreflang={hreflang} href={abs(path)} />
+        ))
+    }
+    {
+      translations.length > 1 && xDefault && (
+        <link rel="alternate" hreflang="x-default" href={abs(xDefault)} />
+      )
+    }
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#0f172a" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:locale" content={ogLocale[locale] ?? locale} />
+    {!noindex && <meta property="og:url" content={canonical} />}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={abs(image)} />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

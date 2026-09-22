@@ -1,0 +1,133 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { nav } from "../data/nav";
+import { t } from "../i18n/ui";
+import { defaultLocale } from "../i18n/locales";
+
+const locale = Astro.currentLocale ?? defaultLocale;
+const links = nav.map((item) => {
+  const href = getRelativeLocaleUrl(locale, item.path);
+  return {
+    href,
+    label: t(locale, item.label),
+    current: href === Astro.url.pathname ? ("page" as const) : undefined,
+  };
+});
+---
+
+<a class="skip-link" href="#main">{t(locale, "a11y.skip")}</a>
+<header class="site-header">
+  <div class="container bar">
+    <a href={getRelativeLocaleUrl(locale)} class="logo">🤾 Coachboard</a>
+
+    <nav class="nav-wide" aria-label={t(locale, "nav.label")}>
+      <ul>
+        {links.map((l) => <li><a href={l.href} aria-current={l.current}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <details class="nav-narrow">
+      <summary class="btn btn-secondary">{t(locale, "nav.menu")}</summary>
+      <nav aria-label={t(locale, "nav.label")}>
+        <ul>
+          {links.map((l) => <li><a href={l.href} aria-current={l.current}>{l.label}</a></li>)}
+        </ul>
+      </nav>
+    </details>
+  </div>
+</header>
+
+<style>
+  .skip-link {
+    position: absolute;
+    left: var(--gutter);
+    top: -100px;
+    z-index: 100;
+    padding: 8px 16px;
+    background: var(--color-primary);
+    color: #fff;
+    border-radius: var(--radius-sm);
+  }
+  .skip-link:focus {
+    top: 8px;
+  }
+
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgb(255 255 255 / 0.95);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 64px;
+  }
+
+  .logo {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-primary);
+  }
+  .logo:hover {
+    text-decoration: none;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    min-height: var(--tap);
+    color: var(--color-text-muted);
+    font-weight: 500;
+  }
+  nav a:hover,
+  nav a[aria-current="page"] {
+    color: var(--color-primary);
+  }
+
+  /* Narrow: a <details> dropdown, no JavaScript. */
+  .nav-wide {
+    display: none;
+  }
+  summary {
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  .nav-narrow nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    padding: 8px var(--gutter) 16px;
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow);
+  }
+  .nav-narrow li + li {
+    border-top: 1px solid var(--color-border);
+  }
+
+  @media (min-width: 860px) {
+    .nav-narrow {
+      display: none;
+    }
+    .nav-wide {
+      display: block;
+    }
+    .nav-wide ul {
+      display: flex;
+      gap: 24px;
+    }
+  }
+</style>

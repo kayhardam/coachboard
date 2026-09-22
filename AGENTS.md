@@ -1,18 +1,65 @@
-## Development
+# Handball Coachboard
 
-When starting the dev server, use background mode:
+Static Astro 7 site for handball trainers. The product is a tactics board (coming in Fase 1); the content pages lead to it. `CLAUDE.md` is a symlink to this file.
 
-```
-astro dev --background
-```
+## Commands
 
-Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Dev server. There is no page at `/` locally; open `/en/`. |
+| `npm run verify` | What CI runs: `astro check` → `vitest run` → `astro build` → `node scripts/check-links.mjs`. Must be green before every commit. |
+| `npm run check` / `test` / `build` | The separate steps. |
+| `node scripts/og-default.mjs` | Re-renders `public/og-default.png`. One-off; commit the PNG. |
 
-## Documentation
+When starting the dev server as an agent, use background mode: `npx astro dev --background`, and manage it with `astro dev stop`, `astro dev status` and `astro dev logs`.
 
-Full documentation: https://docs.astro.build
+## URLs and routing
 
-Consult these guides before working on related tasks:
+- **Trailing slash everywhere.** `trailingSlash: "always"`: every internal link, canonical and sitemap entry ends in `/`. Build links with `getRelativeLocaleUrl(locale, "privacy/")` from `astro:i18n`, not by hand.
+- **Every language has a prefix** (`/en/`, later `/nl/` and `/de/`). Pages live under `src/pages/[lang]/` and export `getStaticPaths = localeParams`. `404.astro` is the only page outside `[lang]`.
+- **`/` has no page.** Cloudflare redirects it to `/en/` (`public/_redirects`); Astro's own root redirect is off.
+- **Locales are configured once**, in the `locales` map in `astro.config.mjs` (it feeds both Astro's i18n and the sitemap's hreflang). `src/i18n/locales.ts` exposes them typed.
+- **Only link to pages that exist.** `scripts/check-links.mjs` fails the build on a missing target or a page link without a trailing slash. It also checks own-origin URLs in `href`, `src` and `content`, so canonical, `og:image` and hreflang are covered.
+
+## Layout, SEO and text
+
+- Every page renders through `src/layouts/BaseLayout.astro` with a real `title` and `description`. It owns the whole `<head>`:
+  - canonical and `og:url` from `site` + the page path;
+  - absolute `og:image` (default `/og-default.png`, 1200×630);
+  - `lang` and `og:locale` from the page's locale;
+  - hreflang + `x-default` once `alternates` lists more than one translation;
+  - `noindex` (for the 404) drops canonical and `og:url`.
+- `BaseLayout` renders `Header`, `<main id="main">` and `Footer`.
+- Menu and footer links come from `src/data/nav.ts`. Labels and short page texts come from `t(locale, key)` in `src/i18n/ui.ts`.
+- English is the source dictionary. Another language may leave keys out; they fall back to English per key.
+- Long page text (privacy) is still English in the `.astro` file. A new locale needs a plan for translating it, or `/nl/privacy/` will show English.
+- Astro's HTML compression drops a line break between text and an inline tag on the next line ("See the" + newline + `<a>` renders as "See the<a>"). Start the tag on the same line as the text before it.
+
+## Styling
+
+- **Global CSS is two files**, imported once by `BaseLayout`:
+  - `src/styles/tokens.css`: custom properties;
+  - `src/styles/base.css`: reset, typography, focus ring, `.container`, `.btn`, `.btn-primary`, `.btn-secondary`.
+- **Everything else is a scoped `<style>`** in the component or page. No inline `style` attributes.
+- **Mobile-first.** Base styles are for phones. Wider layouts go in `@media (min-width: 560px)` or `@media (min-width: 860px)`, and only those two.
+- **Green behind or as text** uses `--color-accent-dark` (5.0:1 on white). `--color-accent` is for fills and icons only (3.3:1).
+- **Touch targets** are at least `var(--tap)` (44px) high.
+- **The narrow-screen menu** is a `<details>` element, without JavaScript. Content pages ship no JS.
+
+## Hosting
+
+Cloudflare Pages via Git integration: build `npm run build`, output `dist`. `public/_redirects` holds the root redirect. `public/_headers` gives `/_astro/*` (hashed files) a one-year immutable cache.
+
+## Not yet
+
+Don't add these without a plan:
+- links to `/board/`, `/tactics/` or `/about/` before those pages exist;
+- sponsor blocks, an "Install app" button or a "Works offline" claim before there is a PWA;
+- `/blog`, `/premium` or `/sponsor`.
+
+## Astro documentation
+
+Full documentation: https://docs.astro.build. Consult these guides before working on related tasks:
 
 - [Adding pages, dynamic routes, or middleware](https://docs.astro.build/en/guides/routing/)
 - [Working with Astro components](https://docs.astro.build/en/basics/astro-components/)

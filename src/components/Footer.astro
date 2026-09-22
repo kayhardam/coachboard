@@ -1,0 +1,126 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { legal, nav } from "../data/nav";
+import { t } from "../i18n/ui";
+import { defaultLocale, locales } from "../i18n/locales";
+
+const locale = Astro.currentLocale ?? defaultLocale;
+const siteLinks = [...nav, ...legal].map((item) => ({
+  href: getRelativeLocaleUrl(locale, item.path),
+  label: t(locale, item.label),
+}));
+
+// The same page in each other language, e.g. /en/privacy/ → /nl/privacy/.
+const prefix = `/${locale}/`;
+const rest = Astro.url.pathname.startsWith(prefix)
+  ? Astro.url.pathname.slice(prefix.length)
+  : "";
+const languages = locales.map((code) => ({
+  code,
+  href: getRelativeLocaleUrl(code, rest),
+  current: code === locale ? ("page" as const) : undefined,
+}));
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="grid">
+      <div>
+        <p class="brand">Coachboard</p>
+        <p>{t(locale, "footer.tagline")}</p>
+      </div>
+      <nav aria-labelledby="footer-site">
+        <h2 id="footer-site">{t(locale, "footer.site")}</h2>
+        <ul>
+          {siteLinks.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+        </ul>
+      </nav>
+    </div>
+
+    <div class="bottom">
+      <span>{t(locale, "footer.madeBy")}</span>
+      {
+        languages.length > 1 && (
+          <nav aria-label={t(locale, "footer.language")}>
+            <ul class="languages">
+              {languages.map((l) => (
+                <li>
+                  <a href={l.href} hreflang={l.code} lang={l.code} aria-current={l.current}>
+                    {l.code.toUpperCase()}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
+      }
+      <span>© {new Date().getFullYear()} Handball Coachboard</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: 64px;
+    padding: 48px 0 24px;
+    background: var(--color-primary);
+    color: #cbd5e1;
+  }
+
+  .grid {
+    display: grid;
+    gap: 32px;
+  }
+
+  .brand,
+  h2 {
+    margin-bottom: 8px;
+    color: #fff;
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 1rem;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    color: #e2e8f0;
+  }
+  a:hover {
+    color: #fff;
+  }
+
+  .bottom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-primary-soft);
+    font-size: 0.875rem;
+  }
+
+  .languages {
+    display: flex;
+    gap: 16px;
+  }
+  .languages a[aria-current="page"] {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  @media (min-width: 560px) {
+    .grid {
+      grid-template-columns: 2fr 1fr;
+    }
+  }
+</style>
