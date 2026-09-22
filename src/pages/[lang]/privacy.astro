@@ -1,0 +1,73 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { localeParams } from "../../i18n/locales";
+import { t } from "../../i18n/ui";
+
+export const getStaticPaths = localeParams;
+
+const { lang } = Astro.params;
+---
+
+<BaseLayout title={t(lang, "privacy.title")} description={t(lang, "privacy.description")}>
+  <article class="container">
+    <h1>{t(lang, "privacy.heading")}</h1>
+    <p class="updated">Last updated: 22 September 2026</p>
+
+    <p class="lead">
+      Handball Coachboard sets no cookies, has no accounts and doesn't collect personal data.
+    </p>
+
+    <h2>Cookies</h2>
+    <p>
+      This site sets no cookies, first-party or third-party, and loads no advertising or tracking
+      scripts. That's why there is no cookie banner.
+    </p>
+
+    <h2>Hosting</h2>
+    <p>
+      The site is hosted by Cloudflare. To deliver pages and protect the site against abuse,
+      Cloudflare processes technical data such as your IP address and browser type, as any web
+      server does. We don't use that data to identify you. See the <a
+        href="https://www.cloudflare.com/privacypolicy/"
+        rel="noopener">Cloudflare privacy policy</a
+      >.
+    </p>
+
+    <h2>Statistics</h2>
+    <p>
+      We don't run any statistics right now. If we add them later, they will be cookieless and
+      anonymous: page views are counted without cookies, without storing IP addresses and without
+      building profiles. This page will then name the service we use.
+    </p>
+
+    <h2>Changes</h2>
+    <p>When something changes, we update this page and the date at the top.</p>
+  </article>
+</BaseLayout>
+
+<style>
+  article {
+    max-width: 720px;
+    padding-block: 48px;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 2.5rem);
+  }
+
+  h2 {
+    margin-top: 32px;
+    margin-bottom: 8px;
+    font-size: 1.25rem;
+  }
+
+  .updated {
+    margin-bottom: 24px;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+  }
+
+  .lead {
+    font-size: 1.125rem;
+  }
+</style>

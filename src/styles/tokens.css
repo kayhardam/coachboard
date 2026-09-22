@@ -1,0 +1,36 @@
+/*
+ * Design tokens. Components use these through scoped <style> blocks.
+ *
+ * Breakpoints are mobile-first and can't be custom properties, so every
+ * media query uses one of these two literally:
+ *   @media (min-width: 560px)  — large phone / small tablet
+ *   @media (min-width: 860px)  — tablet landscape and up
+ */
+:root {
+  --color-primary: #0f172a; /* dark navy */
+  --color-primary-soft: #1e293b;
+  --color-accent: #16a34a; /* green: fills and icons, not behind text */
+  --color-accent-dark: #15803d; /* green behind or as text, ≥ 4.5:1 on white */
+  --color-accent-darker: #166534;
+  --color-bg: #ffffff;
+  --color-bg-soft: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 14px rgb(15 23 42 / 0.08);
+
+  --gutter: 16px;
+  --container: 1080px;
+  --tap: 44px; /* minimum touch target */
+}
+
+@media (min-width: 560px) {
+  :root {
+    --gutter: 24px;
+  }
+}
