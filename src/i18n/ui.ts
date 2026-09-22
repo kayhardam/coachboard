@@ -8,6 +8,7 @@ const en = {
   "nav.menu": "Menu",
   "nav.home": "Home",
   "nav.board": "Board",
+  "nav.tactics": "Tactics",
   "cta.board": "Open the board",
   "nav.privacy": "Privacy",
   "footer.tagline":
@@ -26,6 +27,22 @@ const en = {
   "privacy.description":
     "Handball Coachboard sets no cookies and collects no personal data. What the hosting provider sees, and how statistics would work.",
   "privacy.heading": "Privacy",
+  "category.attack.label": "Attack",
+  "category.attack.desc": "Fast breaks, build-up, powerplay, circulation",
+  "category.attack.intro":
+    "Attacking handball is about creating a gap and arriving in it at full speed. These plays cover the fast break and second wave, positional build-up against a set defense, crossing and circulation patterns, and what to do with a one-player advantage.",
+  "category.defense.label": "Defense",
+  "category.defense.desc": "6-0, 5-1, 3-2-1, man-to-man",
+  "category.defense.intro":
+    "A defense wins games when six players move as one line. Start with the 6-0, then add the offensive systems (5-1, 3-2-1 and man-to-man) once your team shifts together, communicates every switch, and never loses sight of the pivot.",
+  "category.youth.label": "Youth",
+  "category.youth.desc": "Age-appropriate drills for U10 up to U16",
+  "category.youth.intro":
+    "Young players need the right thing at the right age: catching, throwing and running games from U10, then real handball principles from U12 upward. These drills keep everyone moving, keep the ball in hand, and build habits that still hold up at senior level.",
+  "category.goalkeeping.label": "Goalkeeping",
+  "category.goalkeeping.desc": "Positioning, reflex drills, fast-break starts",
+  "category.goalkeeping.intro":
+    "The keeper is the first attacker. These sessions work on angle and positioning in the goal, reflex saves from close range, reading the shooter, and launching the fast break with the first pass out.",
   "notFound.title": "Page not found | Handball Coachboard",
   "notFound.description": "This page doesn't exist.",
   "notFound.heading": "Page not found",
