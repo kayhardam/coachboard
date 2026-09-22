@@ -4,6 +4,8 @@ export interface NavItem {
   /** Path after the locale prefix, e.g. "privacy/". Empty for the home page. */
   path: string;
   label: UiKey;
+  /** Fragment without "#". Kept out of getRelativeLocaleUrl(), which would add a slash after it. */
+  hash?: string;
 }
 
 // Only pages that exist: scripts/check-links.mjs fails the build otherwise.
@@ -19,4 +21,8 @@ export const nav: NavItem[] = [
 export const boardPath = "board/";
 
 /** Footer only. */
-export const legal: NavItem[] = [{ path: "privacy/", label: "nav.privacy" }];
+export const footerOnly: NavItem[] = [
+  { path: "about/", label: "nav.about" },
+  { path: "about/", label: "nav.contact", hash: "contact" },
+  { path: "privacy/", label: "nav.privacy" },
+];

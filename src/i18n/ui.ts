@@ -11,6 +11,8 @@ const en = {
   "nav.tactics": "Tactics",
   "cta.board": "Open the board",
   "nav.privacy": "Privacy",
+  "nav.about": "About",
+  "nav.contact": "Contact",
   "footer.tagline":
     "The free digital coachboard for handball trainers. Draw a play, share a link or QR code, and your whole team has it on their phone.",
   "footer.site": "Site",
@@ -23,10 +25,29 @@ const en = {
   "home.lead":
     "The free digital coachboard for handball trainers. Draw a play, share a link or QR code, and your whole team has it on their phone.",
   "home.note": "Free · No account · Built for phones",
+  "home.browse": "Browse tactics",
+  "home.howTitle": "How it works",
+  "home.howLead": "From idea to your team's phones in a minute.",
+  "home.step1Title": "Draw on the board",
+  "home.step1Body":
+    "Drag players into place and draw runs, passes and dribbles. Made for touch, and it works with a mouse too.",
+  "home.step2Title": "Share a link or QR code",
+  "home.step2Body": "Every play gets its own link and QR code. No accounts and no downloads for your players.",
+  "home.step3Title": "Your team opens it",
+  "home.step3Body": "Players scan the QR code in the sports hall and see the play on their phone.",
+  "home.libraryTitle": "Browse the tactics library",
+  "home.libraryLead": "Free, ready-to-use plays and drills. Open any of them straight in the board.",
+  "home.allTactics": "All tactics",
+  "home.ctaTitle": "Draw your first play",
+  "home.ctaBody": "Free, no account needed. It runs in the browser on your phone.",
   "privacy.title": "Privacy | Handball Coachboard",
   "privacy.description":
     "Handball Coachboard sets no cookies and collects no personal data. What the hosting provider sees, and how statistics would work.",
   "privacy.heading": "Privacy",
+  "about.title": "About | Handball Coachboard",
+  "about.description":
+    "Handball Coachboard is a free tactics board for handball trainers, made by a handball trainer. What it does, and how to get in touch.",
+  "about.heading": "About Handball Coachboard",
   "category.attack.label": "Attack",
   "category.attack.desc": "Fast breaks, build-up, powerplay, circulation",
   "category.attack.intro":
