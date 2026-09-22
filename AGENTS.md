@@ -95,7 +95,12 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 
 ## Hosting
 
-Cloudflare Pages via Git integration: build `npm run build`, output `dist`. `public/_redirects` holds the root redirect. `public/_headers` gives `/_astro/*` (hashed files) a one-year immutable cache.
+Cloudflare Workers with static assets, deployed by Workers Builds (Git integration): build command `npm run build`, deploy command `npx wrangler deploy`. Production is `main`; other branches get a preview URL.
+
+- **`wrangler.jsonc` must stay.** It makes the deploy a plain upload of `dist/`, with no Worker code and no Astro adapter. Without it, Wrangler reconfigures the project on every deploy: it runs `astro add cloudflare` and adds KV and Images bindings.
+- It also sets `html_handling: "auto-trailing-slash"` (`/en/privacy` → `/en/privacy/`) and `not_found_handling: "404-page"` (serves `dist/404.html`).
+- `public/_redirects` holds the root redirect. `public/_headers` gives `/_astro/*` (hashed files) a one-year immutable cache.
+- Try a change to any of these locally with `npm run build && npx wrangler dev`.
 
 ## Not yet
 

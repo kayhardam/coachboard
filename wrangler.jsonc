@@ -1,0 +1,17 @@
+// Cloudflare Workers Builds runs `npx wrangler deploy` after `npm run build`.
+// This file makes that a plain static-assets upload of dist/: no Worker code,
+// no adapter. Without it, Wrangler reconfigures the project on every deploy.
+{
+  "name": "coachboard",
+  "compatibility_date": "2026-09-22",
+  "assets": {
+    "directory": "./dist",
+    // /en/privacy → /en/privacy/, as trailingSlash: "always" expects.
+    "html_handling": "auto-trailing-slash",
+    // Serve dist/404.html, with status 404, for anything that doesn't exist.
+    "not_found_handling": "404-page"
+  },
+  // coachboard.hardamkay.workers.dev, and a preview URL per branch.
+  "workers_dev": true,
+  "preview_urls": true
+}
