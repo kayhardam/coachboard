@@ -11,8 +11,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
-    "test": "vitest run --passWithNoTests",
-    "verify": "npm run check && npm run test && npm run build"
+    "test": "vitest run",
+    "verify": "npm run check && npm run test && npm run build && node scripts/check-links.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",

@@ -13,7 +13,7 @@ interface Props {
   image?: string;
   /** Locale → pathname of each translation of this page, itself included. */
   alternates?: Record<string, string>;
-  /** Keep the page out of search results (404). Drops the canonical too. */
+  /** Keep the page out of search results (404). Drops canonical and og:url too. */
   noindex?: boolean;
 }
 
@@ -60,7 +60,7 @@ const xDefault = alternates[defaultLocale];
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={siteName} />
     <meta property="og:locale" content={ogLocale[locale] ?? locale} />
-    <meta property="og:url" content={canonical} />
+    {!noindex && <meta property="og:url" content={canonical} />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={abs(image)} />
