@@ -52,6 +52,8 @@
   let loaded = $state(false);
   let stage: HTMLDivElement;
   let drag: Drag | null = null;
+  /** The board as it came from a #t= link, until the first edit. */
+  let linked: Board | null = null;
   let noticeTimer: ReturnType<typeof setTimeout> | undefined;
 
   const frame = $derived(board.frames[0]!);
@@ -87,7 +89,7 @@
   onMount(() => {
     (async () => {
       const shared = await fromHash();
-      if (shared) board = shared;
+      if (shared) board = linked = shared;
       else if (shared === null) show(strings["board.invalidLink"]);
       else {
         try {
@@ -105,6 +107,7 @@
       const shared = await fromHash();
       if (shared) {
         commit(shared);
+        linked = shared;
         selected = null;
       } else if (shared === null) show(strings["board.invalidLink"]);
     };
@@ -118,10 +121,14 @@
     if (!loaded) return;
     const current = board;
     const timer = setTimeout(async () => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
-      } catch {
-        // Storage full or blocked: the URL still holds the board.
+      // Opening someone's link (or a tactic) doesn't replace your own saved
+      // board; editing it does.
+      if (current !== linked) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+        } catch {
+          // Storage full or blocked: the URL still holds the board.
+        }
       }
       const link = await encode(current);
       try {
