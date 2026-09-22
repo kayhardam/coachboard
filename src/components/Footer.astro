@@ -1,10 +1,10 @@
 ---
-import { i18n } from "astro:config/client";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { legal, nav } from "../data/nav";
 import { t } from "../i18n/ui";
+import { defaultLocale, locales } from "../i18n/locales";
 
-const locale = Astro.currentLocale ?? i18n!.defaultLocale;
+const locale = Astro.currentLocale ?? defaultLocale;
 const siteLinks = [...nav, ...legal].map((item) => ({
   href: getRelativeLocaleUrl(locale, item.path),
   label: t(locale, item.label),
@@ -15,7 +15,7 @@ const prefix = `/${locale}/`;
 const rest = Astro.url.pathname.startsWith(prefix)
   ? Astro.url.pathname.slice(prefix.length)
   : "";
-const languages = (i18n!.locales as string[]).map((code) => ({
+const languages = locales.map((code) => ({
   code,
   href: getRelativeLocaleUrl(code, rest),
   current: code === locale ? ("page" as const) : undefined,
