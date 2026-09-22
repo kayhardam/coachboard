@@ -1,8 +1,10 @@
 ---
-import { i18n } from "astro:config/client";
-import { ogLocale } from "../i18n/ui";
 import "../styles/tokens.css";
 import "../styles/base.css";
+import { i18n } from "astro:config/client";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import { ogLocale } from "../i18n/ui";
 
 interface Props {
   title: string;
@@ -62,6 +64,10 @@ const xDefault = alternates[i18n!.defaultLocale];
     <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
-    <slot />
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
   </body>
 </html>
