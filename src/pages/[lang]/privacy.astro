@@ -23,6 +23,16 @@ const { lang } = Astro.params;
       scripts. That's why there is no cookie banner.
     </p>
 
+    <h2>The board</h2>
+    <p>
+      The board keeps your drawing in your browser's local storage, on your own device, so it's
+      still there next time. It never leaves your device unless you share it.
+    </p>
+    <p>
+      A shared link carries the drawing after the <code>#</code> in the address. Browsers don't send
+      that part to any server, so we never see what you draw. QR codes are made in your browser too.
+    </p>
+
     <h2>Hosting</h2>
     <p>
       The site is hosted by Cloudflare. To deliver pages and protect the site against abuse,
@@ -69,5 +79,16 @@ const { lang } = Astro.params;
 
   .lead {
     font-size: 1.125rem;
+  }
+
+  p + p {
+    margin-top: 12px;
+  }
+
+  code {
+    padding: 0 4px;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
   }
 </style>

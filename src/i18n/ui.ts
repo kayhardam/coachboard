@@ -7,6 +7,8 @@ const en = {
   "nav.label": "Main navigation",
   "nav.menu": "Menu",
   "nav.home": "Home",
+  "nav.board": "Board",
+  "cta.board": "Open the board",
   "nav.privacy": "Privacy",
   "footer.tagline":
     "The free digital coachboard for handball trainers. Draw a play, share a link or QR code, and your whole team has it on their phone.",
@@ -19,6 +21,7 @@ const en = {
   "home.heading": "Draw tactics. Share them. Win training.",
   "home.lead":
     "The free digital coachboard for handball trainers. Draw a play, share a link or QR code, and your whole team has it on their phone.",
+  "home.note": "Free · No account · Built for phones",
   "privacy.title": "Privacy | Handball Coachboard",
   "privacy.description":
     "Handball Coachboard sets no cookies and collects no personal data. What the hosting provider sees, and how statistics would work.",
