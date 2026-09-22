@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
   import { onMount } from "svelte";
+  import { renderSVG } from "uqr";
   import type { BoardStrings } from "../../i18n/ui";
   import { defaultBoard } from "../../lib/board/defaults";
   import * as edit from "../../lib/board/edit";
@@ -44,6 +45,9 @@
   let selected = $state<Selection | null>(null);
   let notice = $state<string | null>(null);
   let clearOpen = $state(false);
+  let manualLink = $state<string | null>(null);
+  let qr = $state<string | null>(null);
+  let qrDialog: HTMLDialogElement;
   let loaded = $state(false);
   let stage: HTMLDivElement;
   let drag: Drag | null = null;
@@ -263,6 +267,36 @@
     selected = null;
   }
 
+  // ===== Sharing =====
+
+  async function shareUrl() {
+    return `${location.origin}${location.pathname}#t=${await encode(board)}`;
+  }
+
+  async function share() {
+    const url = await shareUrl();
+    if (navigator.share) {
+      try {
+        await navigator.share({ url, title: document.title });
+        return;
+      } catch (e) {
+        if ((e as DOMException).name === "AbortError") return;
+        // Not allowed here (e.g. desktop without a share target): copy instead.
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      show(strings["board.linkCopied"]);
+    } catch {
+      manualLink = url;
+    }
+  }
+
+  async function showQr() {
+    qr = renderSVG(await shareUrl(), { ecc: "L", border: 2 });
+    qrDialog.showModal();
+  }
+
   async function copyJson() {
     await navigator.clipboard.writeText(JSON.stringify(board));
     show("Board JSON copied.");
@@ -281,6 +315,8 @@
     court: "M5 3h14v18H5zM9 3v3h6V3",
     courtFull: "M5 3h14v18H5zM5 12h14M9 3v3h6V3M9 21v-3h6v3",
     json: "M8 4H6v16h2m8-16h2v16h-2",
+    share: "M12 3v12m0-12-4 4m4-4 4 4M5 13v7h14v-7",
+    qr: "M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h2v2h-2zm4 4h2v2h-2zm-4 2h2m2-6h2",
   };
 </script>
 
@@ -300,7 +336,15 @@
     <Court board={draft ?? board} {selected} label={strings["board.court"]} />
   </div>
 
-  {#if notice}
+  {#if manualLink}
+    <div class="notice" role="status">
+      <label>
+        {strings["board.copyManually"]}
+        <input readonly value={manualLink} onfocus={(e) => e.currentTarget.select()} />
+      </label>
+      <button type="button" class="dismiss" onclick={() => (manualLink = null)} aria-label={strings["board.dismiss"]}>×</button>
+    </div>
+  {:else if notice}
     <div class="notice" role="status">
       <span>{notice}</span>
       <button type="button" class="dismiss" onclick={() => (notice = null)} aria-label={strings["board.dismiss"]}>×</button>
@@ -354,6 +398,14 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={board.court === "half" ? icons.courtFull : icons.court} /></svg>
       <span>{board.court === "half" ? strings["board.fullCourt"] : strings["board.halfCourt"]}</span>
     </button>
+    <button type="button" class="tool" onclick={share} title={strings["board.share"]}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.share} /></svg>
+      <span>{strings["board.share"]}</span>
+    </button>
+    <button type="button" class="tool" onclick={showQr} title={strings["board.qr"]}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.qr} /></svg>
+      <span>{strings["board.qr"]}</span>
+    </button>
     {#if import.meta.env.DEV}
       <button type="button" class="tool" onclick={copyJson} title="Copy JSON (dev only)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.json} /></svg>
@@ -362,6 +414,14 @@
     {/if}
   </div>
 </div>
+
+<dialog class="qr" bind:this={qrDialog} aria-label={strings["board.qr"]} onclose={() => (qr = null)}>
+  <button type="button" class="dismiss close" onclick={() => qrDialog.close()} aria-label={strings["board.close"]}>×</button>
+  {#if qr}
+    <div class="code">{@html qr}</div>
+    <p>{strings["board.qrHint"]}</p>
+  {/if}
+</dialog>
 
 <style>
   .editor {
@@ -503,6 +563,57 @@
     box-shadow: var(--shadow);
     font-size: 0.875rem;
   }
+  .notice label {
+    display: grid;
+    gap: 4px;
+    padding-block: 8px;
+  }
+  .notice input {
+    width: 100%;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 4px;
+    font: inherit;
+    font-size: 0.8125rem;
+  }
+
+  .qr {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 16px;
+    border: 0;
+    background: #fff;
+  }
+  .qr[open] {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 12px;
+  }
+  .code {
+    width: min(92vw, 78dvh);
+  }
+  .code :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .qr p {
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+  .close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: var(--color-text);
+    font-size: 1.75rem;
+  }
+
   .dismiss {
     min-width: var(--tap);
     min-height: var(--tap);
