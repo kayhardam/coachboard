@@ -13,6 +13,21 @@ const en = {
   "footer.site": "Site",
   "footer.madeBy": "Made by a handball trainer 🤝",
   "footer.language": "Language",
+  "home.title": "Handball Coachboard: draw and share handball tactics",
+  "home.description":
+    "The free digital coachboard for handball trainers. Draw a play, share a link or QR code, and your whole team has it on their phone.",
+  "home.heading": "Draw tactics. Share them. Win training.",
+  "home.lead":
+    "The free digital coachboard for handball trainers. Draw a play, share a link or QR code, and your whole team has it on their phone.",
+  "privacy.title": "Privacy | Handball Coachboard",
+  "privacy.description":
+    "Handball Coachboard sets no cookies and collects no personal data. What the hosting provider sees, and how statistics would work.",
+  "privacy.heading": "Privacy",
+  "notFound.title": "Page not found | Handball Coachboard",
+  "notFound.description": "This page doesn't exist.",
+  "notFound.heading": "Page not found",
+  "notFound.body": "The page you were looking for doesn't exist or has moved.",
+  "notFound.home": "Go to the home page",
 } as const;
 
 export type UiKey = keyof typeof en;

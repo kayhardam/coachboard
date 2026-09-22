@@ -1,10 +1,10 @@
 ---
 import "../styles/tokens.css";
 import "../styles/base.css";
-import { i18n } from "astro:config/client";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import { ogLocale } from "../i18n/ui";
+import { defaultLocale } from "../i18n/locales";
 
 interface Props {
   title: string;
@@ -13,6 +13,8 @@ interface Props {
   image?: string;
   /** Locale → pathname of each translation of this page, itself included. */
   alternates?: Record<string, string>;
+  /** Keep the page out of search results (404). Drops the canonical too. */
+  noindex?: boolean;
 }
 
 const {
@@ -20,14 +22,15 @@ const {
   description,
   image = "/og-default.png",
   alternates = {},
+  noindex = false,
 } = Astro.props;
 
 const siteName = "Handball Coachboard";
-const locale = Astro.currentLocale ?? i18n!.defaultLocale;
+const locale = Astro.currentLocale ?? defaultLocale;
 const abs = (path: string) => new URL(path, Astro.site).href;
 const canonical = abs(Astro.url.pathname);
 const translations = Object.entries(alternates);
-const xDefault = alternates[i18n!.defaultLocale];
+const xDefault = alternates[defaultLocale];
 ---
 
 <!doctype html>
@@ -37,7 +40,7 @@ const xDefault = alternates[i18n!.defaultLocale];
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
     {
       translations.length > 1 &&
         translations.map(([hreflang, path]) => (
