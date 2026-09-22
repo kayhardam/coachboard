@@ -1,6 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
-import { nav } from "../data/nav";
+import { boardPath, nav } from "../data/nav";
 import { t } from "../i18n/ui";
 import { defaultLocale } from "../i18n/locales";
 
@@ -13,6 +13,8 @@ const links = nav.map((item) => {
     current: href === Astro.url.pathname ? ("page" as const) : undefined,
   };
 });
+const boardHref = getRelativeLocaleUrl(locale, boardPath);
+const onBoard = Astro.url.pathname === boardHref;
 ---
 
 <a class="skip-link" href="#main">{t(locale, "a11y.skip")}</a>
@@ -25,6 +27,8 @@ const links = nav.map((item) => {
         {links.map((l) => <li><a href={l.href} aria-current={l.current}>{l.label}</a></li>)}
       </ul>
     </nav>
+
+    {!onBoard && <a href={boardHref} class="btn btn-primary cta">{t(locale, "cta.board")}</a>}
 
     <details class="nav-narrow">
       <summary class="btn btn-secondary">{t(locale, "nav.menu")}</summary>
@@ -94,6 +98,17 @@ const links = nav.map((item) => {
     color: var(--color-primary);
   }
 
+  /* The board button needs room next to the logo and the menu. */
+  .cta {
+    display: none;
+    margin-left: auto;
+  }
+  @media (min-width: 560px) {
+    .cta {
+      display: inline-flex;
+    }
+  }
+
   /* Narrow: a <details> dropdown, no JavaScript. */
   .nav-wide {
     display: none;
@@ -124,6 +139,10 @@ const links = nav.map((item) => {
     }
     .nav-wide {
       display: block;
+      margin-left: auto;
+    }
+    .cta {
+      margin-left: 0;
     }
     .nav-wide ul {
       display: flex;
