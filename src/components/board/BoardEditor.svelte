@@ -11,6 +11,7 @@
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
   import { decode, encode, isBoard, type Board } from "../../lib/board/format";
+  import { icons } from "../../lib/icons";
   import Court from "./Court.svelte";
 
   let { strings }: { strings: BoardStrings } = $props();
@@ -51,6 +52,8 @@
   let loaded = $state(false);
   let stage: HTMLDivElement;
   let drag: Drag | null = null;
+  /** The board as it came from a #t= link, until the first edit. */
+  let linked: Board | null = null;
   let noticeTimer: ReturnType<typeof setTimeout> | undefined;
 
   const frame = $derived(board.frames[0]!);
@@ -86,7 +89,7 @@
   onMount(() => {
     (async () => {
       const shared = await fromHash();
-      if (shared) board = shared;
+      if (shared) board = linked = shared;
       else if (shared === null) show(strings["board.invalidLink"]);
       else {
         try {
@@ -104,6 +107,7 @@
       const shared = await fromHash();
       if (shared) {
         commit(shared);
+        linked = shared;
         selected = null;
       } else if (shared === null) show(strings["board.invalidLink"]);
     };
@@ -117,10 +121,14 @@
     if (!loaded) return;
     const current = board;
     const timer = setTimeout(async () => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
-      } catch {
-        // Storage full or blocked: the URL still holds the board.
+      // Opening someone's link (or a tactic) doesn't replace your own saved
+      // board; editing it does.
+      if (current !== linked) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+        } catch {
+          // Storage full or blocked: the URL still holds the board.
+        }
       }
       const link = await encode(current);
       try {
@@ -301,23 +309,6 @@
     await navigator.clipboard.writeText(JSON.stringify(board));
     show("Board JSON copied.");
   }
-
-  // ===== Icons (24×24, stroked unless filled below) =====
-
-  const icons: Record<string, string> = {
-    move: "M12 3v18M3 12h18M12 3l-3 3m3-3 3 3m-3 15-3-3m3 3 3-3M3 12l3-3m-3 3 3 3m15-3-3-3m3 3-3 3",
-    run: "M5 19 19 5m0 0h-8m8 0v8",
-    pass: "M5 19 19 5m0 0h-8m8 0v8",
-    dribble: "M4 18c2-1 1-4 3-5s3 1 5-1-0-4 2-5 3 0 5-3m0 0h-7m7 0v7",
-    undo: "M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-4",
-    delete: "M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3",
-    clear: "M19 20H9l-5-5 9-9 7 7-5 5m-7-7 7 7",
-    court: "M5 3h14v18H5zM9 3v3h6V3",
-    courtFull: "M5 3h14v18H5zM5 12h14M9 3v3h6V3M9 21v-3h6v3",
-    json: "M8 4H6v16h2m8-16h2v16h-2",
-    share: "M12 3v12m0-12-4 4m4-4 4 4M5 13v7h14v-7",
-    qr: "M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h2v2h-2zm4 4h2v2h-2zm-4 2h2m2-6h2",
-  };
 </script>
 
 <svelte:window {onkeydown} />

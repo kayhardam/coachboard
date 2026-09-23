@@ -1,4 +1,5 @@
 ---
+import { contactEmail, owner } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { localeParams } from "../../i18n/locales";
 import { t } from "../../i18n/ui";
@@ -15,6 +16,13 @@ const { lang } = Astro.params;
 
     <p class="lead">
       Handball Coachboard sets no cookies, has no accounts and doesn't collect personal data.
+    </p>
+
+    <h2>Who runs this site</h2>
+    <p>
+      Handball Coachboard is run by {owner}. For questions about your privacy, email <a
+        href={`mailto:${contactEmail}`}>{contactEmail}</a
+      >.
     </p>
 
     <h2>Cookies</h2>

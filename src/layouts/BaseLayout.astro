@@ -9,7 +9,7 @@ import { defaultLocale } from "../i18n/locales";
 interface Props {
   title: string;
   description: string;
-  /** Site-relative path to a 1200×630 image. */
+  /** Site-relative path to a 1200×630 PNG. */
   image?: string;
   /** Locale → pathname of each translation of this page, itself included. */
   alternates?: Record<string, string>;
@@ -57,6 +57,7 @@ const xDefault = alternates[defaultLocale];
     }
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <meta name="theme-color" content="#0f172a" />
 
@@ -67,6 +68,8 @@ const xDefault = alternates[defaultLocale];
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={abs(image)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body class:list={{ fullscreen }}>

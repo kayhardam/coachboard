@@ -1,0 +1,229 @@
+---
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { render } from "astro:content";
+import Icon from "../../../../components/Icon.astro";
+import TacticCards from "../../../../components/TacticCards.astro";
+import Court from "../../../../components/board/Court.svelte";
+import { categoryInfo } from "../../../../data/categories";
+import { boardPath } from "../../../../data/nav";
+import { tacticPaths, tacticsFor, type Tactic } from "../../../../data/tactics";
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import { t } from "../../../../i18n/ui";
+import { encode } from "../../../../lib/board/format";
+
+export const getStaticPaths = tacticPaths;
+
+interface Props {
+  tactic: Tactic;
+}
+
+const { tactic } = Astro.props;
+const { lang } = tactic;
+const { data } = tactic.entry;
+const category = categoryInfo(lang, data.category);
+const all = await tacticsFor(lang);
+const related = data.related
+  .map((r) => all.find((other) => other.entry.id === r.id))
+  .filter((other): other is Tactic => other !== undefined);
+
+// The link carries the diagram, so the board opens with exactly this play.
+const boardHref = `${getRelativeLocaleUrl(lang, boardPath)}#t=${await encode(data.board)}`;
+const { Content } = await render(tactic.entry);
+const hasBody = Boolean(tactic.entry.body?.trim());
+---
+
+<BaseLayout
+  title={t(lang, "tactic.title", { title: data.title })}
+  description={data.summary}
+  image={`${getRelativeLocaleUrl(lang, tactic.path)}og.png`}
+>
+  <article class="container">
+    <nav aria-label={t(lang, "tactic.breadcrumb")} class="crumbs">
+      <ol>
+        <li><a href={getRelativeLocaleUrl(lang, "tactics/")}>{t(lang, "tactics.heading")}</a></li>
+        <li><a href={getRelativeLocaleUrl(lang, `tactics/${category.slug}/`)}>{category.label}</a></li>
+      </ol>
+    </nav>
+
+    <header>
+      <h1>{data.title}</h1>
+      <p class="meta">{data.theme} · {data.level}</p>
+      <p class="lead">{data.summary}</p>
+    </header>
+
+    <div class="layout">
+      <div class="diagram">
+        <div class="court">
+          <Court board={data.board} label={data.title} />
+        </div>
+        <a class="btn btn-primary" href={boardHref}>
+          {t(lang, "tactic.open")}
+          <Icon name="arrowRight" />
+        </a>
+        <p class="hint">{t(lang, "tactic.openHint")}</p>
+      </div>
+
+      <div class="body">
+        <section>
+          <h2>{t(lang, "tactic.steps")}</h2>
+          <ol class="steps">
+            {data.steps.map((step) => <li>{step}</li>)}
+          </ol>
+        </section>
+
+        {
+          data.coachingPoints.length > 0 && (
+            <section>
+              <h2>{t(lang, "tactic.coachingPoints")}</h2>
+              <ul class="points">
+                {data.coachingPoints.map((point) => <li>{point}</li>)}
+              </ul>
+            </section>
+          )
+        }
+
+        {
+          hasBody && (
+            <section class="prose">
+              <Content />
+            </section>
+          )
+        }
+      </div>
+    </div>
+
+    {
+      related.length > 0 && (
+        <section class="related">
+          <h2>{t(lang, "tactic.related")}</h2>
+          <TacticCards lang={lang} tactics={related} />
+        </section>
+      )
+    }
+  </article>
+</BaseLayout>
+
+<style>
+  article {
+    padding-top: 8px;
+  }
+
+  .crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0;
+    list-style: none;
+  }
+  .crumbs li + li::before {
+    content: "/";
+    content: "/" / "";
+    margin: 0 8px;
+    color: var(--color-text-muted);
+  }
+  .crumbs a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
+
+  h1 {
+    font-size: clamp(1.875rem, 6vw, 2.5rem);
+  }
+
+  .meta {
+    margin-top: 8px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-accent-dark);
+  }
+
+  .lead {
+    max-width: 640px;
+    margin-top: 12px;
+    font-size: 1.125rem;
+    color: var(--color-text-muted);
+  }
+
+  .layout {
+    display: grid;
+    gap: 32px;
+    margin-top: 24px;
+  }
+
+  .diagram {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    justify-items: stretch;
+  }
+
+  .court {
+    max-width: 420px;
+    width: 100%;
+    margin-inline: auto;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-bg);
+  }
+
+  .btn {
+    gap: 8px;
+  }
+
+  .hint {
+    font-size: 0.875rem;
+    text-align: center;
+    color: var(--color-text-muted);
+  }
+
+  .body {
+    display: grid;
+    gap: 32px;
+    align-content: start;
+  }
+
+  h2 {
+    margin-bottom: 12px;
+    font-size: 1.375rem;
+  }
+
+  .steps,
+  .points {
+    display: grid;
+    gap: 12px;
+    padding-left: 24px;
+  }
+
+  .steps li::marker {
+    font-weight: 700;
+    color: var(--color-accent-dark);
+  }
+
+  .prose :global(p + p) {
+    margin-top: 12px;
+  }
+
+  .related {
+    margin-top: 48px;
+  }
+
+  @media (min-width: 860px) {
+    .layout {
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 48px;
+    }
+
+    .diagram {
+      grid-column: 2;
+      grid-row: 1;
+      position: sticky;
+      top: 88px;
+    }
+
+    .body {
+      grid-column: 1;
+      grid-row: 1;
+    }
+  }
+</style>
