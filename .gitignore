@@ -25,3 +25,9 @@ pnpm-debug.log*
 
 # wrangler (local dev and dry runs)
 .wrangler/
+
+# Claude Code worktrees
+.claude/worktrees/
+
+# v2 source material (not in the repo)
+docs/v2/bronnen/

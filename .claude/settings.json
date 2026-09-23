@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(npx wrangler deploy)",
+      "Bash(npx wrangler deploy *)",
+      "Bash(wrangler deploy)",
+      "Bash(wrangler deploy *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/bescherm-bevroren.mjs"
+          }
+        ]
+      }
+    ]
+  }
+}

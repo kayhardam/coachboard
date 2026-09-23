@@ -1,6 +1,6 @@
 # Handball Coachboard
 
-Static Astro 7 site for handball trainers. The product is the tactics board at `/en/board/`; the content pages lead to it. `CLAUDE.md` is a symlink to this file.
+Static Astro 7 site for handball trainers. The product is the tactics board at `/en/board/`; the content pages lead to it. `CLAUDE.md` imports this file (`@AGENTS.md`) and adds Claude Code notes.
 
 ## Commands
 
@@ -68,7 +68,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 - **`format.ts` is a contract.** Links look like `1.<payload>` and end up in QR codes and team chats, so version 1 must decode forever.
   - Never edit the files in `src/lib/board/fixtures/`; the tests decode them.
   - A change to the format gets a new prefix (`2.`) and its own reader in `decode()`, next to the v1 reader.
-  - To add a fixture, write `{ link: await encode(board), board }` once and commit it.
+  - The v1 fixtures are frozen; a Claude Code hook blocks every change in that folder, new files included. New test links go in a folder of their own (see `docs/v2/linkformaat-v2.md`): write `{ link: await encode(board), board }` once and commit it.
   - The budget test keeps a full lineup (7+7 players, ball, 6 arrows) at ≤ 300 characters.
   - `isBoard()` is hand-written so the client bundle needs no Zod; the content schema reuses it.
 - **`edit.ts` is pure:** every operation returns a new board. The editor keeps the board in `$state.raw`, and undo is a list of earlier boards.
@@ -127,3 +127,24 @@ Full documentation: https://docs.astro.build. Consult these guides before workin
 - [Adding or managing content](https://docs.astro.build/en/guides/content-collections/)
 - [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
 - [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)
+
+## Versie 2 (vanaf september 2026)
+
+**Doel:** het beste handbalbord in de eigen taal voor vrijwillige jeugdtrainers (eerst Nederlands, later Duits), gebouwd rond het moment van delen in de teamapp, en vanaf dag één meetbaar.
+
+**Documenten:** taken in `docs/v2/plan.md`, linkformaat in `docs/v2/linkformaat-v2.md`, termen in `docs/v2/terminologie.md`. Lees alleen wat de taak nodig heeft.
+
+### Harde regels
+- **Privacy:** de tekening (alles na `#`) verlaat nooit het apparaat. Geen netwerkverzoek mag die inhoud bevatten, niet in de URL, de body of de headers. Geen cookies. Geen externe scripts op het bord of op `/b/`. De privacy-e2e-test bewaakt dit en wordt nooit overgeslagen of versoepeld.
+- **Linkformaat:** oude links werken voor altijd. Wijzig nooit hoe een v1-link wordt gelezen en raak de v1-testlinks niet aan. Uitbreiden alleen volgens `docs/v2/linkformaat-v2.md`.
+- **Onbetrouwbare invoer:** inhoud uit een link wordt altijd als tekst weergegeven, nooit als HTML.
+- **Deploy:** nooit vanaf een lokale machine. Deploys lopen via Workers Builds na een merge.
+- **Dependencies:** geen nieuwe dependency zonder die in het plan van de taak te noemen en te motiveren.
+- **Taal:** code, identifiers en commitberichten in het Engels. Elke nieuwe UI-tekst in alle actieve talen (nu `en`; `nl` vanaf T7).
+- **Handbalinhoud:** verzin geen oefeningen, regels of termen. Vraag het, of markeer met `TODO(term)`.
+
+### Werkwijze
+- Eén taak per branch en PR; zet de taak-ID (bijv. `T5`) in de branchnaam en de PR-titel.
+- Een taak is klaar als `npm run verify` groen is en elk punt onder "Klaar als" aantoonbaar is gehaald (testuitvoer, screenshot). Vink het dan af in `docs/v2/plan.md`.
+- UI: controleer op 390 px breed en met touch; tikvlakken minimaal 44 px.
+- Twijfel over scope: kies de kleinste versie die het criterium haalt en noem de rest in de PR. Wat onder "Buiten scope" in het plan staat, bouw je niet.
