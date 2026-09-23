@@ -1,4 +1,5 @@
-// Cloudflare Workers Builds runs `npx wrangler deploy` after `npm run build`.
+// Cloudflare Workers Builds runs `npx wrangler deploy` after `npm run build`
+// on main, and `npx wrangler preview` on other branches.
 // This file makes that a plain static-assets upload of dist/: no Worker code,
 // no adapter. Without it, Wrangler reconfigures the project on every deploy.
 {
@@ -15,5 +16,8 @@
   },
   // coachboard.hardamkay.workers.dev, and a preview URL per branch.
   "workers_dev": true,
-  "preview_urls": true
+  "preview_urls": true,
+  // `wrangler preview` refuses to run without this block. It may stay empty:
+  // it only holds preview-specific bindings and vars, and there are none.
+  "previews": {}
 }
