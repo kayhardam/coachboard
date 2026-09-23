@@ -22,7 +22,7 @@ const tactics = defineCollection({
     /** The same guard as the board, so every diagram opens there too. */
     board: z.custom<Board>(
       isBoard,
-      'Not a valid board. Draw it at /en/board/ in `npm run dev` and paste the output of "Copy as JSON".',
+      'Not a valid board. Draw it at /en/board/ in `npm run dev`, press "JSON" and paste the output.',
     ),
   }),
 });
