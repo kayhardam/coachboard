@@ -1,0 +1,26 @@
+---
+// A decorative icon from src/lib/icons.ts. It is 1.25em, so it scales with the
+// surrounding text; set font-size on the wrapper to size it.
+import { icons, type IconName } from "../lib/icons";
+
+interface Props {
+  name: IconName;
+}
+
+const { name } = Astro.props;
+---
+
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d={icons[name]} /></svg>
+
+<style>
+  svg {
+    width: 1.25em;
+    height: 1.25em;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+</style>

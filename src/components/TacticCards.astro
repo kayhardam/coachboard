@@ -1,0 +1,93 @@
+---
+// A list of tactics as cards, each with its diagram as a static thumbnail.
+import { getRelativeLocaleUrl } from "astro:i18n";
+import type { Tactic } from "../data/tactics";
+import Court from "./board/Court.svelte";
+
+interface Props {
+  lang: string;
+  tactics: Tactic[];
+}
+
+const { lang, tactics } = Astro.props;
+---
+
+<ul class="cards">
+  {
+    tactics.map(({ entry, path }) => (
+      <li>
+        <a class="card" href={getRelativeLocaleUrl(lang, path)}>
+          <span class="thumb" aria-hidden="true">
+            <Court board={entry.data.board} />
+          </span>
+          <div class="text">
+            <h3>{entry.data.title}</h3>
+            <p class="meta">
+              {entry.data.theme} · {entry.data.level}
+            </p>
+          </div>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .cards {
+    display: grid;
+    gap: 12px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 100%;
+    padding: 12px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    color: var(--color-text);
+  }
+  .card:hover {
+    text-decoration: none;
+    border-color: var(--color-accent-dark);
+    box-shadow: var(--shadow);
+  }
+
+  .thumb {
+    flex-shrink: 0;
+    width: 88px;
+    height: 92px;
+  }
+
+  .text {
+    display: grid;
+    gap: 4px;
+  }
+
+  h3 {
+    font-size: 1.0625rem;
+  }
+
+  .meta {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+  }
+
+  @media (min-width: 560px) {
+    .cards {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+  }
+
+  @media (min-width: 860px) {
+    .cards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

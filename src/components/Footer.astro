@@ -1,12 +1,12 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
-import { legal, nav } from "../data/nav";
+import { footerOnly, nav } from "../data/nav";
 import { t } from "../i18n/ui";
 import { defaultLocale, locales } from "../i18n/locales";
 
 const locale = Astro.currentLocale ?? defaultLocale;
-const siteLinks = [...nav, ...legal].map((item) => ({
-  href: getRelativeLocaleUrl(locale, item.path),
+const siteLinks = [...nav, ...footerOnly].map((item) => ({
+  href: getRelativeLocaleUrl(locale, item.path) + (item.hash ? `#${item.hash}` : ""),
   label: t(locale, item.label),
 }));
 

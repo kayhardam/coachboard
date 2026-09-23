@@ -1,5 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
+import Icon from "./Icon.astro";
 import { boardPath, nav } from "../data/nav";
 import { t } from "../i18n/ui";
 import { defaultLocale } from "../i18n/locales";
@@ -20,7 +21,7 @@ const onBoard = Astro.url.pathname === boardHref;
 <a class="skip-link" href="#main">{t(locale, "a11y.skip")}</a>
 <header class="site-header">
   <div class="container bar">
-    <a href={getRelativeLocaleUrl(locale)} class="logo">🤾 Coachboard</a>
+    <a href={getRelativeLocaleUrl(locale)} class="logo"><span class="mark"><Icon name="court" /></span>Coachboard</a>
 
     <nav class="nav-wide" aria-label={t(locale, "nav.label")}>
       <ul>
@@ -73,9 +74,24 @@ const onBoard = Astro.url.pathname === boardHref;
   }
 
   .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     font-size: 1.25rem;
     font-weight: 800;
     color: var(--color-primary);
+  }
+
+  /* The brand mark: the court icon on a green tile. */
+  .mark {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 16px;
   }
   .logo:hover {
     text-decoration: none;
