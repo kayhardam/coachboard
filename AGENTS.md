@@ -7,12 +7,20 @@ Static Astro 7 site for handball trainers. The product is the tactics board at `
 | Command | What it does |
 |---|---|
 | `npm run dev` | Dev server. There is no page at `/` locally; open `/en/`. |
-| `npm run verify` | What CI runs: `astro check` + `svelte-check` → `vitest run` → `astro build` → `node scripts/check-links.mjs`. Must be green before every commit. |
+| `npm run verify` | What CI runs (`.github/workflows/ci.yml`, on pull requests and pushes to `main`): `astro check` + `svelte-check` → `vitest run` → `astro build` → `node scripts/check-links.mjs`. Must be green before every commit. |
 | `npm run check` / `test` / `build` | The separate steps. `astro check` doesn't type-check `.svelte` files, so `check` also runs `svelte-check --fail-on-warnings`. |
+| `npx vitest run src/lib/board/format.test.ts` | One test file; add `-t "<test name>"` for one test. |
 | `node scripts/og-default.mjs` | Re-renders `public/og-default.png`. One-off; commit the PNG. |
 | `node scripts/favicons.mjs` | Renders `public/favicon.ico` and `public/apple-touch-icon.png` from `public/favicon.svg` (the brand mark). One-off; commit the results. |
 
 When starting the dev server as an agent, use background mode: `npx astro dev --background`, and manage it with `astro dev stop`, `astro dev status` and `astro dev logs`.
+
+## Code and tests
+
+- Tests sit next to the code: `*.test.ts` in `src/`, `*.test.mjs` in `scripts/`.
+- Vitest runs through Astro's Vite config (`getViteConfig` in `vitest.config.ts`), so a test can import a `.svelte` file and render it with `svelte/server` (see `Court.test.ts`).
+- `src/lib/` is plain TypeScript with no `astro:` imports, so vitest can test it. Code that needs `astro:content` goes in `src/data/` and calls into `src/lib/`: `src/data/tactics.ts` loads the collection and runs `checkTactics()` from `src/lib/tactics.ts`.
+- `src/data/categories.ts` must not import from `astro:` either, because `src/content.config.ts` imports it.
 
 ## URLs and routing
 
@@ -30,7 +38,7 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
   - `lang` and `og:locale` from the page's locale;
   - hreflang + `x-default` once `alternates` lists more than one translation;
   - `noindex` (for the 404) drops canonical and `og:url`.
-- `BaseLayout` renders `Header`, `<main id="main">` and `Footer`.
+- `BaseLayout` renders `Header`, `<main id="main">` and `Footer`. With `fullscreen` (the board page) the body fills the viewport and there is no footer.
 - Menu and footer links come from `src/data/nav.ts`. Labels and short page texts come from `t(locale, key)` in `src/i18n/ui.ts`; `t(locale, key, { title })` fills `{title}` placeholders.
 - The site owner's name and contact address are in `src/data/site.ts` (about and privacy pages).
 - English is the source dictionary. Another language may leave keys out; they fall back to English per key.
