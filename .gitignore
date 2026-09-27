@@ -25,3 +25,7 @@ pnpm-debug.log*
 
 # wrangler (local dev and dry runs)
 .wrangler/
+
+# Playwright (npm run e2e)
+test-results/
+playwright-report/
