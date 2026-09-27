@@ -117,6 +117,11 @@ Don't add these without a plan:
 - sponsor blocks, an "Install app" button or a "Works offline" claim before there is a PWA;
 - `/blog`, `/premium` or `/sponsor`.
 
+## Optimization work
+
+- `docs/optimalisatieplan.md` (Dutch) lays out the optimization work in phases, one branch and one PR per phase. Its rules apply to every phase.
+- Measure before and after any change that affects speed, size or behaviour, and record both in `docs/metingen.md` (Dutch). Later phases run Lighthouse on their PR's preview URL, with the command listed there.
+
 ## Astro documentation
 
 Full documentation: https://docs.astro.build. Consult these guides before working on related tasks:
