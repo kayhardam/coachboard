@@ -65,3 +65,19 @@ test("opening a link doesn't touch the saved board", async ({ page, context }) =
   await other.waitForTimeout(600);
   expect(await saved(other)).toBe(own);
 });
+
+test("a broken link shows the error and keeps your own board", async ({ page, context }) => {
+  test.fail(true, "A broken link overwrites the saved board with the default lineup; fixed in the next commit");
+  await openBoard(page);
+  await dragPlayer(page, 2, 30, -40);
+  await expect.poll(() => saved(page)).not.toBeNull();
+  const own = await saved(page);
+  const drawn = await pieces(page);
+
+  const other = await context.newPage();
+  await openBoard(other, "#t=1.this-is-not-a-board");
+  await expect(other.getByRole("status")).toContainText("This link couldn't be opened.");
+  await expect.poll(() => pieces(other)).toEqual(drawn);
+  await other.waitForTimeout(600);
+  expect(await saved(other)).toBe(own);
+});
