@@ -63,14 +63,43 @@ test("opening a link doesn't touch the saved board", async ({ page, context }) =
   expect(await saved(other)).toBe(own);
 });
 
-test("a broken link shows the error and keeps your own board", async ({ page, context }) => {
+const brokenLink = "#t=1.this-is-not-a-board";
+
+test("a broken link keeps your own board, and says so until you edit", async ({ page, context }) => {
   const own = await saveOwnBoard(page);
   const drawn = await pieces(page);
 
   const other = await context.newPage();
-  await openBoard(other, "#t=1.this-is-not-a-board");
-  await expect(other.getByRole("status")).toContainText("This link couldn't be opened.");
+  await other.clock.install();
+  await openBoard(other, brokenLink);
+  const notice = other.getByRole("status");
+  await expect(notice).toContainText(
+    "This link couldn't be opened. You're seeing your own board. Ask the sender for a new link.",
+  );
   await expect.poll(() => pieces(other)).toEqual(drawn);
   await other.waitForTimeout(600);
   expect(await saved(other)).toBe(own);
+
+  // Other notices go after six seconds; this one stays.
+  await other.clock.fastForward(10_000);
+  await expect(notice).toBeVisible();
+
+  await dragPlayer(other, 0, 20, 20);
+  await expect(notice).toBeHidden();
+});
+
+test("a broken link without a saved board shows the default lineup, until you dismiss the notice", async ({ page }) => {
+  await page.clock.install();
+  await openBoard(page, brokenLink);
+  const notice = page.getByRole("status");
+  await expect(notice).toContainText(
+    "This link couldn't be opened. You're seeing the default lineup. Ask the sender for a new link.",
+  );
+  await expectBoard(page, defaultBoard);
+
+  await page.clock.fastForward(10_000);
+  await expect(notice).toBeVisible();
+
+  await notice.getByRole("button", { name: "Dismiss" }).click();
+  await expect(notice).toBeHidden();
 });

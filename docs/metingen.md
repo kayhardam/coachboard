@@ -194,7 +194,7 @@ De 12 gefaalde tests zijn in beide browsers:
 
 **Na** (`623f54e`):
 
-- De melding is "This link couldn't be opened."
+- De melding is "This link couldn't be opened." Later in deze PR aangepast: zie hieronder.
 - Het bord laadt je opgeslagen bord, of de standaardopstelling als er niets is opgeslagen.
 - `localStorage` blijft ongewijzigd.
 - De test slaagt zonder markering.
@@ -214,6 +214,25 @@ Lighthouse mobiel op de preview-URL (`https://fase-4a-e2e-coachboard.hardamkay.w
 | Na (preview) | 100 | 100 | 100 | 66 | 0,84 s | 0 | 0 ms |
 
 De lagere SEO-score komt niet door deze wijziging. Cloudflare zet op preview-URL's `X-Robots-Tag: noindex`, en Lighthouse rekent dat mee. **SEO vergelijk je voortaan alleen op productie**; de andere drie scores wel op de preview-URL.
+
+### Melding bij een kapotte link (op verzoek van Kay)
+
+**Wat er veranderd is:**
+
+- Met een opgeslagen bord is de melding "This link couldn't be opened. You're seeing your own board. Ask the sender for a new link."
+- Zonder opgeslagen bord eindigt de tweede zin op "You're seeing the default lineup."
+- De melding blijft staan tot je hem wegklikt of het bord bewerkt. Andere meldingen verdwijnen nog steeds na 6 seconden.
+
+**Hoe het getest is:**
+
+- De tests zetten de klok 10 seconden vooruit (`page.clock`) en controleren dat de melding er dan nog staat. Daarna verdwijnt hij bij een sleep of bij de sluitknop.
+- Controle: met een niet-reactieve versie van de "bewerkt?"-controle falen de tests in beide browsers. Dat was mijn eerste versie; de tests vingen de fout.
+
+| | Vóór | Na |
+|---|--:|--:|
+| JS van het bord (gzip) | 28,2 KB | 28,3 KB |
+| `BoardEditor.*.js` (gzip) | 12,3 KB | 12,4 KB |
+| E2e-tests | 50 | 52 |
 
 ### Kosten van het vangnet
 
