@@ -90,8 +90,10 @@
     (async () => {
       const shared = await fromHash();
       if (shared) board = linked = shared;
-      else if (shared === null) show(strings["board.invalidLink"]);
       else {
+        // A broken link falls back to your own board, so the save below
+        // doesn't replace it with the default lineup.
+        if (shared === null) show(strings["board.invalidLink"]);
         try {
           const saved: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
           if (isBoard(saved)) board = saved;

@@ -67,7 +67,6 @@ test("opening a link doesn't touch the saved board", async ({ page, context }) =
 });
 
 test("a broken link shows the error and keeps your own board", async ({ page, context }) => {
-  test.fail(true, "A broken link overwrites the saved board with the default lineup; fixed in the next commit");
   await openBoard(page);
   await dragPlayer(page, 2, 30, -40);
   await expect.poll(() => saved(page)).not.toBeNull();

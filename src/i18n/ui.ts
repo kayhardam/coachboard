@@ -116,7 +116,7 @@ const en = {
   "board.qr": "QR code",
   "board.qrHint": "Scan with your phone's camera to open this play.",
   "board.close": "Close",
-  "board.invalidLink": "This link couldn't be opened. Showing the default lineup.",
+  "board.invalidLink": "This link couldn't be opened.",
   "board.linkCopied": "Link copied.",
   "board.copyManually": "Copy this link:",
   "board.dismiss": "Dismiss",
