@@ -192,7 +192,7 @@ Elk van deze punten verdient een eigen plan, zoals `AGENTS.md` ook vraagt:
 
 ## Voortgang
 
-- [ ] Fase 3: Nulmeting en werkwijze
+- [x] Fase 3: Nulmeting en werkwijze
 - [ ] Fase 4a: Vangnet met end-to-end-tests
 - [ ] Fase 4b: Vangnet met budgetten
 - [ ] Fase 5: Mobiele UX in de zaal
