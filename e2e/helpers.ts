@@ -69,3 +69,16 @@ export async function linkInAddressBar(page: Page) {
   await expect(page).toHaveURL(/#t=1\./, { timeout: 1000 });
   return page.url();
 }
+
+/**
+ * Makes and saves a board of your own: moves the pivot, which no other piece
+ * covers, and waits until that move (not the default lineup) is in storage.
+ */
+export async function saveOwnBoard(page: Page) {
+  await openBoard(page);
+  await expect.poll(() => saved(page)).not.toBeNull();
+  const before = await saved(page);
+  await dragPlayer(page, 5, 30, 30);
+  await expect.poll(() => saved(page)).not.toBe(before);
+  return (await saved(page))!;
+}

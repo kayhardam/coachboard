@@ -166,6 +166,7 @@ Branch `fase-4a-e2e` (PR #6), vanaf `main` @ `e930f42`.
   - een axe-scan (`@axe-core/playwright` 4.13.0) op alle 10 pagina's en de 404 vindt niets van niveau `serious` of `critical`.
 - **Bekende fout:** `e2e/full-court.spec.ts` legt bevinding 1 vast met `test.fail()`. Die test gaat rood zodra Fase 5 het oplost; dan moet de markering eraf.
 - **Beperking:** slepen gaat via pointer-events van de muis in een mobiele viewport, niet via echte touch-events. Echte touch blijft voor de testronde op telefoons.
+- **Stabiliteit:** de eerste CI-run had één rode test op WebKit. Dat was een race in de test zelf, niet in de app: hij las het opgeslagen bord uit vóór de debounced opslag van de sleep, en sleepte een speler waar de bal bovenop lag. Na de fix (`saveOwnBoard()` in `e2e/helpers.ts`) lokaal 5 keer herhaald, 250/250 groen, en met CI-instellingen 3 keer, 150/150 groen.
 
 ### Controle: kapotte v1-decoder
 

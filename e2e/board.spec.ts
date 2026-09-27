@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { defaultBoard } from "../src/lib/board/defaults";
 import type { Board } from "../src/lib/board/format";
-import { dragPlayer, expectBoard, openBoard, pieces, saved } from "./helpers";
+import { dragPlayer, expectBoard, openBoard, pieces, saved, saveOwnBoard } from "./helpers";
 
 test("the board loads with the default lineup", async ({ page }) => {
   await openBoard(page);
@@ -14,20 +14,20 @@ test("dragging a player puts the new board in the address bar within a second", 
   await expect(page).toHaveURL(/#t=1\./);
   const before = page.url();
 
-  await dragPlayer(page, 2, 30, -40);
+  await dragPlayer(page, 5, 30, 30);
   await expect.poll(() => page.url(), { timeout: 1000 }).not.toBe(before);
   expect(page.url()).toMatch(/#t=1\./);
 });
 
 test("a shared link opens the same board in a clean browser", async ({ page, browser }) => {
   await openBoard(page);
-  await dragPlayer(page, 2, 30, -40);
+  await expect(page).toHaveURL(/#t=1\./);
+  const before = page.url();
+  await dragPlayer(page, 5, 30, 30);
   await dragPlayer(page, 0, 20, 20);
-  await expect.poll(async () => (await pieces(page)).join()).not.toBe("");
   const drawn = await pieces(page);
-  await expect.poll(() => page.url(), { timeout: 1000 }).toMatch(/#t=1\./);
   // Wait for the debounced write of the last drag.
-  await page.waitForTimeout(500);
+  await expect.poll(() => page.url()).not.toBe(before);
   const link = page.url();
 
   const clean = await browser.newContext({ ...test.info().project.use });
@@ -51,10 +51,7 @@ for (const file of fixtures) {
 }
 
 test("opening a link doesn't touch the saved board", async ({ page, context }) => {
-  await openBoard(page);
-  await dragPlayer(page, 2, 30, -40);
-  await expect.poll(() => saved(page)).not.toBeNull();
-  const own = await saved(page);
+  const own = await saveOwnBoard(page);
 
   const fixture = JSON.parse(
     readFileSync(new URL("../src/lib/board/fixtures/v1-full-lineup.json", import.meta.url), "utf8"),
@@ -67,10 +64,7 @@ test("opening a link doesn't touch the saved board", async ({ page, context }) =
 });
 
 test("a broken link shows the error and keeps your own board", async ({ page, context }) => {
-  await openBoard(page);
-  await dragPlayer(page, 2, 30, -40);
-  await expect.poll(() => saved(page)).not.toBeNull();
-  const own = await saved(page);
+  const own = await saveOwnBoard(page);
   const drawn = await pieces(page);
 
   const other = await context.newPage();
