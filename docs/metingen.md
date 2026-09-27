@@ -106,7 +106,7 @@ Kays eigen woorden:
 | # | Test | Resultaat | Opmerking |
 |--:|---|:-:|---|
 | 1 | Bord openen: de standaardopstelling staat er | ✅ | "board werkt naar behoren" |
-| 2 | Een speler slepen: volgt hij je vinger soepel? | ✅ / ❌ | Op het halve veld werkt het. Op het volledige veld (full court) zijn de "iconen" niet meer te selecteren. Zie bevinding 1. |
+| 2 | Een speler slepen: volgt hij je vinger soepel? | ✅ | Op het halve veld werkt het. Op het volledige veld reageren de knoppen in de balken onderaan niet meer. Zie bevinding 1. |
 | 3 | Een pijl tekenen (loopactie, pass of dribbel) | ✅ | |
 | 4 | Ongedaan maken: de laatste stap verdwijnt | ✅ | |
 | 5 | Delen naar WhatsApp | ✅ | "delen … social" werkt |
@@ -129,7 +129,7 @@ Geordend op impact en moeite, met de uitkomsten van de testronde erin verwerkt. 
 
 | # | Bevinding | Impact | Moeite | Fase |
 |--:|---|---|---|---|
-| 1 | **Op een telefoon zijn de stukken op het volledige veld niet te selecteren** (testronde, punt 2). Vermoeden: het veld schaalt naar de beschikbare hoogte. Het volledige veld (viewBox 216×428) wordt daardoor kleiner getekend dan het halve (216×222). Op een telefoon van 390×844 zakt het tikgebied van een stuk (`HIT_R` = 13 in `geometry.ts`) daardoor van ongeveer 45 px naar ongeveer 40 px, onder de 44 px uit `AGENTS.md`. Het ligt dan tegen de tikgebieden van de stukken ernaast. Eerst reproduceren: het is nog niet vastgesteld of "iconen" de stukken of de knoppen zijn. | hoog | middel | 5 |
+| 1 | **Op een telefoon reageren de knoppen in de balken onderaan niet meer zodra het volledige veld aan staat** (testronde, punt 2; Kay bevestigde op 27 september dat met "iconen" de knoppen bedoeld zijn). De oorzaak is nog onbekend: volgens de CSS past het veld (`width: 100%; height: 100%` in `Court.svelte`) in zijn rij en zou het de balken niet moeten overlappen. Eerst reproduceren met mobiele emulatie. In Fase 4a kan een e2e-test dit vastleggen: Playwright klikt pas als de knop echt de tik ontvangt. | hoog | middel | 5 |
 | 2 | **Liggend is het bord niet te gebruiken: de pagina scrollt niet** (testronde, punt 11). Oorzaak volgens de code: de bordpagina is `height: 100dvh; overflow: hidden` (`.fullscreen` in `BaseLayout.astro`). In een liggend scherm van ongeveer 390 px hoog nemen de header en de twee knoppenbalken het grootste deel in, en scrollen kan niet. | hoog | middel | 5 |
 | 3 | **Canonical en `og:image` wijzen naar `handballcoachboard.com`, dat nog niet bestaat.** Gevolgen: een link vanaf workers.dev krijgt in WhatsApp geen voorbeeldafbeelding, en zoekmachines volgen een canonical naar een domein dat niet reageert. Lighthouse ziet dit niet. | hoog | laag, zodra het domein er is | 7 |
 | 4 | **Het contactadres `contact@handballcoachboard.com` werkt nog niet.** Het staat op de privacy- en aboutpagina. | hoog (belofte op de privacypagina) | laag | 7 |
