@@ -135,7 +135,7 @@ Geordend op impact en moeite, met de uitkomsten van de testronde erin verwerkt. 
 | 4 | **Het contactadres `contact@handballcoachboard.com` werkt nog niet.** Het staat op de privacy- en aboutpagina. | hoog (belofte op de privacypagina) | laag | 7 |
 | 5 | **Deellinks en QR-codes gebruiken `location.origin`** (`BoardEditor.svelte`). Alles wat nu vanaf workers.dev gedeeld wordt, moet na de verhuizing doorsturen, met behoud van pad en `#t=`. | hoog | middel | 7 |
 | 6 | ~~**Er zijn geen browsertests voor de kernflow**~~ **Opgelost in Fase 4a:** 50 e2e-tests in mobiel Chromium en WebKit, met een eigen CI-job. | hoog | middel | 4a |
-| 7 | **Niets bewaakt dat contentpagina's zonder JS blijven en het bord licht blijft.** Nu is dat zo: 0 KB JS op contentpagina's en 28,2 KB (gzip) op het bord. | middel | laag | 4b |
+| 7 | ~~**Niets bewaakt dat contentpagina's zonder JS blijven en het bord licht blijft.**~~ **Opgelost in Fase 4b:** `scripts/check-budget.mjs` in `npm run verify` laat de build falen op JS op een contentpagina en op een overschreden budget. | middel | laag | 4b |
 | 8 | **Risico op zoomen bij dubbel tikken in iOS Safari.** Alleen het veld (`.stage`) heeft `touch-action`, de knoppen niet. Nog een hypothese: punt 13 is in de testronde niet gemeld en schuift door naar Fase 5. | middel | laag | 5 |
 | 9 | **Geen security headers**, alleen de cache-header voor `/_astro/*` in `public/_headers`. | middel | laag tot middel (CSP voor de inline scripts van het bord) | 6 |
 | 10 | **De QR-bibliotheek zit in de editorbundel** (ongeveer 4 KB gzip). Pas laden bij het openen van de QR-dialoog scheelt weinig. | laag | laag | 5 |
@@ -244,3 +244,56 @@ De lagere SEO-score komt niet door deze wijziging. Cloudflare zet op preview-URL
 | Browsers lokaal (`~/Library/Caches/ms-playwright`) | — | ongeveer 850 MB (Chromium, Chrome Headless Shell, WebKit) |
 
 Voor bezoekers verandert er niets: alle nieuwe pakketten zijn devDependencies.
+
+## Fase 4b: vangnet met budgetten (28 september 2026)
+
+Branch `fase-4b-budgetten`, vanaf `main` @ `c3b77e3`.
+
+### Wat er bewaakt wordt
+
+`scripts/check-budget.mjs` draait als laatste stap van `npm run verify` (en los met `npm run budget`). Het meet `dist/` op dezelfde manier als de nulmeting: KB = 1000 bytes, gzip met Node `zlib` op standaardniveau, PNG's raw.
+
+| Regel | Hoe gemeten | Gemeten | Budget |
+|---|---|--:|--:|
+| Geen JS op contentpagina's | elke pagina behalve `/<lang>/board/`: geen `<script>` (JSON-LD mag), geen `<astro-island>`, geen `modulepreload` | 0 op 9 pagina's | 0 |
+| JS van het bord | `<script src>`, `component-url` en `renderer-url` van de island, plus hun statische imports, elk bestand één keer | 28,3 KB | 32,5 KB |
+| Lazy JS van het bord | bestanden die alleen via `import()` geladen worden | 0 KB | 10 KB |
+| Alle JS samen | elk `.js`-bestand in `dist/_astro/`, ook chunks die geen pagina laadt (besluit Kay) | 28,3 KB | 32,5 KB |
+| CSS per pagina | de `<link rel="stylesheet">`-bestanden | 1,6 KB | 2,0 KB |
+| HTML per pagina | het HTML-bestand, één grens voor alle pagina's | 2,4 tot 5,5 KB | 6,5 KB |
+| PNG per bestand | elk `.png` in `dist/` | 1,7 tot 50,5 KB | 60 KB |
+
+De budgetten zijn de nulmeting plus ongeveer 15%, afgerond. Ze staan in de constante `BUDGETS` in het script. Een budget verhogen mag alleen bewust, met de reden in de PR en de nieuwe meting hier.
+
+### Vóór en na
+
+De app verandert in deze fase niet: de gemeten groottes zijn gelijk aan de nulmeting en Fase 4a (bord-JS 28,3 KB, HTML en CSS per pagina gelijk op 0,1 KB). Lighthouse is daarom niet opnieuw gedraaid.
+
+| | Vóór | Na |
+|---|--:|--:|
+| Unittests | 7 bestanden, 71 tests | 8 bestanden, 83 tests |
+| `npm run verify` lokaal | 7,6 s | 7,0 s (het budgetscript zelf: 0,05 s; het verschil is ruis) |
+| CI-job `verify` | 33 s | 31 s (PR #7; het verschil is ruis) |
+| Dependencies | — | geen nieuwe |
+
+### Controle: JS op een contentpagina
+
+Tijdelijk `<script>console.log(1)</script>` onderaan `src/pages/[lang]/about.astro`. Astro bundelt dat tot een `<script type="module">`. `npm run verify` faalt (exit 1):
+
+```
+Scripts         9 content pages                                          1        0  OVER
+
+Budget check failed (1):
+  /en/about/: content pages ship no JS, found <script type="module">
+```
+
+Tweede controle: het budget voor de bord-JS tijdelijk op 28,0 KB. `npm run verify` faalt:
+
+```
+JS (gzip)       /en/board/                                         28.3 KB  28.0 KB  OVER
+
+Budget check failed (1):
+  JS (gzip) /en/board/: 28.3 KB is over the budget of 28.0 KB
+```
+
+Beide teruggezet met `git checkout`; niet gecommit. Daarna is `npm run verify` weer groen.

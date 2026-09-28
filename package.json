@@ -12,7 +12,8 @@
     "astro": "astro",
     "check": "astro check && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "test": "vitest run",
-    "verify": "npm run check && npm run test && npm run build && node scripts/check-links.mjs",
+    "verify": "npm run check && npm run test && npm run build && node scripts/check-links.mjs && node scripts/check-budget.mjs",
+    "budget": "node scripts/check-budget.mjs",
     "e2e": "playwright test"
   },
   "dependencies": {
