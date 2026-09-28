@@ -13,6 +13,8 @@
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
   import { decode, encode, isBoard, type Board } from "../../lib/board/format";
+  import { HIT_R } from "../../lib/board/geometry";
+  import { nearestPiece, reach } from "../../lib/board/hit";
   import { icons } from "../../lib/icons";
   import Court from "./Court.svelte";
 
@@ -170,10 +172,28 @@
     return [p.x, p.y];
   }
 
+  /** How far a tap reaches on the court as it is drawn now (see hit.ts). */
+  function tapReach(): number {
+    const ctm = stage.querySelector("svg")?.getScreenCTM();
+    return ctm ? reach(Math.hypot(ctm.a, ctm.b)) : HIT_R;
+  }
+
   function pieceAt(target: EventTarget | Element | null): { kind: string; index: number } | null {
     const el = (target as Element | null)?.closest?.("[data-kind]");
     if (!el) return null;
     return { kind: el.getAttribute("data-kind")!, index: Number(el.getAttribute("data-index")) };
+  }
+
+  /**
+   * What a press at `at` is for: a handle of the selected arrow; else the
+   * nearest piece whose drawn touch area it is in; else an arrow; else the
+   * nearest piece within a finger's reach, so small pieces stay easy to hit
+   * without covering the arrows round them.
+   */
+  function hitAt(target: EventTarget | null, at: XY): { kind: string; index: number } | null {
+    const drawn = pieceAt(target);
+    if (drawn?.kind === "handle") return drawn;
+    return nearestPiece(frame, at, HIT_R) ?? (drawn?.kind === "arrow" ? drawn : nearestPiece(frame, at, tapReach()));
   }
 
   const isDrawTool = (t: Tool): t is "run" | "pass" | "dribble" =>
@@ -181,8 +201,8 @@
 
   function onpointerdown(e: PointerEvent) {
     if (drag || !e.isPrimary || e.button > 0) return;
-    const hit = pieceAt(e.target);
     const at = toCourt(e);
+    const hit = hitAt(e.target, at);
     stage.setPointerCapture(e.pointerId);
 
     if (hit?.kind === "handle" && selected?.kind === "arrow") {
@@ -239,9 +259,10 @@
     draft = null;
 
     if (done.type === "draw") {
-      // Released on a player: the arrow ends at that player.
-      const hit = pieceAt(document.elementFromPoint(e.clientX, e.clientY));
-      const to = hit?.kind === "player" ? ([...frame.players[hit.index]!.at] as XY) : toCourt(e);
+      // Released on (or near) a player: the arrow ends at that player.
+      const at = toCourt(e);
+      const hit = nearestPiece({ ...frame, ball: undefined }, at, tapReach());
+      const to = hit ? ([...frame.players[hit.index]!.at] as XY) : at;
       if (commit(edit.addArrow(board, done.kind, done.from, to))) {
         selected = { kind: "arrow", index: frame.arrows.length - 1 };
       } else {
