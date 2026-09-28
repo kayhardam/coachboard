@@ -115,6 +115,7 @@ const en = {
   "board.share": "Share",
   "board.qr": "QR code",
   "board.qrHint": "Scan with your phone's camera to open this play.",
+  "board.qrFailed": "The QR code couldn't be loaded. Check your connection and try again.",
   "board.close": "Close",
   "board.invalidLink": "This link couldn't be opened. You're seeing your own board. Ask the sender for a new link.",
   "board.invalidLinkDefault":

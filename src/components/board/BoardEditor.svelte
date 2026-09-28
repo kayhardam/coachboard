@@ -7,7 +7,6 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
-  import { renderSVG } from "uqr";
   import type { BoardStrings } from "../../i18n/ui";
   import { defaultBoard } from "../../lib/board/defaults";
   import * as edit from "../../lib/board/edit";
@@ -98,6 +97,14 @@
     if (noticeBoard && board !== noticeBoard) dismiss();
   });
 
+  /**
+   * The QR library isn't needed to draw, so it stays out of the first load.
+   * It is fetched once the board is up, so the QR code still opens after the
+   * phone goes offline.
+   */
+  let qrLibrary: Promise<typeof import("uqr")> | undefined;
+  const loadQr = () => (qrLibrary ??= import("uqr"));
+
   // ===== Loading and saving =====
 
   async function fromHash(): Promise<Board | null | undefined> {
@@ -106,6 +113,9 @@
   }
 
   onMount(() => {
+    const idle = window.requestIdleCallback ?? ((run: () => void) => setTimeout(run, 500));
+    idle(() => loadQr().catch(() => (qrLibrary = undefined)));
+
     (async () => {
       const shared = await fromHash();
       if (shared) board = linked = shared;
@@ -343,6 +353,14 @@
   }
 
   async function showQr() {
+    let renderSVG: (typeof import("uqr"))["renderSVG"];
+    try {
+      ({ renderSVG } = await loadQr());
+    } catch {
+      qrLibrary = undefined; // Try again next time.
+      show(strings["board.qrFailed"]);
+      return;
+    }
     qr = renderSVG(await shareUrl(), { ecc: "L", border: 2 });
     qrDialog.showModal();
   }
