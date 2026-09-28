@@ -16,7 +16,8 @@
   import { icons } from "../../lib/icons";
   import Court from "./Court.svelte";
 
-  let { strings }: { strings: BoardStrings } = $props();
+  /** `home`: the home page, linked from the bar in landscape, where the header is hidden. */
+  let { strings, home }: { strings: BoardStrings; home: string } = $props();
 
   type Tool = "move" | "attack" | "defence" | "ball" | "run" | "pass" | "dribble";
   type XY = [number, number];
@@ -362,7 +363,7 @@
     </div>
   {/if}
 
-  <div class="bar" role="toolbar" aria-label={strings["board.tools"]}>
+  <div class="bar tools" role="toolbar" aria-label={strings["board.tools"]}>
     {#each tools as t (t.id)}
       <button
         type="button"
@@ -385,7 +386,11 @@
     {/each}
   </div>
 
-  <div class="bar" role="toolbar" aria-label={strings["board.actions"]}>
+  <div class="bar actions" role="toolbar" aria-label={strings["board.actions"]}>
+    <a class="tool home" href={home} title={strings["board.home"]}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.court} /></svg>
+      <span>{strings["board.home"]}</span>
+    </a>
     <button type="button" class="tool" onclick={undo} disabled={past.length === 0} title={strings["board.undo"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.undo} /></svg>
       <span>{strings["board.undo"]}</span>
@@ -563,6 +568,56 @@
   }
   .menu-panel button:hover {
     background: var(--color-bg-soft);
+  }
+
+  /* The brand mark, as in the header it stands in for. */
+  .home {
+    display: none;
+    text-decoration: none;
+  }
+  .home svg {
+    padding: 2px;
+    border-radius: 6px;
+    background: var(--color-accent);
+    color: #fff;
+  }
+
+  /*
+   * A phone in landscape has no height to spare. BaseLayout hides the header,
+   * and the bars become columns at the sides, in reach of both thumbs, so the
+   * court gets the full height. Same query as in BaseLayout.astro.
+   */
+  @media (orientation: landscape) and (max-height: 559px) {
+    .editor {
+      grid-template: minmax(0, 1fr) / auto minmax(0, 1fr) auto;
+      max-width: none;
+      padding: 4px 4px max(4px, env(safe-area-inset-bottom));
+    }
+    .stage {
+      grid-area: 1 / 2;
+    }
+    .tools {
+      grid-area: 1 / 1;
+    }
+    .actions {
+      grid-area: 1 / 3;
+    }
+    .bar {
+      grid-auto-flow: row;
+      grid-auto-rows: minmax(0, 1fr);
+      width: 64px;
+      gap: 2px;
+    }
+    .home {
+      display: flex;
+    }
+    .menu-panel {
+      top: 0;
+      right: calc(100% + 6px);
+      bottom: auto;
+      left: auto;
+      translate: none;
+    }
   }
 
   .notice {

@@ -122,6 +122,7 @@ const en = {
   "board.linkCopied": "Link copied.",
   "board.copyManually": "Copy this link:",
   "board.dismiss": "Dismiss",
+  "board.home": "Home",
 } as const;
 
 export type UiKey = keyof typeof en;

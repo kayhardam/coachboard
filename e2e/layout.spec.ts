@@ -52,3 +52,34 @@ test("turning the phone to landscape keeps everything on screen", async ({ page 
   await page.setViewportSize(landscape());
   await expectEverythingOnScreen(page);
 });
+
+test("in landscape the header makes way, and the bar links home", async ({ page }) => {
+  await openBoard(page);
+  const home = page.getByRole("link", { name: "Home" });
+  await expect(page.locator(".site-header")).toBeVisible();
+  await expect(home).toBeHidden();
+
+  await page.setViewportSize(landscape());
+  await expect(page.locator(".site-header")).toBeHidden();
+  await expect(home).toBeInViewport({ ratio: 1 });
+  await expect(home).toHaveAttribute("href", "/en/");
+  // The tools on the left, the actions on the right, the court between them.
+  const [tools, court, actions] = await Promise.all(
+    [page.getByRole("toolbar", { name: "Tools" }), page.locator(".stage svg"), page.getByRole("toolbar", { name: "Actions" })].map(
+      async (l) => (await l.boundingBox())!,
+    ),
+  );
+  expect(tools.x + tools.width).toBeLessThanOrEqual(court.x);
+  expect(court.x + court.width).toBeLessThanOrEqual(actions.x);
+});
+
+for (const orientation of ["portrait", "landscape"] as const) {
+  test(`${orientation}: the Clear menu opens on screen`, async ({ page }) => {
+    if (orientation === "landscape") await page.setViewportSize(landscape());
+    await openBoard(page);
+    await page.getByTitle("Clear").click();
+    for (const name of ["Clear arrows and ball", "Default lineup", "Empty court"]) {
+      await expect(page.getByRole("button", { name })).toBeInViewport({ ratio: 1 });
+    }
+  });
+}

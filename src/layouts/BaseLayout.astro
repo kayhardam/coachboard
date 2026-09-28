@@ -97,4 +97,11 @@ const xDefault = alternates[defaultLocale];
     flex: 1;
     min-height: 0;
   }
+
+  /* A phone in landscape: the board needs the height, and links home from its bar. */
+  @media (orientation: landscape) and (max-height: 559px) {
+    .fullscreen :global(.site-header) {
+      display: none;
+    }
+  }
 </style>

@@ -58,7 +58,7 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
   - `src/styles/tokens.css`: custom properties;
   - `src/styles/base.css`: reset, typography, focus ring, `.container`, `.btn`, `.btn-primary`, `.btn-secondary`.
 - **Everything else is a scoped `<style>`** in the component or page. No inline `style` attributes.
-- **Mobile-first.** Base styles are for phones. Wider layouts go in `@media (min-width: 560px)` or `@media (min-width: 860px)`, and only those two.
+- **Mobile-first.** Base styles are for phones. Wider layouts go in `@media (min-width: 560px)` or `@media (min-width: 860px)`, and only those two. The one exception is the board on a phone in landscape: `@media (orientation: landscape) and (max-height: 559px)` (in `BoardEditor.svelte`, `BaseLayout.astro` and `board.astro`).
 - **Green behind or as text** uses `--color-accent-dark` (5.0:1 on white). `--color-accent` is for fills and icons only (3.3:1).
 - **Touch targets** are at least `var(--tap)` (44px) high.
 - **The narrow-screen menu** is a `<details>` element, without JavaScript. Content pages ship no JS: `scripts/check-budget.mjs` fails on any `<script>` (JSON-LD excepted), `<astro-island>` or modulepreload outside `/<lang>/board/`.
@@ -83,6 +83,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 - **`BoardEditor.svelte`:**
   - it runs `client:only` on `/[lang]/board/` only, the one page that ships JS;
   - its CSS ships inside its JS (`<svelte:options css="injected" />`). As a stylesheet over Vite's 4 KB inline limit, Astro linked it on every page;
+  - the court fits the space the bars leave (letterboxed), in portrait and landscape; in landscape the header is hidden and the bars become columns at the sides, with a Home link in the right one. `e2e/layout.spec.ts` checks that every button stays on screen;
   - its strings come in as a prop from `boardStrings()` in `ui.ts`;
   - it loads `#t=` first, then `localStorage` (`coachboard.board`), then the default lineup;
   - every change is written to both (300 ms debounce), so the address bar is always a shareable link;
