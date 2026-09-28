@@ -195,7 +195,7 @@ Elk van deze punten verdient een eigen plan, zoals `AGENTS.md` ook vraagt:
 - [x] Fase 3: Nulmeting en werkwijze
 - [x] Fase 4a: Vangnet met end-to-end-tests
 - [x] Fase 4b: Vangnet met budgetten
-- [ ] Fase 5: Mobiele UX in de zaal
+- [x] Fase 5: Mobiele UX in de zaal
 - [ ] Fase 6: Veiligheid en onderhoud
 - [ ] Fase 7: Lancering op handballcoachboard.com
 - [ ] Fase 8: Meten in productie

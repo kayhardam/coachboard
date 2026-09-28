@@ -89,9 +89,19 @@ const xDefault = alternates[defaultLocale];
     overflow: hidden;
   }
 
+  /* One row and column that fill the screen below the header, so the board
+     sizes to the screen instead of to its own content. */
   .fullscreen main {
     display: grid;
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
     flex: 1;
     min-height: 0;
+  }
+
+  /* A phone in landscape: the board needs the height, and links home from its bar. */
+  @media (orientation: landscape) and (max-height: 559px) {
+    .fullscreen :global(.site-header) {
+      display: none;
+    }
   }
 </style>

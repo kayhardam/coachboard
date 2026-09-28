@@ -75,6 +75,19 @@ describe("checkBudget", () => {
     expect(row(rows, "Lazy JS (gzip)").measured).toBe(gz(qr));
   });
 
+  it("finds a dynamic import written with backticks, as Vite writes it", () => {
+    const qr = "export const qr=2;";
+    const lazyEditor = `${editor}const q=()=>import(\`./qr.js\`);`;
+    const { rows } = build({
+      "en/board/index.html": island,
+      "_astro/Editor.js": lazyEditor,
+      "_astro/renderer.js": renderer,
+      "_astro/client.js": client,
+      "_astro/qr.js": qr,
+    });
+    expect(row(rows, "Lazy JS (gzip)").measured).toBe(gz(qr));
+  });
+
   it("counts every .js file in _astro in the total, even one no page loads", () => {
     const { rows } = build({ "_astro/a.js": "one", "_astro/chunks/b.js": "two" });
     expect(row(rows, "All JS (gzip)").measured).toBe(gz("one") + gz("two"));

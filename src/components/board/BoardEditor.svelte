@@ -3,18 +3,22 @@
   Court and turns pointer input into the pure operations in edit.ts; the
   board is immutable ($state.raw), so undo is a list of earlier boards.
 -->
+<svelte:options css="injected" />
+
 <script lang="ts">
   import { onMount } from "svelte";
-  import { renderSVG } from "uqr";
   import type { BoardStrings } from "../../i18n/ui";
   import { defaultBoard } from "../../lib/board/defaults";
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
   import { decode, encode, isBoard, type Board } from "../../lib/board/format";
+  import { HIT_R } from "../../lib/board/geometry";
+  import { nearestPiece, reach } from "../../lib/board/hit";
   import { icons } from "../../lib/icons";
   import Court from "./Court.svelte";
 
-  let { strings }: { strings: BoardStrings } = $props();
+  /** `home`: the home page, linked from the bar in landscape, where the header is hidden. */
+  let { strings, home }: { strings: BoardStrings; home: string } = $props();
 
   type Tool = "move" | "attack" | "defence" | "ball" | "run" | "pass" | "dribble";
   type XY = [number, number];
@@ -93,6 +97,14 @@
     if (noticeBoard && board !== noticeBoard) dismiss();
   });
 
+  /**
+   * The QR library isn't needed to draw, so it stays out of the first load.
+   * It is fetched once the board is up, so the QR code still opens after the
+   * phone goes offline.
+   */
+  let qrLibrary: Promise<typeof import("uqr")> | undefined;
+  const loadQr = () => (qrLibrary ??= import("uqr"));
+
   // ===== Loading and saving =====
 
   async function fromHash(): Promise<Board | null | undefined> {
@@ -101,6 +113,9 @@
   }
 
   onMount(() => {
+    const idle = window.requestIdleCallback ?? ((run: () => void) => setTimeout(run, 500));
+    idle(() => loadQr().catch(() => (qrLibrary = undefined)));
+
     (async () => {
       const shared = await fromHash();
       if (shared) board = linked = shared;
@@ -167,10 +182,28 @@
     return [p.x, p.y];
   }
 
+  /** How far a tap reaches on the court as it is drawn now (see hit.ts). */
+  function tapReach(): number {
+    const ctm = stage.querySelector("svg")?.getScreenCTM();
+    return ctm ? reach(Math.hypot(ctm.a, ctm.b)) : HIT_R;
+  }
+
   function pieceAt(target: EventTarget | Element | null): { kind: string; index: number } | null {
     const el = (target as Element | null)?.closest?.("[data-kind]");
     if (!el) return null;
     return { kind: el.getAttribute("data-kind")!, index: Number(el.getAttribute("data-index")) };
+  }
+
+  /**
+   * What a press at `at` is for: a handle of the selected arrow; else the
+   * nearest piece whose drawn touch area it is in; else an arrow; else the
+   * nearest piece within a finger's reach, so small pieces stay easy to hit
+   * without covering the arrows round them.
+   */
+  function hitAt(target: EventTarget | null, at: XY): { kind: string; index: number } | null {
+    const drawn = pieceAt(target);
+    if (drawn?.kind === "handle") return drawn;
+    return nearestPiece(frame, at, HIT_R) ?? (drawn?.kind === "arrow" ? drawn : nearestPiece(frame, at, tapReach()));
   }
 
   const isDrawTool = (t: Tool): t is "run" | "pass" | "dribble" =>
@@ -178,8 +211,8 @@
 
   function onpointerdown(e: PointerEvent) {
     if (drag || !e.isPrimary || e.button > 0) return;
-    const hit = pieceAt(e.target);
     const at = toCourt(e);
+    const hit = hitAt(e.target, at);
     stage.setPointerCapture(e.pointerId);
 
     if (hit?.kind === "handle" && selected?.kind === "arrow") {
@@ -236,9 +269,10 @@
     draft = null;
 
     if (done.type === "draw") {
-      // Released on a player: the arrow ends at that player.
-      const hit = pieceAt(document.elementFromPoint(e.clientX, e.clientY));
-      const to = hit?.kind === "player" ? ([...frame.players[hit.index]!.at] as XY) : toCourt(e);
+      // Released on (or near) a player: the arrow ends at that player.
+      const at = toCourt(e);
+      const hit = nearestPiece({ ...frame, ball: undefined }, at, tapReach());
+      const to = hit ? ([...frame.players[hit.index]!.at] as XY) : at;
       if (commit(edit.addArrow(board, done.kind, done.from, to))) {
         selected = { kind: "arrow", index: frame.arrows.length - 1 };
       } else {
@@ -319,6 +353,14 @@
   }
 
   async function showQr() {
+    let renderSVG: (typeof import("uqr"))["renderSVG"];
+    try {
+      ({ renderSVG } = await loadQr());
+    } catch {
+      qrLibrary = undefined; // Try again next time.
+      show(strings["board.qrFailed"]);
+      return;
+    }
     qr = renderSVG(await shareUrl(), { ecc: "L", border: 2 });
     qrDialog.showModal();
   }
@@ -360,7 +402,7 @@
     </div>
   {/if}
 
-  <div class="bar" role="toolbar" aria-label={strings["board.tools"]}>
+  <div class="bar tools" role="toolbar" aria-label={strings["board.tools"]}>
     {#each tools as t (t.id)}
       <button
         type="button"
@@ -383,7 +425,11 @@
     {/each}
   </div>
 
-  <div class="bar" role="toolbar" aria-label={strings["board.actions"]}>
+  <div class="bar actions" role="toolbar" aria-label={strings["board.actions"]}>
+    <a class="tool home" href={home} title={strings["board.home"]}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.court} /></svg>
+      <span>{strings["board.home"]}</span>
+    </a>
     <button type="button" class="tool" onclick={undo} disabled={past.length === 0} title={strings["board.undo"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.undo} /></svg>
       <span>{strings["board.undo"]}</span>
@@ -436,7 +482,8 @@
   .editor {
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto auto;
-    height: 100%;
+    width: 100%;
+    min-height: 0;
     max-width: 720px;
     margin-inline: auto;
     padding: 8px 8px max(8px, env(safe-area-inset-bottom));
@@ -444,11 +491,19 @@
     position: relative;
   }
 
+  /* The court is taken out of the flow, so its aspect ratio can't size the
+     row: it fits (letterboxed) in whatever space the bars leave. */
   .stage {
+    position: relative;
     min-height: 0;
     touch-action: none;
     -webkit-touch-callout: none;
     cursor: crosshair;
+  }
+
+  .stage > :global(svg) {
+    position: absolute;
+    inset: 0;
   }
 
   .bar {
@@ -552,6 +607,56 @@
   }
   .menu-panel button:hover {
     background: var(--color-bg-soft);
+  }
+
+  /* The brand mark, as in the header it stands in for. */
+  .home {
+    display: none;
+    text-decoration: none;
+  }
+  .home svg {
+    padding: 2px;
+    border-radius: 6px;
+    background: var(--color-accent);
+    color: #fff;
+  }
+
+  /*
+   * A phone in landscape has no height to spare. BaseLayout hides the header,
+   * and the bars become columns at the sides, in reach of both thumbs, so the
+   * court gets the full height. Same query as in BaseLayout.astro.
+   */
+  @media (orientation: landscape) and (max-height: 559px) {
+    .editor {
+      grid-template: minmax(0, 1fr) / auto minmax(0, 1fr) auto;
+      max-width: none;
+      padding: 4px 4px max(4px, env(safe-area-inset-bottom));
+    }
+    .stage {
+      grid-area: 1 / 2;
+    }
+    .tools {
+      grid-area: 1 / 1;
+    }
+    .actions {
+      grid-area: 1 / 3;
+    }
+    .bar {
+      grid-auto-flow: row;
+      grid-auto-rows: minmax(0, 1fr);
+      width: 64px;
+      gap: 2px;
+    }
+    .home {
+      display: flex;
+    }
+    .menu-panel {
+      top: 0;
+      right: calc(100% + 6px);
+      bottom: auto;
+      left: auto;
+      translate: none;
+    }
   }
 
   .notice {
