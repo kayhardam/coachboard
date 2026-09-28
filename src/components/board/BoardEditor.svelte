@@ -436,7 +436,8 @@
   .editor {
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto auto;
-    height: 100%;
+    width: 100%;
+    min-height: 0;
     max-width: 720px;
     margin-inline: auto;
     padding: 8px 8px max(8px, env(safe-area-inset-bottom));
@@ -444,11 +445,19 @@
     position: relative;
   }
 
+  /* The court is taken out of the flow, so its aspect ratio can't size the
+     row: it fits (letterboxed) in whatever space the bars leave. */
   .stage {
+    position: relative;
     min-height: 0;
     touch-action: none;
     -webkit-touch-callout: none;
     cursor: crosshair;
+  }
+
+  .stage > :global(svg) {
+    position: absolute;
+    inset: 0;
   }
 
   .bar {

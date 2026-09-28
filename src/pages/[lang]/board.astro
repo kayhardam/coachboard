@@ -15,7 +15,7 @@ const { lang } = Astro.params;
   <h1 class="visually-hidden">{t(lang, "board.heading")}</h1>
   <BoardEditor client:only="svelte" strings={boardStrings(lang)}>
     <div slot="fallback" class="fallback">
-      <Court board={defaultBoard} label={t(lang, "board.court")} />
+      <div class="court"><Court board={defaultBoard} label={t(lang, "board.court")} /></div>
       <noscript><p>{t(lang, "board.noscript")}</p></noscript>
     </div>
   </BoardEditor>
@@ -25,10 +25,21 @@ const { lang } = Astro.params;
   .fallback {
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
-    max-width: 720px;
     width: 100%;
+    min-height: 0;
+    max-width: 720px;
     margin-inline: auto;
     padding: 8px;
+  }
+
+  /* Like the editor's stage: the court fits the space instead of sizing it. */
+  .court {
+    position: relative;
+    min-height: 0;
+  }
+  .court > :global(svg) {
+    position: absolute;
+    inset: 0;
   }
 
   p {
