@@ -273,6 +273,7 @@ De app verandert in deze fase niet: de gemeten groottes zijn gelijk aan de nulme
 |---|--:|--:|
 | Unittests | 7 bestanden, 71 tests | 8 bestanden, 83 tests |
 | `npm run verify` lokaal | 7,6 s | 7,0 s (het budgetscript zelf: 0,05 s; het verschil is ruis) |
+| CI-job `verify` | 33 s | 31 s (PR #7; het verschil is ruis) |
 | Dependencies | — | geen nieuwe |
 
 ### Controle: JS op een contentpagina
