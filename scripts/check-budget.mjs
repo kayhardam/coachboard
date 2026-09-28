@@ -29,7 +29,8 @@ export const BUDGETS = {
 const TAG = /<(script|astro-island|link)\b([^>]*)>/gi;
 const ATTR = /([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/g;
 const STATIC_IMPORT = /(?:\bfrom|\bimport)\s*["']([^"']+\.js)["']/g;
-const DYNAMIC_IMPORT = /\bimport\s*\(\s*["']([^"']+\.js)["']\s*\)/g;
+// Vite writes dynamic imports with backticks: import(`./chunk.js`).
+const DYNAMIC_IMPORT = /\bimport\s*\(\s*["'`]([^"'`]+\.js)["'`]\s*\)/g;
 
 function* files(dir, ext) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
