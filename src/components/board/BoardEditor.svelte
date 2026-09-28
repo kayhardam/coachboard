@@ -3,6 +3,8 @@
   Court and turns pointer input into the pure operations in edit.ts; the
   board is immutable ($state.raw), so undo is a list of earlier boards.
 -->
+<svelte:options css="injected" />
+
 <script lang="ts">
   import { onMount } from "svelte";
   import { renderSVG } from "uqr";

@@ -82,6 +82,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 - **`Court.svelte` stays pure SVG**, with no browser APIs, so Astro can render it without JS (the home page, the board's fallback, tactic pages and their thumbnails). Pieces carry `data-kind` and `data-index`; the editor finds them with event delegation. Colours are SVG attributes, not CSS variables, so `courtPng()` can render it to a PNG on the server.
 - **`BoardEditor.svelte`:**
   - it runs `client:only` on `/[lang]/board/` only, the one page that ships JS;
+  - its CSS ships inside its JS (`<svelte:options css="injected" />`). As a stylesheet over Vite's 4 KB inline limit, Astro linked it on every page;
   - its strings come in as a prop from `boardStrings()` in `ui.ts`;
   - it loads `#t=` first, then `localStorage` (`coachboard.board`), then the default lineup;
   - every change is written to both (300 ms debounce), so the address bar is always a shareable link;
