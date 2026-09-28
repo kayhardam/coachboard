@@ -10,6 +10,8 @@ Static Astro 7 site for handball trainers. The product is the tactics board at `
 | `npm run verify` | What CI runs (`.github/workflows/ci.yml`, on pull requests and pushes to `main`): `astro check` + `svelte-check` → `vitest run` → `astro build` → `node scripts/check-links.mjs`. Must be green before every commit. |
 | `npm run check` / `test` / `build` | The separate steps. `astro check` doesn't type-check `.svelte` files, so `check` also runs `svelte-check --fail-on-warnings`. |
 | `npx vitest run src/lib/board/format.test.ts` | One test file; add `-t "<test name>"` for one test. |
+| `npm run e2e` | End-to-end tests (Playwright) in mobile Chromium and WebKit. Builds, then serves `dist/` with `wrangler dev` on port 8787. A separate CI job, not part of `verify`. First time: `npx playwright install chromium webkit`. |
+| `npx playwright test e2e/board.spec.ts` | One e2e file; add `-g "<test name>"` for one test, `--project=iphone` or `--project=android` for one browser. |
 | `node scripts/og-default.mjs` | Re-renders `public/og-default.png`. One-off; commit the PNG. |
 | `node scripts/favicons.mjs` | Renders `public/favicon.ico` and `public/apple-touch-icon.png` from `public/favicon.svg` (the brand mark). One-off; commit the results. |
 
@@ -21,6 +23,10 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
 - Vitest runs through Astro's Vite config (`getViteConfig` in `vitest.config.ts`), so a test can import a `.svelte` file and render it with `svelte/server` (see `Court.test.ts`).
 - `src/lib/` is plain TypeScript with no `astro:` imports, so vitest can test it. Code that needs `astro:content` goes in `src/data/` and calls into `src/lib/`: `src/data/tactics.ts` loads the collection and runs `checkTactics()` from `src/lib/tactics.ts`.
 - `src/data/categories.ts` must not import from `astro:` either, because `src/content.config.ts` imports it.
+- End-to-end tests are in `e2e/*.spec.ts`, with shared steps in `e2e/helpers.ts`:
+  - compare boards by the pieces the editor draws (`pieces()`), not by the link text: compression can give other bytes per browser;
+  - don't use `click()` to prove a button is reachable, because Playwright scrolls it into view first; use `toBeInViewport()`;
+  - a known bug gets a test with `test.fail()` and a pointer to its finding in `docs/metingen.md`, and the fix removes the marker.
 
 ## URLs and routing
 
@@ -79,7 +85,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
   - it loads `#t=` first, then `localStorage` (`coachboard.board`), then the default lineup;
   - every change is written to both (300 ms debounce), so the address bar is always a shareable link;
   - a board that came from a `#t=` link reaches `localStorage` only after its first edit, so opening a shared play or a tactic doesn't replace your own saved board.
-- **Testing in a browser:** the Chrome extension, or headless Chrome over the DevTools protocol with `Emulation.setTouchEmulationEnabled` and `Input.dispatchTouchEvent`. Call `Page.bringToFront` first; a background tab ignores touch input.
+- **Testing in a browser:** `npm run e2e` for the core flow; by hand, the Chrome extension, or headless Chrome over the DevTools protocol with `Emulation.setTouchEmulationEnabled` and `Input.dispatchTouchEvent`. Call `Page.bringToFront` first; a background tab ignores touch input.
 
 ## Tactics content
 
@@ -109,7 +115,8 @@ Cloudflare Workers with static assets, deployed by Workers Builds (Git integrati
 - It also sets `html_handling: "auto-trailing-slash"` (`/en/privacy` → `/en/privacy/`) and `not_found_handling: "404-page"` (serves `dist/404.html`).
 - Its empty `previews` block must stay too: `wrangler preview` fails without it, so every branch build would fail while `npm run verify` stays green. `npx wrangler deploy --dry-run` passes without it, so it doesn't catch this.
 - `public/_redirects` holds the root redirect. `public/_headers` gives `/_astro/*` (hashed files) a one-year immutable cache.
-- Try a change to any of these locally with `npm run build && npx wrangler dev`.
+- `wrangler` is a devDependency, so these commands use the version in `package-lock.json`.
+- Try a change to any of these locally with `npm run build && npx wrangler dev`; `npm run e2e` tests the redirects and the 404 page against it.
 
 ## Not yet
 
@@ -120,7 +127,7 @@ Don't add these without a plan:
 ## Optimization work
 
 - `docs/optimalisatieplan.md` (Dutch) lays out the optimization work in phases, one branch and one PR per phase. Its rules apply to every phase.
-- Measure before and after any change that affects speed, size or behaviour, and record both in `docs/metingen.md` (Dutch). Later phases run Lighthouse on their PR's preview URL, with the command listed there.
+- Measure before and after any change that affects speed, size or behaviour, and record both in `docs/metingen.md` (Dutch). Later phases run Lighthouse on their PR's preview URL, with the command listed there. Compare SEO only on production: preview URLs send `X-Robots-Tag: noindex`.
 
 ## Astro documentation
 

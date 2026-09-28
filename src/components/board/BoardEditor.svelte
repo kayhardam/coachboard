@@ -55,6 +55,8 @@
   /** The board as it came from a #t= link, until the first edit. */
   let linked: Board | null = null;
   let noticeTimer: ReturnType<typeof setTimeout> | undefined;
+  /** The board a lasting notice was shown for; the first edit clears it. */
+  let noticeBoard = $state.raw<Board | null>(null);
 
   const frame = $derived(board.frames[0]!);
 
@@ -73,11 +75,23 @@
     selected = null;
   }
 
-  function show(text: string) {
+  /** Shows a notice for six seconds, or with `lasting` until it is dismissed or the board is edited. */
+  function show(text: string, lasting = false) {
     clearTimeout(noticeTimer);
     notice = text;
-    noticeTimer = setTimeout(() => (notice = null), 6000);
+    noticeBoard = lasting ? board : null;
+    if (!lasting) noticeTimer = setTimeout(() => (notice = null), 6000);
   }
+
+  function dismiss() {
+    notice = null;
+    noticeBoard = null;
+  }
+
+  // Every edit makes a new board (edit.ts is pure), so a new board means an edit.
+  $effect(() => {
+    if (noticeBoard && board !== noticeBoard) dismiss();
+  });
 
   // ===== Loading and saving =====
 
@@ -90,14 +104,18 @@
     (async () => {
       const shared = await fromHash();
       if (shared) board = linked = shared;
-      else if (shared === null) show(strings["board.invalidLink"]);
       else {
+        // A broken link falls back to your own board, so the save below
+        // doesn't replace it with the default lineup.
+        let own = false;
         try {
           const saved: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
           if (isBoard(saved)) board = saved;
+          own = isBoard(saved);
         } catch {
           // No storage (private mode, blocked): start from the default lineup.
         }
+        if (shared === null) show(strings[own ? "board.invalidLink" : "board.invalidLinkDefault"], true);
       }
       loaded = true;
     })();
@@ -109,7 +127,7 @@
         commit(shared);
         linked = shared;
         selected = null;
-      } else if (shared === null) show(strings["board.invalidLink"]);
+      } else if (shared === null) show(strings["board.invalidLink"], true);
     };
     addEventListener("hashchange", onHash);
     return () => removeEventListener("hashchange", onHash);
@@ -338,7 +356,7 @@
   {:else if notice}
     <div class="notice" role="status">
       <span>{notice}</span>
-      <button type="button" class="dismiss" onclick={() => (notice = null)} aria-label={strings["board.dismiss"]}>×</button>
+      <button type="button" class="dismiss" onclick={dismiss} aria-label={strings["board.dismiss"]}>×</button>
     </div>
   {/if}
 
