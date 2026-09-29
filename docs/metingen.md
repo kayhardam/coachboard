@@ -137,7 +137,7 @@ Geordend op impact en moeite, met de uitkomsten van de testronde erin verwerkt. 
 | 6 | ~~**Er zijn geen browsertests voor de kernflow**~~ **Opgelost in Fase 4a:** 50 e2e-tests in mobiel Chromium en WebKit, met een eigen CI-job. | hoog | middel | 4a |
 | 7 | ~~**Niets bewaakt dat contentpagina's zonder JS blijven en het bord licht blijft.**~~ **Opgelost in Fase 4b:** `scripts/check-budget.mjs` in `npm run verify` laat de build falen op JS op een contentpagina en op een overschreden budget. | middel | laag | 4b |
 | 8 | **Risico op zoomen bij dubbel tikken in iOS Safari.** Alleen het veld (`.stage`) heeft `touch-action`, de knoppen niet. Nog een hypothese: punt 13 is in de testronde niet gemeld en schuift door naar Fase 5. **Fase 5:** nog niet getest; test 13 staat in de testronde van Fase 5, en pas als de pagina zoomt komt er `touch-action: manipulation`. | middel | laag | 5 |
-| 9 | **Geen security headers**, alleen de cache-header voor `/_astro/*` in `public/_headers`. | middel | laag tot middel (CSP voor de inline scripts van het bord) | 6 |
+| 9 | ~~**Geen security headers**, alleen de cache-header voor `/_astro/*` in `public/_headers`.~~ **Opgelost in Fase 6:** security headers in `public/_headers` en een CSP-`<meta>` van Astro op elke pagina; zie "Fase 6" onderaan. HSTS volgt in Fase 7. | middel | laag tot middel (CSP voor de inline scripts van het bord) | 6 |
 | 10 | ~~**De QR-bibliotheek zit in de editorbundel** (ongeveer 4 KB gzip). Pas laden bij het openen van de QR-dialoog scheelt weinig.~~ **Opgelost in Fase 5:** de QR-bibliotheek laadt na het bord; bij het laden 30,1 → 27,0 KB. | laag | laag | 5 |
 | 11 | **Laadsnelheid in het lab:** alle pagina's 100, LCP ongeveer 0,8 s, CLS 0, TBT 0 ms. Er valt hier niets te winnen; de volgende stappen zijn vastleggen (4a, 4b) en echte telefoons (testronde, Fase 8). | — | — | — |
 | 12 | **Opgelost in Fase 4a: een kapotte link overschreef het opgeslagen bord met de standaardopstelling.** Gevonden bij het lezen van de code voor Fase 4a, bevestigd met een e2e-test en daarna opgelost. Zie "Fase 4a" hieronder. | hoog | laag | 4a |
@@ -540,3 +540,99 @@ Gemeten met Playwright tegen `wrangler dev`, met de standaardopstelling (halve v
 - **Nieuw in `e2e/layout.spec.ts`:** "the court stays put when the editor loads", staand en liggend, in beide projecten (Pixel 7 en iPhone 15). Het verschil in x, y, breedte en hoogte mag hooguit 1 px zijn.
 - **Vóór de fix:** staand faalde de test met 52,1 px (vastgelegd met `test.fail()` in de eerste commit); liggend slaagde hij al.
 - **Na de fix:** `test.fail()` is weg. `npm run verify` is groen (90 unittests), en `npm run e2e` geeft 77 geslaagd en 1 overgeslagen.
+
+## Fase 6: veiligheid en onderhoud (29 september 2026)
+
+Branch `fase-6-veiligheid`, vanaf `main` @ `4fa8b08` (merge van PR #10).
+
+### Wat er veranderd is
+
+- **Security headers** in `public/_headers`, voor elke response (ook de 404-pagina en de bestanden in `/_astro/`):
+
+  | Header | Waarde |
+  |---|---|
+  | `X-Content-Type-Options` | `nosniff` |
+  | `Referrer-Policy` | `strict-origin-when-cross-origin` (de standaard van browsers, nu vastgelegd; `#t=` gaat nooit mee, want een fragment staat nooit in een referrer) |
+  | `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()`; `web-share` en `clipboard-write` blijven toegestaan, want Delen gebruikt ze |
+  | `X-Frame-Options` | `DENY` |
+  | `Content-Security-Policy` | `frame-ancestors 'none'` |
+  | `Cross-Origin-Opener-Policy` | `same-origin` |
+
+- **CSP als `<meta>` van Astro** (`security.csp` in `astro.config.mjs`), op elke pagina:
+
+  ```
+  default-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';
+  script-src 'self' 'sha256-…' (7 hashes); style-src 'self' 'unsafe-inline'
+  ```
+
+  - De 7 hashes zijn die van de inline scripts die Astro kan uitsturen. De bordpagina gebruikt er twee (de `client:only`-directive en de island-loader); beide staan in de set, nagerekend. Astro zet op elke pagina dezelfde set, ook op contentpagina's zonder script.
+  - **Waarom niet alles in `_headers`:** de hashes zijn pas na de build bekend, en `_headers` is een vast bestand. Browsers negeren `frame-ancestors` in een `<meta>`; daarom staat het verbod op inbedden als header (opmerking van Kay).
+  - Een `<meta>`-CSP geldt alleen voor wat erna komt. Astro zet hem vroeg in `<head>`, vóór elk `<style>`, `<script>` en `<link rel="stylesheet">`.
+  - **Niet in `npm run dev`:** Astro past de CSP alleen toe in de build. Testen gaat met `wrangler dev` of `npm run e2e`.
+- **`markdown.syntaxHighlight: false`.** Met CSP aan waarschuwt Astro dat Shiki inline styles gebruikt. De tactieken hebben geen codeblokken, dus Shiki staat uit.
+- **Dependabot** (`.github/dependabot.yml`): wekelijks op maandag, voor npm en GitHub Actions. Minor- en patch-updates komen per ecosysteem in één PR, elke major in een eigen PR. Niets merget automatisch.
+
+### De CSS van de editor: opties en besluit
+
+Met een strikte `style-src` (alleen hashes) blokkeert de browser de `<style>` die Svelte voor `BoardEditor` invoegt. Gemeten met `security: { csp: true }`: 24 e2e-tests falen (alle layout- en reach-tests, in beide browsers). Het bord staat er dan zonder opmaak.
+
+| Optie | Gemeten | Uitkomst |
+|---|---|---|
+| **`'unsafe-inline'` alleen voor `style-src`** | e2e groen, geen CSP-meldingen; HTML +0,3 tot 0,4 KB per pagina | **gekozen (Kay)** |
+| Stylesheet alleen op het bord (de CSS van de editor naar een bestand dat `board.astro` importeert) | proef: Astro linkt zo'n bestand alleen op `/en/board/`; HTML +0,9 tot 1,0 KB per pagina (14 style-hashes), JS van het bord ongeveer −1,6 KB (de CSS is 4,9 KB raw, 1,6 KB gzip), een extra verzoek op het bord, en de scoping van Svelte valt weg | komt terug zodra het JS-budget knelt (besluit Kay) |
+| Hash van de ingevoegde CSS | de CSS staat pas na het bundelen in de JS, terwijl Astro de `<meta>` in dezelfde build schrijft; kan alleen met een stap na de build die elke HTML herschrijft | afgeraden |
+| Nonce | kan niet zonder Worker-code: een statische host maakt geen nonce per verzoek | valt af |
+
+Met `'unsafe-inline'` in `style-src` laat Astro de style-hashes weg (een hash zou `'unsafe-inline'` uitschakelen). Scripts blijven strikt: alleen `'self'` en de 7 hashes.
+
+### Groottes
+
+`npm run budget`, vóór (`main` @ `4fa8b08`) en na:
+
+| Meting | Vóór | Na |
+|---|--:|--:|
+| JS van het bord (gzip) | 27,0 KB | 27,0 KB |
+| Lazy JS van het bord (gzip) | 4,3 KB | 4,3 KB |
+| Alle JS in `_astro/` (gzip) | 31,4 KB | 31,4 KB |
+| CSS per pagina (gzip) | 1,7 KB | 1,7 KB |
+| HTML `/404.html` (gzip) | 1,4 KB | 1,8 KB |
+| HTML `/en/` (gzip) | 4,0 KB | 4,4 KB |
+| HTML `/en/board/` (gzip) | 4,8 KB | 5,2 KB |
+| HTML `/en/tactics/defense/6-0-defense-basics/` (gzip) | 4,3 KB | 4,7 KB (grootste pagina, budget 6,5 KB) |
+
+De `<meta>` is 558 bytes raw. De hashes zijn willekeurige tekens en comprimeren slecht, vandaar +0,3 tot 0,4 KB gzip. Er is geen budget verhoogd.
+
+### Tests
+
+- **Nieuw: `e2e/security.spec.ts`**, 21 tests per browser:
+  - per pagina (en de 404): de headers, en een `<meta>`-CSP met `default-src 'self'`, `script-src` met alleen `'self'` en hashes, en zonder `frame-ancestors`;
+  - per pagina: geen enkele CSP-melding (`securitypolicyviolation`) tijdens het laden;
+  - het bord: QR-code openen, de CSS van de editor is toegepast, en geen CSP-meldingen.
+- De lijst met pagina's staat nu in `allPages()` in `e2e/helpers.ts`; de axe-scan gebruikt hem ook.
+- `npm run verify` groen (90 unittests); `npm run e2e`: 119 geslaagd, 1 overgeslagen (was 77 en 1).
+- **Delen, klembord en QR met COOP:** de bestaande tests in `e2e/share.spec.ts` blijven groen. Echt delen naar WhatsApp kan alleen op een telefoon: zie de testronde.
+
+**Controles** (tijdelijk, niet gecommit):
+
+| Controle | Resultaat |
+|---|---|
+| Strikte `style-src` (zonder `'unsafe-inline'`) | 3 tests in `security.spec.ts` falen: `style-src-elem blocked inline`, en de editor heeft `display: block` in plaats van `grid` |
+| `X-Frame-Options` en `frame-ancestors` uit `_headers` | de headertests falen op elke pagina |
+| `<img src="https://example.com/x.png">` op de aboutpagina | `img-src blocked https://example.com/x.png`; de test faalt |
+
+Bij de derde controle stond de `<img>` eerst vóór `<html>`, dus vóór de `<meta>`. Toen slaagde de test: zo'n `<meta>`-CSP dekt niets wat ervoor staat. In de pagina's staat vóór de `<meta>` alleen wat `BaseLayout` zelf in `<head>` schrijft.
+
+### Headers en Lighthouse
+
+**Vóór:** productie (`main` @ `4fa8b08`), 29 september 2026. Het commando uit de nulmeting, drie runs per URL, mediaan. Lighthouse 13.5.0, Chrome 154 headless.
+
+| URL | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/en/` | 100 | 100 | 100 | 100 | 0,82 s | 0 | 0 ms |
+| `/en/board/` | 100 | 100 | 100 | 100 | 0,83 s | 0 | 0 ms |
+| `/en/tactics/defense/6-0-defense-basics/` | 100 | 100 | 100 | 100 | 0,83 s | 0 | 0 ms |
+
+Lighthouse noemt onder Best Practices ook vijf beveiligingspunten, zonder ze mee te tellen in de score. Vóór stonden ze alle vijf op "High": geen CSP, geen HSTS, geen COOP, geen bescherming tegen inbedden (clickjacking), geen Trusted Types.
+
+**Na:** preview-URL van deze PR. Volgt hieronder zodra Workers Builds de preview heeft gebouwd.
+
