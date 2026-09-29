@@ -73,6 +73,43 @@ test("in landscape the header makes way, and the bar links home", async ({ page 
   expect(court.x + court.width).toBeLessThanOrEqual(actions.x);
 });
 
+// Finding 14 in docs/metingen.md: the static fallback didn't reserve the bars'
+// space, so the court jumped when the editor replaced it.
+for (const orientation of ["portrait", "landscape"] as const) {
+  test(`${orientation}: the court stays put when the editor loads`, async ({ page }) => {
+    test.fail(orientation === "portrait", "finding 14 in docs/metingen.md");
+    if (orientation === "landscape") await page.setViewportSize(landscape());
+    // Hold the scripts, so the fallback stays on screen during this one page load.
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    await page.route(/\/_astro\/.*\.js$/, async (route) => {
+      await gate;
+      await route.continue();
+    });
+
+    // "commit": the held scripts would keep the load event from firing.
+    await page.goto("/en/board/", { waitUntil: "commit" });
+    // The court's surface, not the <svg>: that fills its box and letterboxes the court in it.
+    const fallback = page.locator(".fallback svg > rect:first-of-type");
+    await expect(fallback).toBeInViewport({ ratio: 1 });
+    const before = (await fallback.boundingBox())!;
+
+    release();
+    await expect(page.getByRole("toolbar", { name: "Tools" })).toBeVisible();
+    const after = (await page.locator(".stage svg > rect:first-of-type").boundingBox())!;
+
+    const moved = {
+      x: Math.abs(after.x - before.x),
+      y: Math.abs(after.y - before.y),
+      width: Math.abs(after.width - before.width),
+      height: Math.abs(after.height - before.height),
+    };
+    for (const [key, px] of Object.entries(moved)) {
+      expect(px, `${key}: ${JSON.stringify(before)} → ${JSON.stringify(after)}`).toBeLessThanOrEqual(1);
+    }
+  });
+}
+
 for (const orientation of ["portrait", "landscape"] as const) {
   test(`${orientation}: the Clear menu opens on screen`, async ({ page }) => {
     if (orientation === "landscape") await page.setViewportSize(landscape());
