@@ -142,7 +142,7 @@ Geordend op impact en moeite, met de uitkomsten van de testronde erin verwerkt. 
 | 11 | **Laadsnelheid in het lab:** alle pagina's 100, LCP ongeveer 0,8 s, CLS 0, TBT 0 ms. Er valt hier niets te winnen; de volgende stappen zijn vastleggen (4a, 4b) en echte telefoons (testronde, Fase 8). | — | — | — |
 | 12 | **Opgelost in Fase 4a: een kapotte link overschreef het opgeslagen bord met de standaardopstelling.** Gevonden bij het lezen van de code voor Fase 4a, bevestigd met een e2e-test en daarna opgelost. Zie "Fase 4a" hieronder. | hoog | laag | 4a |
 | 13 | **In WebKit's offline-emulatie mislukt het lezen van een Blob**, dus ook `encode()`: offline komt er in de emulatie geen deellink, geen QR-code en geen `#t=` in de adresbalk. Gevonden in Fase 5. Onbekend of een echte iPhone in vliegtuigmodus dit ook doet; dat is test 14. | middel (als het echt is) | onbekend | 5 (testronde) |
-| 14 | **Staand verspringt het veld 52 px zodra de editor laadt** (Fase 5, Lighthouse-filmstrip en Playwright). De fallback in `board.astro` houdt geen ruimte vrij voor de knoppenbalken. CLS blijft 0, omdat de editor het veld vervangt in plaats van verschuift; Lighthouse ziet het dus niet. Liggend blijft het veld staan en verschijnen alleen de balken. | laag tot middel | laag | aparte PR |
+| 14 | ~~**Staand verspringt het veld 52 px zodra de editor laadt** (Fase 5, Lighthouse-filmstrip en Playwright). De fallback in `board.astro` houdt geen ruimte vrij voor de knoppenbalken. CLS blijft 0, omdat de editor het veld vervangt in plaats van verschuift; Lighthouse ziet het dus niet. Liggend blijft het veld staan en verschijnen alleen de balken.~~ **Opgelost:** de fallback houdt de ruimte van de balken vrij; zie "Bevinding 14: het veld verspringt niet meer" onderaan. | laag tot middel | laag | aparte PR |
 
 ## Fase 4a: vangnet met end-to-end-tests (27 september 2026)
 
@@ -473,5 +473,70 @@ Legenda als in de nulmeting. Vul per toestel in (model, iOS/Android-versie, brow
 | 13 | Snel twee keer op een knop tikken: zoomt de pagina in? (bevinding 8) | | |
 | 14 | Na het laden vliegtuigmodus aan: slepen, tekenen, QR-code openen? | | |
 | 15 | Stopwatch: openen → tekenen → gedeeld in de teamapp, in seconden | | |
+| 16 | Een gedeelde link openen in een privévenster: zie je eerst de standaardopstelling voordat de tactiek verschijnt, en stoort dat? | | |
+| 17 | Het bord openen, staand en liggend: blijft het veld staan terwijl de knoppenbalken verschijnen? (bevinding 14) | | |
 
-De nummers 8 tot en met 15 zijn die van de nulmeting.
+De nummers 8 tot en met 15 zijn die van de nulmeting. 16 en 17 kwamen erbij met de fix van bevinding 14.
+
+- **Waarom test 16:** de fallback tekent altijd de standaardopstelling; pas de editor leest `#t=` en tekent de tactiek. In een privévenster staat er niets in de cache, dus duurt dat het langst.
+
+## Bevinding 14: het veld verspringt niet meer (29 september 2026)
+
+Branch `fix-verspringend-veld`, vanaf `main` @ `34c0ff8` (merge van PR #9).
+
+### Wat er veranderd is
+
+- **De fallback heeft de box van de editor.** `.fallback` in `board.astro` heeft nu dezelfde padding en tussenruimte als `.editor`, en houdt de ruimte van de balken vrij:
+  - staand een rij van twee balken plus tussenruimte onder het veld;
+  - liggend een kolom van 64 px links en rechts.
+- **Gedeelde maten.** De maten staan als tokens in `tokens.css`: `--board-bar` (48 px), `--board-gap` (6 px) en `--board-side` (64 px). Editor en fallback gebruiken ze allebei.
+- **Balkhoogte.** De rijen van de balken in de editor zijn `minmax(var(--board-bar), auto)`:
+  - bij de standaard tekstgrootte zijn ze precies 48 px (de inhoud is 46,1 px), dus de fallback past exact;
+  - bij een grotere tekstgrootte groeien ze mee in plaats van de labels af te knippen. Het veld verspringt dan weer een beetje, maar dat is beter dan onleesbare knoppen.
+- **Gevolg:** de balken zijn 1,9 px hoger dan voorheen, en het veld staat daardoor staand 1,9 px hoger.
+- **Zonder JavaScript:** staand staat de `noscript`-tekst in de vrijgehouden ruimte. Liggend staat hij onder het veld, over de volle breedte.
+
+### Vóór en na
+
+Gemeten met Playwright tegen `wrangler dev`, met de standaardopstelling (halve veld). De positie is die van het veld zelf (de `rect` van het speelveld), niet van de `<svg>`: die vult zijn vak en centreert het veld erin. "Fallback" is gemeten met de scripts van de pagina vastgehouden; daarna mogen ze laden en is de editor gemeten, in dezelfde paginalading.
+
+**Vóór** (`main` @ `34c0ff8`):
+
+| Viewport | Fallback (x, y) | Editor (x, y) | Breedte | Verschuiving |
+|---|--:|--:|--:|--:|
+| iPhone SE staand 320×568 | 19,3, 180,0 | 19,3, 127,9 | 281,5 → 281,5 | 52,1 px omhoog |
+| iPhone 15 staand 393×659 | 22,0, 192,7 | 22,0, 140,6 | 349,1 → 349,1 | 52,1 px omhoog |
+| Pixel 7 staand 412×839 | 22,7, 274,2 | 22,7, 222,1 | 366,7 → 366,7 | 52,1 px omhoog |
+| iPhone 15 liggend 734×343 | 216,1, 25,1 | 216,1, 25,1 | 301,8 → 301,8 | geen |
+| Pixel 7 liggend 863×360 | 272,9, 26,2 | 272,9, 26,2 | 317,1 → 317,1 | geen |
+
+**Na:**
+
+| Viewport | Fallback (x, y) | Editor (x, y) | Breedte | Verschuiving |
+|---|--:|--:|--:|--:|
+| iPhone SE staand 320×568 | 19,3, 126,0 | 19,3, 126,0 | 281,5 → 281,5 | geen |
+| iPhone 15 staand 393×659 | 22,0, 138,7 | 22,0, 138,7 | 349,1 → 349,1 | geen |
+| Pixel 7 staand 412×839 | 22,7, 220,2 | 22,7, 220,2 | 366,7 → 366,7 | geen |
+| iPhone 15 liggend 734×343 | 216,1, 25,1 | 216,1, 25,1 | 301,8 → 301,8 | geen |
+| Pixel 7 liggend 863×360 | 272,9, 26,2 | 272,9, 26,2 | 317,1 → 317,1 | geen |
+
+- **Hoogte van een balk** (staand): 46,1 px vóór, 48 px na, in Chromium en WebKit.
+- **iPhone SE:** WebKit met het profiel "iPhone SE" van Playwright. De rest zijn de profielen van de e2e-projecten.
+
+### Groottes
+
+`npm run budget`, vóór en na:
+
+| Meting | Vóór | Na |
+|---|--:|--:|
+| JS van het bord (gzip) | 27,0 KB | 27,0 KB |
+| Lazy JS van het bord (gzip) | 4,3 KB | 4,3 KB |
+| Alle JS in `_astro/` (gzip) | 31,3 KB | 31,4 KB |
+| CSS per pagina (gzip) | 1,6 KB | 1,6 KB |
+| HTML `/en/board/` (gzip) | 4,7 KB | 4,7 KB |
+
+### Tests
+
+- **Nieuw in `e2e/layout.spec.ts`:** "the court stays put when the editor loads", staand en liggend, in beide projecten (Pixel 7 en iPhone 15). Het verschil in x, y, breedte en hoogte mag hooguit 1 px zijn.
+- **Vóór de fix:** staand faalde de test met 52,1 px (vastgelegd met `test.fail()` in de eerste commit); liggend slaagde hij al.
+- **Na de fix:** `test.fail()` is weg. `npm run verify` is groen (90 unittests), en `npm run e2e` geeft 77 geslaagd en 1 overgeslagen.

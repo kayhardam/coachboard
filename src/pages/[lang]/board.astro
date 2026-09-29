@@ -23,14 +23,18 @@ const { lang } = Astro.params;
 </BaseLayout>
 
 <style>
+  /* The same box as BoardEditor's .editor, with the bars' space reserved, so
+     the court doesn't move when the editor replaces this (finding 14 in
+     docs/metingen.md; e2e/layout.spec.ts checks it). */
   .fallback {
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) minmax(calc(2 * var(--board-bar) + var(--board-gap)), auto);
+    gap: var(--board-gap);
     width: 100%;
     min-height: 0;
     max-width: 720px;
     margin-inline: auto;
-    padding: 8px;
+    padding: 8px 8px max(8px, env(safe-area-inset-bottom));
   }
 
   /* Like the editor's stage: the court fits the space instead of sizing it. */
@@ -46,8 +50,16 @@ const { lang } = Astro.params;
   /* The header is hidden here, as on the board (see BoardEditor). */
   @media (orientation: landscape) and (max-height: 559px) {
     .fallback {
+      grid-template: minmax(0, 1fr) / var(--board-side) minmax(0, 1fr) var(--board-side);
       max-width: none;
-      padding: 4px;
+      padding: 4px 4px max(4px, env(safe-area-inset-bottom));
+    }
+    .court {
+      grid-area: 1 / 2;
+    }
+    /* Only there without JavaScript, when no editor comes: below the court. */
+    .fallback > :global(noscript) {
+      grid-column: 1 / -1;
     }
   }
 
