@@ -118,9 +118,15 @@ Cloudflare Workers with static assets, deployed by Workers Builds (Git integrati
 - **`wrangler.jsonc` must stay.** It makes the deploy a plain upload of `dist/`, with no Worker code and no Astro adapter. Without it, Wrangler reconfigures the project on every deploy: it runs `astro add cloudflare` and adds KV and Images bindings.
 - It also sets `html_handling: "auto-trailing-slash"` (`/en/privacy` → `/en/privacy/`) and `not_found_handling: "404-page"` (serves `dist/404.html`).
 - Its empty `previews` block must stay too: `wrangler preview` fails without it, so every branch build would fail while `npm run verify` stays green. `npx wrangler deploy --dry-run` passes without it, so it doesn't catch this.
-- `public/_redirects` holds the root redirect. `public/_headers` gives `/_astro/*` (hashed files) a one-year immutable cache.
+- `public/_redirects` holds the root redirect. `public/_headers` gives `/_astro/*` (hashed files) a one-year immutable cache, and every response the security headers: `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options: DENY`, `frame-ancestors 'none'` and `Cross-Origin-Opener-Policy: same-origin`.
+- **The CSP is split in two.** Astro writes a `<meta>` CSP into every page (`security.csp` in `astro.config.mjs`), with `default-src 'self'` and a hash for each inline script it emits. Browsers ignore `frame-ancestors` in a `<meta>`, so that one is the header.
+  - `style-src` allows `'unsafe-inline'`: `BoardEditor` injects its CSS as a `<style>` at runtime, and that hash isn't known when Astro writes the `<meta>`. Scripts stay hash-only; never add `'unsafe-inline'` to `script-src`.
+  - Anything from another origin (a script, font, image or `fetch`) is blocked until its origin is added to `directives`. `e2e/security.spec.ts` fails on any CSP violation.
+  - CSP isn't applied in `npm run dev`; check with `npm run build && npx wrangler dev` or `npm run e2e`.
+  - Once the JS budget gets tight, the plan is to move the editor's CSS into a stylesheet that only `board.astro` imports and drop `'unsafe-inline'` (`docs/optimalisatieplan.md`, phase 6).
+- Dependabot (`.github/dependabot.yml`) opens update PRs weekly for npm and GitHub Actions: minor and patch grouped, each major on its own. Nothing merges automatically; each PR goes through CI and its preview URL.
 - `wrangler` is a devDependency, so these commands use the version in `package-lock.json`.
-- Try a change to any of these locally with `npm run build && npx wrangler dev`; `npm run e2e` tests the redirects and the 404 page against it.
+- Try a change to any of these locally with `npm run build && npx wrangler dev`; `npm run e2e` tests the redirects, the headers and the 404 page against it.
 
 ## Not yet
 
