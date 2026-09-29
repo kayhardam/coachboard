@@ -143,6 +143,7 @@ Geordend op impact en moeite, met de uitkomsten van de testronde erin verwerkt. 
 | 12 | **Opgelost in Fase 4a: een kapotte link overschreef het opgeslagen bord met de standaardopstelling.** Gevonden bij het lezen van de code voor Fase 4a, bevestigd met een e2e-test en daarna opgelost. Zie "Fase 4a" hieronder. | hoog | laag | 4a |
 | 13 | **In WebKit's offline-emulatie mislukt het lezen van een Blob**, dus ook `encode()`: offline komt er in de emulatie geen deellink, geen QR-code en geen `#t=` in de adresbalk. Gevonden in Fase 5. Onbekend of een echte iPhone in vliegtuigmodus dit ook doet; dat is test 14. | middel (als het echt is) | onbekend | 5 (testronde) |
 | 14 | ~~**Staand verspringt het veld 52 px zodra de editor laadt** (Fase 5, Lighthouse-filmstrip en Playwright). De fallback in `board.astro` houdt geen ruimte vrij voor de knoppenbalken. CLS blijft 0, omdat de editor het veld vervangt in plaats van verschuift; Lighthouse ziet het dus niet. Liggend blijft het veld staan en verschijnen alleen de balken.~~ **Opgelost:** de fallback houdt de ruimte van de balken vrij; zie "Bevinding 14: het veld verspringt niet meer" onderaan. | laag tot middel | laag | aparte PR |
+| 15 | **De 404-pagina krijgt op Cloudflare geen headers uit `_headers`** (Fase 6, gemeten op de preview-URL). Geen `X-Frame-Options`, `frame-ancestors`, `nosniff`, COOP en de rest; `wrangler dev` zet ze er wel op. De CSP-`<meta>` staat in de HTML, dus de regels voor scripts en styles gelden er wel. De pagina heeft geen functie, dus het risico is klein. Oplossen kan alleen met Worker-code. `e2e/security.spec.ts` controleert de headers daarom niet op de 404. | laag | hoog (Worker-code) | — |
 
 ## Fase 4a: vangnet met end-to-end-tests (27 september 2026)
 
@@ -605,7 +606,7 @@ De `<meta>` is 558 bytes raw. De hashes zijn willekeurige tekens en comprimeren 
 ### Tests
 
 - **Nieuw: `e2e/security.spec.ts`**, 21 tests per browser:
-  - per pagina (en de 404): de headers, en een `<meta>`-CSP met `default-src 'self'`, `script-src` met alleen `'self'` en hashes, en zonder `frame-ancestors`;
+  - per pagina: de headers (niet op de 404, zie bevinding 15), en een `<meta>`-CSP met `default-src 'self'`, `script-src` met alleen `'self'` en hashes, en zonder `frame-ancestors`;
   - per pagina: geen enkele CSP-melding (`securitypolicyviolation`) tijdens het laden;
   - het bord: QR-code openen, de CSS van de editor is toegepast, en geen CSP-meldingen.
 - De lijst met pagina's staat nu in `allPages()` in `e2e/helpers.ts`; de axe-scan gebruikt hem ook.
@@ -634,5 +635,47 @@ Bij de derde controle stond de `<img>` eerst vóór `<html>`, dus vóór de `<me
 
 Lighthouse noemt onder Best Practices ook vijf beveiligingspunten, zonder ze mee te tellen in de score. Vóór stonden ze alle vijf op "High": geen CSP, geen HSTS, geen COOP, geen bescherming tegen inbedden (clickjacking), geen Trusted Types.
 
-**Na:** preview-URL van deze PR. Volgt hieronder zodra Workers Builds de preview heeft gebouwd.
+**Headers op de preview-URL** (`https://fase-6-veiligheid-coachboard.hardamkay.workers.dev`), met `curl -I`:
+
+- `/en/board/` en de andere pagina's: alle zes de headers, en de `<meta>`-CSP in de HTML;
+- `/_astro/*`: de headers plus `Cache-Control: public, max-age=31536000, immutable`, zoals voorheen;
+- **de 404-pagina: geen enkele header uit `_headers`**, terwijl `wrangler dev` ze wel zet. Wordt bevinding 15;
+- met Playwright (Pixel 7 en iPhone 15) op alle pagina's en de 404, plus de QR-code op het bord: geen CSP-meldingen, en de CSS van de editor is toegepast.
+
+**Na:** preview-URL van deze PR, 29 september 2026, zelfde commando en versies.
+
+| URL | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/en/` | 100 | 100 | 100 | 66 | 0,85 s | 0 | 0 ms |
+| `/en/board/` | 100 | 100 | 100 | 66 | 0,84 s | 0 | 0 ms |
+| `/en/tactics/defense/6-0-defense-basics/` | 100 | 100 | 100 | 66 | 0,86 s | 0 | 0 ms |
+
+- **SEO 66** komt door `X-Robots-Tag: noindex` op preview-URL's (zie Fase 4a); SEO vergelijk je alleen op productie.
+- **LCP** 0,82–0,83 → 0,84–0,86 s: binnen de spreiding tussen runs (in de nulmeting 0,80 tot 0,91 s).
+- **Overdracht:** contentpagina's 7,7–7,9 → 8,5–8,8 KB, het bord 43,7 → 45,4 KB. Dat zijn de `<meta>` en de nieuwe headers (headers worden niet gecomprimeerd).
+
+De beveiligingspunten van Lighthouse, vóór → na:
+
+| Punt | Vóór | Na |
+|---|---|---|
+| CSP tegen XSS | High: geen CSP | 2× Medium: (1) voeg `'unsafe-inline'` toe aan `script-src` als terugval voor heel oude browsers zonder hashes; kan niet, want dan laat Astro de hashes weg. (2) De CSP staat in een `<meta>`; zie "Waarom niet alles in `_headers`". |
+| Clickjacking | High: geen bescherming | opgelost |
+| COOP | High: geen COOP | opgelost |
+| HSTS | High | High; komt in Fase 7, op het eigen domein |
+| Trusted Types | High | High; buiten dit plan. Vraagt `require-trusted-types-for 'script'` in een header, en `{@html qr}` in de editor moet dan via een policy. |
+
+### Testronde Fase 6 (Kay)
+
+Op de preview-URL `https://fase-6-veiligheid-coachboard.hardamkay.workers.dev/en/`. Vul per toestel in (model, iOS/Android-versie, browser).
+
+| # | Test | iPhone | Android |
+|--:|---|:-:|:-:|
+| 1 | Home, een tactiekpagina en privacy zien eruit als op productie (opmaak, kleuren, menu) | | |
+| 2 | Het bord staand en liggend: balken en veld zoals altijd | | |
+| 3 | Speler slepen, pijl tekenen, ongedaan maken | | |
+| 4 | Delen naar WhatsApp, en de link openen op een tweede telefoon | | |
+| 5 | QR-code openen en scannen vanaf 1 à 2 meter | | |
+| 6 | Tactiekpagina → "Open in the board": de tactiek staat op het bord | | |
+
+**Na de merge:** de eerste Dependabot-run komt binnen (PR's onder Pull requests, of Insights → Dependency graph → Dependabot).
 

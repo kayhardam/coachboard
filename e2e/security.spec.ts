@@ -28,8 +28,12 @@ async function watchViolations(page: Page) {
 for (const path of allPages()) {
   test(`security headers and CSP on ${path}`, async ({ page }) => {
     const response = await page.goto(path);
-    expect(response!.headers()).toMatchObject(headers);
-    expect(response!.headers()["permissions-policy"]).toContain("camera=()");
+    // Deployed, Cloudflare leaves _headers off the 404 page; `wrangler dev` adds
+    // them. Only the <meta> CSP reaches it (docs/metingen.md, finding 15).
+    if (response!.status() !== 404) {
+      expect(response!.headers()).toMatchObject(headers);
+      expect(response!.headers()["permissions-policy"]).toContain("camera=()");
+    }
 
     const csp = (await page.locator('meta[http-equiv="content-security-policy"]').getAttribute("content"))!;
     expect(csp).toContain("default-src 'self'");

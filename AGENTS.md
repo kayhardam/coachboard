@@ -123,6 +123,7 @@ Cloudflare Workers with static assets, deployed by Workers Builds (Git integrati
   - `style-src` allows `'unsafe-inline'`: `BoardEditor` injects its CSS as a `<style>` at runtime, and that hash isn't known when Astro writes the `<meta>`. Scripts stay hash-only; never add `'unsafe-inline'` to `script-src`.
   - Anything from another origin (a script, font, image or `fetch`) is blocked until its origin is added to `directives`. `e2e/security.spec.ts` fails on any CSP violation.
   - CSP isn't applied in `npm run dev`; check with `npm run build && npx wrangler dev` or `npm run e2e`.
+  - Deployed, Cloudflare leaves the `_headers` off the 404 page (`wrangler dev` adds them), so only the `<meta>` CSP reaches it.
   - Once the JS budget gets tight, the plan is to move the editor's CSS into a stylesheet that only `board.astro` imports and drop `'unsafe-inline'` (`docs/optimalisatieplan.md`, phase 6).
 - Dependabot (`.github/dependabot.yml`) opens update PRs weekly for npm and GitHub Actions: minor and patch grouped, each major on its own. Nothing merges automatically; each PR goes through CI and its preview URL.
 - `wrangler` is a devDependency, so these commands use the version in `package-lock.json`.
