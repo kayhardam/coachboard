@@ -1,7 +1,21 @@
+import { readdirSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 import { expect, type Page } from "@playwright/test";
 import type { Board } from "../src/lib/board/format";
 
 export const STORAGE_KEY = "coachboard.board";
+
+/** Every page in the build, plus a URL that gets the 404 page. The webServer builds before the tests run. */
+export function allPages(): string[] {
+  const dist = new URL("../dist/", import.meta.url).pathname;
+  const walk = (dir: string): string[] =>
+    readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? walk(join(dir, f)) : [join(dir, f)]));
+  return walk(dist)
+    .filter((f) => f.endsWith("index.html"))
+    .map((f) => "/" + relative(dist, f).replace(/index\.html$/, ""))
+    .concat("/en/does-not-exist/")
+    .sort();
+}
 
 /** Opens the board and waits until the editor has replaced the static fallback. */
 export async function openBoard(page: Page, hash = "") {

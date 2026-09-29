@@ -157,6 +157,12 @@ Werk de geordende lijst uit Fase 3 af. Per punt: hypothese → kleine wijziging 
 
 **Klaar als:** de headers op de preview-URL staan, de e2e-tests groen zijn en de eerste Dependabot-run binnen is.
 
+**Uitgevoerd (29 september 2026):**
+
+- **Aanpassing van het plan: de CSP staat niet helemaal in `public/_headers`.** De hashes van de inline scripts kent pas de build, en `_headers` is een vast bestand. Astro 7 schrijft ze zelf in een `<meta>`-CSP op elke pagina (`security.csp`). Browsers negeren `frame-ancestors` in een `<meta>`, dus het verbod op inbedden staat als header in `_headers` (`frame-ancestors 'none'` en `X-Frame-Options: DENY`).
+- **Besluit Kay: `'unsafe-inline'` alleen voor `style-src`.** Scripts houden hun hashes. De gemeten opties staan in `docs/metingen.md` onder "Fase 6".
+- **Terugkomen op dit besluit zodra het JS-budget knelt** (besluit Kay). Dan gaat de CSS van de editor naar een stylesheet die alleen `board.astro` importeert, en valt `'unsafe-inline'` weg. Dat haalt ongeveer 1,6 KB (gzip) uit de JS van het bord. Het kost ongeveer 0,6 KB HTML per pagina (de hashes van de styles), een extra verzoek op het bord, en de scoping van Svelte. In Fase 6 is met een proef nagegaan dat Astro zo'n stylesheet alleen op de bordpagina linkt.
+
 ## Fase 7: Lancering op handballcoachboard.com
 
 **Start pas als Kay het domein registreert.** Deze fase mag eerder dan Fase 4 tot en met 6, los van de volgorde.
@@ -171,6 +177,7 @@ Werk de geordende lijst uit Fase 3 af. Per punt: hypothese → kleine wijziging 
 
 - **Beslissing (Kay):** hoe links die vanaf workers.dev gedeeld zijn, doorsturen naar het eigen domein, met behoud van pad en `#t=`. Opties: een klein script op het bord (past bij "geen Worker-code") of een redirect in Worker-code (raakt de regel in `AGENTS.md` dat `wrangler.jsonc` een pure upload van `dist/` is). Stuur alleen de productie-host `coachboard.hardamkay.workers.dev` door, niet de preview-URL's: die eindigen ook op `workers.dev`. Voeg een e2e-test toe.
 - HSTS toevoegen, zonder `preload`.
+- **CSP op het eigen domein (uit Fase 6).** Controleer dat Cloudflare op het custom domain geen scripts in de HTML zet, zoals Email Address Obfuscation voor het contactadres op de privacy- en aboutpagina. De CSP blokkeert zo'n inline script; `e2e/security.spec.ts` ziet dat niet, want dat draait tegen `wrangler dev`. Kijk na de livegang in de console van `/en/about/` en `/en/privacy/`.
 - `README.md` ("not live yet") en het hoofdstuk Hosting in `AGENTS.md` bijwerken.
 - Na de livegang controleren en noteren in `docs/metingen.md`: canonical, `og:image`, sitemap en `robots.txt` op het echte domein, het linkvoorbeeld in WhatsApp, en een nieuwe Lighthouse-meting.
 
@@ -180,7 +187,7 @@ Werk de geordende lijst uit Fase 3 af. Per punt: hypothese → kleine wijziging 
 
 **Start na Fase 7.** Doel: weten of trainers de app gebruiken en hoe snel die op hun telefoons is.
 
-- **Beslissing (Kay):** welke statistiekdienst. De privacypagina belooft statistieken zonder cookies, anoniem, zonder opslag van IP-adressen, en met de naam van de dienst op die pagina. Een kandidaat is Cloudflare Web Analytics: gratis, zonder cookies, en het meet ook Core Web Vitals van echte bezoekers. Claude Code controleert of de gekozen dienst aan de beloftes voldoet. Afweging: het is een extern script op elke pagina, terwijl contentpagina's nu geen JavaScript laden; het budgetscript krijgt daarvoor een bewuste, gedocumenteerde uitzondering.
+- **Beslissing (Kay):** welke statistiekdienst. De privacypagina belooft statistieken zonder cookies, anoniem, zonder opslag van IP-adressen, en met de naam van de dienst op die pagina. Een kandidaat is Cloudflare Web Analytics: gratis, zonder cookies, en het meet ook Core Web Vitals van echte bezoekers. Claude Code controleert of de gekozen dienst aan de beloftes voldoet. Afweging: het is een extern script op elke pagina, terwijl contentpagina's nu geen JavaScript laden; het budgetscript krijgt daarvoor een bewuste, gedocumenteerde uitzondering. Sinds Fase 6 blokkeert de CSP elk script van een ander domein: het domein van de dienst moet in `astro.config.mjs` bij `security.csp.scriptDirective.resources` (naast `'self'`) en, als de dienst gegevens verstuurt, in `connect-src` bij `security.csp.directives`, en `e2e/security.spec.ts` moet groen blijven.
 - Maak de kernlus meetbaar zonder tekendata te versturen, bijvoorbeeld met een markering als `?via=qr` in gedeelde links, zodat geopende gedeelde borden apart te tellen zijn. `format.ts` blijft ongewijzigd en oude links blijven werken. Controleer eerst of de gekozen dienst zo'n markering kan tonen.
 - Werk de privacypagina bij: de naam van de dienst en de datum bovenaan.
 - Noteer elke maand in `docs/metingen.md`: bezoeken aan het bord, geopende gedeelde borden, en de Core Web Vitals van echte bezoekers.
@@ -202,7 +209,7 @@ Elk van deze punten verdient een eigen plan, zoals `AGENTS.md` ook vraagt:
 - [x] Fase 4a: Vangnet met end-to-end-tests
 - [x] Fase 4b: Vangnet met budgetten
 - [x] Fase 5: Mobiele UX in de zaal
-- [ ] Fase 6: Veiligheid en onderhoud
+- [x] Fase 6: Veiligheid en onderhoud (de eerste Dependabot-run volgt na de merge)
 - [ ] Fase 7: Lancering op handballcoachboard.com
 - [ ] Fase 8: Meten in productie
 
