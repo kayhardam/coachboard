@@ -84,6 +84,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
   - it runs `client:only` on `/[lang]/board/` only, the one page that ships JS;
   - its CSS ships inside its JS (`<svelte:options css="injected" />`). As a stylesheet over Vite's 4 KB inline limit, Astro linked it on every page;
   - the court fits the space the bars leave (letterboxed), in portrait and landscape; in landscape the header is hidden and the bars become columns at the sides, with a Home link in the right one. `e2e/layout.spec.ts` checks that every button stays on screen;
+  - the static fallback in `board.astro` reserves the bars' space with the same tokens (`--board-bar`, `--board-gap`, `--board-side` in `tokens.css`), so the court doesn't move when the editor replaces it. Change the editor's box and the fallback's together; `e2e/layout.spec.ts` allows 1 px;
   - its strings come in as a prop from `boardStrings()` in `ui.ts`;
   - it loads `#t=` first, then `localStorage` (`coachboard.board`), then the default lineup;
   - every change is written to both (300 ms debounce), so the address bar is always a shareable link;
