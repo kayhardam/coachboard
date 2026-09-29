@@ -77,7 +77,6 @@ test("in landscape the header makes way, and the bar links home", async ({ page 
 // space, so the court jumped when the editor replaced it.
 for (const orientation of ["portrait", "landscape"] as const) {
   test(`${orientation}: the court stays put when the editor loads`, async ({ page }) => {
-    test.fail(orientation === "portrait", "finding 14 in docs/metingen.md");
     if (orientation === "landscape") await page.setViewportSize(landscape());
     // Hold the scripts, so the fallback stays on screen during this one page load.
     let release!: () => void;

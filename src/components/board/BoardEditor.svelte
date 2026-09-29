@@ -479,15 +479,16 @@
 </dialog>
 
 <style>
+  /* The fallback in board.astro mirrors this box: keep them in step. */
   .editor {
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-rows: minmax(0, 1fr) minmax(var(--board-bar), auto) minmax(var(--board-bar), auto);
     width: 100%;
     min-height: 0;
     max-width: 720px;
     margin-inline: auto;
     padding: 8px 8px max(8px, env(safe-area-inset-bottom));
-    gap: 6px;
+    gap: var(--board-gap);
     position: relative;
   }
 
@@ -644,7 +645,7 @@
     .bar {
       grid-auto-flow: row;
       grid-auto-rows: minmax(0, 1fr);
-      width: 64px;
+      width: var(--board-side);
       gap: 2px;
     }
     .home {
