@@ -142,6 +142,7 @@ Geordend op impact en moeite, met de uitkomsten van de testronde erin verwerkt. 
 | 11 | **Laadsnelheid in het lab:** alle pagina's 100, LCP ongeveer 0,8 s, CLS 0, TBT 0 ms. Er valt hier niets te winnen; de volgende stappen zijn vastleggen (4a, 4b) en echte telefoons (testronde, Fase 8). | — | — | — |
 | 12 | **Opgelost in Fase 4a: een kapotte link overschreef het opgeslagen bord met de standaardopstelling.** Gevonden bij het lezen van de code voor Fase 4a, bevestigd met een e2e-test en daarna opgelost. Zie "Fase 4a" hieronder. | hoog | laag | 4a |
 | 13 | **In WebKit's offline-emulatie mislukt het lezen van een Blob**, dus ook `encode()`: offline komt er in de emulatie geen deellink, geen QR-code en geen `#t=` in de adresbalk. Gevonden in Fase 5. Onbekend of een echte iPhone in vliegtuigmodus dit ook doet; dat is test 14. | middel (als het echt is) | onbekend | 5 (testronde) |
+| 14 | **Staand verspringt het veld 52 px zodra de editor laadt** (Fase 5, Lighthouse-filmstrip en Playwright). De fallback in `board.astro` houdt geen ruimte vrij voor de knoppenbalken. CLS blijft 0, omdat de editor het veld vervangt in plaats van verschuift; Lighthouse ziet het dus niet. Liggend blijft het veld staan en verschijnen alleen de balken. | laag tot middel | laag | aparte PR |
 
 ## Fase 4a: vangnet met end-to-end-tests (27 september 2026)
 
@@ -400,11 +401,60 @@ Let op: "Alle JS" zit nu op 31,3 van 32,5 KB, omdat de CSS van de editor meetelt
 | Reach-tests met de oude reikwijdte (13 dm) | "21 px naast een speler" faalt in beide browsers; de twee andere (voorrang) slagen, zoals bedoeld |
 | Offline-QR-test zonder het vooraf laden | faalt |
 
-### Lighthouse
+### Lighthouse (productie, 29 september 2026)
 
-Volgt op de preview-URL van de PR, met het commando uit de nulmeting. Let vooral op CLS: de no-JS-fallback toont het veld zonder balken, en de editor vervangt hem.
+Gemeten na de merge van PR #8, dus op productie (`main` @ `70bfaac`) in plaats van op de preview-URL. Zo is ook SEO te vergelijken met de nulmeting.
 
-### Testronde Fase 5 (Kay, op de preview-URL)
+**Methode:** het commando uit de nulmeting, drie runs per URL, mediaan in de tabel. Lighthouse 13.5.0, Chrome 154.0.8037.58 headless (nulmeting: Chrome 153), op een Mac.
+
+| URL | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/en/` | 100 | 100 | 100 | 100 | 0,82 s | 0 | 0 ms |
+| `/en/board/` | 100 | 100 | 100 | 100 | 0,82 s | 0 | 0 ms |
+| `/en/tactics/defense/6-0-defense-basics/` | 100 | 100 | 100 | 100 | 0,84 s | 0 | 0 ms |
+
+Per run (Performance, LCP):
+
+- `/en/`: 100, 100, 100 (0,82, 0,82, 0,79 s)
+- `/en/board/`: 100, 100, 100 (0,84, 0,81, 0,82 s)
+- tactiekpagina: 100, 100, 100 (0,86, 0,82, 0,84 s)
+
+Vergeleken met de nulmeting:
+
+- De scores en LCP zijn gelijk; de verschillen vallen binnen de spreiding tussen runs.
+- **Het bord:** 7 verzoeken en 43,6 KB, was 6 en 40,5 KB. Het extra verzoek is de QR-bibliotheek, die nu als eigen chunk na het bord laadt (zie "Groottes").
+- **LCP-element op het bord:** nog steeds het logo in de header.
+
+#### Verspringt het veld bij het laden van het bord?
+
+**Ja, staand.** CLS 0 zegt hier niets: de editor verschuift het veld van de fallback niet, hij vervangt het door nieuwe elementen. CLS telt alleen elementen die bewegen, dus deze sprong telt niet mee.
+
+**Filmstrip.** Drie runs met `--throttling-method=devtools` (echte vertraging in plaats van gesimuleerde). Scores: Performance 100, LCP 1,25, 1,30 en 1,27 s, CLS 0, TBT 0 ms. De filmstrip (een beeld per 375 ms) laat in alle drie hetzelfde zien:
+
+- tot ongeveer 1,1 s: nog niets getekend;
+- vanaf 1,5 s: het veld van de fallback, verticaal gecentreerd, zonder knoppenbalken;
+- tussen 1,9 en 2,25 s neemt de editor het over: het veld schuift omhoog en de twee balken verschijnen onderaan.
+
+**Hoe groot de sprong is.** Gemeten met Playwright op productie. De fallback is gemeten met JavaScript aan en het script van de editor geblokkeerd; dat is wat een bezoeker ziet voordat de editor laadt. Met JavaScript uit staat er ook de `noscript`-tekst onder het veld, en dat is een andere layout.
+
+| Viewport | Veld (breedte) | Verschuiving |
+|---|--:|--:|
+| iPhone SE staand 320×568 | 281 → 281 px | 52 px omhoog |
+| iPhone 15 staand 393×659 | 349 → 349 px | 52 px omhoog |
+| Pixel 7 staand 412×839 | 367 → 367 px | 52 px omhoog |
+| Moto G Power staand 412×823 (Lighthouse) | 367 → 367 px | 52 px omhoog |
+| iPhone 15 liggend 734×343 | 302 → 302 px | geen |
+| Pixel 7 liggend 863×360 | 317 → 317 px | geen |
+
+- **Oorzaak:** `.fallback` in `board.astro` houdt geen ruimte vrij voor de knoppenbalken. Het veld staat daardoor gecentreerd in de volle hoogte; zodra de balken er zijn, is het gecentreerd in de hoogte erboven.
+- **Liggend:** het veld blijft op zijn plek, maar de balken verschijnen er plotseling naast.
+- **Gemeten:** alleen het halve veld, met de standaardopstelling.
+
+Wordt bevinding 14; de fix komt in een aparte PR.
+
+### Testronde Fase 5 (Kay)
+
+**Nog niet uitgevoerd; volgt later.** De PR van Fase 5 is gemerged zonder deze testronde. Kay test daarom op productie (`https://coachboard.hardamkay.workers.dev/en/board/`) in plaats van op de preview-URL. De resultaten en wat eruit volgt, komen in een latere PR.
 
 Legenda als in de nulmeting. Vul per toestel in (model, iOS/Android-versie, browser).
 
