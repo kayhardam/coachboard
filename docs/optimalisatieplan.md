@@ -146,7 +146,13 @@ Werk de geordende lijst uit Fase 3 af. Per punt: hypothese → kleine wijziging 
 **Doel:** nette standaardbeveiliging en updates zonder gedoe.
 
 - Zet security headers voor alle pagina's in `public/_headers`: `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, een verbod op inbedden in frames, en een Content-Security-Policy. Zoek uit of Astro 7 zelf CSP-hashes kan maken voor de inline scripts van het bord; anders doe je een voorstel. HSTS komt pas in Fase 7, op het eigen domein.
-- Controleer dat de e2e-tests groen blijven (delen, klembord, QR) en dat de headers te zien zijn in `wrangler dev` en op de preview-URL.
+- **CSS van de editor.** Sinds Fase 5 staat de CSS van `BoardEditor.svelte` in zijn JS (`<svelte:options css="injected" />`). Svelte voegt die bij het laden als `<style>`-element in, dus een strikte `style-src` blokkeert hem. Dan staat het bord er zonder opmaak, en de e2e-layouttests vangen dat. Zoek in de documentatie van Svelte 5 en Astro 7 uit welke opties er zijn en leg ze voor:
+  - een hash: verandert bij elke build, dus moet automatisch in `_headers` komen;
+  - een nonce: kan niet zonder Worker-code, omdat een statische host geen nonce per verzoek maakt;
+  - `'unsafe-inline'` alleen voor `style-src`, niet voor scripts;
+  - weer een gelinkte stylesheet, maar alleen op de bordpagina. Het budgetscript bewaakt dat contentpagina's hem niet krijgen, zoals in Fase 5.
+- **`Cross-Origin-Opener-Policy: same-origin`** voor alle pagina's. De code opent geen vensters (`window.open`, `opener`), dus het risico is klein. Controleer toch dat delen naar WhatsApp, het klembord en de QR-code blijven werken, in de e2e-tests en op de preview-URL.
+- Controleer dat de e2e-tests groen blijven (delen, klembord, QR, layout) en dat de headers te zien zijn in `wrangler dev` en op de preview-URL.
 - Voeg `.github/dependabot.yml` toe voor npm en GitHub Actions: wekelijks en gegroepeerd. Nooit automatisch mergen: elke update gaat via CI en de preview-URL.
 
 **Klaar als:** de headers op de preview-URL staan, de e2e-tests groen zijn en de eerste Dependabot-run binnen is.
