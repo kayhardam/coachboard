@@ -729,7 +729,7 @@ Volgt na de merge, en komt in de PR van 7b:
 
 - **`src/pages/[lang]/board.astro`:** een `<script>` die het bord op `coachboard.hardamkay.workers.dev` doorstuurt naar hetzelfde pad op `https://handballcoachboard.com`, met `#t=` erbij.
   - Alleen precies die host, niet de preview-URL's.
-  - Astro zet het script inline (369 bytes) en neemt zijn hash op in de CSP-`<meta>` van het bord: 8 hashes, was 7, nagerekend.
+  - Astro zet het script inline (301 bytes) en neemt zijn hash op in de CSP-`<meta>` van het bord: 8 hashes, was 7, nagerekend.
   - `location.replace`, zodat de oude URL niet in de geschiedenis blijft.
 - **Het eigen bord gaat mee.** Zonder `#t=` neemt het script het opgeslagen bord van workers.dev mee als `#own=…`.
   - De editor bewaart dat als eigen bord, maar alleen als het nieuwe domein nog geen bord heeft.
