@@ -87,9 +87,14 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
   - the court fits the space the bars leave (letterboxed), in portrait and landscape; in landscape the header is hidden and the bars become columns at the sides, with a Home link in the right one. `e2e/layout.spec.ts` checks that every button stays on screen;
   - the static fallback in `board.astro` reserves the bars' space with the same tokens (`--board-bar`, `--board-gap`, `--board-side` in `tokens.css`), so the court doesn't move when the editor replaces it. Change the editor's box and the fallback's together; `e2e/layout.spec.ts` allows 1 px;
   - its strings come in as a prop from `boardStrings()` in `ui.ts`;
-  - it loads `#t=` first, then `localStorage` (`coachboard.board`), then the default lineup;
+  - it loads `#t=` first, then `localStorage` (`coachboard.board`), then `#own=` (see below), then the default lineup;
   - every change is written to both (300 ms debounce), so the address bar is always a shareable link;
   - a board that came from a `#t=` link reaches `localStorage` only after its first edit, so opening a shared play or a tactic doesn't replace your own saved board.
+- **Moved from workers.dev:** a `<script>` in `board.astro` sends the board on `coachboard.hardamkay.workers.dev` (that exact host, not the preview URLs) to the same path on `site`, keeping `#t=`.
+  - Without `#t=`, it brings that origin's saved board along as `#own=<URI-encoded JSON>`. `localStorage` belongs to one origin, so a server redirect would leave it behind.
+  - The editor keeps an `#own=` board (checked with `isBoard()`) as your own and saves it, but only when the new domain has no saved board yet; otherwise it ignores it.
+  - Content pages don't redirect (they ship no JS); their canonical already points at the domain.
+  - `e2e/move.spec.ts` serves the three hosts from `wrangler dev` with `context.route()`.
 - **Testing in a browser:** `npm run e2e` for the core flow; by hand, the Chrome extension, or headless Chrome over the DevTools protocol with `Emulation.setTouchEmulationEnabled` and `Input.dispatchTouchEvent`. Call `Page.bringToFront` first; a background tab ignores touch input.
 
 ## Tactics content
@@ -121,7 +126,7 @@ Cloudflare Workers with static assets, deployed by Workers Builds (Git integrati
 - **`wrangler.jsonc` must stay.** It makes the deploy a plain upload of `dist/`, with no Worker code and no Astro adapter. Without it, Wrangler reconfigures the project on every deploy: it runs `astro add cloudflare` and adds KV and Images bindings.
 - It also sets `html_handling: "auto-trailing-slash"` (`/en/privacy` → `/en/privacy/`) and `not_found_handling: "404-page"` (serves `dist/404.html`).
 - Its `routes` entry attaches `handballcoachboard.com` as a Custom Domain. Keep it there and don't manage the domain only in the dashboard: a deploy whose config lacks it removes the domain again.
-- `workers_dev` stays `true`: `coachboard.hardamkay.workers.dev` keeps serving the links and QR codes shared before the move.
+- `workers_dev` stays `true`: `coachboard.hardamkay.workers.dev` keeps serving the links and QR codes shared before the move, and its board page redirects to the domain (see "Moved from workers.dev" under The board).
 - Its empty `previews` block must stay too: `wrangler preview` fails without it, so every branch build would fail while `npm run verify` stays green. `npx wrangler deploy --dry-run` passes without it, so it doesn't catch this.
 - `public/_redirects` holds the root redirect. `public/_headers` gives `/_astro/*` (hashed files) a one-year immutable cache, and every response the security headers: `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `Cross-Origin-Opener-Policy: same-origin` and HSTS (one year, without `includeSubDomains` or `preload`).
 - **Set in the Cloudflare dashboard**, not in this repo:

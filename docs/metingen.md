@@ -722,3 +722,48 @@ Volgt na de merge, en komt in de PR van 7b:
 - `E2E_BASE_URL=https://handballcoachboard.com npx playwright test e2e/security.spec.ts`: op elke pagina de headers, en geen scripts van Cloudflare die de CSP blokkeert (zoals Email Address Obfuscation op `/en/about/` en `/en/privacy/`);
 - Lighthouse mobiel op productie, met SEO;
 - Kay: het linkvoorbeeld in WhatsApp en de testmail naar `contact@handballcoachboard.com`.
+
+## Fase 7b: workers.dev doorsturen (1 oktober 2026)
+
+### Wat er veranderd is
+
+- **`src/pages/[lang]/board.astro`:** een `<script>` die het bord op `coachboard.hardamkay.workers.dev` doorstuurt naar hetzelfde pad op `https://handballcoachboard.com`, met `#t=` erbij.
+  - Alleen precies die host, niet de preview-URL's.
+  - Astro zet het script inline (369 bytes) en neemt zijn hash op in de CSP-`<meta>` van het bord: 8 hashes, was 7, nagerekend.
+  - `location.replace`, zodat de oude URL niet in de geschiedenis blijft.
+- **Het eigen bord gaat mee.** Zonder `#t=` neemt het script het opgeslagen bord van workers.dev mee als `#own=…`.
+  - De editor bewaart dat als eigen bord, maar alleen als het nieuwe domein nog geen bord heeft.
+  - Heeft het nieuwe domein al een bord, dan negeert de editor `#own=`, en de adresbalk krijgt de `#t=` van het eigen bord (besluit Kay).
+  - `format.ts` blijft ongewijzigd.
+- **Contentpagina's sturen niet door.** Ze laden geen JS, en hun canonical wijst al naar het domein.
+
+### Groottes
+
+`npm run budget`, vóór (7a) en na:
+
+| Meting | Vóór | Na |
+|---|--:|--:|
+| JS van het bord (gzip) | 27,0 KB | 27,1 KB |
+| Lazy JS van het bord (gzip) | 4,3 KB | 4,3 KB |
+| Alle JS in `_astro/` (gzip) | 31,4 KB | 31,4 KB |
+| HTML `/en/board/` (gzip) | 5,2 KB | 5,4 KB |
+| Contentpagina's | geen JS | geen JS |
+
+Het script zit in de HTML van het bord, niet in `_astro/`; vandaar +0,2 KB HTML. Er is geen budget verhoogd. Wel is `All JS` 31,4 van 32,5 KB: nog 1,1 KB ruimte. Dat is het moment uit Fase 6 om de CSS van de editor naar een stylesheet te verplaatsen, zodra er JS bij moet.
+
+### Tests
+
+- **Nieuw: `e2e/move.spec.ts`**, 5 tests per browser. `context.route()` bedient `coachboard.hardamkay.workers.dev`, `handballcoachboard.com` en een preview-host vanuit `wrangler dev`, elk met een eigen localStorage:
+  1. een workers.dev-link met `#t=` (fixture `v1-full-lineup`) opent op het domein met hetzelfde bord;
+  2. een eigen bord op workers.dev gaat mee, wordt op het domein opgeslagen en krijgt een `#t=` in de adresbalk;
+  3. heeft het domein al een bord, dan blijft dat staan en verandert de opslag niet, zonder melding;
+  4. een preview-host stuurt niet door;
+  5. `/en/` op workers.dev stuurt niet door.
+- `npm run verify` groen; `npm run e2e`: 129 geslaagd, 1 overgeslagen (was 119 en 1).
+
+**Controles** (tijdelijk, niet gecommit):
+
+| Controle | Resultaat |
+|---|---|
+| Hostnaam in het script fout (`…workers.dev.invalid`) | tests 1, 2 en 3 falen (Pixel 7) |
+| Editor neemt `#own=` altijd over, ook als er al een bord is | test 3 faalt (Pixel 7) |
