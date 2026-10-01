@@ -14,7 +14,12 @@
     // Serve dist/404.html, with status 404, for anything that doesn't exist.
     "not_found_handling": "404-page"
   },
-  // coachboard.hardamkay.workers.dev, and a preview URL per branch.
+  // The production domain. It lives here, not only in the dashboard: a deploy
+  // whose config lacks it removes it again. www redirects to it with a Redirect
+  // Rule in the dashboard (a Custom Domain matches one exact hostname).
+  "routes": [{ "pattern": "handballcoachboard.com", "custom_domain": true }],
+  // coachboard.hardamkay.workers.dev stays up: links and QR codes shared before
+  // the move point there. Also a preview URL per branch.
   "workers_dev": true,
   "preview_urls": true,
   // `wrangler preview` refuses to run without this block. It may stay empty:
