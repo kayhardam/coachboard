@@ -183,6 +183,15 @@ Werk de geordende lijst uit Fase 3 af. Per punt: hypothese → kleine wijziging 
 
 **Klaar als:** het domein live is, oude workers.dev-links doorsturen, de testmail aankomt en de controles in `docs/metingen.md` staan.
 
+**Uitvoering (1 oktober 2026; Kay heeft het domein gekocht bij Cloudflare Registrar):**
+
+- **Aanpassing van het plan: twee PR's.** 7a zet het domein live, 7b zet daarna pas de doorsturing vanaf workers.dev aan. Zo stuurt workers.dev nooit door naar een domein dat nog geen certificaat heeft.
+  - **7a** (`fase-7a-domein`): het custom domain staat in `wrangler.jsonc` en niet alleen in het dashboard, want een deploy zonder de route haalt het domein weer weg. Verder HSTS in `public/_headers`, README en `AGENTS.md` bijgewerkt, en `E2E_BASE_URL` om een e2e-test tegen productie te draaien.
+  - **7b** (`fase-7b-doorsturen`): het script op het bord dat workers.dev doorstuurt, met de tests.
+- **Besluit Kay: een klein script op de bordpagina stuurt door.** Het opgeslagen bord gaat mee (`#own=`), want localStorage hoort bij één domein, en met een redirect op de server zou het eigen bord van een trainer op workers.dev achterblijven. Heeft het nieuwe domein al een bord, dan wordt `#own=` genegeerd en blijft dat bord staan; dat krijgt een eigen test. Contentpagina's sturen niet door: ze laden geen JS, en hun canonical wijst al naar het eigen domein.
+- **Werkafspraak (Kay):** Claude Code deployt nooit zelf met wrangler, alleen `--dry-run`. Live gaat alleen via een merge van Kay.
+- **Na de merge van 7a** draait `e2e/security.spec.ts` één keer tegen `https://handballcoachboard.com`, zodat per pagina te zien is of Cloudflare scripts invoegt die de CSP blokkeert.
+
 ## Fase 8: Meten in productie
 
 **Start na Fase 7.** Doel: weten of trainers de app gebruiken en hoe snel die op hun telefoons is.
@@ -211,6 +220,8 @@ Elk van deze punten verdient een eigen plan, zoals `AGENTS.md` ook vraagt:
 - [x] Fase 5: Mobiele UX in de zaal
 - [x] Fase 6: Veiligheid en onderhoud (de eerste Dependabot-run volgt na de merge)
 - [ ] Fase 7: Lancering op handballcoachboard.com
+  - [ ] 7a: domein live
+  - [ ] 7b: workers.dev doorsturen
 - [ ] Fase 8: Meten in productie
 
 ## Startprompts

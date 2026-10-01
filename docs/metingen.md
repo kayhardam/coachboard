@@ -679,3 +679,39 @@ Op de preview-URL `https://fase-6-veiligheid-coachboard.hardamkay.workers.dev/en
 
 **Na de merge:** de eerste Dependabot-run komt binnen (PR's onder Pull requests, of Insights → Dependency graph → Dependabot).
 
+
+## Fase 7a: het domein live (1 oktober 2026)
+
+Kay heeft `handballcoachboard.com` gekocht bij Cloudflare Registrar. Deze PR zet de site op dat domein. Het doorsturen vanaf workers.dev volgt in 7b, pas als het domein werkt (zie het plan).
+
+### Wat er veranderd is
+
+- **`wrangler.jsonc`:** `routes` met `handballcoachboard.com` als Custom Domain. Bij de deploy na de merge maakt Cloudflare het DNS-record en het certificaat aan. Het domein staat in de config, want een deploy zonder de route haalt een domein uit het dashboard weer weg. `workers_dev` blijft aan voor oude links.
+- **`public/_headers`:** `Strict-Transport-Security: max-age=31536000`, zonder `includeSubDomains` en zonder `preload`.
+- **`playwright.config.ts`:** met `E2E_BASE_URL` draaien de e2e-tests tegen een gedeployde site in plaats van `wrangler dev`.
+- **`README.md` en `AGENTS.md`:**
+  - het domein, en dat deployen alleen via Workers Builds gaat;
+  - waarom de route in `wrangler.jsonc` staat;
+  - wat in het dashboard staat: Always Use HTTPS, Email Address Obfuscation uit, www → kaal domein, Email Routing en het TXT-record voor Search Console.
+
+### Groottes
+
+`npm run budget`: geen verschil met `main` @ `6b0ccd5`. Deze PR raakt geen HTML, CSS of JS; de nieuwe header telt niet mee in de budgetten.
+
+### Tests
+
+- `npm run verify` groen (90 unittests, 125 links, 28 budgetten).
+- `npm run e2e`: 119 geslaagd, 1 overgeslagen (gelijk aan Fase 6). `e2e/security.spec.ts` verwacht nu ook de HSTS-header.
+- **Controle** (tijdelijk, niet gecommit): zonder de HSTS-regel in `_headers` falen 9 van de 21 tests in `security.spec.ts` (Pixel 7). Dat is de headertest op elke pagina behalve de 404, die de headers overslaat (bevinding 15).
+- `npx wrangler deploy --dry-run` slaagt. De dry-run controleert de route niet tegen het account. Volgens de broncode van Wrangler 4.141 gebruikt `wrangler preview` alleen routes met `previews_enabled`, dus de route raakt de previews niet.
+
+### Na de livegang
+
+Volgt na de merge, en komt in de PR van 7b:
+
+- `curl -I` op `https://handballcoachboard.com/en/`: HSTS en de andere headers, http → https, www → kaal domein;
+- canonical, `og:url` en `og:image` in de HTML;
+- `/robots.txt` en `/sitemap-index.xml`;
+- `E2E_BASE_URL=https://handballcoachboard.com npx playwright test e2e/security.spec.ts`: op elke pagina de headers, en geen scripts van Cloudflare die de CSP blokkeert (zoals Email Address Obfuscation op `/en/about/` en `/en/privacy/`);
+- Lighthouse mobiel op productie, met SEO;
+- Kay: het linkvoorbeeld in WhatsApp en de testmail naar `contact@handballcoachboard.com`.
