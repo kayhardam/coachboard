@@ -112,6 +112,17 @@
     return decode(decodeURIComponent(location.hash.slice(3)));
   }
 
+  /** The board you had on workers.dev, brought along as #own= by the redirect in board.astro. */
+  function movedBoard(): Board | undefined {
+    if (!location.hash.startsWith("#own=")) return undefined;
+    try {
+      const moved: unknown = JSON.parse(decodeURIComponent(location.hash.slice(5)));
+      return isBoard(moved) ? moved : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   onMount(() => {
     const idle = window.requestIdleCallback ?? ((run: () => void) => setTimeout(run, 500));
     idle(() => loadQr().catch(() => (qrLibrary = undefined)));
@@ -130,6 +141,10 @@
         } catch {
           // No storage (private mode, blocked): start from the default lineup.
         }
+        // Not linked, so the save below keeps it. A board already saved on
+        // this domain wins, and the address bar gets its #t= instead.
+        const moved = own ? undefined : movedBoard();
+        if (moved) board = moved;
         if (shared === null) show(strings[own ? "board.invalidLink" : "board.invalidLinkDefault"], true);
       }
       loaded = true;

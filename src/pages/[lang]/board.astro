@@ -22,6 +22,26 @@ const { lang } = Astro.params;
   </BoardEditor>
 </BaseLayout>
 
+<script>
+  // Links and QR codes shared before the move point at workers.dev: send them
+  // to the production domain with their path and #t= intact. Only the old
+  // production host; preview URLs end in workers.dev too.
+  if (location.hostname === "coachboard.hardamkay.workers.dev") {
+    let { hash } = location;
+    if (!hash.startsWith("#t=")) {
+      // Your own board is in this origin's storage. It comes along as #own=,
+      // which the editor keeps only if the new domain has no board yet.
+      try {
+        const own = localStorage.getItem("coachboard.board");
+        hash = own ? `#own=${encodeURIComponent(own)}` : "";
+      } catch {
+        hash = "";
+      }
+    }
+    location.replace(new URL(location.pathname + location.search + hash, import.meta.env.SITE));
+  }
+</script>
+
 <style>
   /* The same box as BoardEditor's .editor, with the bars' space reserved, so
      the court doesn't move when the editor replaces this (finding 14 in
