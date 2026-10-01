@@ -191,6 +191,8 @@ Werk de geordende lijst uit Fase 3 af. Per punt: hypothese → kleine wijziging 
 - **Besluit Kay: een klein script op de bordpagina stuurt door.** Het opgeslagen bord gaat mee (`#own=`), want localStorage hoort bij één domein, en met een redirect op de server zou het eigen bord van een trainer op workers.dev achterblijven. Heeft het nieuwe domein al een bord, dan wordt `#own=` genegeerd en blijft dat bord staan; dat krijgt een eigen test. Contentpagina's sturen niet door: ze laden geen JS, en hun canonical wijst al naar het eigen domein.
 - **Werkafspraak (Kay):** Claude Code deployt nooit zelf met wrangler, alleen `--dry-run`. Live gaat alleen via een merge van Kay.
 - **Na de merge van 7a** draait `e2e/security.spec.ts` één keer tegen `https://handballcoachboard.com`, zodat per pagina te zien is of Cloudflare scripts invoegt die de CSP blokkeert.
+- **7a live (1 oktober 2026).** Na de merge van PR #14 slaagt `e2e/security.spec.ts` tegen productie: 42 van 42. De andere controles en Lighthouse (overal 100, SEO ook) staan in `docs/metingen.md`.
+- **TypeScript 7 opnieuw bekijken (Kay).** Dependabot negeert 7.x sinds PR #13 (`@dependabot ignore this major version`). Kijk opnieuw zodra TypeScript 7.1 uit is en Astro en Svelte (`astro check`, `svelte-check`) het ondersteunen. Dan haal je de negeerregel weg, door PR #13 te heropenen of met `@dependabot unignore`, en loopt de update gewoon via CI en de preview-URL.
 
 ## Fase 8: Meten in productie
 
@@ -220,7 +222,7 @@ Elk van deze punten verdient een eigen plan, zoals `AGENTS.md` ook vraagt:
 - [x] Fase 5: Mobiele UX in de zaal
 - [x] Fase 6: Veiligheid en onderhoud (de eerste Dependabot-run volgt na de merge)
 - [ ] Fase 7: Lancering op handballcoachboard.com
-  - [ ] 7a: domein live
+  - [x] 7a: domein live
   - [ ] 7b: workers.dev doorsturen
 - [ ] Fase 8: Meten in productie
 

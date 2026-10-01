@@ -712,16 +712,48 @@ Kay heeft `handballcoachboard.com` gekocht bij Cloudflare Registrar. Deze PR zet
 - `curl -I /en/`: `strict-transport-security: max-age=31536000`, plus de zes headers uit Fase 6 (en `x-robots-tag: noindex`, zoals op elke preview);
 - `E2E_BASE_URL=<preview-URL> npx playwright test e2e/security.spec.ts`: 42 van 42 geslaagd (Pixel 7 en iPhone 15). Zo is `E2E_BASE_URL` getest vóór de run tegen productie.
 
-### Na de livegang
+### Na de livegang (1 oktober 2026)
 
-Volgt na de merge, en komt in de PR van 7b:
+PR #14 is gemerged (`main` @ `219c3ce`, met ook de Dependabot-update uit PR #12). Kay heeft het domein bekeken en www, Email Routing en Search Console ingericht.
 
-- `curl -I` op `https://handballcoachboard.com/en/`: HSTS en de andere headers, http → https, www → kaal domein;
-- canonical, `og:url` en `og:image` in de HTML;
-- `/robots.txt` en `/sitemap-index.xml`;
-- `E2E_BASE_URL=https://handballcoachboard.com npx playwright test e2e/security.spec.ts`: op elke pagina de headers, en geen scripts van Cloudflare die de CSP blokkeert (zoals Email Address Obfuscation op `/en/about/` en `/en/privacy/`);
-- Lighthouse mobiel op productie, met SEO;
-- Kay: het linkvoorbeeld in WhatsApp en de testmail naar `contact@handballcoachboard.com`.
+**`e2e/security.spec.ts` tegen productie**, met `E2E_BASE_URL=https://handballcoachboard.com` na een build van `219c3ce`: **42 van 42 geslaagd** (Pixel 7 en iPhone 15).
+
+- Elke pagina heeft de headers, met HSTS.
+- Er zijn geen CSP-meldingen, ook niet op het bord met de QR-code.
+- Cloudflare voegt dus geen scripts in die de CSP blokkeert.
+
+**Met `curl`:**
+
+| Controle | Resultaat |
+|---|---|
+| Headers op `/en/` | HSTS `max-age=31536000` plus de zes headers uit Fase 6; geen `x-robots-tag` |
+| `http://handballcoachboard.com/en/board/` | 301 → `https://handballcoachboard.com/en/board/` (Always Use HTTPS) |
+| `https://www.handballcoachboard.com/en/privacy/?x=1` | 301 → `https://handballcoachboard.com/en/privacy/?x=1` (Redirect Rule) |
+| `http://www.handballcoachboard.com/en/` | 301 → `https://www.…`, dan 301 → het kale domein |
+| `/`, `/en/privacy`, `/en/nope/` | 302 → `/en/`, 307 → `/en/privacy/`, 404 |
+| canonical, `og:url`, `og:image` (`/en/` en de tactiekpagina) | alle drie absoluut op `https://handballcoachboard.com`; `og-default.png` en de `og.png` van de tactiek geven 200 met `image/png` |
+| `/robots.txt` | `Allow: /`, `Sitemap: https://handballcoachboard.com/sitemap-index.xml` |
+| `/sitemap-index.xml` → `/sitemap-0.xml` | de 9 indexeerbare pagina's, allemaal op het domein en met `/` aan het eind |
+| HTML van `/en/about/` en `/en/privacy/` | geen `cdn-cgi`, geen `<script>`; de link is gewoon `mailto:contact@handballcoachboard.com`, dus Email Address Obfuscation staat uit |
+| `https://coachboard.hardamkay.workers.dev/en/board/` | 200: werkt nog, tot 7b doorstuurt |
+
+Mijn Mac kon `www.handballcoachboard.com` eerst niet vinden (een negatieve cache), terwijl `dig` het adres wel gaf. De www-controles zijn daarom gedaan met `curl --resolve` op het IP-adres van Cloudflare.
+
+**Lighthouse mobiel op productie**, met het commando uit de nulmeting: drie runs per URL, de mediaan. Lighthouse 13.5.0, Chrome 154 headless.
+
+| URL | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/en/` | 100 | 100 | 100 | 100 | 0,84 s | 0 | 0 ms |
+| `/en/board/` | 100 | 100 | 100 | 100 | 0,83 s | 0 | 0 ms |
+| `/en/tactics/defense/6-0-defense-basics/` | 100 | 100 | 100 | 100 | 0,83 s | 0 | 0 ms |
+
+- Elke run gaf 100 in alle vier de categorieën. De LCP lag tussen 0,82 en 0,85 s; in de nulmeting op workers.dev was dat 0,80 tot 0,91 s.
+- **SEO is 100** op het eigen domein: er is geen `noindex` zoals op de preview-URL's, en de canonical wijst naar het domein zelf.
+- **Beveiligingspunten:**
+  - HSTS ging van "High" (geen HSTS, Fase 6) naar twee keer "Medium": geen `includeSubDomains` en geen `preload`. Allebei zijn bewust weggelaten (zie het plan).
+  - De CSP- en Trusted Types-punten zijn ongewijzigd ten opzichte van Fase 6.
+
+**Nog van Kay:** het linkvoorbeeld in WhatsApp met een link naar het domein, en of de testmail naar `contact@handballcoachboard.com` is aangekomen.
 
 ## Fase 7b: workers.dev doorsturen (1 oktober 2026)
 
