@@ -6,6 +6,7 @@ import { allPages, openBoard } from "./helpers";
 // astro.config.mjs); browsers ignore frame-ancestors there, so it is a header.
 
 const headers = {
+  "strict-transport-security": "max-age=31536000",
   "x-content-type-options": "nosniff",
   "referrer-policy": "strict-origin-when-cross-origin",
   "x-frame-options": "DENY",
