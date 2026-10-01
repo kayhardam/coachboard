@@ -839,8 +839,14 @@ Het script zit in de HTML van het bord, niet in `_astro/`; vandaar +0,2 KB HTML.
    - **zonder wijziging in stap 2 (geval 7):** het eigen bord gaat alsnog mee en wordt op het domein opgeslagen;
    - **met één wijziging in stap 2 (7′, een speler verschoven):** het domein heeft nu een bord (de aangepaste fixture), dus het eigen bord wordt genegeerd, zoals in geval 4. **Het blijft achter op workers.dev.**
 
-**Open punt (7c):** wie eerst een gedeelde link opent en daar iets aan verandert, raakt het eigen bord van workers.dev kwijt op het domein. Het staat nog in de opslag van workers.dev, maar daar raakt niemand het bord meer aan, want het stuurt meteen door. Safari op iOS wist de opslag van een site na zeven dagen Safari-gebruik zonder interactie op die site, dus op iPhones verdwijnt het daarna echt. Niet opgelost in deze PR; Kay beslist over een 7c.
+**Bekend en geaccepteerd gevolg (besluit Kay, geen 7c):** wie eerst een gedeelde link opent en daar iets aan verandert, krijgt het eigen bord van workers.dev niet meer mee naar het domein; het blijft op workers.dev achter. Daar raakt niemand het meer aan, want het bord stuurt meteen door, en Safari op iOS wist de opslag van een site na zeven dagen Safari-gebruik zonder interactie op die site. Reden om het zo te laten: een gedeeld bord aanpassen overschrijft het eigen bord ook zonder verhuizing, en het gaat om weinig gebruikers.
 
 **`security.spec.ts` tegen `https://handballcoachboard.com`** (build van `0550cd6`): 42 van 42 geslaagd. De CSP-`<meta>` van het bord heeft 8 script-hashes, zoals op de preview.
 
-**Nog van Kay:** de oude link op een echte telefoon (zie hierboven), het linkvoorbeeld in WhatsApp en de testmail (uit 7a).
+**Controles van Kay** (1 oktober 2026):
+
+| Controle | Resultaat |
+|---|---|
+| Oude workers.dev-link met `#t=` op een echte telefoon | werkt: op het domein met hetzelfde bord |
+| Testmail naar `contact@handballcoachboard.com` (uit 7a) | aangekomen |
+| Linkvoorbeeld in WhatsApp (uit 7a) | nog niet doorgegeven |
