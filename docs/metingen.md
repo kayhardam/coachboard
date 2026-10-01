@@ -849,4 +849,7 @@ Het script zit in de HTML van het bord, niet in `_astro/`; vandaar +0,2 KB HTML.
 |---|---|
 | Oude workers.dev-link met `#t=` op een echte telefoon | werkt: op het domein met hetzelfde bord |
 | Testmail naar `contact@handballcoachboard.com` (uit 7a) | aangekomen |
-| Linkvoorbeeld in WhatsApp (uit 7a) | nog niet doorgegeven |
+| Linkvoorbeeld in WhatsApp (uit 7a), met links naar `handballcoachboard.com` | werkt: titel, beschrijving en afbeelding (`og-default.png`), in het grote en in het compacte kaartje |
+
+- Een eerdere test met een versie-preview-URL (`d30ab823-…`) telt niet mee.
+- **Opmerking voor een nieuwe versie van `og-default.png`:** in het compacte kaartje snijdt WhatsApp de afbeelding vierkant bij vanuit het midden, waardoor de tekst half wegvalt.
