@@ -712,13 +712,106 @@ Kay heeft `handballcoachboard.com` gekocht bij Cloudflare Registrar. Deze PR zet
 - `curl -I /en/`: `strict-transport-security: max-age=31536000`, plus de zes headers uit Fase 6 (en `x-robots-tag: noindex`, zoals op elke preview);
 - `E2E_BASE_URL=<preview-URL> npx playwright test e2e/security.spec.ts`: 42 van 42 geslaagd (Pixel 7 en iPhone 15). Zo is `E2E_BASE_URL` getest vóór de run tegen productie.
 
-### Na de livegang
+### Na de livegang (1 oktober 2026)
 
-Volgt na de merge, en komt in de PR van 7b:
+PR #14 is gemerged (`main` @ `219c3ce`, met ook de Dependabot-update uit PR #12). Kay heeft het domein bekeken en www, Email Routing en Search Console ingericht.
 
-- `curl -I` op `https://handballcoachboard.com/en/`: HSTS en de andere headers, http → https, www → kaal domein;
-- canonical, `og:url` en `og:image` in de HTML;
-- `/robots.txt` en `/sitemap-index.xml`;
-- `E2E_BASE_URL=https://handballcoachboard.com npx playwright test e2e/security.spec.ts`: op elke pagina de headers, en geen scripts van Cloudflare die de CSP blokkeert (zoals Email Address Obfuscation op `/en/about/` en `/en/privacy/`);
-- Lighthouse mobiel op productie, met SEO;
-- Kay: het linkvoorbeeld in WhatsApp en de testmail naar `contact@handballcoachboard.com`.
+**`e2e/security.spec.ts` tegen productie**, met `E2E_BASE_URL=https://handballcoachboard.com` na een build van `219c3ce`: **42 van 42 geslaagd** (Pixel 7 en iPhone 15).
+
+- Elke pagina heeft de headers, met HSTS.
+- Er zijn geen CSP-meldingen, ook niet op het bord met de QR-code.
+- Cloudflare voegt dus geen scripts in die de CSP blokkeert.
+
+**Met `curl`:**
+
+| Controle | Resultaat |
+|---|---|
+| Headers op `/en/` | HSTS `max-age=31536000` plus de zes headers uit Fase 6; geen `x-robots-tag` |
+| `http://handballcoachboard.com/en/board/` | 301 → `https://handballcoachboard.com/en/board/` (Always Use HTTPS) |
+| `https://www.handballcoachboard.com/en/privacy/?x=1` | 301 → `https://handballcoachboard.com/en/privacy/?x=1` (Redirect Rule) |
+| `http://www.handballcoachboard.com/en/` | 301 → `https://www.…`, dan 301 → het kale domein |
+| `/`, `/en/privacy`, `/en/nope/` | 302 → `/en/`, 307 → `/en/privacy/`, 404 |
+| canonical, `og:url`, `og:image` (`/en/` en de tactiekpagina) | alle drie absoluut op `https://handballcoachboard.com`; `og-default.png` en de `og.png` van de tactiek geven 200 met `image/png` |
+| `/robots.txt` | `Allow: /`, `Sitemap: https://handballcoachboard.com/sitemap-index.xml` |
+| `/sitemap-index.xml` → `/sitemap-0.xml` | de 9 indexeerbare pagina's, allemaal op het domein en met `/` aan het eind |
+| HTML van `/en/about/` en `/en/privacy/` | geen `cdn-cgi`, geen `<script>`; de link is gewoon `mailto:contact@handballcoachboard.com`, dus Email Address Obfuscation staat uit |
+| `https://coachboard.hardamkay.workers.dev/en/board/` | 200: werkt nog, tot 7b doorstuurt |
+
+Mijn Mac kon `www.handballcoachboard.com` eerst niet vinden (een negatieve cache), terwijl `dig` het adres wel gaf. De www-controles zijn daarom gedaan met `curl --resolve` op het IP-adres van Cloudflare.
+
+**Lighthouse mobiel op productie**, met het commando uit de nulmeting: drie runs per URL, de mediaan. Lighthouse 13.5.0, Chrome 154 headless.
+
+| URL | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/en/` | 100 | 100 | 100 | 100 | 0,84 s | 0 | 0 ms |
+| `/en/board/` | 100 | 100 | 100 | 100 | 0,83 s | 0 | 0 ms |
+| `/en/tactics/defense/6-0-defense-basics/` | 100 | 100 | 100 | 100 | 0,83 s | 0 | 0 ms |
+
+- Elke run gaf 100 in alle vier de categorieën. De LCP lag tussen 0,82 en 0,85 s; in de nulmeting op workers.dev was dat 0,80 tot 0,91 s.
+- **SEO is 100** op het eigen domein: er is geen `noindex` zoals op de preview-URL's, en de canonical wijst naar het domein zelf.
+- **Beveiligingspunten:**
+  - HSTS ging van "High" (geen HSTS, Fase 6) naar twee keer "Medium": geen `includeSubDomains` en geen `preload`. Allebei zijn bewust weggelaten (zie het plan).
+  - De CSP- en Trusted Types-punten zijn ongewijzigd ten opzichte van Fase 6.
+
+**Nog van Kay:** het linkvoorbeeld in WhatsApp met een link naar het domein, en of de testmail naar `contact@handballcoachboard.com` is aangekomen.
+
+## Fase 7b: workers.dev doorsturen (1 oktober 2026)
+
+### Wat er veranderd is
+
+- **`src/pages/[lang]/board.astro`:** een `<script>` die het bord op `coachboard.hardamkay.workers.dev` doorstuurt naar hetzelfde pad op `https://handballcoachboard.com`, met `#t=` erbij.
+  - Alleen precies die host, niet de preview-URL's.
+  - Astro zet het script inline (301 bytes) en neemt zijn hash op in de CSP-`<meta>` van het bord: 8 hashes, was 7, nagerekend.
+  - `location.replace`, zodat de oude URL niet in de geschiedenis blijft.
+- **Het eigen bord gaat mee.** Zonder `#t=` neemt het script het opgeslagen bord van workers.dev mee als `#own=…`.
+  - De editor bewaart dat als eigen bord, maar alleen als het nieuwe domein nog geen bord heeft.
+  - Heeft het nieuwe domein al een bord, dan negeert de editor `#own=`, en de adresbalk krijgt de `#t=` van het eigen bord (besluit Kay).
+  - `format.ts` blijft ongewijzigd.
+- **Contentpagina's sturen niet door.** Ze laden geen JS, en hun canonical wijst al naar het domein.
+
+### Groottes
+
+`npm run budget`, vóór (7a) en na:
+
+| Meting | Vóór | Na |
+|---|--:|--:|
+| JS van het bord (gzip) | 27,0 KB | 27,1 KB |
+| Lazy JS van het bord (gzip) | 4,3 KB | 4,3 KB |
+| Alle JS in `_astro/` (gzip) | 31,4 KB | 31,4 KB |
+| HTML `/en/board/` (gzip) | 5,2 KB | 5,4 KB |
+| Contentpagina's | geen JS | geen JS |
+
+Het script zit in de HTML van het bord, niet in `_astro/`; vandaar +0,2 KB HTML. Er is geen budget verhoogd. Wel is `All JS` 31,4 van 32,5 KB: nog 1,1 KB ruimte. Dat is het moment uit Fase 6 om de CSS van de editor naar een stylesheet te verplaatsen, zodra er JS bij moet.
+
+### Tests
+
+- **Nieuw: `e2e/move.spec.ts`**, 5 tests per browser. `context.route()` bedient `coachboard.hardamkay.workers.dev`, `handballcoachboard.com` en een preview-host vanuit `wrangler dev`, elk met een eigen localStorage:
+  1. een workers.dev-link met `#t=` (fixture `v1-full-lineup`) opent op het domein met hetzelfde bord;
+  2. een eigen bord op workers.dev gaat mee, wordt op het domein opgeslagen en krijgt een `#t=` in de adresbalk;
+  3. heeft het domein al een bord, dan blijft dat staan en verandert de opslag niet, zonder melding;
+  4. een preview-host stuurt niet door;
+  5. `/en/` op workers.dev stuurt niet door.
+- `npm run verify` groen; `npm run e2e`: 129 geslaagd, 1 overgeslagen (was 119 en 1).
+
+**Controles** (tijdelijk, niet gecommit):
+
+| Controle | Resultaat |
+|---|---|
+| Hostnaam in het script fout (`…workers.dev.invalid`) | tests 1, 2 en 3 falen (Pixel 7) |
+| Editor neemt `#own=` altijd over, ook als er al een bord is | test 3 faalt (Pixel 7) |
+
+### Preview-URL
+
+`https://fase-7b-doorsturen-coachboard.hardamkay.workers.dev`, 1 oktober 2026.
+
+- **`security.spec.ts` met `E2E_BASE_URL` = de preview:** 42 van 42 geslaagd. Het nieuwe inline script geeft dus geen CSP-meldingen.
+- **De preview stuurt niet door.** Het bord opent met `#t=` op de preview-host zelf, in beide browsers, zonder routes.
+- **`move.spec.ts` met `E2E_BASE_URL` = de preview:** 8 van 10 geslaagd. Twee tests falen op Pixel 7, elke run opnieuw. Ze openen direct een bordpagina op een gerouteerde host en wachten 5 s op de editor.
+  - Gemeten: een paar van de `route.fetch()`-verzoeken vanuit Node naar de preview duren elk ongeveer 5,3 s, de rest 60 tot 110 ms. De editor verschijnt na ongeveer 6 s.
+  - Dat ligt aan de testopzet (doorsturen via Node naar een externe host), niet aan de site. Tegen `wrangler dev` slagen alle 10.
+- **Lighthouse mobiel, `/en/board/`**, drie runs met het commando uit de nulmeting:
+  - elke run Performance, Accessibility en Best Practices 100, SEO 66 (`noindex` op de preview);
+  - LCP 0,85 tot 0,86 s (mediaan 0,86 s; productie vóór deze PR 0,83 s), CLS 0, TBT 0 ms;
+  - overdracht 45,6 KB, op productie vóór deze PR 45,0 KB: het script en de extra hash in de HTML.
+
+**Na de merge (Kay):** open op je telefoon een oude link naar `https://coachboard.hardamkay.workers.dev/en/board/` met `#t=`, en kijk of je op `handballcoachboard.com` uitkomt met hetzelfde bord.
