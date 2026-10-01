@@ -221,9 +221,9 @@ Elk van deze punten verdient een eigen plan, zoals `AGENTS.md` ook vraagt:
 - [x] Fase 4b: Vangnet met budgetten
 - [x] Fase 5: Mobiele UX in de zaal
 - [x] Fase 6: Veiligheid en onderhoud (de eerste Dependabot-run volgt na de merge)
-- [ ] Fase 7: Lancering op handballcoachboard.com
+- [x] Fase 7: Lancering op handballcoachboard.com (een oude link op de telefoon testen volgt na de merge van 7b)
   - [x] 7a: domein live
-  - [ ] 7b: workers.dev doorsturen
+  - [x] 7b: workers.dev doorsturen
 - [ ] Fase 8: Meten in productie
 
 ## Startprompts

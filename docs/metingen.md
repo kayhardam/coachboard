@@ -799,3 +799,19 @@ Het script zit in de HTML van het bord, niet in `_astro/`; vandaar +0,2 KB HTML.
 |---|---|
 | Hostnaam in het script fout (`…workers.dev.invalid`) | tests 1, 2 en 3 falen (Pixel 7) |
 | Editor neemt `#own=` altijd over, ook als er al een bord is | test 3 faalt (Pixel 7) |
+
+### Preview-URL
+
+`https://fase-7b-doorsturen-coachboard.hardamkay.workers.dev`, 1 oktober 2026.
+
+- **`security.spec.ts` met `E2E_BASE_URL` = de preview:** 42 van 42 geslaagd. Het nieuwe inline script geeft dus geen CSP-meldingen.
+- **De preview stuurt niet door.** Het bord opent met `#t=` op de preview-host zelf, in beide browsers, zonder routes.
+- **`move.spec.ts` met `E2E_BASE_URL` = de preview:** 8 van 10 geslaagd. Twee tests falen op Pixel 7, elke run opnieuw. Ze openen direct een bordpagina op een gerouteerde host en wachten 5 s op de editor.
+  - Gemeten: een paar van de `route.fetch()`-verzoeken vanuit Node naar de preview duren elk ongeveer 5,3 s, de rest 60 tot 110 ms. De editor verschijnt na ongeveer 6 s.
+  - Dat ligt aan de testopzet (doorsturen via Node naar een externe host), niet aan de site. Tegen `wrangler dev` slagen alle 10.
+- **Lighthouse mobiel, `/en/board/`**, drie runs met het commando uit de nulmeting:
+  - elke run Performance, Accessibility en Best Practices 100, SEO 66 (`noindex` op de preview);
+  - LCP 0,85 tot 0,86 s (mediaan 0,86 s; productie vóór deze PR 0,83 s), CLS 0, TBT 0 ms;
+  - overdracht 45,6 KB, op productie vóór deze PR 45,0 KB: het script en de extra hash in de HTML.
+
+**Na de merge (Kay):** open op je telefoon een oude link naar `https://coachboard.hardamkay.workers.dev/en/board/` met `#t=`, en kijk of je op `handballcoachboard.com` uitkomt met hetzelfde bord.
