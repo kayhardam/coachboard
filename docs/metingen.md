@@ -705,6 +705,13 @@ Kay heeft `handballcoachboard.com` gekocht bij Cloudflare Registrar. Deze PR zet
 - **Controle** (tijdelijk, niet gecommit): zonder de HSTS-regel in `_headers` falen 9 van de 21 tests in `security.spec.ts` (Pixel 7). Dat is de headertest op elke pagina behalve de 404, die de headers overslaat (bevinding 15).
 - `npx wrangler deploy --dry-run` slaagt. De dry-run controleert de route niet tegen het account. Volgens de broncode van Wrangler 4.141 gebruikt `wrangler preview` alleen routes met `previews_enabled`, dus de route raakt de previews niet.
 
+### Preview-URL
+
+`https://fase-7a-domein-coachboard.hardamkay.workers.dev`, 1 oktober 2026:
+
+- `curl -I /en/`: `strict-transport-security: max-age=31536000`, plus de zes headers uit Fase 6 (en `x-robots-tag: noindex`, zoals op elke preview);
+- `E2E_BASE_URL=<preview-URL> npx playwright test e2e/security.spec.ts`: 42 van 42 geslaagd (Pixel 7 en iPhone 15). Zo is `E2E_BASE_URL` getest vóór de run tegen productie.
+
 ### Na de livegang
 
 Volgt na de merge, en komt in de PR van 7b:
