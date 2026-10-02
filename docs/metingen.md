@@ -1097,3 +1097,14 @@ Een inhoudsfix vóór Fase 9, in `src/lib/board/defaults.ts`. Drie spelers staan
 **Groottes** (gzip -9, vóór `main` @ `7bda591`, en na): `/en/` 4434 → 4436 bytes, `/en/board/` 5556 → 5556, `BoardEditor`-chunk 11092 → 11091. `npm run budget` geeft dezelfde tabel.
 
 **Tests:** `npm run verify` groen: 9 testbestanden met 94 tests (was 93). `npm run e2e`: 179 geslaagd, 1 overgeslagen, zoals vóór. In `e2e/reach.spec.ts` klopte alleen een comment niet meer (de afstand tussen cirkelspeler en verdediger, 23 → 20 dm).
+
+### LB en RB naar 3,0 m van de zijlijn (vervolg op #19)
+
+LB en RB staan een halve meter breder: LB van [35, 118] naar [30, 118], RB van [165, 118] naar [170, 118]. Dat is 3,0 m van de zijlijn (was 3,5 m), op dezelfde diepte (11,8 m van het doel). De rest van de opstelling is gelijk.
+
+- Dezelfde regels als hierboven: `src/lib/board/fixtures/` is niet aangeraakt, en deellinks en het eigen bord houden hun posities. Alleen een nieuw of gereset bord krijgt de nieuwe plek.
+- In de HTML van `/en/` en de bordpagina's veranderen alleen de `translate()`'s van LB en RB.
+
+**Groottes** (gzip -9, vóór `main` @ `d360502`, en na): `/en/` 4436 → 4436 bytes, `/en/board/` 5556 → 5557, `BoardEditor`-chunk 11091 → 11090. `npm run budget` geeft dezelfde tabel.
+
+**Tests:** `npm run verify` groen: 9 testbestanden met 94 tests. `npm run e2e`: 179 geslaagd, 1 overgeslagen, zoals vóór.
