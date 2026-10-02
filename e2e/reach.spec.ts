@@ -38,7 +38,7 @@ test("a press 21 px beside a player on the full court drags that player", async 
 
 test("between two players, the nearer one moves", async ({ page }) => {
   await fullCourt(page);
-  // The pivot (5) and the defender left of it (9) are about 23 dm apart.
+  // The pivot (5) and the defender left of it (9) are 20 dm apart.
   const pivot = await centre(page, 5);
   const defender = await centre(page, 9);
   const before = { pivot: await transform(page, 5), defender: await transform(page, 9) };
