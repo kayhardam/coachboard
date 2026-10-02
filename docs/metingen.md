@@ -859,7 +859,8 @@ Het script zit in de HTML van het bord, niet in `_astro/`; vandaar +0,2 KB HTML.
 ### Wat er veranderd is
 
 - **Cloudflare Web Analytics, alleen op de bordpagina's** (besluit Kay, variant B).
-  - `src/components/Beacon.astro` zet de beacon als laatste in `<body>`, met `defer`. Het token staat in `src/data/analytics.ts`; het is openbaar.
+  - `src/components/Beacon.astro` zet de beacon als laatste in `<body>`, als `type="module"`, zoals het snippet van Cloudflare. Het token staat in `src/data/analytics.ts`; het is openbaar.
+  - Eerst stond er `defer`. Kay vroeg om de vorm van het snippet over te nemen, zodat de beacon blijft werken als Cloudflare hem aanpast. Een module-script wordt net zo uitgesteld als `defer`, maar wordt met CORS opgehaald. Cloudflare stuurt `Access-Control-Allow-Origin: *` mee (gecontroleerd met `curl`).
   - `"spa": false`: anders telt de beacon in Chromium elke `history.replaceState()` als paginaweergave, dus elke bewerking (gevonden in de code van de beacon: hij luistert naar het `navigate`-event van de Navigation API).
   - Contentpagina's laden nog steeds geen JavaScript.
 - **Drie bordpagina's per taal**, alle drie via `src/components/board/BoardPage.astro`:
@@ -900,12 +901,12 @@ Nee. De volgorde in `dist/en/board/index.html`:
 | 1 | twee inline scripts van Astro (`astro:only` en `<astro-island>`) | direct, tijdens het parsen |
 | 2 | `<astro-island … await-children>` | haalt de editor op met een dynamische `import()` zodra zijn inhoud er is (`astro:end`) |
 | 3 | `<script type="module">` (doorsturen vanaf workers.dev, alleen op `/en/board/`) | uitgesteld, in volgorde |
-| 4 | `<script defer src="…beacon.min.js">` | uitgesteld, als laatste |
+| 4 | `<script type="module" src="…beacon.min.js">` | uitgesteld, als laatste |
 
 - Een dynamische `import()` staat niet in de rij met uitgestelde scripts, dus de editor wacht nergens op.
 - Wel wachten `DOMContentLoaded` en `load` op het downloaden van de beacon. Het bord gebruikt die events niet.
 - **Getest:** `e2e/analytics.spec.ts` houdt de beacon voor altijd tegen, op alle drie de paden. Het bord laadt een gedeeld bord, een speler is te slepen en de adresbalk krijgt de nieuwe `#t=`.
-- Daarom is `async` niet nodig. Ook niet om de beacon pas na het laden in te voegen.
+- Daarom is `async` niet nodig. Ook niet om de beacon pas na het laden in te voegen. Met `type="module"` blijft dit zo: een module-script staat in dezelfde rij als `defer`.
 
 ### Groottes
 
@@ -937,7 +938,7 @@ De QR-code blijft even groot.
 
 - **Nieuw: `e2e/analytics.spec.ts`**, 4 tests per browser:
   - op `/en/board/`, `/link/` en `/qr/` laadt en werkt het bord terwijl de beacon nooit aankomt;
-  - de echte beacon (opgehaald bij Cloudflare, met een testtoken) verstuurt geen `#t=`, geen deel van de link en geen query. De `location` is `…/en/board/link/`, en er zijn geen CSP-meldingen, geen cookies en alleen `coachboard.board` in de opslag. In WebKit is de inhoud van `sendBeacon()` niet te zien voor de route; daar telt de inhoud van de XHR's.
+  - de echte beacon (opgehaald bij Cloudflare, met het echte token) verstuurt geen `#t=`, geen deel van de link en geen query. De `location` is `…/en/board/link/`, `siteToken` is het token uit `src/data/analytics.ts`, en er zijn geen CSP-meldingen, geen cookies en alleen `coachboard.board` in de opslag. In WebKit is de inhoud van `sendBeacon()` niet te zien voor de route; daar telt de inhoud van de XHR's.
 - **`e2e/helpers.ts` exporteert `test`**, die de beacon in elke test beantwoordt met een leeg script, en het eindpunt met 204. Geen test stuurt dus data naar het echte dashboard, ook niet met `E2E_BASE_URL` tegen productie. Alle specs importeren `test` en `expect` nu daaruit.
 - **`e2e/security.spec.ts`:**
   - `script-src` per pagina: `'self'` voorop, hashes, en alleen op de bordpagina's de beacon; `connect-src` alleen daar;
@@ -1003,8 +1004,11 @@ Onderzocht voor besluit 1, niet gekozen.
 Elke maand één tabel, gelezen in het Web Analytics-dashboard, gefilterd op host `handballcoachboard.com`.
 
 - **Aantal metingen:** zet bij elke p75 het aantal metingen (n) waarop hij rust. Toont het dashboard dat niet, noteer dan het aantal paginaweergaven met hetzelfde filter, en schrijf erbij dat n dat getal of lager is.
-- **Minimum:** onder **n = 100** per meetwaarde en per groep (iOS of Android) noteren we de p75, maar trekken we geen conclusie. Bij p75 uit minder dan 100 metingen schuift één trage zaal of één slecht netwerk de waarde al ver op. Er zijn nu twee gebruikers.
-- **Steekproef:** na 7 dagen bewaart Cloudflare ongeveer 10% van de metingen. Een maandcijfer van een volle maand rust dus op een steekproef. Noteer daarom ook of n uit de laatste 7 dagen komt (alle metingen) of van langer geleden (steekproef).
+- **Telling of schatting:** na 7 dagen bewaart Cloudflare ongeveer 10% van de metingen. Over de laatste 7 dagen is n dus een echte telling. Gaat de periode verder terug, dan is n waarschijnlijk een schatting die uit de steekproef is teruggerekend: een getoonde 100 kan dan zo'n 10 echte metingen zijn.
+  - Of het dashboard terugrekent en of het een melding over sampling toont, is nog niet nagegaan. Controleer dat bij de eerste maandmeting.
+  - Tot het tegendeel blijkt geldt: bij een schatting deel je n door 10 (of door de factor die het dashboard noemt).
+- **Minimum:** onder **100 echte metingen** per meetwaarde en per groep (iOS of Android) noteren we de p75, maar trekken we geen conclusie. Bij p75 uit minder dan 100 metingen schuift één trage zaal of één slecht netwerk de waarde al ver op. Er zijn nu twee gebruikers.
+- **Echte tellingen erbij:** lees op de dag van de maandmeting ook de laatste 7 dagen af. Die rusten op alle metingen, dus daar is n een echte telling.
 - **CLS komt alleen uit Chromium**, dus niet van iPhones. Of Safari LCP en INP doorgeeft, hangt af van de versie; het dashboard laat het zien (filter op besturingssysteem).
 
 Sjabloon:
@@ -1019,19 +1023,20 @@ Sjabloon:
 | Paginaweergaven /en/board/qr/ (QR-code gescand) | |
 | Verwijzers naar /en/board/ (top 3) | |
 
-| Meetwaarde | iOS p75 | iOS n | Android p75 | Android n | Conclusie (alleen bij n ≥ 100) |
-|---|--:|--:|--:|--:|---|
-| LCP | | | | | |
-| INP | | | | | |
-| CLS | — | — | | | |
+Per periode een tabel: de hele maand, en de laatste 7 dagen.
 
-Steekproef: ja / nee. Opmerkingen:
+| Meetwaarde | iOS p75 | iOS n | Android p75 | Android n | n is telling of schatting | Echte n (schatting ÷ 10) | Conclusie (alleen bij echte n ≥ 100) |
+|---|--:|--:|--:|--:|---|--:|---|
+| LCP | | | | | | | |
+| INP | | | | | | | |
+| CLS | — | — | | | | | |
+
+Melding over sampling in het dashboard: ja (factor …) / nee. Opmerkingen:
 ```
 
 ### Open
 
-- **Voor de merge (Kay):**
-  - Web Analytics (RUM) staat op "Enable with JS Snippet installation";
+- **Voorwaarden voor de merge, allebei vervuld (2 oktober 2026):**
+  - Web Analytics (RUM) staat op "Enable with JS Snippet installation" (Kay). Eerder stond hij op "Enable, excluding visitor data in the EU", en dan injecteert Cloudflare de beacon op elke pagina voor bezoekers buiten de EU;
   - het token staat in `analyticsToken` in `src/data/analytics.ts`.
-- **Nu (2 oktober 2026)** staat RUM op "Enable, excluding visitor data in the EU". Cloudflare injecteert de beacon dan op elke pagina, voor bezoekers buiten de EU. Vanuit Nederland is dat niet te zien, dus `curl` en Lighthouse van hieruit zeggen er niets over.
-- **Zonder token** laadt de beacon wel, maar verstuurt hij niets.
+- **Na de merge:** `security.spec.ts` tegen productie. Die laat zien of Cloudflare echt niets meer injecteert, maar alleen voor een bezoeker uit Nederland.
