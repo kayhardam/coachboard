@@ -17,7 +17,10 @@ export const test = base.extend<{ beacon: { sent: string[] } }>({
   beacon: [
     async ({ context }, use) => {
       const sent: string[] = [];
-      await context.route(beaconSrc, (route) => route.fulfill({ contentType: "text/javascript", body: "" }));
+      // A module script from another origin needs CORS, as Cloudflare sends it.
+      await context.route(beaconSrc, (route) =>
+        route.fulfill({ contentType: "text/javascript", headers: { "access-control-allow-origin": "*" }, body: "" }),
+      );
       await context.route(`${beaconEndpoint}/**`, (route) => {
         sent.push(route.request().postData() ?? "");
         return route.fulfill({ status: 204 });

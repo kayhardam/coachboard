@@ -78,7 +78,7 @@ describe("checkBudget", () => {
   });
 
   it("allows the beacon once on a board page and no other script from another origin", () => {
-    const beacon = `<script defer src="${beaconSrc}" data-cf-beacon='{"token":""}'></script>`;
+    const beacon = `<script type="module" src="${beaconSrc}" data-cf-beacon='{"token":""}'></script>`;
     const { rows, errors } = build({
       "en/board/index.html": beacon,
       "en/board/qr/index.html": `${beacon}${beacon}`,

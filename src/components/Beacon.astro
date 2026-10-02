@@ -3,8 +3,10 @@
 // storage. The beacon strips the query and the hash (#t=) from what it sends.
 // Only the board pages load it; content pages ship no JS.
 //
-// - Last in <body> with defer: the editor loads through <astro-island> and a
-//   dynamic import, which never wait for a deferred script.
+// - Last in <body>, as type="module" like Cloudflare's own snippet. A module
+//   script is deferred, like defer; the editor loads through <astro-island>
+//   and a dynamic import, which never wait for it. As a module it is fetched
+//   with CORS; Cloudflare sends Access-Control-Allow-Origin: *.
 // - "spa": false. Otherwise, in Chromium, the beacon counts every
 //   history.replaceState() (each edit writes #t= to the address bar) as a page view.
 // - The page's CSP must allow it: BoardPage.astro adds its script and endpoint
@@ -14,4 +16,4 @@ import { analyticsToken, beaconSrc } from "../data/analytics";
 const config = JSON.stringify({ token: analyticsToken, spa: false });
 ---
 
-<script is:inline defer src={beaconSrc} data-cf-beacon={config}></script>
+<script is:inline type="module" src={beaconSrc} data-cf-beacon={config}></script>

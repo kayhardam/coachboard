@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
-import type { Page } from "@playwright/test";
-import { beaconSrc } from "../src/data/analytics";
+import { analyticsToken, beaconSrc } from "../src/data/analytics";
 import type { Board } from "../src/lib/board/format";
 import { dragPlayer, expect, expectBoard, linkInAddressBar, openBoard, STORAGE_KEY, test, watchViolations } from "./helpers";
 
@@ -24,19 +23,9 @@ for (const path of ["/en/board/", "/en/board/link/", "/en/board/qr/"]) {
   });
 }
 
-/** Serves the page with a test token, so the beacon runs: without a token it does nothing. */
-async function withToken(page: Page) {
-  await page.route(/\/board\/(?:link\/|qr\/)?(?:\?.*)?$/, async (route) => {
-    const response = await route.fetch();
-    const body = (await response.text()).replace(/(&quot;token&quot;:&quot;)[^&]*(&quot;)/, "$1e2e-token$2");
-    await route.fulfill({ response, body });
-  });
-}
-
 test("the real beacon sends no board and stores nothing", async ({ page, context, beacon }) => {
   // This test fetches the real beacon from Cloudflare; its endpoint stays answered by the fixture.
   await page.route(beaconSrc, async (route) => route.fulfill({ response: await route.fetch() }));
-  await withToken(page);
   const violations = await watchViolations(page);
 
   await openBoard(page, `?via=test#t=${fixture.link}`, "/en/board/link/");
@@ -57,7 +46,7 @@ test("the real beacon sends no board and stores nothing", async ({ page, context
     expect(body).not.toContain("#t=");
     expect(body).not.toContain(fixture.link.slice(2, 40));
     expect(body).not.toContain("via=test");
-    expect(JSON.parse(body)).toMatchObject({ location: `${origin}/en/board/link/` });
+    expect(JSON.parse(body)).toMatchObject({ location: `${origin}/en/board/link/`, siteToken: analyticsToken });
   }
   expect(await context.cookies()).toEqual([]);
 });
