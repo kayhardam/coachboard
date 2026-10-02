@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { defaultBoard } from "./defaults";
 import type { Frame } from "./format";
 import { HIT_R } from "./geometry";
 import { nearestPiece, reach } from "./hit";
@@ -43,5 +44,16 @@ describe("nearestPiece", () => {
   it("reaches exactly as far as the radius", () => {
     expect(nearestPiece(frame, [150, 120], 20)).toEqual({ kind: "player", index: 2 });
     expect(nearestPiece(frame, [150, 120.5], 20)).toBeNull();
+  });
+
+  it("gives the pivot in the default lineup a tap on its edge beside a defender", () => {
+    const lineup = defaultBoard.frames[0]!;
+    const pivot = lineup.players.findIndex((p) => p.label === "P");
+    expect(lineup.players[pivot]!.at).toEqual([100, 66]);
+    expect(lineup.players).toContainEqual({ team: "d", at: [80, 66] });
+    // [91, 66] is PLAYER_R from the pivot and 11 dm from the defender.
+    for (const radius of [reach(1.75), reach(1.1)]) {
+      expect(nearestPiece(lineup, [91, 66], radius)).toEqual({ kind: "player", index: pivot });
+    }
   });
 });

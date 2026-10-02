@@ -1078,3 +1078,22 @@ Vergeleken met vóór 8a (productie, 2 oktober 2026: `/en/board/` mediaan Perfor
 - **`/en/`:** geen verzoek naar Cloudflare Insights en geen JS, zoals bedoeld. Gelijk aan Fase 5 (0,82 s).
 
 **Let op voor 8b:** deze drie Lighthouse-runs stuurden echte beacons. Dat zijn drie paginaweergaven van `/en/board/` op 2 oktober 2026, uit Nederland, met headless Chrome op macOS en een gesimuleerd mobiel scherm. De e2e-tests sturen niets: hun beacon is een leeg script.
+
+## Standaardopstelling (2 oktober 2026)
+
+Een inhoudsfix vóór Fase 9, in `src/lib/board/defaults.ts`. Drie spelers staan anders:
+
+| Speler | Was | Nu | Waarom |
+|---|---|---|---|
+| P (cirkelspeler) | [100, 78] | [100, 66] | in de verdediging: precies tussen de twee middelste verdedigers ([80, 66] en [120, 66]) en op hun diepte |
+| LB | [45, 118] | [35, 118] | breder, zelfde diepte |
+| RB | [155, 118] | [165, 118] | breder, zelfde diepte |
+
+- **Alleen een nieuw of gereset bord** krijgt de nieuwe opstelling: een bord zonder `#t=`, eigen bord of `#own=`, en "Default lineup". Deellinks en het eigen bord in `localStorage` houden hun posities.
+- **`src/lib/board/fixtures/` is niet aangeraakt.** `v1-default.json` is een oude link en decodeert nog steeds naar de oude opstelling.
+- **Waar het te zien is:** de homepage (`/en/`), de statische fallback van de bordpagina's (`BoardPage.astro`, op `/en/board/`, `/link/` en `/qr/`) en het bord zelf (`BoardEditor`). In de HTML veranderen alleen de drie `translate()`'s van die spelers. `public/og-default.png` tekent zijn eigen spelers en verandert niet.
+- **Een tik op de rand:** de cirkelspeler en de verdedigers naast hem staan nu 20 dm uit elkaar (hart op hart), met 2 dm tussen de cirkels. `hit.test.ts` legt vast dat een tik op [91, 66], de rand van de cirkelspeler aan de kant van een verdediger, de cirkelspeler pakt (9 dm tegen 11 dm), op het halve en het hele veld.
+
+**Groottes** (gzip -9, vóór `main` @ `7bda591`, en na): `/en/` 4434 → 4436 bytes, `/en/board/` 5556 → 5556, `BoardEditor`-chunk 11092 → 11091. `npm run budget` geeft dezelfde tabel.
+
+**Tests:** `npm run verify` groen: 9 testbestanden met 94 tests (was 93). `npm run e2e`: 179 geslaagd, 1 overgeslagen, zoals vóór. In `e2e/reach.spec.ts` klopte alleen een comment niet meer (de afstand tussen cirkelspeler en verdediger, 23 → 20 dm).
