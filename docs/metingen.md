@@ -815,3 +815,41 @@ Het script zit in de HTML van het bord, niet in `_astro/`; vandaar +0,2 KB HTML.
   - overdracht 45,6 KB, op productie vóór deze PR 45,0 KB: het script en de extra hash in de HTML.
 
 **Na de merge (Kay):** open op je telefoon een oude link naar `https://coachboard.hardamkay.workers.dev/en/board/` met `#t=`, en kijk of je op `handballcoachboard.com` uitkomt met hetzelfde bord.
+
+### Productie (na de merge van PR #15)
+
+`main` @ `0550cd6`, gemerged en door Workers Builds uitgerold op 1 oktober 2026. De bordpagina op `coachboard.hardamkay.workers.dev` geeft 200 met het script erin; het doorsturen gebeurt in de browser, dus de server ziet `#t=` niet.
+
+**Doorsturen tegen de echte hosts.** Een kopie van `e2e/move.spec.ts` zonder `context.route()`, tijdelijk en niet gecommit, elke test in een verse browsercontext. Er is nog geen Nederlands bord (`/nl/board/` geeft 404), dus geval 1 alleen op `/en/board/`.
+
+| # | Geval | Verwacht | Pixel 7 | iPhone 15 |
+|---|---|---|---|---|
+| 1 | workers.dev-link met `#t=` (fixture `v1-full-lineup`) | op het domein, zelfde `#t=` en bord | ✅ | ✅ |
+| 2 | zonder `#t=`, niets opgeslagen | op het domein, standaardopstelling | ✅ | ✅ |
+| 3 | zonder `#t=`, eigen bord op workers.dev | gaat mee als `#own=`, opgeslagen, adresbalk krijgt `#t=` | ✅ | ✅ |
+| 4 | domein heeft al een bord | `#own=` genegeerd, opslag ongewijzigd, geen melding | ✅ | ✅ |
+| 5 | preview-URL met `#t=` | blijft op de preview-host | ✅ | ✅ |
+| 6 | `/en/` op workers.dev | stuurt niet door | ✅ | ✅ |
+
+**Geval 7: `#t=` én een eigen bord op workers.dev**, in één browsercontext. Zonder vooraf verwachte uitkomst; beide browsers gaven hetzelfde.
+
+1. Eigen bord opgeslagen op workers.dev (via `/en/`), domein leeg.
+2. `OLD/en/board/#t=<fixture>` opent op het domein met de fixture en `#t=`. `#own=` gaat niet mee: het script neemt het eigen bord alleen mee zonder `#t=`. De opslag van het domein blijft leeg, want een bord uit een `#t=`-link wordt pas bij de eerste wijziging bewaard.
+3. Daarna `OLD/en/board/` zonder `#t=`:
+   - **zonder wijziging in stap 2 (geval 7):** het eigen bord gaat alsnog mee en wordt op het domein opgeslagen;
+   - **met één wijziging in stap 2 (7′, een speler verschoven):** het domein heeft nu een bord (de aangepaste fixture), dus het eigen bord wordt genegeerd, zoals in geval 4. **Het blijft achter op workers.dev.**
+
+**Bekend en geaccepteerd gevolg (besluit Kay, geen 7c):** wie eerst een gedeelde link opent en daar iets aan verandert, krijgt het eigen bord van workers.dev niet meer mee naar het domein; het blijft op workers.dev achter. Daar raakt niemand het meer aan, want het bord stuurt meteen door, en Safari op iOS wist de opslag van een site na zeven dagen Safari-gebruik zonder interactie op die site. Reden om het zo te laten: een gedeeld bord aanpassen overschrijft het eigen bord ook zonder verhuizing, en het gaat om weinig gebruikers.
+
+**`security.spec.ts` tegen `https://handballcoachboard.com`** (build van `0550cd6`): 42 van 42 geslaagd. De CSP-`<meta>` van het bord heeft 8 script-hashes, zoals op de preview.
+
+**Controles van Kay** (1 oktober 2026):
+
+| Controle | Resultaat |
+|---|---|
+| Oude workers.dev-link met `#t=` op een echte telefoon | werkt: op het domein met hetzelfde bord |
+| Testmail naar `contact@handballcoachboard.com` (uit 7a) | aangekomen |
+| Linkvoorbeeld in WhatsApp (uit 7a), met links naar `handballcoachboard.com` | werkt: titel, beschrijving en afbeelding (`og-default.png`), in het grote en in het compacte kaartje |
+
+- Een eerdere test met een versie-preview-URL (`d30ab823-…`) telt niet mee.
+- **Opmerking voor een nieuwe versie van `og-default.png`:** in het compacte kaartje snijdt WhatsApp de afbeelding vierkant bij vanuit het midden, waardoor de tekst half wegvalt.
