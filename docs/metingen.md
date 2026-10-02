@@ -999,6 +999,12 @@ Onderzocht voor besluit 1, niet gekozen.
   - de overdracht is ongeveer 11 KB groter: de beacon is 10,3 KB over het netwerk;
   - Accessibility en Best Practices zijn 100. SEO is 66, en 63 op `/link/`: de preview stuurt `noindex`, en `/link/` heeft zelf ook `noindex`.
 
+**Na de overstap naar `type="module"` en het echte token** (`0e46a58`, 2 oktober 2026). `analytics.spec.ts` en `security.spec.ts` met `E2E_BASE_URL` = de preview: 82 van 82 geslaagd, in beide browsers.
+
+- De echte beacon laadt als module en stuurt het token van de site als `siteToken`.
+- Er gaan geen `#t=` en geen query mee.
+- Er zijn geen CSP-meldingen en geen andere scripts van een ander domein.
+
 ### Maandmeting (vanaf 8b)
 
 Elke maand één tabel, gelezen in het Web Analytics-dashboard, gefilterd op host `handballcoachboard.com`.
