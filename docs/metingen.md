@@ -978,6 +978,26 @@ Onderzocht voor besluit 1, niet gekozen.
 - **Per pad alleen via de GraphQL API** (`httpRequestsAdaptiveGroups`); hoe ver die op Free teruggaat, staat niet in de docs en is niet nagegaan.
 - **Geen Core Web Vitals**, en de previews van WhatsApp en crawlers tellen als bezoek.
 
+### Preview-URL
+
+`https://fase-8a-statistieken-coachboard.hardamkay.workers.dev`, 2 oktober 2026, nog zonder token. CI (verify, e2e, Workers Builds) is groen.
+
+- **`security.spec.ts`, `analytics.spec.ts` en `share.spec.ts` met `E2E_BASE_URL` = de preview:** 93 geslaagd, 1 overgeslagen.
+  - Geen CSP-meldingen.
+  - Geen script van een ander domein behalve de beacon op de drie bordpagina's.
+  - De echte beacon verstuurt geen `#t=`.
+- **Lighthouse mobiel**, drie runs per URL met het commando uit de nulmeting:
+
+| URL | Performance | LCP (mediaan) | CLS | TBT | Overdracht | Verzoeken |
+|---|--:|--:|--:|--:|--:|--:|
+| `/en/board/` | 100, 100, 100 | 0,87 s | 0 | 0–5 ms | 56,1–56,8 KB | 8–9 |
+| `/en/board/link/` | 100, 100, 100 | 0,86 s | 0 | 4–5 ms | 56,1–56,7 KB | 8–9 |
+
+- **Vergeleken met productie vóór deze PR** (mediaan Performance 99, LCP 0,99 s, 45,3 KB, 7 verzoeken):
+  - LCP en Performance zijn niet slechter; de verschillen vallen binnen de spreiding;
+  - de overdracht is ongeveer 11 KB groter: de beacon is 10,3 KB over het netwerk;
+  - Accessibility en Best Practices zijn 100. SEO is 66, en 63 op `/link/`: de preview stuurt `noindex`, en `/link/` heeft zelf ook `noindex`.
+
 ### Maandmeting (vanaf 8b)
 
 Elke maand één tabel, gelezen in het Web Analytics-dashboard, gefilterd op host `handballcoachboard.com`.
