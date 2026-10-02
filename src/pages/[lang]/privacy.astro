@@ -12,7 +12,7 @@ const { lang } = Astro.params;
 <BaseLayout title={t(lang, "privacy.title")} description={t(lang, "privacy.description")}>
   <article class="container">
     <h1>{t(lang, "privacy.heading")}</h1>
-    <p class="updated">Last updated: 22 September 2026</p>
+    <p class="updated">Last updated: 2 October 2026</p>
 
     <p class="lead">
       Handball Coachboard sets no cookies, has no accounts and doesn't collect personal data.
@@ -27,8 +27,8 @@ const { lang } = Astro.params;
 
     <h2>Cookies</h2>
     <p>
-      This site sets no cookies, first-party or third-party, and loads no advertising or tracking
-      scripts. That's why there is no cookie banner.
+      This site sets no cookies, first-party or third-party, and loads no advertising. The
+      statistics below work without cookies too. That's why there is no cookie banner.
     </p>
 
     <h2>The board</h2>
@@ -53,9 +53,22 @@ const { lang } = Astro.params;
 
     <h2>Statistics</h2>
     <p>
-      We don't run any statistics right now. If we add them later, they will be cookieless and
-      anonymous: page views are counted without cookies, without storing IP addresses and without
-      building profiles. This page will then name the service we use.
+      To learn whether trainers use the board and how fast it is on their phones, the board pages
+      load <a href="https://www.cloudflare.com/web-analytics/" rel="noopener">Cloudflare Web
+        Analytics</a
+      >. The other pages load no script at all.
+    </p>
+    <p>
+      It counts page views and measures loading speed, without cookies, without anything stored
+      in your browser and without fingerprinting. It sends the address of the page without the
+      part after the <code>#</code> or <code>?</code>, so never your drawing; the page you came
+      from; your browser, operating system and device type; your country; and how fast the page
+      loaded and responded. Cloudflare drops your IP address at its nearest data center and
+      doesn't store it, and keeps the statistics for six months.
+    </p>
+    <p>
+      A shared link opens <code>/board/link/</code> and a QR code <code>/board/qr/</code>. That
+      tells us how often shared boards are opened, and nothing about what is on them.
     </p>
 
     <h2>Changes</h2>
