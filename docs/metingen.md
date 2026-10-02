@@ -1234,6 +1234,17 @@ Nagerekend met een eenmalig script (niet in de repo), met dezelfde compressie al
   - Elke zin van ongeveer 61 tekens kost ongeveer 47 tekens in de link.
   - De limiet op stappen en die op tekst per stap bepalen samen de grootte.
 - **Pas op met foutcorrectie M:** die maakt de code 2 tot 4 versies groter. Het bord gebruikt L.
+- **Limieten doorgerekend:** dezelfde borden (variant a, pad `/qr/`), met elke zin precies zo lang als de limiet.
+  - De zinnen zijn unieke woordreeksen uit een Nederlandse woordenlijst, zodat de compressie geen herhaling tussen stappen vindt.
+  - Bij 61 tekens geeft dat 1300 tekens tegen 1323 met de echte zinnen hierboven, dus de woordenlijst comprimeert ongeveer als echte tekst.
+
+  | Stappen | Zin ≤ 61 | Zin ≤ 80 | Zin ≤ 100 | Zin ≤ 140 |
+  |--:|--:|--:|--:|--:|
+  | 4 | 620 (v17) | 662 (v18) | 715 (v18) | 796 (v20) |
+  | 8 | 1002 (v22) | 1060 (v23) | 1140 (v24) | 1276 (v26) |
+  | 12 | 1300 (v26) | 1416 (v27) | 1496 (v28) | 1720 (v30) |
+
+  In tekens van de hele link, met de QR-versie bij foutcorrectie L tussen haakjes.
 - **Ter vergelijking:**
   - de grootste QR-code (versie 40, L) houdt op bij ongeveer 2950 tekens;
   - het formaat staat nu 4000 tekens payload toe (`MAX_PAYLOAD`).
