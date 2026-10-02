@@ -1167,6 +1167,16 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
   - met het budget op 5 en daarna op 7 faalt de test ("Expected: 5, Received: 6" en "Expected: 7, Received: 6");
   - de route met eigen bord zonder "Clear" faalt op de opstelling.
 
+### Doelen (besluit Kay, 2 oktober 2026)
+
+| Taak | Nulmeting (route) | Doel | `TAP_BUDGET` |
+|---|--:|--:|--:|
+| T1 | 6 handelingen | **5** | 6 |
+| T2, T3, T4 | — | zodra hun route bestaat | — |
+
+- **Het budget blijft 6** tot een fase de route echt korter maakt. Die fase verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
+- **Doelen in seconden** volgen na de stopwatch (geparkeerd).
+
 ### Per taak en toestel
 
 Leeg tot de metingen met mensen er zijn. "Route" is het aantal handelingen uit `e2e/tasks.spec.ts`.
@@ -1262,11 +1272,26 @@ Nagerekend met een eenmalig script (niet in de repo), met dezelfde compressie al
 
 ### Geparkeerd
 
-Deze punten wachten op testers en worden ingehaald vóór de fase die ze nodig heeft:
+Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die ze nodig heeft:
 
 - **De testronde van Fase 5,** op productie, met test 15 (stopwatch).
-- **De vier meettaken in seconden,** door Kay en door drie tot vijf trainers.
+- **De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a.
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
   - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (kaatsers).
 - **Eén aanval naar het eigen team sturen** en vragen wat ze zien.
-- **De scantest:** de QR-codes hierboven in de zaal scannen van telefoon naar telefoon, op 1 à 2 meter.
+- **De scantest,** vóór Fase 11: de QR-codes hierboven in de zaal scannen, op twee afstanden.
+  - Telefoon bij telefoon: scherm naar camera, zoals bij het doorgeven van een bord.
+  - Op de afstand waarop spelers in de zaal staan als de trainer zijn scherm laat zien.
+  - Noteer per code en afstand: scant hij, en na hoeveel seconden. Daarna kiest Kay de limieten van de link.
+- **De testlijst voor de telefoon (Fase 9).** De app verandert in Fase 9 niet; dit is wat de nulmeting met echte telefoons aanvult. Op productie (`https://handballcoachboard.com/en/board/`), per toestel (model, iOS/Android-versie, browser):
+
+  | # | Test | iPhone | Android |
+  |--:|---|:-:|:-:|
+  | 1 | T1 met de hand vanaf de standaardopstelling ("Run", twee looppijlen, "Pass", een pass, "Share"): 6 handelingen, zonder scrollen? | | |
+  | 2 | T1 met een eigen bord ("Clear" → "Default lineup" eerst): 8 handelingen? | | |
+  | 3 | T1 met de stopwatch, drie keer: de mediaan in seconden, tot "gedeeld" in de teamapp | | |
+  | 4 | De gedeelde link openen op een tweede telefoon: opent `/en/board/link/` met de drie pijlen? | | |
+  | 5 | De scantest hierboven, op beide afstanden | | |
+  | 6 | iPhone: Coachboard op het beginscherm zetten en dan een link uit WhatsApp openen. Opent hij in Safari of in de app? (Fase 12b) | | — |
+  | 7 | Android: na "Toevoegen aan startscherm" een bord tekenen in Chrome. Staat het ook in de geïnstalleerde app? (Fase 12b) | — | |
+
