@@ -17,8 +17,15 @@
   import { icons } from "../../lib/icons";
   import Court from "./Court.svelte";
 
-  /** `home`: the home page, linked from the bar in landscape, where the header is hidden. */
-  let { strings, home }: { strings: BoardStrings; home: string } = $props();
+  /**
+   * `home`: the home page, linked from the bar in landscape, where the header is hidden.
+   * `links`: the pages a shared link and a QR code open, so statistics can count them apart.
+   */
+  let {
+    strings,
+    home,
+    links,
+  }: { strings: BoardStrings; home: string; links: { link: string; qr: string } } = $props();
 
   type Tool = "move" | "attack" | "defence" | "ball" | "run" | "pass" | "dribble";
   type XY = [number, number];
@@ -344,12 +351,12 @@
 
   // ===== Sharing =====
 
-  async function shareUrl() {
-    return `${location.origin}${location.pathname}#t=${await encode(board)}`;
+  async function shareUrl(via: "link" | "qr") {
+    return `${location.origin}${links[via]}#t=${await encode(board)}`;
   }
 
   async function share() {
-    const url = await shareUrl();
+    const url = await shareUrl("link");
     if (navigator.share) {
       try {
         await navigator.share({ url, title: document.title });
@@ -376,7 +383,7 @@
       show(strings["board.qrFailed"]);
       return;
     }
-    qr = renderSVG(await shareUrl(), { ecc: "L", border: 2 });
+    qr = renderSVG(await shareUrl("qr"), { ecc: "L", border: 2 });
     qrDialog.showModal();
   }
 

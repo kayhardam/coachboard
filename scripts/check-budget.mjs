@@ -1,8 +1,12 @@
 // Checks the built site against size budgets. Run after `astro build`:
 //   node scripts/check-budget.mjs
 //
-// - Content pages (every page except <lang>/board/) ship no JavaScript: no
-//   <script> other than JSON-LD, no <astro-island>, no modulepreload.
+// - Content pages (every page except the board pages: <lang>/board/ and the
+//   pages for shared boards, <lang>/board/link/ and <lang>/board/qr/) ship no
+//   JavaScript: no <script> other than JSON-LD, no <astro-island>, no modulepreload.
+// - A board page loads JS from another origin only from EXTERNAL_SCRIPTS: the
+//   statistics beacon, at most once. It isn't in dist/, so it has no size here;
+//   docs/metingen.md records it.
 // - The board's JS: the files its page loads plus everything they import
 //   statically. Dynamic imports count as its lazy JS.
 // - All JS: every .js file in _astro/, so code moved into a lazy chunk still counts.
@@ -25,6 +29,10 @@ export const BUDGETS = {
   html: 6_500, // 5.5 KB on the board, the largest page
   png: 60_000, // 50.5 KB for og-default.png, the largest
 };
+
+// The one script from another origin, on the board pages only. The same URL as
+// beaconSrc in src/data/analytics.ts (check-budget.test.mjs compares them).
+export const EXTERNAL_SCRIPTS = ["https://static.cloudflareinsights.com/beacon.min.js"];
 
 const TAG = /<(script|astro-island|link)\b([^>]*)>/gi;
 const ATTR = /([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/g;
@@ -50,7 +58,8 @@ function attrs(source) {
 
 const gzipped = (path) => gzipSync(readFileSync(path)).length;
 
-const isBoard = (page) => /^[^/]+\/board\/index\.html$/.test(page);
+const isBoard = (page) => /^[^/]+\/board\/(?:(?:link|qr)\/)?index\.html$/.test(page);
+const isExternal = (url) => /^(?:[a-z]+:)?\/\//i.test(url);
 
 /**
  * @param {string} dist     directory with the built site
@@ -115,6 +124,7 @@ export function checkBudget(dist, budgets = BUDGETS) {
     const html = readFileSync(file, "utf8");
     const board = isBoard(page);
     const scripts = [];
+    const external = [];
     const stylesheets = [];
     const forbid = (found) => {
       contentScripts++;
@@ -127,7 +137,8 @@ export function checkBudget(dist, budgets = BUDGETS) {
       if (name === "script") {
         if (a.type?.toLowerCase() === "application/ld+json") continue;
         if (!board) forbid(`<script${source}>`);
-        if (a.src) scripts.push(a.src);
+        if (a.src && isExternal(a.src)) external.push(a.src);
+        else if (a.src) scripts.push(a.src);
       } else if (name === "astro-island") {
         if (!board) forbid("<astro-island>");
         for (const key of ["component-url", "renderer-url"]) if (a[key]) scripts.push(a[key]);
@@ -148,6 +159,10 @@ export function checkBudget(dist, budgets = BUDGETS) {
       const { eager, lazy } = importGraph(new Set(entries), url);
       measure("JS (gzip)", url, sum(eager), budgets.boardJs);
       measure("Lazy JS (gzip)", url, sum(lazy), budgets.lazyJs);
+      for (const src of external) {
+        if (!EXTERNAL_SCRIPTS.includes(src)) errors.push(`${url}: script from another origin: ${src}`);
+      }
+      measure("External scripts", url, external.length, EXTERNAL_SCRIPTS.length, "");
     }
 
     const css = stylesheets.map((href) => resolve(href, url)).filter(Boolean);
@@ -167,7 +182,7 @@ export function checkBudget(dist, budgets = BUDGETS) {
     measure("PNG", url, statSync(file).size, budgets.png);
   }
 
-  const order = ["JS (gzip)", "Lazy JS (gzip)", "All JS (gzip)", "Scripts", "CSS (gzip)", "HTML (gzip)", "PNG"];
+  const order = ["JS (gzip)", "Lazy JS (gzip)", "All JS (gzip)", "External scripts", "Scripts", "CSS (gzip)", "HTML (gzip)", "PNG"];
   rows.sort((a, b) => order.indexOf(a.budget) - order.indexOf(b.budget));
   return { rows, errors };
 }

@@ -3,7 +3,8 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { gzipSync } from "node:zlib";
 import { afterEach, describe, expect, it } from "vitest";
-import { BUDGETS, checkBudget, table } from "./check-budget.mjs";
+import { beaconSrc } from "../src/data/analytics.ts";
+import { BUDGETS, EXTERNAL_SCRIPTS, checkBudget, table } from "./check-budget.mjs";
 
 let dist;
 
@@ -58,6 +59,42 @@ describe("checkBudget", () => {
     expect(errors).toEqual([]);
     expect(row(rows, "Scripts").measured).toBe(0);
     expect(rows.filter((r) => r.budget === "JS (gzip)").map((r) => r.item)).toEqual(["/en/board/", "/nl/board/"]);
+  });
+
+  it("treats the pages for shared boards as board pages", () => {
+    const files = {
+      "_astro/Editor.js": editor,
+      "_astro/renderer.js": renderer,
+      "_astro/client.js": client,
+    };
+    for (const page of ["board/link", "board/qr"]) files[`en/${page}/index.html`] = island;
+    files["en/board/other/index.html"] = island;
+    const { rows, errors } = build(files);
+    expect(errors).toEqual([expect.stringMatching(/^\/en\/board\/other\/: content pages ship no JS/)]);
+    expect(rows.filter((r) => r.budget === "JS (gzip)").map((r) => r.item)).toEqual([
+      "/en/board/link/",
+      "/en/board/qr/",
+    ]);
+  });
+
+  it("allows the beacon once on a board page and no other script from another origin", () => {
+    const beacon = `<script defer src="${beaconSrc}" data-cf-beacon='{"token":""}'></script>`;
+    const { rows, errors } = build({
+      "en/board/index.html": beacon,
+      "en/board/qr/index.html": `${beacon}${beacon}`,
+      "en/board/link/index.html": `<script src="https://cdn.example.com/x.js"></script>`,
+      "en/about/index.html": beacon,
+    });
+    expect(errors).toEqual([
+      expect.stringMatching(/^\/en\/about\/: content pages ship no JS/),
+      "/en/board/link/: script from another origin: https://cdn.example.com/x.js",
+      "External scripts /en/board/qr/: 2 is over the budget of 1",
+    ]);
+    expect(row(rows, "External scripts", "/en/board/")).toMatchObject({ measured: 1, limit: 1 });
+  });
+
+  it("allows the same beacon URL as the site loads", () => {
+    expect(EXTERNAL_SCRIPTS).toEqual([beaconSrc]);
   });
 
   it("counts the board's static imports once and its dynamic imports as lazy JS", () => {

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers";
 
 // These rely on wrangler.jsonc and public/_redirects, which `wrangler dev` applies.
 

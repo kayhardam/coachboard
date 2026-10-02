@@ -1,5 +1,7 @@
-import { expect, test } from "@playwright/test";
-import { openBoard } from "./helpers";
+import { readFileSync } from "node:fs";
+import { renderSVG } from "uqr";
+import type { Board } from "../src/lib/board/format";
+import { dragPlayer, expect, expectBoard, linkInAddressBar, openBoard, test } from "./helpers";
 
 test("the QR dialog shows a QR code", async ({ page }) => {
   await openBoard(page);
@@ -27,8 +29,33 @@ test("without navigator.share, Share copies the link", async ({ page }) => {
   await expect(page.getByRole("status")).toContainText("Link copied.");
   const copied = await page.evaluate(() => (window as unknown as { copied: string[] }).copied);
   expect(copied).toHaveLength(1);
-  expect(copied[0]).toMatch(/^http:\/\/127\.0\.0\.1:8787\/en\/board\/#t=1\./);
+  // A shared link opens /board/link/, so statistics count it apart from the board.
+  expect(new URL(copied[0]!, page.url()).pathname).toBe("/en/board/link/");
+  expect(copied[0]).toMatch(/#t=1\./);
 });
+
+test("the QR code holds the board's link on /board/qr/", async ({ page }) => {
+  await openBoard(page);
+  await dragPlayer(page, 5, 30, 30);
+  const { hash, origin } = new URL(await linkInAddressBar(page));
+  await page.getByRole("button", { name: "QR code" }).click();
+  const modules = await page.getByRole("dialog", { name: "QR code" }).locator(".code path").getAttribute("d");
+  // The same browser encodes the address bar and the QR code, so the bytes match.
+  const expected = renderSVG(`${origin}/en/board/qr/${hash}`, { ecc: "L", border: 2 });
+  expect(modules).toBe(expected.match(/ d="([^"]+)"/)![1]);
+});
+
+for (const via of ["link", "qr"]) {
+  test(`a shared board opens on /board/${via}/, out of search results`, async ({ page }) => {
+    const { link, board } = JSON.parse(
+      readFileSync(new URL("../src/lib/board/fixtures/v1-full-lineup.json", import.meta.url), "utf8"),
+    ) as { link: string; board: Board };
+    await openBoard(page, `#t=${link}`, `/en/board/${via}/`);
+    await expectBoard(page, board);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex");
+    await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+  });
+}
 
 // The QR library loads after the board, not with it; it must be there
 // before the phone goes offline in the gym.

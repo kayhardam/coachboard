@@ -29,5 +29,9 @@ export default defineConfig({
   },
   // No code blocks in the content; Shiki's inline styles would trip the CSP warning.
   markdown: { syntaxHighlight: false },
-  integrations: [sitemap({ i18n: { defaultLocale, locales } }), svelte()],
+  integrations: [
+    // The pages for shared boards (/<lang>/board/link/ and /qr/) are noindex.
+    sitemap({ i18n: { defaultLocale, locales }, filter: (page) => !/\/board\/(link|qr)\/$/.test(page) }),
+    svelte(),
+  ],
 });

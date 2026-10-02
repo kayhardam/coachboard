@@ -1,0 +1,93 @@
+---
+// The board page: the editor, its static fallback and the statistics beacon.
+// /<lang>/board/ is the editor; /<lang>/board/link/ and /<lang>/board/qr/ are
+// where shared links and QR codes point, so statistics can count them apart.
+import { getRelativeLocaleUrl } from "astro:i18n";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { boardStrings, t } from "../../i18n/ui";
+import { beaconEndpoint, beaconSrc } from "../../data/analytics";
+import { defaultBoard } from "../../lib/board/defaults";
+import Beacon from "../Beacon.astro";
+import BoardEditor from "./BoardEditor.svelte";
+import Court from "./Court.svelte";
+
+interface Props {
+  /** The pages for shared boards: out of search results, like the 404. */
+  noindex?: boolean;
+}
+
+const { noindex = false } = Astro.props;
+
+// Only these pages may load the statistics beacon (Beacon.astro). This runs
+// before BaseLayout writes the CSP <meta>; content pages keep the plain CSP.
+// Astro.csp is undefined in `npm run dev`, which writes no CSP. A resource
+// replaces Astro's default 'self', so 'self' (the editor's files) goes first.
+Astro.csp?.insertScriptResource("'self'");
+Astro.csp?.insertScriptResource(beaconSrc);
+Astro.csp?.insertDirective(`connect-src 'self' ${beaconEndpoint}`);
+const lang = Astro.currentLocale!;
+const links = {
+  link: getRelativeLocaleUrl(lang, "board/link/"),
+  qr: getRelativeLocaleUrl(lang, "board/qr/"),
+};
+---
+
+<BaseLayout title={t(lang, "board.title")} description={t(lang, "board.description")} {noindex} fullscreen>
+  <h1 class="visually-hidden">{t(lang, "board.heading")}</h1>
+  <BoardEditor client:only="svelte" strings={boardStrings(lang)} home={getRelativeLocaleUrl(lang)} {links}>
+    <div slot="fallback" class="fallback">
+      <div class="court"><Court board={defaultBoard} label={t(lang, "board.court")} /></div>
+      <noscript><p>{t(lang, "board.noscript")}</p></noscript>
+    </div>
+  </BoardEditor>
+  <slot />
+  <Beacon />
+</BaseLayout>
+
+<style>
+  /* The same box as BoardEditor's .editor, with the bars' space reserved, so
+     the court doesn't move when the editor replaces this (finding 14 in
+     docs/metingen.md; e2e/layout.spec.ts checks it). */
+  .fallback {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) minmax(calc(2 * var(--board-bar) + var(--board-gap)), auto);
+    gap: var(--board-gap);
+    width: 100%;
+    min-height: 0;
+    max-width: 720px;
+    margin-inline: auto;
+    padding: 8px 8px max(8px, env(safe-area-inset-bottom));
+  }
+
+  /* Like the editor's stage: the court fits the space instead of sizing it. */
+  .court {
+    position: relative;
+    min-height: 0;
+  }
+  .court > :global(svg) {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* The header is hidden here, as on the board (see BoardEditor). */
+  @media (orientation: landscape) and (max-height: 559px) {
+    .fallback {
+      grid-template: minmax(0, 1fr) / var(--board-side) minmax(0, 1fr) var(--board-side);
+      max-width: none;
+      padding: 4px 4px max(4px, env(safe-area-inset-bottom));
+    }
+    .court {
+      grid-area: 1 / 2;
+    }
+    /* Only there without JavaScript, when no editor comes: below the court. */
+    .fallback > :global(noscript) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  p {
+    padding: 8px;
+    text-align: center;
+    color: var(--color-text-muted);
+  }
+</style>

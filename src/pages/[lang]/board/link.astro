@@ -1,0 +1,9 @@
+---
+// Where a shared link points (see BoardPage.astro).
+import BoardPage from "../../../components/board/BoardPage.astro";
+import { localeParams } from "../../../i18n/locales";
+
+export const getStaticPaths = localeParams;
+---
+
+<BoardPage noindex />
