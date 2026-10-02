@@ -1045,4 +1045,36 @@ Melding over sampling in het dashboard: ja (factor …) / nee. Opmerkingen:
 - **Voorwaarden voor de merge, allebei vervuld (2 oktober 2026):**
   - Web Analytics (RUM) staat op "Enable with JS Snippet installation" (Kay). Eerder stond hij op "Enable, excluding visitor data in the EU", en dan injecteert Cloudflare de beacon op elke pagina voor bezoekers buiten de EU;
   - het token staat in `analyticsToken` in `src/data/analytics.ts`.
-- **Na de merge:** `security.spec.ts` tegen productie. Die laat zien of Cloudflare echt niets meer injecteert, maar alleen voor een bezoeker uit Nederland.
+- **Na de merge:** `security.spec.ts` tegen productie. Gedaan, zie hieronder.
+
+### Productie (na de merge van PR #17)
+
+`main` @ `9bfb2e9`, gemerged en door Workers Builds uitgerold op 2 oktober 2026.
+
+- Workers Builds en verify zijn geslaagd.
+- `/en/board/link/` geeft 200, met de beacon als `type="module"` en het token.
+
+**`security.spec.ts` tegen `https://handballcoachboard.com`** (build van `9bfb2e9`): 74 van 74 geslaagd, in beide browsers.
+
+- Elke pagina heeft de headers.
+- Er zijn geen CSP-meldingen.
+- Op geen enkele pagina staat een script van een ander domein, behalve de beacon op `/en/board/`, `/link/` en `/qr/`. Cloudflare injecteert dus niets meer.
+- Dat geldt voor een bezoeker uit Nederland. Of Cloudflare buiten de EU nog injecteert, is van hieruit niet te zien. Met RUM op "Enable with JS Snippet installation" hoort dat niet meer te gebeuren.
+
+**Lighthouse mobiel**, drie runs per URL met het commando uit de nulmeting. Lighthouse 13.5.0, Chrome 154.
+
+| URL | Performance | Accessibility | Best Practices | SEO | LCP (mediaan) | CLS | TBT | Overdracht | Verzoeken |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| `/en/` | 100, 100, 100 | 100 | 100 | 100 | 0,82 s | 0 | 0 ms | 8,0–8,4 KB | 3 |
+| `/en/board/` | 100, 100, 100 | 100 | 100 | 100 | 0,83 s | 0 | 0 ms | 56,5 KB | 11 |
+
+Per run (LCP): `/en/` 0,82, 0,83 en 0,82 s; `/en/board/` 0,83, 0,83 en 0,83 s.
+
+Vergeleken met vóór 8a (productie, 2 oktober 2026: `/en/board/` mediaan Performance 99, LCP 0,99 s, 45,3 KB, 7 verzoeken):
+
+- **Het bord:** Performance en LCP zijn niet slechter. De spreiding is kleiner dan in de meting vooraf.
+- **11 KB meer:** de beacon (10,3 KB over het netwerk).
+- **11 verzoeken in plaats van 7:** de beacon, twee berichten naar `cloudflareinsights.com/cdn-cgi/rum` (36 en 0 bytes), en het QR-chunk.
+- **`/en/`:** geen verzoek naar Cloudflare Insights en geen JS, zoals bedoeld. Gelijk aan Fase 5 (0,82 s).
+
+**Let op voor 8b:** deze drie Lighthouse-runs stuurden echte beacons. Dat zijn drie paginaweergaven van `/en/board/` op 2 oktober 2026, uit Nederland, met headless Chrome op macOS en een gesimuleerd mobiel scherm. De e2e-tests sturen niets: hun beacon is een leeg script.
