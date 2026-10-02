@@ -853,3 +853,196 @@ Het script zit in de HTML van het bord, niet in `_astro/`; vandaar +0,2 KB HTML.
 
 - Een eerdere test met een versie-preview-URL (`d30ab823-…`) telt niet mee.
 - **Opmerking voor een nieuwe versie van `og-default.png`:** in het compacte kaartje snijdt WhatsApp de afbeelding vierkant bij vanuit het midden, waardoor de tekst half wegvalt.
+
+## Fase 8a: statistieken op de bordpagina's (2 oktober 2026)
+
+### Wat er veranderd is
+
+- **Cloudflare Web Analytics, alleen op de bordpagina's** (besluit Kay, variant B).
+  - `src/components/Beacon.astro` zet de beacon als laatste in `<body>`, als `type="module"`, zoals het snippet van Cloudflare. Het token staat in `src/data/analytics.ts`; het is openbaar.
+  - Eerst stond er `defer`. Kay vroeg om de vorm van het snippet over te nemen, zodat de beacon blijft werken als Cloudflare hem aanpast. Een module-script wordt net zo uitgesteld als `defer`, maar wordt met CORS opgehaald. Cloudflare stuurt `Access-Control-Allow-Origin: *` mee (gecontroleerd met `curl`).
+  - `"spa": false`: anders telt de beacon in Chromium elke `history.replaceState()` als paginaweergave, dus elke bewerking (gevonden in de code van de beacon: hij luistert naar het `navigate`-event van de Navigation API).
+  - Contentpagina's laden nog steeds geen JavaScript.
+- **Drie bordpagina's per taal**, alle drie via `src/components/board/BoardPage.astro`:
+  - `/en/board/`: de editor, zoals altijd;
+  - `/en/board/link/`: hier opent een gedeelde link (Delen);
+  - `/en/board/qr/`: hier opent een gescande QR-code.
+  - Link en QR zijn `noindex` en staan niet in de sitemap. Oude links naar `/en/board/#t=…` blijven werken. `format.ts` is ongewijzigd.
+- **De CSP per pagina.** `BoardPage.astro` voegt met `Astro.csp` alleen op de bordpagina's toe:
+  - `script-src`: `https://static.cloudflareinsights.com/beacon.min.js`;
+  - `connect-src 'self' https://cloudflareinsights.com` (daar stuurt de beacon naartoe).
+  - Een scriptbron vervangt de standaard-`'self'` van Astro. Zonder expliciete `'self'` blokkeert de CSP de editor zelf (controle hieronder).
+  - Contentpagina's houden de CSP van vóór deze fase, zonder `connect-src` en zonder Cloudflare.
+- **Privacypagina:** de naam van de dienst, wat hij verstuurt, zes maanden bewaren, de paden voor link en QR, en de datum (2 oktober 2026). De zin "loads no … tracking scripts" is weg.
+
+### De beacon
+
+Gedownload op 2 oktober 2026: versie 2026.9.1, 30,3 KB raw, **10,1 KB gzip**, door Cloudflare 1 dag gecachet.
+
+- **Telt niet mee in de JS-budgetten van het bord.** Hij staat niet in `dist/` en is niet nodig om te tekenen. `scripts/check-budget.mjs` heeft een nieuwe rij "External scripts":
+  - op een bordpagina mag precies één script van een ander domein staan: de beacon;
+  - elk ander extern script geeft een fout, net als de beacon twee keer;
+  - op een contentpagina blijft elk script een fout.
+- **Opgeteld** laadt het bord 27,1 + 10,1 = 37,2 KB JS bij het openen.
+  - De stylesheet-optie uit Fase 6 (ongeveer 1,5 KB) is daarvoor niet nodig en zou dat gat ook niet dichten.
+  - De krappe plek blijft "All JS": 31,4 van 32,5 KB.
+- **Wat hij verstuurt** (gecontroleerd in de code en in `e2e/analytics.spec.ts`):
+  - de URL zonder `?` en `#`, dus nooit `#t=`;
+  - de verwijzer, ook zonder `?` en `#`;
+  - meetwaarden: LCP, INP, CLS, FCP en TTFB.
+- **Wat hij niet doet:** geen cookies, geen `localStorage`, geen `sessionStorage`. Volgens Cloudflare gooit hij het IP-adres weg in het datacenter en bewaart hij de gegevens zes maanden. Na 7 dagen zijn ze teruggebracht tot ongeveer 10% (een steekproef).
+
+### Wacht het bord op de beacon?
+
+Nee. De volgorde in `dist/en/board/index.html`:
+
+| # | Wat | Hoe het laadt |
+|--:|---|---|
+| 1 | twee inline scripts van Astro (`astro:only` en `<astro-island>`) | direct, tijdens het parsen |
+| 2 | `<astro-island … await-children>` | haalt de editor op met een dynamische `import()` zodra zijn inhoud er is (`astro:end`) |
+| 3 | `<script type="module">` (doorsturen vanaf workers.dev, alleen op `/en/board/`) | uitgesteld, in volgorde |
+| 4 | `<script type="module" src="…beacon.min.js">` | uitgesteld, als laatste |
+
+- Een dynamische `import()` staat niet in de rij met uitgestelde scripts, dus de editor wacht nergens op.
+- Wel wachten `DOMContentLoaded` en `load` op het downloaden van de beacon. Het bord gebruikt die events niet.
+- **Getest:** `e2e/analytics.spec.ts` houdt de beacon voor altijd tegen, op alle drie de paden. Het bord laadt een gedeeld bord, een speler is te slepen en de adresbalk krijgt de nieuwe `#t=`.
+- Daarom is `async` niet nodig. Ook niet om de beacon pas na het laden in te voegen. Met `type="module"` blijft dit zo: een module-script staat in dezelfde rij als `defer`.
+
+### Groottes
+
+`npm run budget`, vóór (`main` @ `934db67`) en na:
+
+| Meting | Vóór | Na |
+|---|--:|--:|
+| JS van het bord (gzip) | 27,1 KB | 27,1 KB (op alle drie de bordpagina's) |
+| Lazy JS van het bord (gzip) | 4,3 KB | 4,3 KB |
+| Alle JS in `_astro/` (gzip) | 31,4 KB | 31,4 KB |
+| HTML `/en/board/` (gzip) | 5,4 KB | 5,5 KB |
+| HTML `/en/board/link/` en `/qr/` (gzip) | — | 5,4 KB |
+| Externe scripts op een bordpagina | 0 | 1 (de beacon, 10,1 KB gzip) |
+| Contentpagina's | geen JS | geen JS |
+
+Er is geen budget verhoogd.
+
+**Linklengte en QR-code**, met `https://handballcoachboard.com` (foutcorrectie L, zoals de editor; QR-versie met `uqr`):
+
+| Fixture | `/en/board/` (vóór) | `/en/board/link/` | `/en/board/qr/` |
+|---|--:|--:|--:|
+| `v1-full-lineup` | 247 tekens, versie 10 | 252, versie 10 | 250, versie 10 |
+| `v1-default` | 183, versie 8 | 188, versie 8 | 186, versie 8 |
+| `v1-empty` | 64, versie 4 | 69, versie 4 | 67, versie 4 |
+
+De QR-code blijft even groot.
+
+### Tests
+
+- **Nieuw: `e2e/analytics.spec.ts`**, 4 tests per browser:
+  - op `/en/board/`, `/link/` en `/qr/` laadt en werkt het bord terwijl de beacon nooit aankomt;
+  - de echte beacon (opgehaald bij Cloudflare, met het echte token) verstuurt geen `#t=`, geen deel van de link en geen query. De `location` is `…/en/board/link/`, `siteToken` is het token uit `src/data/analytics.ts`, en er zijn geen CSP-meldingen, geen cookies en alleen `coachboard.board` in de opslag. In WebKit is de inhoud van `sendBeacon()` niet te zien voor de route; daar telt de inhoud van de XHR's.
+- **`e2e/helpers.ts` exporteert `test`**, die de beacon in elke test beantwoordt met een leeg script, en het eindpunt met 204. Geen test stuurt dus data naar het echte dashboard, ook niet met `E2E_BASE_URL` tegen productie. Alle specs importeren `test` en `expect` nu daaruit.
+- **`e2e/security.spec.ts`:**
+  - `script-src` per pagina: `'self'` voorop, hashes, en alleen op de bordpagina's de beacon; `connect-src` alleen daar;
+  - **nieuw, op verzoek van Kay:** geen script van een ander domein in de pagina, behalve de beacon op de bordpagina's. De test kijkt naar `document.scripts` en naar de netwerkverzoeken, dus ook naar een script dat Cloudflare bóven de CSP-`<meta>` injecteert. Zo'n script blokkeert de `<meta>` niet, want die geldt alleen voor wat erna komt; Kay zag de beacon daardoor op `/en/` draaien.
+- **`e2e/share.spec.ts`:**
+  - Delen kopieert een link naar `/en/board/link/`;
+  - de QR-code bevat de link van de adresbalk op `/en/board/qr/` (vergeleken met `uqr`, module voor module);
+  - beide pagina's openen een gedeeld bord en zijn `noindex`, zonder canonical.
+- `scripts/check-budget.test.mjs`: 3 tests erbij (link en QR als bordpagina, de beacon wel en andere externe scripts niet, en dezelfde URL als `src/data/analytics.ts`).
+- `npm run verify` groen: 9 testbestanden met 93 tests, 12 pagina's, 143 interne links. `npm run e2e`: 179 geslaagd, 1 overgeslagen (was 129 en 1).
+
+**Controles** (tijdelijk, niet gecommit):
+
+| Controle | Resultaat |
+|---|---|
+| `insertScriptResource("'self'")` weggelaten | de editor laadt niet: bord- en security-tests falen (Pixel 7) |
+| beacon op `/en/about/` gezet | `no script from another origin` en `no CSP violations` falen; het budgetscript faalt |
+
+Niet getest: `"spa": true`. Dat staat alleen in de code van de beacon en in een comment in `Beacon.astro`.
+
+### Lighthouse vóór (productie, 2 oktober 2026)
+
+`/en/board/` op `https://handballcoachboard.com` (`main` @ `934db67`), drie runs met het commando uit de nulmeting, Lighthouse 13.5.0, Chrome 154. Vanuit Nederland, dus zonder de beacon die Cloudflare nu buiten de EU injecteert (zie "Open").
+
+| Run | Performance | LCP | CLS | TBT | Overdracht | Verzoeken |
+|--:|--:|--:|--:|--:|--:|--:|
+| 1 | 100 | 0,88 s | 0 | 0 ms | 45,3 KB | 7 |
+| 2 | 97 | 0,99 s | 0 | 3 ms | 45,4 KB | 7 |
+| 3 | 99 | 1,22 s | 0 | 4 ms | 45,3 KB | 7 |
+
+Mediaan: Performance 99, LCP 0,99 s. Accessibility, Best Practices en SEO waren 100 in elke run. De spreiding is groter dan in Fase 5 (0,81 tot 0,84 s). De meting "na" volgt op de preview-URL.
+
+### Zonder script: wat Cloudflare aan de serverkant meet
+
+Onderzocht voor besluit 1, niet gekozen.
+
+- **Op Free alleen totalen:** requests, bandbreedte en unieke bezoekers. Bots tellen mee en er is geen uitsplitsing per pad.
+- **Per pad alleen via de GraphQL API** (`httpRequestsAdaptiveGroups`); hoe ver die op Free teruggaat, staat niet in de docs en is niet nagegaan.
+- **Geen Core Web Vitals**, en de previews van WhatsApp en crawlers tellen als bezoek.
+
+### Preview-URL
+
+`https://fase-8a-statistieken-coachboard.hardamkay.workers.dev`, 2 oktober 2026, nog zonder token. CI (verify, e2e, Workers Builds) is groen.
+
+- **`security.spec.ts`, `analytics.spec.ts` en `share.spec.ts` met `E2E_BASE_URL` = de preview:** 93 geslaagd, 1 overgeslagen.
+  - Geen CSP-meldingen.
+  - Geen script van een ander domein behalve de beacon op de drie bordpagina's.
+  - De echte beacon verstuurt geen `#t=`.
+- **Lighthouse mobiel**, drie runs per URL met het commando uit de nulmeting:
+
+| URL | Performance | LCP (mediaan) | CLS | TBT | Overdracht | Verzoeken |
+|---|--:|--:|--:|--:|--:|--:|
+| `/en/board/` | 100, 100, 100 | 0,87 s | 0 | 0–5 ms | 56,1–56,8 KB | 8–9 |
+| `/en/board/link/` | 100, 100, 100 | 0,86 s | 0 | 4–5 ms | 56,1–56,7 KB | 8–9 |
+
+- **Vergeleken met productie vóór deze PR** (mediaan Performance 99, LCP 0,99 s, 45,3 KB, 7 verzoeken):
+  - LCP en Performance zijn niet slechter; de verschillen vallen binnen de spreiding;
+  - de overdracht is ongeveer 11 KB groter: de beacon is 10,3 KB over het netwerk;
+  - Accessibility en Best Practices zijn 100. SEO is 66, en 63 op `/link/`: de preview stuurt `noindex`, en `/link/` heeft zelf ook `noindex`.
+
+**Na de overstap naar `type="module"` en het echte token** (`0e46a58`, 2 oktober 2026). `analytics.spec.ts` en `security.spec.ts` met `E2E_BASE_URL` = de preview: 82 van 82 geslaagd, in beide browsers.
+
+- De echte beacon laadt als module en stuurt het token van de site als `siteToken`.
+- Er gaan geen `#t=` en geen query mee.
+- Er zijn geen CSP-meldingen en geen andere scripts van een ander domein.
+
+### Maandmeting (vanaf 8b)
+
+Elke maand één tabel, gelezen in het Web Analytics-dashboard, gefilterd op host `handballcoachboard.com`.
+
+- **Aantal metingen:** zet bij elke p75 het aantal metingen (n) waarop hij rust. Toont het dashboard dat niet, noteer dan het aantal paginaweergaven met hetzelfde filter, en schrijf erbij dat n dat getal of lager is.
+- **Telling of schatting:** na 7 dagen bewaart Cloudflare ongeveer 10% van de metingen. Over de laatste 7 dagen is n dus een echte telling. Gaat de periode verder terug, dan is n waarschijnlijk een schatting die uit de steekproef is teruggerekend: een getoonde 100 kan dan zo'n 10 echte metingen zijn.
+  - Of het dashboard terugrekent en of het een melding over sampling toont, is nog niet nagegaan. Controleer dat bij de eerste maandmeting.
+  - Tot het tegendeel blijkt geldt: bij een schatting deel je n door 10 (of door de factor die het dashboard noemt).
+- **Minimum:** onder **100 echte metingen** per meetwaarde en per groep (iOS of Android) noteren we de p75, maar trekken we geen conclusie. Bij p75 uit minder dan 100 metingen schuift één trage zaal of één slecht netwerk de waarde al ver op. Er zijn nu twee gebruikers.
+- **Echte tellingen erbij:** lees op de dag van de maandmeting ook de laatste 7 dagen af. Die rusten op alle metingen, dus daar is n een echte telling.
+- **CLS komt alleen uit Chromium**, dus niet van iPhones. Of Safari LCP en INP doorgeeft, hangt af van de versie; het dashboard laat het zien (filter op besturingssysteem).
+
+Sjabloon:
+
+```
+#### <maand> <jaar> (gelezen op <datum>)
+
+| Wat | Aantal |
+|---|--:|
+| Paginaweergaven /en/board/ | |
+| Paginaweergaven /en/board/link/ (gedeelde link geopend) | |
+| Paginaweergaven /en/board/qr/ (QR-code gescand) | |
+| Verwijzers naar /en/board/ (top 3) | |
+
+Per periode een tabel: de hele maand, en de laatste 7 dagen.
+
+| Meetwaarde | iOS p75 | iOS n | Android p75 | Android n | n is telling of schatting | Echte n (schatting ÷ 10) | Conclusie (alleen bij echte n ≥ 100) |
+|---|--:|--:|--:|--:|---|--:|---|
+| LCP | | | | | | | |
+| INP | | | | | | | |
+| CLS | — | — | | | | | |
+
+Melding over sampling in het dashboard: ja (factor …) / nee. Opmerkingen:
+```
+
+### Open
+
+- **Voorwaarden voor de merge, allebei vervuld (2 oktober 2026):**
+  - Web Analytics (RUM) staat op "Enable with JS Snippet installation" (Kay). Eerder stond hij op "Enable, excluding visitor data in the EU", en dan injecteert Cloudflare de beacon op elke pagina voor bezoekers buiten de EU;
+  - het token staat in `analyticsToken` in `src/data/analytics.ts`.
+- **Na de merge:** `security.spec.ts` tegen productie. Die laat zien of Cloudflare echt niets meer injecteert, maar alleen voor een bezoeker uit Nederland.

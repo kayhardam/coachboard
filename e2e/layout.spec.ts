@@ -1,5 +1,5 @@
-import { devices, expect, test, type Page } from "@playwright/test";
-import { openBoard } from "./helpers";
+import { devices, type Page } from "@playwright/test";
+import { expect, openBoard, test } from "./helpers";
 
 // Finding 1 and 2 in docs/metingen.md: the court scaled to the screen's width
 // only, so the full court (and, in landscape, the half court too) pushed both

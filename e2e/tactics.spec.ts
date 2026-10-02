@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import { dragPlayer, pieces, saved, saveOwnBoard } from "./helpers";
+import { dragPlayer, expect, pieces, saved, saveOwnBoard, test } from "./helpers";
 
 const tactic = "/en/tactics/defense/6-0-defense-basics/";
 

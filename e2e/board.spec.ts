@@ -1,8 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { expect, test } from "@playwright/test";
 import { defaultBoard } from "../src/lib/board/defaults";
 import type { Board } from "../src/lib/board/format";
-import { dragPlayer, expectBoard, openBoard, pieces, saved, saveOwnBoard } from "./helpers";
+import { dragPlayer, expect, expectBoard, openBoard, pieces, saved, saveOwnBoard, test } from "./helpers";
 
 test("the board loads with the default lineup", async ({ page }) => {
   await openBoard(page);

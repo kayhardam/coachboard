@@ -1,6 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
-import { allPages } from "./helpers";
+import { allPages, expect, test } from "./helpers";
 
 for (const path of allPages()) {
   test(`axe finds nothing serious on ${path}`, async ({ page }) => {

@@ -28,7 +28,8 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
 - End-to-end tests are in `e2e/*.spec.ts`, with shared steps in `e2e/helpers.ts`:
   - compare boards by the pieces the editor draws (`pieces()`), not by the link text: compression can give other bytes per browser;
   - don't use `click()` to prove a button is reachable, because Playwright scrolls it into view first; use `toBeInViewport()`;
-  - a known bug gets a test with `test.fail()` and a pointer to its finding in `docs/metingen.md`, and the fix removes the marker.
+  - a known bug gets a test with `test.fail()` and a pointer to its finding in `docs/metingen.md`, and the fix removes the marker;
+  - import `test` and `expect` from `./helpers`, not from `@playwright/test`: its `test` answers the statistics beacon with an empty script and its endpoint with 204, so no test sends data to the real dashboard (also not with `E2E_BASE_URL`). `e2e/analytics.spec.ts` runs the real beacon (it needs network) and checks what it sends.
 
 ## URLs and routing
 
@@ -59,10 +60,10 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
   - `src/styles/tokens.css`: custom properties;
   - `src/styles/base.css`: reset, typography, focus ring, `.container`, `.btn`, `.btn-primary`, `.btn-secondary`.
 - **Everything else is a scoped `<style>`** in the component or page. No inline `style` attributes.
-- **Mobile-first.** Base styles are for phones. Wider layouts go in `@media (min-width: 560px)` or `@media (min-width: 860px)`, and only those two. The one exception is the board on a phone in landscape: `@media (orientation: landscape) and (max-height: 559px)` (in `BoardEditor.svelte`, `BaseLayout.astro` and `board.astro`).
+- **Mobile-first.** Base styles are for phones. Wider layouts go in `@media (min-width: 560px)` or `@media (min-width: 860px)`, and only those two. The one exception is the board on a phone in landscape: `@media (orientation: landscape) and (max-height: 559px)` (in `BoardEditor.svelte`, `BaseLayout.astro` and `BoardPage.astro`).
 - **Green behind or as text** uses `--color-accent-dark` (5.0:1 on white). `--color-accent` is for fills and icons only (3.3:1).
 - **Touch targets** are at least `var(--tap)` (44px) high.
-- **The narrow-screen menu** is a `<details>` element, without JavaScript. Content pages ship no JS: `scripts/check-budget.mjs` fails on any `<script>` (JSON-LD excepted), `<astro-island>` or modulepreload outside `/<lang>/board/`.
+- **The narrow-screen menu** is a `<details>` element, without JavaScript. Content pages ship no JS: `scripts/check-budget.mjs` fails on any `<script>` (JSON-LD excepted), `<astro-island>` or modulepreload outside the board pages (see "Board pages" under The board). On those, the only script from another origin it allows is the statistics beacon, once.
 - **Icons** come from one set in `src/lib/icons.ts` (24×24, 2-unit stroke, round caps, `currentColor`), drawn with `Icon.astro` on content pages and inline in `BoardEditor`. No emoji anywhere in the UI.
   - An icon next to visible text is decorative (`aria-hidden`, which `Icon.astro` sets). An icon-only button needs `aria-label` and `title`.
   - Icons take their colour from the text: `--color-accent-dark` when they carry meaning. In cards they sit on a 44×44 tile with `--color-accent-soft` behind them.
@@ -81,15 +82,23 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
   - `isBoard()` is hand-written so the client bundle needs no Zod; the content schema reuses it.
 - **`edit.ts` is pure:** every operation returns a new board. The editor keeps the board in `$state.raw`, and undo is a list of earlier boards.
 - **`Court.svelte` stays pure SVG**, with no browser APIs, so Astro can render it without JS (the home page, the board's fallback, tactic pages and their thumbnails). Pieces carry `data-kind` and `data-index`; the editor finds them with event delegation. Colours are SVG attributes, not CSS variables, so `courtPng()` can render it to a PNG on the server.
+- **Board pages:** `src/components/board/BoardPage.astro` renders the editor, its fallback and the statistics beacon, for three pages per language:
+  - `/<lang>/board/`: the editor (`src/pages/[lang]/board.astro`, which adds the workers.dev redirect);
+  - `/<lang>/board/link/` and `/<lang>/board/qr/`: where Share and the QR code point, so the statistics count opened shared boards per channel (the beacon drops `?` and `#`, so only a path can tell them apart). They are `noindex` and left out of the sitemap (`filter` in `astro.config.mjs`);
+  - these are the only pages that ship JS. `isBoard` in `scripts/check-budget.mjs` and `e2e/security.spec.ts` lists them.
 - **`BoardEditor.svelte`:**
-  - it runs `client:only` on `/[lang]/board/` only, the one page that ships JS;
+  - it runs `client:only` on the board pages only;
   - its CSS ships inside its JS (`<svelte:options css="injected" />`). As a stylesheet over Vite's 4 KB inline limit, Astro linked it on every page;
   - the court fits the space the bars leave (letterboxed), in portrait and landscape; in landscape the header is hidden and the bars become columns at the sides, with a Home link in the right one. `e2e/layout.spec.ts` checks that every button stays on screen;
-  - the static fallback in `board.astro` reserves the bars' space with the same tokens (`--board-bar`, `--board-gap`, `--board-side` in `tokens.css`), so the court doesn't move when the editor replaces it. Change the editor's box and the fallback's together; `e2e/layout.spec.ts` allows 1 px;
-  - its strings come in as a prop from `boardStrings()` in `ui.ts`;
+  - the static fallback in `BoardPage.astro` reserves the bars' space with the same tokens (`--board-bar`, `--board-gap`, `--board-side` in `tokens.css`), so the court doesn't move when the editor replaces it. Change the editor's box and the fallback's together; `e2e/layout.spec.ts` allows 1 px;
+  - its strings come in as a prop from `boardStrings()` in `ui.ts`, and the paths for Share and the QR code as `links`;
   - it loads `#t=` first, then `localStorage` (`coachboard.board`), then `#own=` (see below), then the default lineup;
   - every change is written to both (300 ms debounce), so the address bar is always a shareable link;
   - a board that came from a `#t=` link reaches `localStorage` only after its first edit, so opening a shared play or a tactic doesn't replace your own saved board.
+- **Statistics:** Cloudflare Web Analytics, on the board pages only (`src/components/Beacon.astro`, token and URLs in `src/data/analytics.ts`). The privacy page names it and says what it sends.
+  - It sits last in `<body>` as `type="module"`, the form of Cloudflare's snippet: deferred like `defer`, and fetched with CORS (Cloudflare sends `Access-Control-Allow-Origin: *`; the stub in `e2e/helpers.ts` does too). The editor loads through `<astro-island>` and a dynamic import, which never wait for it; `e2e/analytics.spec.ts` holds the beacon back and checks the board still works.
+  - `"spa": false` in `data-cf-beacon`: otherwise, in Chromium, the beacon counts every `history.replaceState()` (each edit) as a page view.
+  - Never send board data to it: no `#t=` in a path, no custom events.
 - **Moved from workers.dev:** a `<script>` in `board.astro` sends the board on `coachboard.hardamkay.workers.dev` (that exact host, not the preview URLs) to the same path on `site`, keeping `#t=`.
   - Without `#t=`, it brings that origin's saved board along as `#own=<URI-encoded JSON>`. `localStorage` belongs to one origin, so a server redirect would leave it behind.
   - The editor keeps an `#own=` board (checked with `isBoard()`) as your own and saves it, but only when the new domain has no saved board yet; otherwise it ignores it.
@@ -134,13 +143,15 @@ Cloudflare Workers with static assets, deployed by Workers Builds (Git integrati
   - Email Address Obfuscation off, so Cloudflare doesn't rewrite the contact address or inject a script the CSP would block;
   - a Redirect Rule from `www.handballcoachboard.com` to the bare domain (a Custom Domain matches one exact hostname);
   - Email Routing forwards `contact@handballcoachboard.com` (`contactEmail` in `src/data/site.ts`) to the owner's own address;
-  - the TXT record that verifies the domain in Google Search Console: leave it, or the verification lapses.
+  - the TXT record that verifies the domain in Google Search Console: leave it, or the verification lapses;
+  - Web Analytics (RUM) set to "Enable with JS Snippet installation", not automatic: an injected beacon would land on every page, above the CSP `<meta>`. Its token is `analyticsToken` in `src/data/analytics.ts`.
 - **The CSP is split in two.** Astro writes a `<meta>` CSP into every page (`security.csp` in `astro.config.mjs`), with `default-src 'self'` and a hash for each inline script it emits. Browsers ignore `frame-ancestors` in a `<meta>`, so that one is the header.
   - `style-src` allows `'unsafe-inline'`: `BoardEditor` injects its CSS as a `<style>` at runtime, and that hash isn't known when Astro writes the `<meta>`. Scripts stay hash-only; never add `'unsafe-inline'` to `script-src`.
-  - Anything from another origin (a script, font, image or `fetch`) is blocked until its origin is added to `directives`. `e2e/security.spec.ts` fails on any CSP violation.
+  - Anything from another origin (a script, font, image or `fetch`) is blocked until its origin is added. `e2e/security.spec.ts` fails on any CSP violation, and on any script from another origin in the page, which also catches one injected above the `<meta>` (a CSP `<meta>` only covers what comes after it).
+  - The board pages add the statistics beacon per page with `Astro.csp` in `BoardPage.astro`: its script URL in `script-src` and `connect-src 'self' https://cloudflareinsights.com`. That must run before `BaseLayout` renders `<head>`, so not in `Beacon.astro`; and a script resource replaces Astro's default `'self'`, so `'self'` is inserted too. Content pages keep the plain CSP.
   - CSP isn't applied in `npm run dev`; check with `npm run build && npx wrangler dev` or `npm run e2e`.
   - Deployed, Cloudflare leaves the `_headers` off the 404 page (`wrangler dev` adds them), so only the `<meta>` CSP reaches it.
-  - Once the JS budget gets tight, the plan is to move the editor's CSS into a stylesheet that only `board.astro` imports and drop `'unsafe-inline'` (`docs/optimalisatieplan.md`, phase 6).
+  - Once the JS budget gets tight, the plan is to move the editor's CSS into a stylesheet that only `BoardPage.astro` imports and drop `'unsafe-inline'` (`docs/optimalisatieplan.md`, phase 6).
 - Dependabot (`.github/dependabot.yml`) opens update PRs weekly for npm and GitHub Actions: minor and patch grouped, each major on its own. Nothing merges automatically; each PR goes through CI and its preview URL.
 - `wrangler` is a devDependency, so these commands use the version in `package-lock.json`.
 - Try a change to any of these locally with `npm run build && npx wrangler dev`; `npm run e2e` tests the redirects, the headers and the 404 page against it.

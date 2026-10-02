@@ -1,91 +1,28 @@
 ---
-import { getRelativeLocaleUrl } from "astro:i18n";
-import BoardEditor from "../../components/board/BoardEditor.svelte";
-import Court from "../../components/board/Court.svelte";
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import BoardPage from "../../components/board/BoardPage.astro";
 import { localeParams } from "../../i18n/locales";
-import { boardStrings, t } from "../../i18n/ui";
-import { defaultBoard } from "../../lib/board/defaults";
 
 export const getStaticPaths = localeParams;
-
-const { lang } = Astro.params;
 ---
 
-<BaseLayout title={t(lang, "board.title")} description={t(lang, "board.description")} fullscreen>
-  <h1 class="visually-hidden">{t(lang, "board.heading")}</h1>
-  <BoardEditor client:only="svelte" strings={boardStrings(lang)} home={getRelativeLocaleUrl(lang)}>
-    <div slot="fallback" class="fallback">
-      <div class="court"><Court board={defaultBoard} label={t(lang, "board.court")} /></div>
-      <noscript><p>{t(lang, "board.noscript")}</p></noscript>
-    </div>
-  </BoardEditor>
-</BaseLayout>
-
-<script>
-  // Links and QR codes shared before the move point at workers.dev: send them
-  // to the production domain with their path and #t= intact. Only the old
-  // production host; preview URLs end in workers.dev too.
-  if (location.hostname === "coachboard.hardamkay.workers.dev") {
-    let { hash } = location;
-    if (!hash.startsWith("#t=")) {
-      // Your own board is in this origin's storage. It comes along as #own=,
-      // which the editor keeps only if the new domain has no board yet.
-      try {
-        const own = localStorage.getItem("coachboard.board");
-        hash = own ? `#own=${encodeURIComponent(own)}` : "";
-      } catch {
-        hash = "";
+<BoardPage>
+  <script>
+    // Links and QR codes shared before the move point at workers.dev: send them
+    // to the production domain with their path and #t= intact. Only the old
+    // production host; preview URLs end in workers.dev too.
+    if (location.hostname === "coachboard.hardamkay.workers.dev") {
+      let { hash } = location;
+      if (!hash.startsWith("#t=")) {
+        // Your own board is in this origin's storage. It comes along as #own=,
+        // which the editor keeps only if the new domain has no board yet.
+        try {
+          const own = localStorage.getItem("coachboard.board");
+          hash = own ? `#own=${encodeURIComponent(own)}` : "";
+        } catch {
+          hash = "";
+        }
       }
+      location.replace(new URL(location.pathname + location.search + hash, import.meta.env.SITE));
     }
-    location.replace(new URL(location.pathname + location.search + hash, import.meta.env.SITE));
-  }
-</script>
-
-<style>
-  /* The same box as BoardEditor's .editor, with the bars' space reserved, so
-     the court doesn't move when the editor replaces this (finding 14 in
-     docs/metingen.md; e2e/layout.spec.ts checks it). */
-  .fallback {
-    display: grid;
-    grid-template-rows: minmax(0, 1fr) minmax(calc(2 * var(--board-bar) + var(--board-gap)), auto);
-    gap: var(--board-gap);
-    width: 100%;
-    min-height: 0;
-    max-width: 720px;
-    margin-inline: auto;
-    padding: 8px 8px max(8px, env(safe-area-inset-bottom));
-  }
-
-  /* Like the editor's stage: the court fits the space instead of sizing it. */
-  .court {
-    position: relative;
-    min-height: 0;
-  }
-  .court > :global(svg) {
-    position: absolute;
-    inset: 0;
-  }
-
-  /* The header is hidden here, as on the board (see BoardEditor). */
-  @media (orientation: landscape) and (max-height: 559px) {
-    .fallback {
-      grid-template: minmax(0, 1fr) / var(--board-side) minmax(0, 1fr) var(--board-side);
-      max-width: none;
-      padding: 4px 4px max(4px, env(safe-area-inset-bottom));
-    }
-    .court {
-      grid-area: 1 / 2;
-    }
-    /* Only there without JavaScript, when no editor comes: below the court. */
-    .fallback > :global(noscript) {
-      grid-column: 1 / -1;
-    }
-  }
-
-  p {
-    padding: 8px;
-    text-align: center;
-    color: var(--color-text-muted);
-  }
-</style>
+  </script>
+</BoardPage>

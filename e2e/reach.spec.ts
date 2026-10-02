@@ -1,5 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
-import { openBoard } from "./helpers";
+import type { Page } from "@playwright/test";
+import { expect, openBoard, test } from "./helpers";
 
 // On the full court a piece's drawn touch area is under 44 px on a phone
 // (29 px on an iPhone 15, 40 px on a Pixel 7); a press within 22 px of a

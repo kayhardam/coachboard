@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import type { Board } from "../src/lib/board/format";
-import { dragPlayer, expectBoard, pieces, saved, STORAGE_KEY } from "./helpers";
+import { dragPlayer, expect, expectBoard, pieces, saved, STORAGE_KEY, test } from "./helpers";
 
 // The board on the old production host sends you to handballcoachboard.com
 // (the script in board.astro). These hosts are served from wrangler dev, so

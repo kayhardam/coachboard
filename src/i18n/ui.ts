@@ -42,7 +42,7 @@ const en = {
   "home.ctaBody": "Free, no account needed. It runs in the browser on your phone.",
   "privacy.title": "Privacy | Handball Coachboard",
   "privacy.description":
-    "Handball Coachboard sets no cookies and collects no personal data. What the hosting provider sees, and how statistics would work.",
+    "Handball Coachboard sets no cookies and collects no personal data. What the hosting provider sees, and how the statistics work.",
   "privacy.heading": "Privacy",
   "about.title": "About | Handball Coachboard",
   "about.description":

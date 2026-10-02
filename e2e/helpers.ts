@@ -1,7 +1,35 @@
 import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { expect, type Page } from "@playwright/test";
+import { test as base, expect, type Page } from "@playwright/test";
+import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
 import type { Board } from "../src/lib/board/format";
+
+export { expect };
+
+/**
+ * Every test imports `test` from here. It answers the statistics beacon with an
+ * empty script and its endpoint with 204, so no test (also not one against a
+ * deployed site) sends data to the real dashboard. `beacon.sent` collects what
+ * reaches the endpoint; analytics.spec.ts runs the real beacon with page.route(),
+ * which comes before these context routes.
+ */
+export const test = base.extend<{ beacon: { sent: string[] } }>({
+  beacon: [
+    async ({ context }, use) => {
+      const sent: string[] = [];
+      // A module script from another origin needs CORS, as Cloudflare sends it.
+      await context.route(beaconSrc, (route) =>
+        route.fulfill({ contentType: "text/javascript", headers: { "access-control-allow-origin": "*" }, body: "" }),
+      );
+      await context.route(`${beaconEndpoint}/**`, (route) => {
+        sent.push(route.request().postData() ?? "");
+        return route.fulfill({ status: 204 });
+      });
+      await use({ sent });
+    },
+    { auto: true },
+  ],
+});
 
 export const STORAGE_KEY = "coachboard.board";
 
@@ -18,8 +46,8 @@ export function allPages(): string[] {
 }
 
 /** Opens the board and waits until the editor has replaced the static fallback. */
-export async function openBoard(page: Page, hash = "") {
-  await page.goto(`/en/board/${hash}`);
+export async function openBoard(page: Page, hash = "", path = "/en/board/") {
+  await page.goto(`${path}${hash}`);
   await expect(page.getByRole("toolbar", { name: "Tools" })).toBeVisible();
 }
 
@@ -72,6 +100,18 @@ export async function dragPlayer(page: Page, index: number, dx: number, dy: numb
   await page.mouse.down();
   await page.mouse.move(x + dx, y + dy, { steps: 8 });
   await page.mouse.up();
+}
+
+/** Collects CSP violations from the moment the document exists. */
+export async function watchViolations(page: Page) {
+  await page.addInitScript(() => {
+    const seen: string[] = [];
+    (window as unknown as { cspViolations: string[] }).cspViolations = seen;
+    document.addEventListener("securitypolicyviolation", (e) =>
+      seen.push(`${e.effectiveDirective} blocked ${e.blockedURI || "inline"}: ${e.sample}`),
+    );
+  });
+  return () => page.evaluate(() => (window as unknown as { cspViolations: string[] }).cspViolations);
 }
 
 export function saved(page: Page) {

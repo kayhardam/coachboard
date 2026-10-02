@@ -200,12 +200,20 @@ Werk de geordende lijst uit Fase 3 af. Per punt: hypothese → kleine wijziging 
 
 **Start na Fase 7.** Doel: weten of trainers de app gebruiken en hoe snel die op hun telefoons is.
 
-- **Beslissing (Kay):** welke statistiekdienst. De privacypagina belooft statistieken zonder cookies, anoniem, zonder opslag van IP-adressen, en met de naam van de dienst op die pagina. Een kandidaat is Cloudflare Web Analytics: gratis, zonder cookies, en het meet ook Core Web Vitals van echte bezoekers. Claude Code controleert of de gekozen dienst aan de beloftes voldoet. Afweging: het is een extern script op elke pagina, terwijl contentpagina's nu geen JavaScript laden; het budgetscript krijgt daarvoor een bewuste, gedocumenteerde uitzondering. Sinds Fase 6 blokkeert de CSP elk script van een ander domein: het domein van de dienst moet in `astro.config.mjs` bij `security.csp.scriptDirective.resources` (naast `'self'`) en, als de dienst gegevens verstuurt, in `connect-src` bij `security.csp.directives`, en `e2e/security.spec.ts` moet groen blijven.
-- Maak de kernlus meetbaar zonder tekendata te versturen, bijvoorbeeld met een markering als `?via=qr` in gedeelde links, zodat geopende gedeelde borden apart te tellen zijn. `format.ts` blijft ongewijzigd en oude links blijven werken. Controleer eerst of de gekozen dienst zo'n markering kan tonen.
+- **Beslissing (Kay):** welke statistiekdienst. De privacypagina belooft statistieken zonder cookies, anoniem, zonder opslag van IP-adressen, en met de naam van de dienst op die pagina. Een kandidaat is Cloudflare Web Analytics: gratis, zonder cookies, en het meet ook Core Web Vitals van echte bezoekers. Claude Code controleert of de gekozen dienst aan de beloftes voldoet. Afweging: het is een extern script op elke pagina, terwijl contentpagina's nu geen JavaScript laden; het budgetscript krijgt daarvoor een bewuste, gedocumenteerde uitzondering. Sinds Fase 6 blokkeert de CSP elk script van een ander domein: het domein van de dienst moet in de CSP bij `script-src` (naast `'self'`) en, als de dienst gegevens verstuurt, in `connect-src`, en `e2e/security.spec.ts` moet groen blijven.
+- Maak de kernlus meetbaar zonder tekendata te versturen, zodat geopende gedeelde borden apart te tellen zijn. `format.ts` blijft ongewijzigd en oude links blijven werken. Controleer eerst of de gekozen dienst de markering kan tonen.
 - Werk de privacypagina bij: de naam van de dienst en de datum bovenaan.
 - Noteer elke maand in `docs/metingen.md`: bezoeken aan het bord, geopende gedeelde borden, en de Core Web Vitals van echte bezoekers.
 
-**Klaar als:** de eerste maandmeting in `docs/metingen.md` staat.
+**Besluiten Kay (2 oktober 2026):**
+
+- **Cloudflare Web Analytics, alleen op de bordpagina's** (variant B). Contentpagina's blijven zonder JavaScript. Voorwaarde: het bord wacht nooit op de beacon.
+- **Een eigen pad per kanaal** voor gedeelde borden: Delen opent `/<lang>/board/link/`, de QR-code `/<lang>/board/qr/`.
+  - **Plan aangepast:** de markering was `?via=qr`, maar de beacon haalt de query en de hash uit elke URL (`cleanLocation()` in de beacon; de FAQ van Cloudflare zegt het ook). Een query is dus niet te zien in het dashboard; een pad wel.
+- De beacon draait ook op preview-builds; in het dashboard filter je op host.
+- **Fase 8 in twee delen:** 8a bouwt het, 8b is de eerste maandmeting.
+
+**Klaar als:** de eerste maandmeting in `docs/metingen.md` staat (8b).
 
 ## Buiten dit plan
 
@@ -227,6 +235,8 @@ Elk van deze punten verdient een eigen plan, zoals `AGENTS.md` ook vraagt:
   - [x] 7a: domein live
   - [x] 7b: workers.dev doorsturen
 - [ ] Fase 8: Meten in productie
+  - [x] 8a: statistieken op de bordpagina's
+  - [ ] 8b: eerste maandmeting (begin november 2026)
 
 ## Startprompts
 
