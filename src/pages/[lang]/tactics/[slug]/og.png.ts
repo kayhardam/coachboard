@@ -1,7 +1,7 @@
-// The tactic's share image, next to its page: /en/tactics/<category>/<slug>/og.png.
+// The tactic's share image, next to its page: /en/tactics/<slug>/og.png.
 import type { APIRoute } from "astro";
-import { courtPng } from "../../../../../components/board/courtPng";
-import { tacticPaths, type Tactic } from "../../../../../data/tactics";
+import { courtPng } from "../../../../components/board/courtPng";
+import { tacticPaths, type Tactic } from "../../../../data/tactics";
 
 export const getStaticPaths = tacticPaths;
 

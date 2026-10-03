@@ -14,8 +14,8 @@ describe("parseId", () => {
 });
 
 describe("tacticPath", () => {
-  it("nests the slug under its category, with a trailing slash", () => {
-    expect(tacticPath("attack", "fast-break")).toBe("tactics/attack/fast-break/");
+  it("puts the slug right under tactics/, with a trailing slash", () => {
+    expect(tacticPath("fast-break")).toBe("tactics/fast-break/");
   });
 });
 
@@ -32,6 +32,12 @@ describe("checkTactics", () => {
 
   it("rejects a slug that isn't kebab-case or sits in a subfolder", () => {
     expect(checkTactics([entry("en/Fast_Break"), entry("en/attack/a")], locales)).toHaveLength(2);
+  });
+
+  it("rejects a slug that is a category, whose page has the same URL", () => {
+    expect(checkTactics([entry("en/attack"), entry("en/attack-drill")], locales, ["attack"])).toEqual([
+      '"en/attack": the file name is a category; tactics/attack/ is the category page',
+    ]);
   });
 
   it("rejects a tactic related to itself", () => {

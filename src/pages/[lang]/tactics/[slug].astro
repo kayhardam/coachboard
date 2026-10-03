@@ -1,15 +1,15 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { render } from "astro:content";
-import Icon from "../../../../components/Icon.astro";
-import TacticCards from "../../../../components/TacticCards.astro";
-import Court from "../../../../components/board/Court.svelte";
-import { categoryInfo } from "../../../../data/categories";
-import { boardPath } from "../../../../data/nav";
-import { tacticPaths, tacticsFor, type Tactic } from "../../../../data/tactics";
-import BaseLayout from "../../../../layouts/BaseLayout.astro";
-import { t } from "../../../../i18n/ui";
-import { encode } from "../../../../lib/board/format";
+import Icon from "../../../components/Icon.astro";
+import TacticCards from "../../../components/TacticCards.astro";
+import Court from "../../../components/board/Court.svelte";
+import { categoryInfo } from "../../../data/categories";
+import { boardPath } from "../../../data/nav";
+import { tacticPaths, tacticsFor, type Tactic } from "../../../data/tactics";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { t } from "../../../i18n/ui";
+import { encode } from "../../../lib/board/format";
 
 export const getStaticPaths = tacticPaths;
 

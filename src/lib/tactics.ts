@@ -3,7 +3,8 @@
 //
 // Entry ids come from the file path: src/content/tactics/en/6-0-defense-basics.md
 // has id "en/6-0-defense-basics". The folder is the language, the file name
-// the slug, and `related` lists full ids.
+// the slug, and `related` lists full ids. A translation has the same file name
+// in another language folder, so its URL differs only in the prefix.
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -12,9 +13,12 @@ export function parseId(id: string): { lang: string; slug: string } {
   return slash < 0 ? { lang: "", slug: id } : { lang: id.slice(0, slash), slug: id.slice(slash + 1) };
 }
 
-/** Path after the locale prefix, for getRelativeLocaleUrl(). */
-export function tacticPath(category: string, slug: string): string {
-  return `tactics/${category}/${slug}/`;
+/**
+ * Path after the locale prefix, for getRelativeLocaleUrl(). Only the type is in
+ * the URL, not the category, so a tactic can change category without moving.
+ */
+export function tacticPath(slug: string): string {
+  return `tactics/${slug}/`;
 }
 
 export interface TacticRef {
@@ -25,8 +29,14 @@ export interface TacticRef {
 /**
  * What the schema can't see: the file's folder and how entries point at each
  * other. reference() already fails the build on a related id that doesn't exist.
+ * `categories` share the URL level with the tactics (tactics/attack/ and
+ * tactics/<slug>/), so no slug may equal one.
  */
-export function checkTactics(entries: TacticRef[], locales: readonly string[]): string[] {
+export function checkTactics(
+  entries: TacticRef[],
+  locales: readonly string[],
+  categories: readonly string[] = [],
+): string[] {
   const errors: string[] = [];
   for (const { id, related } of entries) {
     const { lang, slug } = parseId(id);
@@ -35,6 +45,9 @@ export function checkTactics(entries: TacticRef[], locales: readonly string[]): 
     }
     if (!SLUG.test(slug)) {
       errors.push(`"${id}": the file name must be lowercase-kebab-case, with no subfolders`);
+    }
+    if (categories.includes(slug)) {
+      errors.push(`"${id}": the file name is a category; tactics/${slug}/ is the category page`);
     }
     for (const r of related) {
       if (r.id === id) errors.push(`"${id}": lists itself as related`);

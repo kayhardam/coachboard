@@ -109,7 +109,9 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 
 ## Tactics content
 
-- **One Markdown file per tactic and language:** `src/content/tactics/<lang>/<slug>.md`. The entry id is `<lang>/<slug>` and the page is `/<lang>/tactics/<category>/<slug>/`. A translation later gets the same file name in another language folder.
+- **One Markdown file per tactic and language:** `src/content/tactics/<lang>/<slug>.md`. The entry id is `<lang>/<slug>` and the page is `/<lang>/tactics/<slug>/`. A translation gets the same file name in another language folder. Path segments and slugs are English in every language (`/nl/tactics/<slug>/`).
+- **Only the type is in the URL, not the category,** so a tactic can change category without moving. Category pages share the level (`/<lang>/tactics/attack/`), so `checkTactics()` fails the build on a slug that equals a category. Later, drills get `/<lang>/drills/<slug>/`.
+- **A page that moves keeps its old URL working:** a 301 in `public/_redirects` (with and without the trailing slash, and its `og.png`) and a test in `e2e/routing.spec.ts`. The tactic pages moved from `tactics/<category>/<slug>/` in phase 10.
 - **The schema** is in `src/content.config.ts`:
   - `title`, `theme`, `level`;
   - `summary`: at least 50 characters, and also the meta description;
@@ -121,11 +123,11 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 - **The build fails** on:
   - an invalid board or an unknown category (the schema);
   - a `related` id that doesn't exist (`reference()`);
-  - a `related` that points at itself or another language, or a file outside a language folder (`checkTactics()` in `src/lib/tactics.ts`, called by `src/data/tactics.ts`).
+  - a `related` that points at itself or another language, a file outside a language folder, or a slug that is a category (`checkTactics()` in `src/lib/tactics.ts`, called by `src/data/tactics.ts`).
 - **Diagrams:** draw the play at `/en/board/` in `npm run dev`, press "JSON" (dev only) and paste the output as `board:`. JSON is valid YAML. The existing files write it in YAML flow style, one player or arrow per line, which is easier to review. Tactic pages show `frames[0]`.
 - **Categories:** `categorySlugs` in `src/data/categories.ts` is the only list. Their texts are the `category.<slug>.*` keys in `ui.ts`, and each has an icon of the same name in `icons.ts`. A category page exists only when that language has a tactic in it; otherwise its card says "Soon" and has no link, so no empty pages get indexed.
 - **Links into the board:** "Open in the board" carries the diagram in `#t=`, encoded at build time.
-- **Share image:** `src/pages/[lang]/tactics/[category]/[slug]/og.png.ts` renders the diagram with `courtPng()` (`svelte/server` + `sharp`) as a 1200×630 PNG next to the page. The only text in it is the player labels; without a font they drop out, and the build still passes.
+- **Share image:** `src/pages/[lang]/tactics/[slug]/og.png.ts` renders the diagram with `courtPng()` (`svelte/server` + `sharp`) as a 1200×630 PNG next to the page. The only text in it is the player labels; without a font they drop out, and the build still passes.
 
 ## Hosting
 
@@ -138,7 +140,7 @@ Cloudflare Workers with static assets, deployed by Workers Builds (Git integrati
 - Its `routes` entry attaches `handballcoachboard.com` as a Custom Domain. Keep it there and don't manage the domain only in the dashboard: a deploy whose config lacks it removes the domain again.
 - `workers_dev` stays `true`: `coachboard.hardamkay.workers.dev` keeps serving the links and QR codes shared before the move, and its board page redirects to the domain (see "Moved from workers.dev" under The board).
 - Its empty `previews` block must stay too: `wrangler preview` fails without it, so every branch build would fail while `npm run verify` stays green. `npx wrangler deploy --dry-run` passes without it, so it doesn't catch this.
-- `public/_redirects` holds the root redirect. `public/_headers` gives `/_astro/*` (hashed files) a one-year immutable cache, and every response the security headers: `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `Cross-Origin-Opener-Policy: same-origin` and HSTS (one year, without `includeSubDomains` or `preload`).
+- `public/_redirects` holds the root redirect and the 301s for moved pages. `public/_headers` gives `/_astro/*` (hashed files) a one-year immutable cache, and every response the security headers: `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `Cross-Origin-Opener-Policy: same-origin` and HSTS (one year, without `includeSubDomains` or `preload`).
 - **Set in the Cloudflare dashboard**, not in this repo:
   - Always Use HTTPS on;
   - Email Address Obfuscation off, so Cloudflare doesn't rewrite the contact address or inject a script the CSP would block;
