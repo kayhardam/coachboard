@@ -2,9 +2,9 @@ import { expect, test } from "./helpers";
 
 // These rely on wrangler.jsonc and public/_redirects, which `wrangler dev` applies.
 
-test("/ goes to /en/", async ({ page }) => {
+test("/ goes to /nl/", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/en\/$/);
+  await expect(page).toHaveURL(/\/nl\/$/);
 });
 
 test("/en/privacy goes to /en/privacy/", async ({ page }) => {

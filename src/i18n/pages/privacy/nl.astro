@@ -1,0 +1,69 @@
+---
+// De tekst van de privacypagina in het Nederlands. Opmaak en stijl staan in
+// src/pages/[lang]/privacy.astro; elke taal heeft hier een eigen bestand.
+import { contactEmail, owner } from "../../../data/site";
+---
+
+<p class="updated">Laatst bijgewerkt: 2 oktober 2026</p>
+
+<p class="lead">
+  Handball Coachboard zet geen cookies, heeft geen accounts en verzamelt geen persoonsgegevens.
+</p>
+
+<h2>Wie deze site beheert</h2>
+<p>
+  Handball Coachboard wordt beheerd door {owner}. Voor vragen over je privacy mail je naar <a
+    href={`mailto:${contactEmail}`}>{contactEmail}</a
+  >.
+</p>
+
+<h2>Cookies</h2>
+<p>
+  Deze site zet geen cookies, niet van zichzelf en niet van anderen, en laadt geen advertenties.
+  De statistieken hieronder werken ook zonder cookies. Daarom is er geen cookiemelding.
+</p>
+
+<h2>Het bord</h2>
+<p>
+  Het bord bewaart je tekening in de lokale opslag van je browser, op je eigen toestel, zodat hij
+  er de volgende keer nog staat. Hij verlaat je toestel niet, tenzij je hem deelt.
+</p>
+<p>
+  Een gedeelde link draagt de tekening na de <code>#</code> in het adres. Browsers sturen dat deel
+  naar geen enkele server, dus wij zien nooit wat je tekent. Ook QR-codes worden in je browser
+  gemaakt.
+</p>
+
+<h2>Hosting</h2>
+<p>
+  De site wordt gehost door Cloudflare. Om pagina's te leveren en de site tegen misbruik te
+  beschermen, verwerkt Cloudflare technische gegevens zoals je IP-adres en browsertype, zoals elke
+  webserver dat doet. Wij gebruiken die gegevens niet om je te herkennen. Zie het <a
+    href="https://www.cloudflare.com/privacypolicy/"
+    rel="noopener">privacybeleid van Cloudflare</a
+  > (Engels).
+</p>
+
+<h2>Statistieken</h2>
+<p>
+  Om te weten of trainers het bord gebruiken en hoe snel het op hun telefoon is, laden de
+  bordpagina's <a href="https://www.cloudflare.com/web-analytics/" rel="noopener">Cloudflare Web
+    Analytics</a
+  >. De andere pagina's laden helemaal geen script.
+</p>
+<p>
+  Het telt paginaweergaven en meet de laadsnelheid, zonder cookies, zonder iets in je browser op te
+  slaan en zonder fingerprinting. Het stuurt het adres van de pagina zonder het deel na de <code
+    >#</code
+  > of <code>?</code>, dus nooit je tekening; de pagina waar je vandaan kwam; je browser,
+  besturingssysteem en type toestel; je land; en hoe snel de pagina laadde en reageerde. Cloudflare
+  laat je IP-adres vallen in het dichtstbijzijnde datacenter, slaat het niet op, en bewaart de
+  statistieken zes maanden.
+</p>
+<p>
+  Een gedeelde link opent <code>/board/link/</code> en een QR-code <code>/board/qr/</code>. Zo zien
+  we hoe vaak gedeelde borden worden geopend, en niets over wat erop staat.
+</p>
+
+<h2>Wijzigingen</h2>
+<p>Verandert er iets, dan passen we deze pagina aan en de datum bovenaan.</p>

@@ -1,18 +1,32 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { defaultLocale } from "../i18n/locales";
+import { defaultLocale, locales } from "../i18n/locales";
 import { t } from "../i18n/ui";
 import { getRelativeLocaleUrl } from "astro:i18n";
 
-// One 404 for the whole site, served by the host for any missing path.
-const lang = defaultLocale;
+// One 404 for the whole site, served by the host for any missing path, so it
+// speaks every language: English first (the page's lang), then the others.
+const others = locales.filter((l) => l !== defaultLocale);
 ---
 
-<BaseLayout title={t(lang, "notFound.title")} description={t(lang, "notFound.description")} noindex>
+<BaseLayout
+  title={t(defaultLocale, "notFound.title")}
+  description={t(defaultLocale, "notFound.description")}
+  noindex
+>
   <section class="container">
-    <h1>{t(lang, "notFound.heading")}</h1>
-    <p>{t(lang, "notFound.body")}</p>
-    <a class="btn btn-primary" href={getRelativeLocaleUrl(lang)}>{t(lang, "notFound.home")}</a>
+    <h1>{t(defaultLocale, "notFound.heading")}</h1>
+    <p>{t(defaultLocale, "notFound.body")}</p>
+    <a class="btn btn-primary" href={getRelativeLocaleUrl(defaultLocale)}>{t(defaultLocale, "notFound.home")}</a>
+    {
+      others.map((lang) => (
+        <div lang={lang} class="other">
+          <h2>{t(lang, "notFound.heading")}</h2>
+          <p>{t(lang, "notFound.body")}</p>
+          <a class="btn btn-secondary" href={getRelativeLocaleUrl(lang)}>{t(lang, "notFound.home")}</a>
+        </div>
+      ))
+    }
   </section>
 </BaseLayout>
 
@@ -30,5 +44,16 @@ const lang = defaultLocale;
   p {
     margin-bottom: 24px;
     color: var(--color-text-muted);
+  }
+
+  .other {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  h2 {
+    margin-bottom: 12px;
+    font-size: 1.5rem;
   }
 </style>

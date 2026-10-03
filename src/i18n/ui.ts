@@ -130,8 +130,132 @@ export type UiKey = keyof typeof en;
 export type BoardKey = Extract<UiKey, `board.${string}`>;
 export type BoardStrings = Record<BoardKey, string>;
 
-/** Other languages may leave keys out; those fall back to English. */
-const ui: Record<string, Partial<Record<UiKey, string>>> = { en };
+/** Dutch. Its type requires every key, so no English shows under /nl/. */
+const nl: Record<UiKey, string> = {
+  "a11y.skip": "Naar de inhoud",
+  "nav.label": "Hoofdmenu",
+  "nav.menu": "Menu",
+  "nav.home": "Home",
+  "nav.board": "Bord",
+  "nav.tactics": "Tactieken",
+  "cta.board": "Open het bord",
+  "nav.privacy": "Privacy",
+  "nav.about": "Over",
+  "nav.contact": "Contact",
+  "footer.tagline":
+    "Het gratis digitale tactiekbord voor handbaltrainers. Teken een aanval, deel een link of QR-code, en je hele team heeft hem op de telefoon.",
+  "footer.site": "Site",
+  "footer.madeBy": "Gemaakt door een handbaltrainer",
+  "footer.language": "Taal",
+  "home.title": "Handball Coachboard: handbaltactieken tekenen en delen",
+  "home.description":
+    "Het gratis digitale tactiekbord voor handbaltrainers. Teken een aanval, deel een link of QR-code, en je hele team heeft hem op de telefoon.",
+  "home.heading": "Teken tactieken. Deel ze. Win de training.",
+  "home.lead":
+    "Het gratis digitale tactiekbord voor handbaltrainers. Teken een aanval, deel een link of QR-code, en je hele team heeft hem op de telefoon.",
+  "home.note": "Gratis · Geen account · Gemaakt voor de telefoon",
+  "home.browse": "Bekijk tactieken",
+  "home.howTitle": "Zo werkt het",
+  "home.howLead": "Van idee tot op de telefoons van je team in een minuut.",
+  "home.step1Title": "Teken op het bord",
+  "home.step1Body":
+    "Sleep spelers op hun plek en teken loopacties, passes en dribbels. Gemaakt voor aanraken, en het werkt ook met een muis.",
+  "home.step2Title": "Deel een link of QR-code",
+  "home.step2Body": "Elke aanval krijgt een eigen link en QR-code. Geen accounts en geen app voor je spelers.",
+  "home.step3Title": "Je team opent hem",
+  "home.step3Body": "Spelers scannen de QR-code in de zaal en zien de aanval op hun telefoon.",
+  "home.libraryTitle": "Blader door de tactieken",
+  "home.libraryLead": "Gratis aanvallen en oefeningen, klaar voor gebruik. Open ze direct in het bord.",
+  "home.allTactics": "Alle tactieken",
+  "home.ctaTitle": "Teken je eerste aanval",
+  "home.ctaBody": "Gratis, zonder account. Het werkt in de browser op je telefoon.",
+  "privacy.title": "Privacy | Handball Coachboard",
+  "privacy.description":
+    "Handball Coachboard zet geen cookies en verzamelt geen persoonsgegevens. Wat de hostingpartij ziet, en hoe de statistieken werken.",
+  "privacy.heading": "Privacy",
+  "about.title": "Over | Handball Coachboard",
+  "about.description":
+    "Handball Coachboard is een gratis tactiekbord voor handbaltrainers, gemaakt door een handbaltrainer. Wat het doet, en hoe je contact opneemt.",
+  "about.heading": "Over Handball Coachboard",
+  "category.attack.label": "Aanval",
+  "category.attack.desc": "Break, opbouw, overtal, circulatie",
+  "category.attack.intro":
+    "Aanvallend handbal draait om een gat maken en daar met volle snelheid in komen. Deze aanvallen gaan over de break en de tweede golf, opbouw tegen een staande verdediging, kruisen en circulatie, en wat je doet met een speler meer.",
+  "category.defense.label": "Verdediging",
+  "category.defense.desc": "6-0, 5-1, 3-2-1, man-op-man",
+  "category.defense.intro":
+    "Een verdediging wint wedstrijden als zes spelers als één lijn bewegen. Begin met de 6-0, en voeg de aanvallende systemen (5-1, 3-2-1 en man-op-man) toe zodra je team samen schuift, elke wissel benoemt en de cirkelloper nooit uit het oog verliest.",
+  "category.youth.label": "Jeugd",
+  "category.youth.desc": "Oefeningen voor de E- tot en met de B-jeugd",
+  "category.youth.intro":
+    "Jonge spelers hebben het juiste op de juiste leeftijd nodig: vang-, gooi- en loopspelletjes in de E-jeugd, en echte handbalprincipes vanaf de D-jeugd. Deze oefeningen houden iedereen in beweging, met de bal in de hand, en bouwen gewoontes op die bij de senioren nog staan.",
+  "category.goalkeeping.label": "Keepers",
+  "category.goalkeeping.desc": "Positie, reflexen, de break starten",
+  "category.goalkeeping.intro":
+    "De keeper is de eerste aanvaller. Deze trainingen werken aan hoek en positie in het doel, reflexreddingen van dichtbij, de schutter lezen, en de break starten met de eerste pass.",
+  "tactics.title": "Handbaltactieken en oefeningen met tekeningen | Handball Coachboard",
+  "tactics.description":
+    "Gratis handbaltactieken en oefeningen met tekeningen: aanval, verdediging, jeugd en keepers. Open elke aanval direct in het tactiekbord.",
+  "tactics.heading": "Tactieken",
+  "tactics.lead": "Gratis aanvallen en oefeningen, klaar voor gebruik. Open ze in het bord en pas ze aan voor je team.",
+  "tactics.categories": "Onderwerpen",
+  "tactics.all": "Alle tactieken",
+  "tactics.soon": "Binnenkort",
+  "category.title": "{label}: handbaltactieken en oefeningen | Handball Coachboard",
+  "category.others": "Andere onderwerpen",
+  "category.cta": "Teken je eigen aanval",
+  "category.ctaBody": "Gratis, zonder account. Deel hem met je team als link of QR-code.",
+  "tactic.title": "{title} | Handball Coachboard",
+  "tactic.breadcrumb": "Kruimelpad",
+  "tactic.open": "Open in het bord",
+  "tactic.openHint": "Pas hem aan en deel hem met je team als link of QR-code.",
+  "tactic.steps": "Stap voor stap",
+  "tactic.coachingPoints": "Aandachtspunten",
+  "tactic.related": "Verwante tactieken",
+  "notFound.title": "Pagina niet gevonden | Handball Coachboard",
+  "notFound.description": "Deze pagina bestaat niet.",
+  "notFound.heading": "Pagina niet gevonden",
+  "notFound.body": "De pagina die je zocht bestaat niet of is verhuisd.",
+  "notFound.home": "Naar de startpagina",
+  "board.title": "Handbal tactiekbord: aanvallen tekenen en delen | Handball Coachboard",
+  "board.description":
+    "Gratis handbal tactiekbord voor je telefoon. Sleep spelers, teken loopacties, passes en dribbels, en deel de aanval als link of QR-code.",
+  "board.heading": "Handbal tactiekbord",
+  "board.court": "Handbalveld",
+  "board.noscript": "Het bord heeft JavaScript nodig. Hier is de standaardopstelling.",
+  "board.tools": "Gereedschap",
+  "board.actions": "Acties",
+  "board.tool.move": "Schuif",
+  "board.tool.attack": "Aanval",
+  "board.tool.defence": "Verdedig",
+  "board.tool.ball": "Bal",
+  "board.tool.run": "Loop",
+  "board.tool.pass": "Pass",
+  "board.tool.dribble": "Dribbel",
+  "board.undo": "Ongedaan maken",
+  "board.delete": "Verwijderen",
+  "board.clear": "Wissen",
+  "board.clearArrows": "Pijlen en bal wissen",
+  "board.resetLineup": "Standaardopstelling",
+  "board.emptyCourt": "Leeg veld",
+  "board.fullCourt": "Heel veld",
+  "board.halfCourt": "Half veld",
+  "board.share": "Delen",
+  "board.qr": "QR-code",
+  "board.qrHint": "Scan met de camera van je telefoon om deze aanval te openen.",
+  "board.qrFailed": "De QR-code kon niet worden geladen. Controleer je verbinding en probeer het opnieuw.",
+  "board.close": "Sluiten",
+  "board.invalidLink": "Deze link kon niet worden geopend. Je ziet je eigen bord. Vraag de afzender om een nieuwe link.",
+  "board.invalidLinkDefault":
+    "Deze link kon niet worden geopend. Je ziet de standaardopstelling. Vraag de afzender om een nieuwe link.",
+  "board.linkCopied": "Link gekopieerd.",
+  "board.copyManually": "Kopieer deze link:",
+  "board.dismiss": "Sluiten",
+  "board.home": "Home",
+};
+
+/** A language may leave keys out; those fall back to English. Dutch has them all. */
+const ui: Record<string, Partial<Record<UiKey, string>>> = { en, nl };
 
 /** Fills `{name}` placeholders from vars. */
 export function t(locale: string, key: UiKey, vars?: Record<string, string>): string {
@@ -148,4 +272,5 @@ export function boardStrings(locale: string): BoardStrings {
 /** Open Graph wants language_TERRITORY. */
 export const ogLocale: Record<string, string> = {
   en: "en_GB",
+  nl: "nl_NL",
 };

@@ -1,5 +1,5 @@
-# Every language has a prefix; the root goes to the default one.
-/  /en/  302
+# Every language has a prefix; the root goes to Dutch, the first language of our users.
+/  /nl/  302
 
 # Tactic pages moved from tactics/<category>/<slug>/ to tactics/<slug>/ (phase 10).
 # Links to the old URLs may sit in team chats and search results; their share
