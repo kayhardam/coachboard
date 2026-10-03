@@ -1415,6 +1415,11 @@ Kay heeft de teksten van `/nl/` herschreven: kop, inleiding, kenmerken, de drie 
   - De kaarten staan ook op `/nl/tactics/`.
 - **De footertekst** staat op elke Nederlandse pagina.
 - **Het Engels is ongewijzigd:** HTML `/en/` blijft 4.515 B. `/nl/` gaat van 4.536 naar 4.431 B (gzip).
+- **Daarna (Kay): geen kaarten voor lege onderwerpen in het Nederlands.**
+  - Jeugd en Keepers staan niet meer op `/nl/` en `/nl/tactics/`. Ze komen terug zodra er een Nederlandse tactiek in staat.
+  - `soonCards` in `src/data/categories.ts` bepaalt per taal of een leeg onderwerp als "Soon" verschijnt; Engels doet dat nog.
+  - HTML `/nl/` 4.431 → 4.305 B, `/nl/tactics/` 4.366 → 4.109 B. Engels ongewijzigd.
+  - Nog open: de meta-beschrijving van `/nl/tactics/` noemt nog "jeugd en keepers".
 
 ### Preview-URL
 
