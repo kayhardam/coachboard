@@ -1,82 +1,28 @@
 ---
-import { contactEmail, owner } from "../../data/site";
+import type { AstroComponentFactory } from "astro/runtime/server/index.js";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { localeParams } from "../../i18n/locales";
 import { t } from "../../i18n/ui";
+import { pageText } from "../../i18n/pages";
 
 export const getStaticPaths = localeParams;
 
 const { lang } = Astro.params;
+const Text = pageText(
+  import.meta.glob<AstroComponentFactory>("../../i18n/pages/privacy/*.astro", { eager: true, import: "default" }),
+  lang,
+);
 ---
 
 <BaseLayout title={t(lang, "privacy.title")} description={t(lang, "privacy.description")}>
   <article class="container">
     <h1>{t(lang, "privacy.heading")}</h1>
-    <p class="updated">Last updated: 2 October 2026</p>
-
-    <p class="lead">
-      Handball Coachboard sets no cookies, has no accounts and doesn't collect personal data.
-    </p>
-
-    <h2>Who runs this site</h2>
-    <p>
-      Handball Coachboard is run by {owner}. For questions about your privacy, email <a
-        href={`mailto:${contactEmail}`}>{contactEmail}</a
-      >.
-    </p>
-
-    <h2>Cookies</h2>
-    <p>
-      This site sets no cookies, first-party or third-party, and loads no advertising. The
-      statistics below work without cookies too. That's why there is no cookie banner.
-    </p>
-
-    <h2>The board</h2>
-    <p>
-      The board keeps your drawing in your browser's local storage, on your own device, so it's
-      still there next time. It never leaves your device unless you share it.
-    </p>
-    <p>
-      A shared link carries the drawing after the <code>#</code> in the address. Browsers don't send
-      that part to any server, so we never see what you draw. QR codes are made in your browser too.
-    </p>
-
-    <h2>Hosting</h2>
-    <p>
-      The site is hosted by Cloudflare. To deliver pages and protect the site against abuse,
-      Cloudflare processes technical data such as your IP address and browser type, as any web
-      server does. We don't use that data to identify you. See the <a
-        href="https://www.cloudflare.com/privacypolicy/"
-        rel="noopener">Cloudflare privacy policy</a
-      >.
-    </p>
-
-    <h2>Statistics</h2>
-    <p>
-      To learn whether trainers use the board and how fast it is on their phones, the board pages
-      load <a href="https://www.cloudflare.com/web-analytics/" rel="noopener">Cloudflare Web
-        Analytics</a
-      >. The other pages load no script at all.
-    </p>
-    <p>
-      It counts page views and measures loading speed, without cookies, without anything stored
-      in your browser and without fingerprinting. It sends the address of the page without the
-      part after the <code>#</code> or <code>?</code>, so never your drawing; the page you came
-      from; your browser, operating system and device type; your country; and how fast the page
-      loaded and responded. Cloudflare drops your IP address at its nearest data center and
-      doesn't store it, and keeps the statistics for six months.
-    </p>
-    <p>
-      A shared link opens <code>/board/link/</code> and a QR code <code>/board/qr/</code>. That
-      tells us how often shared boards are opened, and nothing about what is on them.
-    </p>
-
-    <h2>Changes</h2>
-    <p>When something changes, we update this page and the date at the top.</p>
+    <Text />
   </article>
 </BaseLayout>
 
 <style>
+  /* The text comes from src/i18n/pages/; scoped styles reach it through :global(). */
   article {
     max-width: 720px;
     padding-block: 48px;
@@ -86,27 +32,27 @@ const { lang } = Astro.params;
     font-size: clamp(2rem, 5vw, 2.5rem);
   }
 
-  h2 {
+  article :global(h2) {
     margin-top: 32px;
     margin-bottom: 8px;
     font-size: 1.25rem;
   }
 
-  .updated {
+  article :global(.updated) {
     margin-bottom: 24px;
     color: var(--color-text-muted);
     font-size: 0.875rem;
   }
 
-  .lead {
+  article :global(.lead) {
     font-size: 1.125rem;
   }
 
-  p + p {
+  article :global(p + p) {
     margin-top: 12px;
   }
 
-  code {
+  article :global(code) {
     padding: 0 4px;
     background: var(--color-bg-soft);
     border: 1px solid var(--color-border);

@@ -1,0 +1,43 @@
+---
+// The about page's text in English. Its layout and styles are in
+// src/pages/[lang]/about.astro; every language needs its own file here.
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { boardPath } from "../../../data/nav";
+import { contactEmail, owner } from "../../../data/site";
+
+interface Props {
+  lang: string;
+}
+
+const { lang } = Astro.props;
+---
+
+<p class="lead">A free tactics board for handball trainers, made by a handball trainer.</p>
+
+<h2>What it does</h2>
+<ul>
+  <li>
+    Draw a play on <a href={getRelativeLocaleUrl(lang, boardPath)}>the board</a>: players, the
+    ball, runs, passes and dribbles, on a half or a full court.
+  </li>
+  <li>Share it with your team as a link or a QR code. Players open it on their phone.</li>
+  <li>
+    Browse the <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactics library</a> and open
+    any play in the board to adapt it.
+  </li>
+</ul>
+
+<h2>Free, without an account</h2>
+<p>
+  The board and the tactics are free to use. There are no accounts, no cookies and no ads.
+  The <a href={getRelativeLocaleUrl(lang, "privacy/")}>privacy page</a> explains what happens
+  to your drawings.
+</p>
+
+<section id="contact">
+  <h2>Contact</h2>
+  <p>
+    Handball Coachboard is made by {owner}. A question, a mistake in a tactic, or a play you'd
+    like to see here? Email <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+  </p>
+</section>
