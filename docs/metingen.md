@@ -1167,6 +1167,18 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
   - met het budget op 5 en daarna op 7 faalt de test ("Expected: 5, Received: 6" en "Expected: 7, Received: 6");
   - de route met eigen bord zonder "Clear" faalt op de opstelling.
 
+### T1 in het Nederlands (Fase 10, 3 oktober 2026)
+
+Dezelfde route op `/nl/board/`, met de Nederlandse knoppen ("Loop", "Pass", "Delen"; met eigen bord eerst "Wissen" → "Standaardopstelling"). `e2e/tasks.spec.ts` loopt nu per taal, in beide browsers.
+
+| Route | `/en/` | `/nl/` |
+|---|--:|--:|
+| T1, eerste keer (standaardopstelling) | **6** | **6** |
+| T1 met eigen bord | **8** | **8** |
+
+- De gedeelde link gaat naar `/nl/board/link/`. Hij bevat de standaardopstelling met de Nederlandse afkortingen (LH, LO, MO, RO, RH, CL, K), twee looppijlen en een pass.
+- Het budget blijft 6 (en 8), in beide talen.
+
 ### Doelen (besluit Kay, 2 oktober 2026)
 
 | Taak | Nulmeting (route) | Doel | `TAP_BUDGET` |
@@ -1276,6 +1288,7 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
 
 - **De testronde van Fase 5,** op productie, met test 15 (stopwatch).
 - **De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a.
+- **Lezen of kijken,** in dezelfde sessies met trainers. Een trainer opent een tactiek en legt die daarna uit aan een speler. Noteer per trainer of hij de tekst las of alleen naar de tekening keek. Dit toetst of trainers vooral doeners zijn (Kay, 3 oktober 2026). Met de uitkomst kiest Kay hoeveel tekst een tactiekpagina naast de tekening nodig heeft.
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
   - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (kaatsers).
 - **Eén aanval naar het eigen team sturen** en vragen wat ze zien.
@@ -1295,3 +1308,193 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
   | 6 | iPhone: Coachboard op het beginscherm zetten en dan een link uit WhatsApp openen. Opent hij in Safari of in de app? (Fase 12b) | | — |
   | 7 | Android: na "Toevoegen aan startscherm" een bord tekenen in Chrome. Staat het ook in de geïnstalleerde app? (Fase 12b) | — | |
 
+
+## Fase 10: Nederlands (3 oktober 2026)
+
+### Wat er veranderd is
+
+- **`/nl/` met alle pagina's:** home, het bord (met `link/` en `qr/`), de tactieken, de onderwerpen, about en privacy.
+  - `ui.ts` heeft een complete Nederlandse lijst. Het type eist elke sleutel, dus `npm run check` faalt op een ontbrekende.
+  - About en privacy staan per taal in `src/i18n/pages/<pagina>/<taal>.astro`. Mist een taal zijn bestand, dan faalt de build: geen Engels onder `/nl/`. De Engelse pagina's zijn pixel voor pixel gelijk gebleven (schermafbeelding vóór en na).
+  - De twee tactieken in het Nederlands, met dezelfde bestandsnaam en de Nederlandse afkortingen in de tekening.
+- **Besluiten van Kay** (2 oktober 2026): Nederlands als eerste taal (4), oefeningen erbij (1), alleen het type in de URL met Engelse padnamen en slugs (2), de bordpaden niet vertaald (11). Voor deze fase: de afkortingen LH, LO, MO, RO, RH, CL en K, en `/` naar `/nl/`.
+- **Tactiekpagina's op `/<taal>/tactics/<slug>/`** (besluit 2), zonder het onderwerp.
+  - De twee Engelse pagina's verhuizen. De oude URL's, met en zonder `/` aan het eind, en hun `og.png` krijgen een 301 in `public/_redirects`. `e2e/routing.spec.ts` controleert dat.
+  - Onderwerppagina's blijven op `/<taal>/tactics/<onderwerp>/`. Ze staan dus op hetzelfde niveau als de tactieken. Astro 7 bouwt beide dynamische routes naast elkaar zonder waarschuwing, en `checkTactics()` laat de build falen op een slug die gelijk is aan een onderwerp.
+- **`/` gaat naar `/nl/`** (302). `x-default` wijst naar de Engelse pagina, niet naar `/`.
+- **hreflang** `en`, `nl` en `x-default` op elke pagina die in beide talen bestaat.
+  - `BaseLayout` krijgt de talen van een pagina in plaats van een lijst paden. Een vertaling heeft hetzelfde pad na het voorvoegsel.
+  - Tactiek- en onderwerppagina's geven alleen de talen mee waarin ze bestaan. De taallinks in de footer sturen een andere taal dan naar zijn startpagina.
+  - Op `link/`, `qr/` en de 404 staat geen hreflang.
+- **Taalknop:** elke contentpagina heeft de taallinks EN en NL in de footer (dat was al zo; nu met een tweede taal). Het bord heeft geen footer.
+- **Wat Fase 8a regelde, geldt ook voor `/nl/`:**
+  - de beacon en de CSP met de beacon alleen op `/nl/board/`, `/nl/board/link/` en `/nl/board/qr/`;
+  - `link/` en `qr/` zijn `noindex` en staan niet in de sitemap.
+  - Het budgetscript, de sitemapfilter en `BoardPage.astro` werkten al per taal.
+- **De standaardopstelling per taal.** `defaultBoardFor(lang)` geeft de Nederlandse afkortingen, en het bord krijgt de opstelling als prop, net als zijn teksten.
+- **Labels die passen.**
+  - Op 360 px breed heeft een gereedschapslabel ongeveer 40 px, en een actielabel ongeveer 48 px.
+  - Afgekapt werden: "Verdedig", "Ongedaan maken", "Verwijderen", "Heel veld", en het Engelse "Full court". Dat laatste was al zo vóór deze fase.
+  - De actiebalk toont nu korte labels (`board.*Short`). De volledige tekst blijft de titel van de knop.
+
+  | Knop | Label NL | Titel NL | Label EN (titel EN) |
+  |---|---|---|---|
+  | verdediger | Dekker | Dekker | Defend |
+  | ongedaan maken | Herstel | Ongedaan maken | Undo |
+  | verwijderen | Weg | Verwijderen | Delete |
+  | heel of half veld | Heel / Half | Heel veld / Half veld | Full / Half (Full court / Half court) |
+
+- **De 404** is één pagina voor de hele site. Hij toont de tekst in het Engels en het Nederlands.
+- **Een Nederlandse deelafbeelding:** `public/og-default-nl.png`, 46,6 KB.
+  - Zes verdedigers in een 6-0, en drie opbouwers met een pass en een loopactie.
+  - Het middelste vierkant van 630×630 is op zichzelf compleet (merknaam, veld, ondertitel). Chat-apps snijden een deelafbeelding voor een kleine preview bij tot dat vierkant. De kop staat in de zijstroken.
+  - `public/og-default.png` (Engels) is ongewijzigd en heeft nog de oude indeling met vijf verdedigers. `node scripts/og-default.mjs en` maakt hem in de nieuwe indeling.
+
+### Groottes
+
+Gzip -9, vóór (`main` @ `07a2f91`) en na:
+
+| Bestand | Vóór | Na |
+|---|--:|--:|
+| `BoardEditor` (JS) | 11.090 B | 10.990 B |
+| Svelte-runtime (`client`) | 15.497 B | 15.497 B |
+| HTML `/en/board/` | 5.557 B | 5.801 B |
+| HTML `/nl/board/` | — | 5.891 B |
+| HTML `/en/board/link/` | 5.388 B | 5.603 B |
+| HTML `/en/` | 4.436 B | 4.515 B |
+| HTML `/nl/` | — | 4.536 B |
+| HTML 6-0-tactiek (`/en/`) | 4.755 B | 4.838 B |
+| HTML 6-0-tactiek (`/nl/`) | — | 4.898 B |
+| HTML 404 | 1.875 B | 2.075 B |
+| CSS | 1.691 B | 1.691 B |
+
+`npm run budget`: JS van het bord 27,1 KB, alle JS 31,4 van 32,5 KB, zoals vóór. Er is geen budget verhoogd.
+
+- **De editor is 100 B kleiner,** want hij importeert de standaardopstelling niet meer.
+- **De HTML van het bord is ongeveer 0,25 KB groter:** de opstelling als prop, de korte labels en de hreflang-regels. `/nl/board/` gebruikt 5,9 van 6,5 KB. Die marge wordt krap als het bord meer teksten krijgt (Fase 12a).
+- **Eerst was de runtime 235 B groter,** door `$state.snapshot()`. Astro geeft props door als `$state`-proxy, en `structuredClone()` kan die niet kopiëren (zonder kopie laadde de editor niet; de bordtests vingen dat). Een JSON-kopie doet hetzelfde zonder extra runtime.
+- **PNG:** de Nederlandse tactiekafbeeldingen zijn 36,6 en 44,9 KB, de Nederlandse standaardafbeelding 46,6 KB. Het budget is 60 KB.
+- **Pagina's:** 12 → 23. Interne links: 143 → 294.
+
+### Tests
+
+- **`npm run verify`** groen: 11 testbestanden met 100 tests (was 9 en 94), 23 pagina's, 294 interne links, 73 budgetcontroles.
+  - Nieuw: `defaults.test.ts` (de opstelling per taal) en `pages.test.ts` (`pageText()` faalt op een ontbrekende taal).
+  - `tactics.test.ts`: het nieuwe pad, en een slug die gelijk is aan een onderwerp.
+- **`npm run e2e`:** 183 → 349 geslaagd, 1 overgeslagen.
+  - Het meeste komt van de `/nl/`-pagina's in de bestaande lussen over alle pagina's (axe, headers, CSP, scripts van een ander domein).
+  - Nieuw: `e2e/i18n.spec.ts`:
+    - hreflang op elke indexeerbare pagina, met `x-default` naar het Engels;
+    - `link/` en `qr/` zonder hreflang;
+    - de sitemap bevat precies de indexeerbare pagina's;
+    - de taallink in de footer;
+    - een Nederlandse tactiek opent in het Nederlandse bord, met de Nederlandse afkortingen.
+  - `routing.spec.ts`: `/` → `/nl/`, en de 301's van de oude tactiek-URL's.
+  - `security.spec.ts` faalt als de bordpagina's van een taal ontbreken, en tekent in beide talen zonder CSP-melding.
+  - `layout.spec.ts`: in beide talen geen afgekapt label, op 360 px en liggend. Vóór de nieuwe labels faalde deze test op de woorden hierboven.
+  - `tasks.spec.ts`: T1 in beide talen (zie "T1 in het Nederlands" onder "UX-metingen").
+
+### Lighthouse vóór (productie, 3 oktober 2026)
+
+`https://handballcoachboard.com` (`main` @ `07a2f91`), drie runs per URL met het commando uit de nulmeting, Lighthouse 13.5.0, Chrome 154.
+
+| URL | Performance | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|
+| `/en/` | 100, 100, 100 | 0,82 / 0,82 / 0,81 s | 0 | 0 ms | 8,4 KB |
+| `/en/board/` | 100, 100, 100 | 0,81 / 0,81 / 0,82 s | 0 | 0 ms | 56,4 KB |
+| `/en/tactics/defense/6-0-defense-basics/` | 100, 100, 100 | 0,83 / 0,82 / 0,82 s | 0 | 0 ms | 8,7 KB |
+
+Accessibility, Best Practices en SEO waren 100 in elke run.
+
+### Teksten van de Nederlandse homepage (Kay, 3 oktober 2026)
+
+Kay heeft de teksten van `/nl/` herschreven: kop, inleiding, kenmerken, de drie stappen, de inleiding van de tactieken, het slot, de footer en de beschrijving (meta en `og:description`). De inleiding onder "Zo werkt het" is weg.
+
+- **De kaarten met onderwerpen noemen alleen wat erin zit:** "Break, tweede golf" bij Aanval en "6-0-dekking" bij Verdediging.
+  - Jeugd en Keepers hebben nog geen tactieken. Hun omschrijving is daarom leeg, en de kaart toont alleen "Binnenkort".
+  - Een lege tekst laat de pagina nu weg, zowel de inleiding onder "Zo werkt het" als de omschrijving op een kaart.
+  - De kaarten staan ook op `/nl/tactics/`.
+- **De footertekst** staat op elke Nederlandse pagina.
+- **Het Engels is ongewijzigd:** HTML `/en/` blijft 4.515 B. `/nl/` gaat van 4.536 naar 4.431 B (gzip).
+- **Daarna (Kay): geen kaarten voor lege onderwerpen in het Nederlands.**
+  - Jeugd en Keepers staan niet meer op `/nl/` en `/nl/tactics/`. Ze komen terug zodra er een Nederlandse tactiek in staat.
+  - `soonCards` in `src/data/categories.ts` bepaalt per taal of een leeg onderwerp als "Soon" verschijnt; Engels doet dat nog.
+  - HTML `/nl/` 4.431 → 4.305 B, `/nl/tactics/` 4.366 → 4.109 B. Engels ongewijzigd.
+  - De meta-beschrijving van `/nl/tactics/` noemde nog "jeugd en keepers". Gesloten bij de tactiekpagina's (hieronder).
+
+### Teksten van het Nederlandse bord (Kay, 3 oktober 2026)
+
+Op `/nl/board/`, `/link/` en `/qr/` zijn de paginatitel, de kop, de beschrijving, de twee meldingen over een kapotte link, de melding als de QR-code niet laadt en de uitleg bij de QR-code nieuw.
+
+- **De paginatitel is nu 46 tekens** ("Tactiekbord voor handbal | Handball Coachboard"); was 69.
+- **De meldingen over een kapotte link zijn korter:** 65 en 74 tekens, was 95 en 104. Op 360 px zijn dat 2 regels in plaats van 3.
+- **"Terug" wordt "Herstel".** Het past, en de titel blijft "Ongedaan maken".
+- **"Dekking" past niet.** `e2e/layout.spec.ts` faalde staand in beide browsers (het woord is 42,5 tot 44,6 px; er is ongeveer 40 px). Daarom blijft het "Dekker".
+- **Geen test controleerde op de oude woorden:** de e2e-tests lezen de teksten uit `ui.ts`.
+- **HTML `/nl/board/`:** 5.891 → 5.852 B (gzip).
+
+### Teksten van de Nederlandse tactiekpagina's (Kay, 3 oktober 2026)
+
+Op `/nl/tactics/`, de twee onderwerpen en de twee tactieken zijn de teksten nieuw. Thema, niveau, `related` en de tekeningen zijn gelijk gebleven; het Engels ook.
+
+- **`/nl/tactics/`:** titel, beschrijving en inleiding.
+  - De titel noemt geen oefeningen meer: "Handbaltactieken met tekeningen | Handball Coachboard", 53 tekens (was 67).
+  - De beschrijving noemt geen jeugd en keepers meer. Dat sluit het open punt bij de homepage.
+- **De onderwerpen Aanval en Verdediging:** titel ("{label}: handbaltactieken"), inleiding en de oproep onderaan ("Teken je eigen aanval of verdediging"). De teksten van Jeugd en Keepers staan er nog; die pagina's bestaan niet op `/nl/`.
+- **"6-0-verdediging: de basis" heet nu "6-0-dekking: de basis",** zoals de kaart bij Verdediging. Bestandsnaam en slug blijven.
+- **De twee tactieken:** samenvatting (ook de meta-beschrijving), stappen en aandachtspunten.
+  - De samenvattingen zijn 149 en 151 tekens (was 234 en 198).
+  - De tweede golf heeft nu 6 stappen (was 5); de 6-0 houdt er 4.
+  - **De zinnen van de stappen zijn 54 tot 92 tekens, gemiddeld 71.** De linkberekening ("Linklengte en QR-grootte", Fase 9) rekende met 61. Voor besluit 3 (de limieten).
+- **Geen test controleerde op de oude teksten.**
+- **HTML (gzip):** Engels ongewijzigd.
+
+  | Pagina | Vóór | Na |
+  |---|--:|--:|
+  | `/nl/tactics/` | 4.109 B | 4.101 B |
+  | `/nl/tactics/attack/` | 3.934 B | 3.883 B |
+  | `/nl/tactics/defense/` | 3.937 B | 3.862 B |
+  | `/nl/tactics/6-0-defense-basics/` | 4.846 B | 4.756 B |
+  | `/nl/tactics/fast-break-second-wave/` | 4.502 B | 4.390 B |
+
+### Preview-URL
+
+`https://fase-10-nederlands-coachboard.hardamkay.workers.dev`, 3 oktober 2026. Workers Builds is groen.
+
+- **`security.spec.ts`, `i18n.spec.ts`, `routing.spec.ts` en `analytics.spec.ts` met `E2E_BASE_URL` = de preview:** 218 geslaagd.
+  - Geen CSP-meldingen, in beide talen.
+  - Geen script van een ander domein, behalve de beacon op de zes bordpagina's.
+  - `/` → `/nl/` (302), en de oude tactiek-URL's → 301.
+- **Lighthouse mobiel**, drie runs per URL:
+
+| URL | Performance | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|
+| `/en/` | 100, 100, 100 | 0,84 / 0,84 / 0,87 s | 0 | 0 ms | 8,6 KB |
+| `/en/board/` | 100, 100, 100 | 0,81 / 0,83 / 0,82 s | 0 | 0 ms | 56,3 KB |
+| `/en/tactics/6-0-defense-basics/` | 100, 100, 100 | 0,84 / 0,85 / 0,85 s | 0 | 0 ms | 8,9 KB |
+| `/nl/` | 100, 100, 100 | 0,84 / 0,83 / 0,83 s | 0 | 0 ms | 8,7 KB |
+| `/nl/board/` | 100, 100, 100 | 0,82 / 0,81 / 0,82 s | 0 | 0 ms | 56,5 KB |
+| `/nl/tactics/6-0-defense-basics/` | 100, 100, 100 | 0,85 / 0,85 / 0,84 s | 0 | 0 ms | 9,0 KB |
+
+- **Vergeleken met productie vóór deze PR:**
+  - Performance blijft 100.
+  - LCP is 0 tot 0,03 s hoger. Dat valt binnen de spreiding van eerdere metingen (Fase 8a: 0,81 tot 1,22 s).
+  - De overdracht is 0,2 KB groter (hreflang en de taallinks).
+  - Accessibility en Best Practices zijn 100. SEO is 66, omdat de preview `noindex` stuurt; SEO alleen op productie vergelijken.
+
+### Testronde Fase 10 (Kay)
+
+Op de preview-URL hierboven. Testen ligt stil (besluit Kay, Fase 9); dit zijn de tests voor wanneer het weer begint, of vóór de merge als je dat wilt. Vul per toestel in (model, iOS/Android-versie, browser).
+
+| # | Test | iPhone | Android |
+|--:|---|:-:|:-:|
+| 1 | Het domein zonder pad openen: kom je op `/nl/`? | | |
+| 2 | `/nl/`, de tactieken, een tactiek, over en privacy: alles in het Nederlands, niets afgekapt, staand en liggend? | | |
+| 3 | Het bord op `/nl/board/`: de afkortingen LH, LO, MO, RO, RH, CL en K, en alle labels heel (Schuif, Aanval, Dekker, Bal, Loop, Pass, Dribbel; Herstel, Weg, Wissen, Heel, Delen, QR-code)? | | |
+| 4 | Lezen de labels goed? Vooral "Dekker", "Herstel" (ongedaan maken) en "Weg" (verwijderen) | | |
+| 5 | T1 in het Nederlands: Loop, twee looppijlen, Pass, een pass, Delen. Zes handelingen, en de link opent `/nl/board/link/` op een tweede telefoon? | | |
+| 6 | Een Nederlandse tactiek → "Open in het bord": de tactiek staat op het bord, met Nederlandse afkortingen | | |
+| 7 | De taallink in de footer (EN/NL) op een tactiek: kom je op dezelfde tactiek in de andere taal? | | |
+| 8 | Een oude link (`/en/tactics/defense/6-0-defense-basics/`) gaat naar de nieuwe URL | | |
+| 9 | Een link naar `/nl/` in WhatsApp: de Nederlandse deelafbeelding, ook als klein vierkant? | | |
+| 10 | Een niet-bestaande pagina (`/nl/bestaat-niet/`): de 404 in het Engels en het Nederlands | | |

@@ -119,3 +119,21 @@ for (const orientation of ["portrait", "landscape"] as const) {
     }
   });
 }
+
+// The tool labels sit under their icons and get an ellipsis when they don't
+// fit. Dutch words are longer ("Verdedig"), so every language is checked on
+// a narrow phone (360 px) and in landscape.
+for (const lang of ["en", "nl"]) {
+  for (const orientation of ["portrait", "landscape"] as const) {
+    test(`${lang}, ${orientation}: no tool label is cut off`, async ({ page }) => {
+      await page.setViewportSize(orientation === "portrait" ? { width: 360, height: 740 } : landscape());
+      await openBoard(page, "", `/${lang}/board/`);
+      const labels = page.locator(".editor .tool span");
+      await expect(labels.first()).toBeVisible();
+      const cut = await labels.evaluateAll((spans) =>
+        spans.filter((s) => s.scrollWidth > s.clientWidth).map((s) => s.textContent),
+      );
+      expect(cut).toEqual([]);
+    });
+  }
+}

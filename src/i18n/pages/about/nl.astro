@@ -1,0 +1,43 @@
+---
+// De tekst van de over-pagina in het Nederlands. Opmaak en stijl staan in
+// src/pages/[lang]/about.astro; elke taal heeft hier een eigen bestand.
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { boardPath } from "../../../data/nav";
+import { contactEmail, owner } from "../../../data/site";
+
+interface Props {
+  lang: string;
+}
+
+const { lang } = Astro.props;
+---
+
+<p class="lead">Een gratis tactiekbord voor handbaltrainers, gemaakt door een handbaltrainer.</p>
+
+<h2>Wat het doet</h2>
+<ul>
+  <li>
+    Teken een aanval op <a href={getRelativeLocaleUrl(lang, boardPath)}>het bord</a>: spelers,
+    de bal, loopacties, passes en dribbels, op een half of een heel veld.
+  </li>
+  <li>Deel hem met je team als link of QR-code. Spelers openen hem op hun telefoon.</li>
+  <li>
+    Blader door de <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactieken</a> en open elke
+    aanval in het bord om hem aan te passen.
+  </li>
+</ul>
+
+<h2>Gratis, zonder account</h2>
+<p>
+  Het bord en de tactieken zijn gratis. Er zijn geen accounts, geen cookies en geen advertenties.
+  Op de <a href={getRelativeLocaleUrl(lang, "privacy/")}>privacypagina</a> lees je wat er met je
+  tekeningen gebeurt.
+</p>
+
+<section id="contact">
+  <h2>Contact</h2>
+  <p>
+    Handball Coachboard is gemaakt door {owner}. Een vraag, een fout in een tactiek, of een aanval
+    die je hier graag zou zien? Mail naar <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+  </p>
+</section>

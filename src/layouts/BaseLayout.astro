@@ -4,15 +4,19 @@ import "../styles/base.css";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import { ogLocale } from "../i18n/ui";
-import { defaultLocale } from "../i18n/locales";
+import { defaultLocale, locales } from "../i18n/locales";
 
 interface Props {
   title: string;
   description: string;
-  /** Site-relative path to a 1200×630 PNG. */
+  /** Site-relative path to a 1200×630 PNG. Defaults to the language's og-default image. */
   image?: string;
-  /** Locale → pathname of each translation of this page, itself included. */
-  alternates?: Record<string, string>;
+  /**
+   * The languages this page exists in, itself included; every language by default.
+   * Translations share the path after the prefix (/en/privacy/ and /nl/privacy/).
+   * They feed hreflang and the footer's language links.
+   */
+  languages?: readonly string[];
   /** Keep the page out of search results (404). Drops canonical and og:url too. */
   noindex?: boolean;
   /** An app page (the board): no footer, and <main> fills the screen below the header. */
@@ -22,8 +26,8 @@ interface Props {
 const {
   title,
   description,
-  image = "/og-default.png",
-  alternates = {},
+  image,
+  languages = locales,
   noindex = false,
   fullscreen = false,
 } = Astro.props;
@@ -32,8 +36,15 @@ const siteName = "Handball Coachboard";
 const locale = Astro.currentLocale ?? defaultLocale;
 const abs = (path: string) => new URL(path, Astro.site).href;
 const canonical = abs(Astro.url.pathname);
-const translations = Object.entries(alternates);
-const xDefault = alternates[defaultLocale];
+// The same page under each language's prefix. noindex pages (the 404, the
+// pages for shared boards) get no hreflang.
+const prefix = `/${locale}/`;
+const rest = Astro.url.pathname.startsWith(prefix) ? Astro.url.pathname.slice(prefix.length) : "";
+const translations = noindex ? [] : languages.map((code) => [code, `/${code}/${rest}`] as const);
+// x-default is the English page, not /: the root redirects to /nl/.
+const xDefault = translations.find(([code]) => code === defaultLocale)?.[1];
+// scripts/og-default.mjs renders one per language; check-links fails on a missing one.
+const ogImage = image ?? (locale === defaultLocale ? "/og-default.png" : `/og-default-${locale}.png`);
 ---
 
 <!doctype html>
@@ -67,7 +78,7 @@ const xDefault = alternates[defaultLocale];
     {!noindex && <meta property="og:url" content={canonical} />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={abs(image)} />
+    <meta property="og:image" content={abs(ogImage)} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -77,7 +88,7 @@ const xDefault = alternates[defaultLocale];
     <main id="main">
       <slot />
     </main>
-    {!fullscreen && <Footer />}
+    {!fullscreen && <Footer {languages} />}
   </body>
 </html>
 

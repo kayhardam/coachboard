@@ -1,2 +1,12 @@
-# Every language has a prefix; the root goes to the default one.
-/  /en/  302
+# Every language has a prefix; the root goes to Dutch, the first language of our users.
+/  /nl/  302
+
+# Tactic pages moved from tactics/<category>/<slug>/ to tactics/<slug>/ (phase 10).
+# Links to the old URLs may sit in team chats and search results; their share
+# images may sit in link previews.
+/en/tactics/attack/fast-break-second-wave/        /en/tactics/fast-break-second-wave/        301
+/en/tactics/attack/fast-break-second-wave         /en/tactics/fast-break-second-wave/        301
+/en/tactics/attack/fast-break-second-wave/og.png  /en/tactics/fast-break-second-wave/og.png  301
+/en/tactics/defense/6-0-defense-basics/           /en/tactics/6-0-defense-basics/            301
+/en/tactics/defense/6-0-defense-basics            /en/tactics/6-0-defense-basics/            301
+/en/tactics/defense/6-0-defense-basics/og.png     /en/tactics/6-0-defense-basics/og.png      301

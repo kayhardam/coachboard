@@ -1,4 +1,5 @@
 import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
+import { t } from "../src/i18n/ui";
 import { allPages, expect, openBoard, test, watchViolations } from "./helpers";
 
 // The headers come from public/_headers, which `wrangler dev` applies. The CSP
@@ -16,6 +17,16 @@ const headers = {
 
 /** The board and the pages for shared boards: the only ones with the beacon. */
 const isBoard = (path: string) => /^\/[^/]+\/board\/(?:(?:link|qr)\/)?$/.test(path);
+
+test("every language's board pages are among the pages checked here", () => {
+  // allPages() reads dist/. Without this, a language whose pages failed to build
+  // would quietly drop out of every check below.
+  for (const lang of ["en", "nl"]) {
+    for (const page of ["board/", "board/link/", "board/qr/"]) {
+      expect(allPages()).toContain(`/${lang}/${page}`);
+    }
+  }
+});
 
 for (const path of allPages()) {
   test(`security headers and CSP on ${path}`, async ({ page }) => {
@@ -60,12 +71,14 @@ for (const path of allPages()) {
   });
 }
 
-test("no CSP violations while using the board", async ({ page }) => {
-  const violations = await watchViolations(page);
-  await openBoard(page);
-  await page.getByRole("button", { name: "QR code" }).click();
-  await expect(page.getByRole("dialog", { name: "QR code" }).locator("svg")).toBeVisible();
-  // The editor's CSS arrives as a <style> that Svelte injects; a blocked one leaves the bars unstyled.
-  await expect(page.locator(".editor")).toHaveCSS("display", "grid");
-  expect(await violations()).toEqual([]);
-});
+for (const lang of ["en", "nl"]) {
+  test(`no CSP violations while using the board (${lang})`, async ({ page }) => {
+    const violations = await watchViolations(page);
+    await openBoard(page, "", `/${lang}/board/`);
+    await page.getByRole("button", { name: t(lang, "board.qr") }).click();
+    await expect(page.getByRole("dialog", { name: t(lang, "board.qr") }).locator("svg")).toBeVisible();
+    // The editor's CSS arrives as a <style> that Svelte injects; a blocked one leaves the bars unstyled.
+    await expect(page.locator(".editor")).toHaveCSS("display", "grid");
+    expect(await violations()).toEqual([]);
+  });
+}

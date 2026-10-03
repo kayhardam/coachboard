@@ -1,8 +1,9 @@
 ---
 // One card per category. A category without tactics in this language has no
-// page yet, so its card says "Soon" and doesn't link anywhere.
+// page yet: its card says "Soon" and doesn't link anywhere, or, in a language
+// not in soonCards, isn't shown at all.
 import { getRelativeLocaleUrl } from "astro:i18n";
-import { categoryInfo, categorySlugs } from "../data/categories";
+import { categoryInfo, categorySlugs, soonCards } from "../data/categories";
 import { tacticsFor } from "../data/tactics";
 import { t } from "../i18n/ui";
 import Icon from "./Icon.astro";
@@ -13,12 +14,14 @@ interface Props {
 
 const { lang } = Astro.props;
 const tactics = await tacticsFor(lang);
-const cards = categorySlugs.map((slug) => ({
-  ...categoryInfo(lang, slug),
-  href: tactics.some((tactic) => tactic.entry.data.category === slug)
-    ? getRelativeLocaleUrl(lang, `tactics/${slug}/`)
-    : undefined,
-}));
+const cards = categorySlugs
+  .map((slug) => ({
+    ...categoryInfo(lang, slug),
+    href: tactics.some((tactic) => tactic.entry.data.category === slug)
+      ? getRelativeLocaleUrl(lang, `tactics/${slug}/`)
+      : undefined,
+  }))
+  .filter((c) => c.href || soonCards.includes(lang));
 ---
 
 <ul class="cards">
@@ -33,7 +36,7 @@ const cards = categorySlugs.map((slug) => ({
             </span>
             <div class="text">
               <h3>{c.label}</h3>
-              <p class="desc">{c.desc}</p>
+              {c.desc && <p class="desc">{c.desc}</p>}
             </div>
             {!c.href && <span class="badge">{t(lang, "tactics.soon")}</span>}
           </Tag>

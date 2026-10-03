@@ -6,7 +6,7 @@ Static Astro 7 site for handball trainers. The product is the tactics board at `
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | Dev server. There is no page at `/` locally; open `/en/`. |
+| `npm run dev` | Dev server. There is no page at `/` locally; open `/nl/` or `/en/`. |
 | `npm run verify` | What CI runs (`.github/workflows/ci.yml`, on pull requests and pushes to `main`): `astro check` + `svelte-check` → `vitest run` → `astro build` → `node scripts/check-links.mjs` → `node scripts/check-budget.mjs`. Must be green before every commit. |
 | `npm run budget` | The size budgets against the current `dist/` (run `npm run build` first): a table of each measured size next to its budget. |
 | `npm run check` / `test` / `build` | The separate steps. `astro check` doesn't type-check `.svelte` files, so `check` also runs `svelte-check --fail-on-warnings`. |
@@ -14,8 +14,10 @@ Static Astro 7 site for handball trainers. The product is the tactics board at `
 | `npm run e2e` | End-to-end tests (Playwright) in mobile Chromium and WebKit. Builds, then serves `dist/` with `wrangler dev` on port 8787. A separate CI job, not part of `verify`. First time: `npx playwright install chromium webkit`. |
 | `npx playwright test e2e/board.spec.ts` | One e2e file; add `-g "<test name>"` for one test, `--project=iphone` or `--project=android` for one browser. |
 | `E2E_BASE_URL=https://handballcoachboard.com npx playwright test e2e/security.spec.ts` | An e2e file against a deployed site instead of `wrangler dev`. Run `npm run build` on the deployed commit first: the page list comes from `dist/`. |
-| `node scripts/og-default.mjs` | Re-renders `public/og-default.png`. One-off; commit the PNG. |
+| `node scripts/og-default.mjs nl` | Re-renders a language's default share image (`public/og-default-nl.png`; `en` is `og-default.png`). One-off, with local fonts; commit the PNG. |
 | `node scripts/favicons.mjs` | Renders `public/favicon.ico` and `public/apple-touch-icon.png` from `public/favicon.svg` (the brand mark). One-off; commit the results. |
+
+Commit only when `npm run verify` exits with code 0. Check the exit code itself, not the output: a pipe through `tail` or `head` hides a failure.
 
 When starting the dev server as an agent, use background mode: `npx astro dev --background`, and manage it with `astro dev stop`, `astro dev status` and `astro dev logs`.
 
@@ -29,14 +31,16 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
   - compare boards by the pieces the editor draws (`pieces()`), not by the link text: compression can give other bytes per browser;
   - don't use `click()` to prove a button is reachable, because Playwright scrolls it into view first; use `toBeInViewport()`;
   - a known bug gets a test with `test.fail()` and a pointer to its finding in `docs/metingen.md`, and the fix removes the marker;
-  - `e2e/tasks.spec.ts` is the tap budget: it counts the actions (taps, drags, key presses) of the shortest route for each measured task and requires exactly `TAP_BUDGET`. A longer or a shorter route fails until the budget changes on purpose, with the reason in the PR and the new count in `docs/metingen.md` ("UX-metingen");
+  - `e2e/tasks.spec.ts` is the tap budget: it counts the actions (taps, drags, key presses) of the shortest route for each measured task, in every language, and requires exactly `TAP_BUDGET`. A longer or a shorter route fails until the budget changes on purpose, with the reason in the PR and the new count in `docs/metingen.md` ("UX-metingen");
+  - find board buttons by their text in the page's language: `t(lang, "board.share")` from `src/i18n/ui.ts`, as `e2e/tasks.spec.ts` does;
+  - `e2e/i18n.spec.ts` checks hreflang, the sitemap and the language links; `allPages()` reads the pages from `dist/`, and `security.spec.ts` fails if a language's board pages are missing from it;
   - import `test` and `expect` from `./helpers`, not from `@playwright/test`: its `test` answers the statistics beacon with an empty script and its endpoint with 204, so no test sends data to the real dashboard (also not with `E2E_BASE_URL`). `e2e/analytics.spec.ts` runs the real beacon (it needs network) and checks what it sends.
 
 ## URLs and routing
 
 - **Trailing slash everywhere.** `trailingSlash: "always"`: every internal link, canonical and sitemap entry ends in `/`. Build links with `getRelativeLocaleUrl(locale, "privacy/")` from `astro:i18n`, not by hand.
-- **Every language has a prefix** (`/en/`, later `/nl/` and `/de/`). Pages live under `src/pages/[lang]/` and export `getStaticPaths = localeParams`. `404.astro` is the only page outside `[lang]`.
-- **`/` has no page.** Cloudflare redirects it to `/en/` (`public/_redirects`); Astro's own root redirect is off.
+- **Every language has a prefix** (`/en/`, `/nl/`, later `/de/`). Pages live under `src/pages/[lang]/` and export `getStaticPaths = localeParams`. `404.astro` is the only page outside `[lang]`.
+- **`/` has no page.** Cloudflare redirects it to `/nl/` with a 302 (`public/_redirects`), because the first users are Dutch; Astro's own root redirect is off. `x-default` points at the English page, not at `/`.
 - **Locales are configured once**, in the `locales` map in `astro.config.mjs` (it feeds both Astro's i18n and the sitemap's hreflang). `src/i18n/locales.ts` exposes them typed.
 - **Only link to pages that exist.** `scripts/check-links.mjs` fails the build on a missing target or a page link without a trailing slash. It also checks own-origin URLs in `href`, `src` and `content`, so canonical, `og:image` and hreflang are covered.
 
@@ -44,15 +48,17 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
 
 - Every page renders through `src/layouts/BaseLayout.astro` with a real `title` and `description`. It owns the whole `<head>`:
   - canonical and `og:url` from `site` + the page path;
-  - absolute `og:image`, always a 1200×630 PNG: `/og-default.png` by default, a tactic's own `og.png` on its page;
+  - absolute `og:image`, always a 1200×630 PNG: the language's default (`/og-default.png` for English, `/og-default-<lang>.png` for the others) or a tactic's own `og.png` on its page. Their middle 630×630 square must work on its own: chat apps crop to it;
   - `lang` and `og:locale` from the page's locale;
-  - hreflang + `x-default` once `alternates` lists more than one translation;
-  - `noindex` (for the 404) drops canonical and `og:url`.
-- `BaseLayout` renders `Header`, `<main id="main">` and `Footer`. With `fullscreen` (the board page) the body fills the viewport and there is no footer.
+  - hreflang for each language in `languages` (every language unless the page passes fewer, as tactic and category pages do) + `x-default` to the English page. Translations share the path after the prefix;
+  - `noindex` (the 404, `board/link/`, `board/qr/`) drops canonical, `og:url` and hreflang.
+- `BaseLayout` renders `Header`, `<main id="main">` and `Footer`. With `fullscreen` (the board page) the body fills the viewport and there is no footer. The footer has the language links on every content page; a language the page doesn't exist in links to its home page.
+- `404.astro` is one page for the whole site (the host serves `dist/404.html` for any missing path), so it shows the text in every language.
 - Menu and footer links come from `src/data/nav.ts`. Labels and short page texts come from `t(locale, key)` in `src/i18n/ui.ts`; `t(locale, key, { title })` fills `{title}` placeholders.
 - The site owner's name and contact address are in `src/data/site.ts` (about and privacy pages).
-- English is the source dictionary. Another language may leave keys out; they fall back to English per key.
-- Long page text (privacy, about) is still English in the `.astro` file. A new locale needs a plan for translating it, or `/nl/privacy/` will show English.
+- English is the source dictionary. A language may leave keys out (they fall back to English per key), but a launched one shouldn't: Dutch is typed `Record<UiKey, string>`, so `npm run check` fails on a missing key.
+- Long page text (about, privacy) lives per language in `src/i18n/pages/<page>/<lang>.astro`; the page in `src/pages/[lang]/` keeps the layout and styles (with `:global()`, since scoped styles don't reach a child component). `pageText()` fails the build for a language without its file, so no English shows under `/nl/`.
+- Board labels must fit: a tool has about 40 px and an action about 48 px for its label on a 360 px phone. The action bar shows the `board.*Short` keys and keeps the full text as `title`. `e2e/layout.spec.ts` fails on a label cut off by its ellipsis, per language.
 - Astro's HTML compression drops a line break between text and an inline tag on the next line ("See the" + newline + `<a>` renders as "See the<a>"). Start the tag on the same line as the text before it.
 
 ## Styling
@@ -92,7 +98,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
   - its CSS ships inside its JS (`<svelte:options css="injected" />`). As a stylesheet over Vite's 4 KB inline limit, Astro linked it on every page;
   - the court fits the space the bars leave (letterboxed), in portrait and landscape; in landscape the header is hidden and the bars become columns at the sides, with a Home link in the right one. `e2e/layout.spec.ts` checks that every button stays on screen;
   - the static fallback in `BoardPage.astro` reserves the bars' space with the same tokens (`--board-bar`, `--board-gap`, `--board-side` in `tokens.css`), so the court doesn't move when the editor replaces it. Change the editor's box and the fallback's together; `e2e/layout.spec.ts` allows 1 px;
-  - its strings come in as a prop from `boardStrings()` in `ui.ts`, and the paths for Share and the QR code as `links`;
+  - its strings come in as a prop from `boardStrings()` in `ui.ts`, the paths for Share and the QR code as `links`, and the default lineup in the page's language as `lineup` (`defaultBoardFor(lang)` in `src/lib/board/defaults.ts`: LW, LB, CB, RB, RW, P, GK in English; LH, LO, MO, RO, RH, CL, K in Dutch). Astro passes props as `$state`, a proxy that `structuredClone()` can't copy, so the editor copies `lineup` once with JSON;
   - it loads `#t=` first, then `localStorage` (`coachboard.board`), then `#own=` (see below), then the default lineup;
   - every change is written to both (300 ms debounce), so the address bar is always a shareable link;
   - a board that came from a `#t=` link reaches `localStorage` only after its first edit, so opening a shared play or a tactic doesn't replace your own saved board.
@@ -109,7 +115,9 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 
 ## Tactics content
 
-- **One Markdown file per tactic and language:** `src/content/tactics/<lang>/<slug>.md`. The entry id is `<lang>/<slug>` and the page is `/<lang>/tactics/<category>/<slug>/`. A translation later gets the same file name in another language folder.
+- **One Markdown file per tactic and language:** `src/content/tactics/<lang>/<slug>.md`. The entry id is `<lang>/<slug>` and the page is `/<lang>/tactics/<slug>/`. A translation gets the same file name in another language folder. Path segments and slugs are English in every language (`/nl/tactics/<slug>/`).
+- **Only the type is in the URL, not the category,** so a tactic can change category without moving. Category pages share the level (`/<lang>/tactics/attack/`), so `checkTactics()` fails the build on a slug that equals a category. Later, drills get `/<lang>/drills/<slug>/`.
+- **A page that moves keeps its old URL working:** a 301 in `public/_redirects` (with and without the trailing slash, and its `og.png`) and a test in `e2e/routing.spec.ts`. The tactic pages moved from `tactics/<category>/<slug>/` in phase 10.
 - **The schema** is in `src/content.config.ts`:
   - `title`, `theme`, `level`;
   - `summary`: at least 50 characters, and also the meta description;
@@ -121,11 +129,11 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 - **The build fails** on:
   - an invalid board or an unknown category (the schema);
   - a `related` id that doesn't exist (`reference()`);
-  - a `related` that points at itself or another language, or a file outside a language folder (`checkTactics()` in `src/lib/tactics.ts`, called by `src/data/tactics.ts`).
-- **Diagrams:** draw the play at `/en/board/` in `npm run dev`, press "JSON" (dev only) and paste the output as `board:`. JSON is valid YAML. The existing files write it in YAML flow style, one player or arrow per line, which is easier to review. Tactic pages show `frames[0]`.
+  - a `related` that points at itself or another language, a file outside a language folder, or a slug that is a category (`checkTactics()` in `src/lib/tactics.ts`, called by `src/data/tactics.ts`).
+- **Diagrams:** draw the play at `/<lang>/board/` in `npm run dev`, press "JSON" (dev only) and paste the output as `board:`. A translation keeps the board and uses its language's labels (the Dutch tactics have LH, LO, MO and so on). JSON is valid YAML. The existing files write it in YAML flow style, one player or arrow per line, which is easier to review. Tactic pages show `frames[0]`.
 - **Categories:** `categorySlugs` in `src/data/categories.ts` is the only list. Their texts are the `category.<slug>.*` keys in `ui.ts`, and each has an icon of the same name in `icons.ts`. A category page exists only when that language has a tactic in it; otherwise its card says "Soon" and has no link, so no empty pages get indexed.
 - **Links into the board:** "Open in the board" carries the diagram in `#t=`, encoded at build time.
-- **Share image:** `src/pages/[lang]/tactics/[category]/[slug]/og.png.ts` renders the diagram with `courtPng()` (`svelte/server` + `sharp`) as a 1200×630 PNG next to the page. The only text in it is the player labels; without a font they drop out, and the build still passes.
+- **Share image:** `src/pages/[lang]/tactics/[slug]/og.png.ts` renders the diagram with `courtPng()` (`svelte/server` + `sharp`) as a 1200×630 PNG next to the page. The only text in it is the player labels; without a font they drop out, and the build still passes.
 
 ## Hosting
 
@@ -138,7 +146,7 @@ Cloudflare Workers with static assets, deployed by Workers Builds (Git integrati
 - Its `routes` entry attaches `handballcoachboard.com` as a Custom Domain. Keep it there and don't manage the domain only in the dashboard: a deploy whose config lacks it removes the domain again.
 - `workers_dev` stays `true`: `coachboard.hardamkay.workers.dev` keeps serving the links and QR codes shared before the move, and its board page redirects to the domain (see "Moved from workers.dev" under The board).
 - Its empty `previews` block must stay too: `wrangler preview` fails without it, so every branch build would fail while `npm run verify` stays green. `npx wrangler deploy --dry-run` passes without it, so it doesn't catch this.
-- `public/_redirects` holds the root redirect. `public/_headers` gives `/_astro/*` (hashed files) a one-year immutable cache, and every response the security headers: `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `Cross-Origin-Opener-Policy: same-origin` and HSTS (one year, without `includeSubDomains` or `preload`).
+- `public/_redirects` holds the root redirect and the 301s for moved pages. `public/_headers` gives `/_astro/*` (hashed files) a one-year immutable cache, and every response the security headers: `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `Cross-Origin-Opener-Policy: same-origin` and HSTS (one year, without `includeSubDomains` or `preload`).
 - **Set in the Cloudflare dashboard**, not in this repo:
   - Always Use HTTPS on;
   - Email Address Obfuscation off, so Cloudflare doesn't rewrite the contact address or inject a script the CSP would block;

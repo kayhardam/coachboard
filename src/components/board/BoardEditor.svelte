@@ -8,7 +8,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { BoardStrings } from "../../i18n/ui";
-  import { defaultBoard } from "../../lib/board/defaults";
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
   import { decode, encode, isBoard, type Board } from "../../lib/board/format";
@@ -20,12 +19,14 @@
   /**
    * `home`: the home page, linked from the bar in landscape, where the header is hidden.
    * `links`: the pages a shared link and a QR code open, so statistics can count them apart.
+   * `lineup`: the default lineup, labelled in the page's language.
    */
   let {
     strings,
     home,
     links,
-  }: { strings: BoardStrings; home: string; links: { link: string; qr: string } } = $props();
+    lineup,
+  }: { strings: BoardStrings; home: string; links: { link: string; qr: string }; lineup: Board } = $props();
 
   type Tool = "move" | "attack" | "defence" | "ball" | "run" | "pass" | "dribble";
   type XY = [number, number];
@@ -50,7 +51,13 @@
     { id: "dribble", label: strings["board.tool.dribble"] },
   ]);
 
-  let board = $state.raw<Board>(structuredClone(defaultBoard));
+  // Astro passes props as $state, a proxy that structuredClone() can't copy:
+  // take a plain copy once (a board is plain JSON; $state.snapshot() would add
+  // runtime code). The lineup prop never changes.
+  // svelte-ignore state_referenced_locally
+  const defaultLineup: Board = JSON.parse(JSON.stringify(lineup));
+
+  let board = $state.raw<Board>(structuredClone(defaultLineup));
   let past = $state.raw<Board[]>([]);
   let draft = $state.raw<Board | null>(null);
   let tool = $state<Tool>("move");
@@ -454,11 +461,11 @@
     </a>
     <button type="button" class="tool" onclick={undo} disabled={past.length === 0} title={strings["board.undo"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.undo} /></svg>
-      <span>{strings["board.undo"]}</span>
+      <span>{strings["board.undoShort"]}</span>
     </button>
     <button type="button" class="tool" onclick={remove} disabled={!selected} title={strings["board.delete"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.delete} /></svg>
-      <span>{strings["board.delete"]}</span>
+      <span>{strings["board.deleteShort"]}</span>
     </button>
     <details class="menu" bind:open={clearOpen}>
       <summary class="tool" title={strings["board.clear"]}>
@@ -467,13 +474,13 @@
       </summary>
       <div class="menu-panel">
         <button type="button" onclick={() => clearWith(edit.clearArrows(board))}>{strings["board.clearArrows"]}</button>
-        <button type="button" onclick={() => clearWith(edit.resetLineup())}>{strings["board.resetLineup"]}</button>
+        <button type="button" onclick={() => clearWith(edit.resetLineup(defaultLineup))}>{strings["board.resetLineup"]}</button>
         <button type="button" onclick={() => clearWith(edit.emptyCourt(board))}>{strings["board.emptyCourt"]}</button>
       </div>
     </details>
     <button type="button" class="tool" onclick={toggleCourt} title={board.court === "half" ? strings["board.fullCourt"] : strings["board.halfCourt"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={board.court === "half" ? icons.courtFull : icons.court} /></svg>
-      <span>{board.court === "half" ? strings["board.fullCourt"] : strings["board.halfCourt"]}</span>
+      <span>{board.court === "half" ? strings["board.fullCourtShort"] : strings["board.halfCourtShort"]}</span>
     </button>
     <button type="button" class="tool" onclick={share} title={strings["board.share"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.share} /></svg>

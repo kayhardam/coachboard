@@ -4,7 +4,7 @@ import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 
 // URL prefix → hreflang. Adding a language starts here.
-const locales = { en: "en" };
+const locales = { en: "en", nl: "nl" };
 const defaultLocale = "en";
 
 // https://astro.build/config

@@ -1,6 +1,6 @@
 import { dragPlayer, expect, pieces, saved, saveOwnBoard, test } from "./helpers";
 
-const tactic = "/en/tactics/defense/6-0-defense-basics/";
+const tactic = "/en/tactics/6-0-defense-basics/";
 
 test('"Open in the board" shows the tactic and keeps the saved board until the first edit', async ({ page }) => {
   // Save a board of your own first.

@@ -4,7 +4,7 @@ import Icon from "../../../../components/Icon.astro";
 import TacticCards from "../../../../components/TacticCards.astro";
 import { categoryInfo, categorySlugs } from "../../../../data/categories";
 import { boardPath } from "../../../../data/nav";
-import { tacticsFor } from "../../../../data/tactics";
+import { categoryLanguages, tacticsFor } from "../../../../data/tactics";
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import { locales } from "../../../../i18n/locales";
 import { t } from "../../../../i18n/ui";
@@ -34,7 +34,11 @@ const { tactics, others } = Astro.props;
 const info = categoryInfo(lang, category);
 ---
 
-<BaseLayout title={t(lang, "category.title", { label: info.label })} description={info.intro}>
+<BaseLayout
+  title={t(lang, "category.title", { label: info.label })}
+  description={info.intro}
+  languages={await categoryLanguages(category)}
+>
   <div class="intro">
     <div class="container">
       <nav aria-label={t(lang, "tactic.breadcrumb")} class="crumbs">

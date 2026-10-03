@@ -3,6 +3,7 @@ import { join, relative } from "node:path";
 import { test as base, expect, type Page } from "@playwright/test";
 import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
 import type { Board } from "../src/lib/board/format";
+import { t } from "../src/i18n/ui";
 
 export { expect };
 
@@ -41,14 +42,16 @@ export function allPages(): string[] {
   return walk(dist)
     .filter((f) => f.endsWith("index.html"))
     .map((f) => "/" + relative(dist, f).replace(/index\.html$/, ""))
-    .concat("/en/does-not-exist/")
+    // A missing page in each language: the host serves the one 404 page.
+    .concat("/en/does-not-exist/", "/nl/does-not-exist/")
     .sort();
 }
 
 /** Opens the board and waits until the editor has replaced the static fallback. */
 export async function openBoard(page: Page, hash = "", path = "/en/board/") {
   await page.goto(`${path}${hash}`);
-  await expect(page.getByRole("toolbar", { name: "Tools" })).toBeVisible();
+  const lang = path.split("/")[1]!;
+  await expect(page.getByRole("toolbar", { name: t(lang, "board.tools") })).toBeVisible();
 }
 
 /**
