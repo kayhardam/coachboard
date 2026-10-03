@@ -29,6 +29,7 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
   - compare boards by the pieces the editor draws (`pieces()`), not by the link text: compression can give other bytes per browser;
   - don't use `click()` to prove a button is reachable, because Playwright scrolls it into view first; use `toBeInViewport()`;
   - a known bug gets a test with `test.fail()` and a pointer to its finding in `docs/metingen.md`, and the fix removes the marker;
+  - `e2e/tasks.spec.ts` is the tap budget: it counts the actions (taps, drags, key presses) of the shortest route for each measured task and requires exactly `TAP_BUDGET`. A longer or a shorter route fails until the budget changes on purpose, with the reason in the PR and the new count in `docs/metingen.md` ("UX-metingen");
   - import `test` and `expect` from `./helpers`, not from `@playwright/test`: its `test` answers the statistics beacon with an empty script and its endpoint with 204, so no test sends data to the real dashboard (also not with `E2E_BASE_URL`). `e2e/analytics.spec.ts` runs the real beacon (it needs network) and checks what it sends.
 
 ## URLs and routing

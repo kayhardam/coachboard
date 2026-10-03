@@ -1108,3 +1108,190 @@ LB en RB staan een halve meter breder: LB van [35, 118] naar [30, 118], RB van [
 **Groottes** (gzip -9, vóór `main` @ `d360502`, en na): `/en/` 4436 → 4436 bytes, `/en/board/` 5556 → 5557, `BoardEditor`-chunk 11091 → 11090. `npm run budget` geeft dezelfde tabel.
 
 **Tests:** `npm run verify` groen: 9 testbestanden met 94 tests. `npm run e2e`: 179 geslaagd, 1 overgeslagen, zoals vóór.
+
+## UX-metingen (Fase 9, 2 oktober 2026)
+
+Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bord veranderen. De app zelf verandert in Fase 9 niet.
+
+**Testen met mensen is geparkeerd:** de stopwatch, de trainers, de testronde van Fase 5 (ook test 15), de tekentest en de scantest. Tot die er zijn, is het aantal handelingen van de kortste e2e-route de nulmeting. Seconden volgen later.
+
+### Meettaken
+
+| Taak | Wat | Toestel | Nu te meten |
+|---|---|---|---|
+| T1 | Open het bord, zet een aanval tegen een 6-0 neer, teken drie pijlen (loop, pass, loop) en deel de link in de teamapp | telefoon | ja |
+| T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | als vier losse borden; als route zodra het bord stappen heeft |
+| T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, twee pionnen, een bal en de kruising | telefoon | met spelers als pionnen; als route zodra het bord pionnen heeft |
+| T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf; als route zodra er meerdere borden te bewaren zijn |
+
+### Meetmethode
+
+- **Tikken.** Elke tik, sleep en toetsaanslag telt als één handeling.
+  - Het openen van het bord telt niet mee.
+  - Het deelvenster van de telefoon (app kiezen, chat kiezen, versturen) ligt buiten de pagina en telt ook niet.
+- **Route.** De kortste route per taak is een e2e-test: `e2e/tasks.spec.ts`, in beide projecten (iPhone en Android).
+  - Een tik gaat alleen naar een knop die al in beeld staat (`toBeInViewport()`): de route mag niet om scrollen vragen.
+  - De test controleert ook de uitkomst. De gedeelde link (`/en/board/link/#t=…`) wordt gedecodeerd en moet de standaardopstelling met twee looppijlen en één pass bevatten.
+- **Budget.** `TAP_BUDGET` in die test moet precies kloppen.
+  - Vraagt de route een handeling meer, dan faalt de test. Vraagt hij er een minder, dan faalt hij ook. Zo blijft elke winst vastgelegd.
+  - Het budget gaat alleen bewust omhoog of omlaag, met de reden in de PR en de nieuwe meting hieronder.
+- **Seconden** (geparkeerd). Met een stopwatch, van de eerste tik tot "gedeeld" of "klaar".
+- **Wie** (geparkeerd).
+  - Kay doet elke taak drie keer en noteert de mediaan.
+  - Drie tot vijf andere trainers, liefst jeugdtrainers, doen elke taak één keer zonder hulp. Noteer ook waar ze vastlopen.
+- **Per fase.** Elke fase meet de taken die ze raakt opnieuw, vóór en na, en noteert dat hier.
+
+### Nulmeting in tikken: T1
+
+`main` @ `29b6d4b`, mobiele emulatie (Pixel 7 en iPhone 15, staand). De route vanaf de standaardopstelling:
+
+| # | Handeling |
+|--:|---|
+| 1 | Tik "Run" |
+| 2 | Sleep een looppijl vanaf LB |
+| 3 | Sleep een looppijl vanaf RB |
+| 4 | Tik "Pass" |
+| 5 | Sleep een pass van CB naar RB |
+| 6 | Tik "Share" |
+
+| Route | Handelingen |
+|---|--:|
+| T1, eerste keer (standaardopstelling) | **6** |
+| T1 met eigen bord (eerst "Clear" → "Default lineup") | **8** |
+
+- **De aanval tegen 6-0 kost niets.** De standaardopstelling is al zes aanvallers tegen een 6-0 met keeper. Een trainer die al een eigen bord heeft, zet hem terug met twee tikken.
+- **Gereedschap blijft gekozen na een pijl.** Daarom tekent de route eerst beide looppijlen en dan de pass.
+  - In de volgorde van de taak (loop, pass, loop) is het één tik meer, want dan wissel je twee keer van gereedschap: 7.
+  - v1 kent geen volgorde van pijlen, dus het gedeelde bord is in beide gevallen hetzelfde.
+- **Controle** (tijdelijk, niet gecommit):
+  - met het budget op 5 en daarna op 7 faalt de test ("Expected: 5, Received: 6" en "Expected: 7, Received: 6");
+  - de route met eigen bord zonder "Clear" faalt op de opstelling.
+
+### Doelen (besluit Kay, 2 oktober 2026)
+
+| Taak | Nulmeting (route) | Doel | `TAP_BUDGET` |
+|---|--:|--:|--:|
+| T1 | 6 handelingen | **5** | 6 |
+| T2, T3, T4 | — | zodra hun route bestaat | — |
+
+- **Het budget blijft 6** tot een fase de route echt korter maakt. Die fase verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
+- **Doelen in seconden** volgen na de stopwatch (geparkeerd).
+
+### Per taak en toestel
+
+Leeg tot de metingen met mensen er zijn. "Route" is het aantal handelingen uit `e2e/tasks.spec.ts`.
+
+**T1**
+
+| Toestel | Route | Kay: tikken (mediaan) | Kay: seconden (mediaan) | Trainers: seconden (n, mediaan) | Vastgelopen op |
+|---|--:|--:|--:|--:|---|
+| iPhone (Safari) | 6 (8 met eigen bord) | | | | |
+| Android (Chrome) | 6 (8 met eigen bord) | | | | |
+
+**T2** (nu als vier losse borden)
+
+| Toestel | Route | Kay: tikken (mediaan) | Kay: seconden (mediaan) | Trainers: seconden (n, mediaan) | Vastgelopen op |
+|---|--:|--:|--:|--:|---|
+| iPhone (Safari) | — | | | | |
+| Android (Chrome) | — | | | | |
+
+**T3** (nu met spelers als pionnen)
+
+| Toestel | Route | Kay: tikken (mediaan) | Kay: seconden (mediaan) | Trainers: seconden (n, mediaan) | Vastgelopen op |
+|---|--:|--:|--:|--:|---|
+| iPhone (Safari) | — | | | | |
+| Android (Chrome) | — | | | | |
+
+**T4** (nu met links naar jezelf)
+
+| Toestellen | Route | Kay: tikken (mediaan) | Kay: seconden (mediaan) | Trainers: seconden (n, mediaan) | Vastgelopen op |
+|---|--:|--:|--:|--:|---|
+| laptop → iPhone | — | | | | |
+| laptop → Android | — | | | | |
+
+### Linklengte en QR-grootte
+
+Nagerekend met een eenmalig script (niet in de repo), met dezelfde compressie als `format.ts`: JSON → `deflate-raw` → base64url. De QR-versie komt van `uqr`, de bibliotheek van het bord.
+
+**De borden:**
+- de standaardopstelling (13 spelers, 7 met label) en een bal;
+- per stap een pass en 1 tot 3 looppijlen, soms gebogen;
+- lopers eindigen waar hun pijl eindigt, en twee verdedigers schuiven per stap;
+- een titel en een Nederlandse zin per stap van 57 tot 65 tekens (gemiddeld 61);
+- voor het formaat is een prefix `2.` aangenomen en een pad onder `/nl/`. Geen van beide bestaat nog: de links openen geen bord.
+
+**De oefening** gebruikt wat er volgens de voorlopige uitkomst van de tekentest bij moet: een derde kleur (twee kaatsers), vier pionnen, twee ballen, en schot, blok en stuit als pijlsoorten.
+
+**Twee manieren om de stappen te schrijven:**
+- (a) elke stap volledig, zoals de frames van v1;
+- (b) de eerste stap volledig en daarna alleen wat verandert: verplaatste spelers, de bal, de pijlen en de zin.
+
+| Bord | Variant | Tekens `/link/` | Tekens `/qr/` | QR, foutcorrectie L | QR, foutcorrectie M |
+|---|---|--:|--:|--:|--:|
+| Nu (v1): 1 stap, 3 pijlen, geen tekst | — | 206 | 204 | versie 9, 53×53 | versie 10, 57×57 |
+| 4 stappen + tekst | a | 650 | 648 | versie 18, 89×89 | versie 20, 97×97 |
+| 4 stappen + tekst | b | 638 | 636 | versie 17, 85×85 | versie 20, 97×97 |
+| 8 stappen + tekst | a | 998 | 996 | versie 22, 105×105 | versie 25, 117×117 |
+| 8 stappen + tekst | b | 973 | 971 | versie 22, 105×105 | versie 25, 117×117 |
+| 12 stappen + tekst | a | 1325 | 1323 | versie 26, 121×121 | versie 30, 137×137 |
+| 12 stappen + tekst | b | 1282 | 1280 | versie 26, 121×121 | versie 30, 137×137 |
+| Oefening: 4 stappen, kaatsers, pionnen, 2 ballen | a | 560 | 558 | versie 16, 81×81 | versie 18, 89×89 |
+| Oefening: 4 stappen, kaatsers, pionnen, 2 ballen | b | 541 | 539 | versie 16, 81×81 | versie 18, 89×89 |
+
+- **Alleen opslaan wat verandert, levert bijna niets op:** 2 tot 3% korter, en de QR-code wordt hooguit één versie kleiner. `deflate-raw` haalt de herhaling tussen stappen er al uit. Voor de lengte hoeft v2 dus geen verschilformaat te hebben.
+- **De tekst kost het meest.** Zonder zinnen zijn dezelfde borden 425, 600 en 762 tekens (`/link/`, variant a). Dat is versie 13, 17 en 19 bij L.
+  - De zinnen zijn dus 35 tot 45% van de link.
+  - Elke zin van ongeveer 61 tekens kost ongeveer 47 tekens in de link.
+  - De limiet op stappen en die op tekst per stap bepalen samen de grootte.
+- **Pas op met foutcorrectie M:** die maakt de code 2 tot 4 versies groter. Het bord gebruikt L.
+- **Limieten doorgerekend:** dezelfde borden (variant a, pad `/qr/`), met elke zin precies zo lang als de limiet.
+  - De zinnen zijn unieke woordreeksen uit een Nederlandse woordenlijst, zodat de compressie geen herhaling tussen stappen vindt.
+  - Bij 61 tekens geeft dat 1300 tekens tegen 1323 met de echte zinnen hierboven, dus de woordenlijst comprimeert ongeveer als echte tekst.
+
+  | Stappen | Zin ≤ 61 | Zin ≤ 80 | Zin ≤ 100 | Zin ≤ 140 |
+  |--:|--:|--:|--:|--:|
+  | 4 | 620 (v17) | 662 (v18) | 715 (v18) | 796 (v20) |
+  | 8 | 1002 (v22) | 1060 (v23) | 1140 (v24) | 1276 (v26) |
+  | 12 | 1300 (v26) | 1416 (v27) | 1496 (v28) | 1720 (v30) |
+
+  In tekens van de hele link, met de QR-versie bij foutcorrectie L tussen haakjes.
+- **Ter vergelijking:**
+  - de grootste QR-code (versie 40, L) houdt op bij ongeveer 2950 tekens;
+  - het formaat staat nu 4000 tekens payload toe (`MAX_PAYLOAD`).
+  - Welke versie in de zaal nog scant van telefoon naar telefoon, moet de scantest uitwijzen.
+- **Testmateriaal voor de scantest** (geparkeerd):
+  - de negen QR-codes van de `/qr/`-links hierboven (de borden met variant a en b, plus v1);
+  - met dezelfde instellingen als de QR-dialoog van het bord (foutcorrectie L, rand 2), en een printpagina van 8 cm per code;
+  - ze staan lokaal en niet in de repo.
+
+### Vóór en na
+
+- **De app verandert niet.** `npm run budget` geeft dezelfde tabel als vóór Fase 9: JS van het bord 27,1 KB, alle JS 31,4 van 32,5 KB (gzip).
+- **`npm run verify`** is groen: 9 testbestanden met 94 tests, zoals vóór.
+- **`npm run e2e`:** 179 → 183 geslaagd, 1 overgeslagen. Dat zijn de twee routes van `e2e/tasks.spec.ts`, elk in twee browsers.
+
+### Geparkeerd
+
+Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die ze nodig heeft:
+
+- **De testronde van Fase 5,** op productie, met test 15 (stopwatch).
+- **De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a.
+- **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
+  - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (kaatsers).
+- **Eén aanval naar het eigen team sturen** en vragen wat ze zien.
+- **De scantest,** vóór Fase 11: de QR-codes hierboven in de zaal scannen, op twee afstanden.
+  - Telefoon bij telefoon: scherm naar camera, zoals bij het doorgeven van een bord.
+  - Op de afstand waarop spelers in de zaal staan als de trainer zijn scherm laat zien.
+  - Noteer per code en afstand: scant hij, en na hoeveel seconden. Daarna kiest Kay de limieten van de link.
+- **De testlijst voor de telefoon (Fase 9).** De app verandert in Fase 9 niet; dit is wat de nulmeting met echte telefoons aanvult. Op productie (`https://handballcoachboard.com/en/board/`), per toestel (model, iOS/Android-versie, browser):
+
+  | # | Test | iPhone | Android |
+  |--:|---|:-:|:-:|
+  | 1 | T1 met de hand vanaf de standaardopstelling ("Run", twee looppijlen, "Pass", een pass, "Share"): 6 handelingen, zonder scrollen? | | |
+  | 2 | T1 met een eigen bord ("Clear" → "Default lineup" eerst): 8 handelingen? | | |
+  | 3 | T1 met de stopwatch, drie keer: de mediaan in seconden, tot "gedeeld" in de teamapp | | |
+  | 4 | De gedeelde link openen op een tweede telefoon: opent `/en/board/link/` met de drie pijlen? | | |
+  | 5 | De scantest hierboven, op beide afstanden | | |
+  | 6 | iPhone: Coachboard op het beginscherm zetten en dan een link uit WhatsApp openen. Opent hij in Safari of in de app? (Fase 12b) | | — |
+  | 7 | Android: na "Toevoegen aan startscherm" een bord tekenen in Chrome. Staat het ook in de geïnstalleerde app? (Fase 12b) | — | |
+
