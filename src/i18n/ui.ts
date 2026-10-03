@@ -187,11 +187,11 @@ const nl: Record<UiKey, string> = {
   "category.attack.label": "Aanval",
   "category.attack.desc": "Break, tweede golf",
   "category.attack.intro":
-    "Aanvallend handbal draait om een gat maken en daar met volle snelheid in komen. Deze aanvallen gaan over de break en de tweede golf, opbouw tegen een staande verdediging, kruisen en circulatie, en wat je doet met een speler meer.",
+    "Elke aanval laat zien wie waar loopt, wie de bal krijgt en waar het gat valt. Open er een in het bord en pas die aan voor je team.",
   "category.defense.label": "Verdediging",
   "category.defense.desc": "6-0-dekking",
   "category.defense.intro":
-    "Een verdediging wint wedstrijden als zes spelers als één lijn bewegen. Begin met de 6-0, en voeg de aanvallende systemen (5-1, 3-2-1 en man-op-man) toe zodra je team samen schuift, elke wissel benoemt en de cirkelloper nooit uit het oog verliest.",
+    "Elke verdediging laat zien wie welke aanvaller dekt, wanneer je uitstapt en hoe je samen schuift. Open er een in het bord en pas die aan voor je team.",
   "category.youth.label": "Jeugd",
   "category.youth.desc": "",
   "category.youth.intro":
@@ -200,17 +200,18 @@ const nl: Record<UiKey, string> = {
   "category.goalkeeping.desc": "",
   "category.goalkeeping.intro":
     "De keeper is de eerste aanvaller. Deze trainingen werken aan hoek en positie in het doel, reflexreddingen van dichtbij, de schutter lezen, en de break starten met de eerste pass.",
-  "tactics.title": "Handbaltactieken en oefeningen met tekeningen | Handball Coachboard",
+  "tactics.title": "Handbaltactieken met tekeningen | Handball Coachboard",
   "tactics.description":
-    "Gratis handbaltactieken en oefeningen met tekeningen: aanval, verdediging, jeugd en keepers. Open elke aanval direct in het tactiekbord.",
+    "Handbaltactieken voor aanval en verdediging, elk met een tekening en de stappen. Open er een in het tactiekbord en pas die aan voor je team.",
   "tactics.heading": "Tactieken",
-  "tactics.lead": "Gratis aanvallen en oefeningen, klaar voor gebruik. Open ze in het bord en pas ze aan voor je team.",
+  "tactics.lead":
+    "Uitgewerkte aanvallen en verdedigingen, elk met een tekening en de stappen. Open er een in het bord en pas die aan voor je eigen team.",
   "tactics.categories": "Onderwerpen",
   "tactics.all": "Alle tactieken",
   "tactics.soon": "Binnenkort",
-  "category.title": "{label}: handbaltactieken en oefeningen | Handball Coachboard",
+  "category.title": "{label}: handbaltactieken | Handball Coachboard",
   "category.others": "Andere onderwerpen",
-  "category.cta": "Teken je eigen aanval",
+  "category.cta": "Teken je eigen aanval of verdediging",
   "category.ctaBody": "Gratis, zonder account. Deel hem met je team als link of QR-code.",
   "tactic.title": "{title} | Handball Coachboard",
   "tactic.breadcrumb": "Kruimelpad",

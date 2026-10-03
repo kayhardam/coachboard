@@ -4,18 +4,19 @@ category: attack
 theme: Omschakeling
 level: Jeugd (C-jeugd en ouder) en senioren
 summary: >-
-  Wordt de eerste golf van een break gestopt, dan komt de tweede golf: opbouwers die een tel later de
-  middenlijn over komen en de verdediging aanvallen voordat die staat. Timing en breedte zijn alles.
+  Wordt de eerste golf gestopt, dan komt de tweede golf. De opbouwers komen een tel later over de
+  middenlijn. Ze vallen aan voordat de verdediging staat.
 steps:
-  - Keeper of hoekspeler pakt de bal na een redding of balverlies → direct een diepe pass naar de eerste golf.
-  - De eerste golf gaat op het doel af; wordt die gestopt, speel de bal dan terug. Forceer niets.
-  - De opbouwers van de tweede golf spreiden zich breed, links, midden en rechts, op 9 meter.
-  - De cirkelloper zet zich vast tussen de teruglopende verdedigers.
-  - "Speel 3 snelle passes over de opbouw: laat de verdediging schuiven, en schiet dan van afstand, speel de cirkelloper in of speel de hoek weer vrij."
+  - Na een redding of balwinst gaat de bal direct diep naar de eerste golf.
+  - Wordt de eerste golf gestopt, dan gaat de bal terug naar de opbouwers.
+  - "De opbouwers komen breed mee: links, midden en rechts."
+  - De cirkelloper loopt tussen de teruglopende verdedigers door en zet zich vast in het midden.
+  - De opbouwers spelen drie snelle passes, zodat de verdediging moet schuiven.
+  - "Daarna kiezen ze: een schot van afstand, de cirkelloper of de hoek."
 coachingPoints:
-  - De tweede golf werkt alleen als de eerste golf onvoorwaardelijk sprint. Die trekt verdedigers weg.
-  - "Breedte wint van diepte: de opbouwers staan breder dan de teruglopende verdediging."
-  - "Vuistregel voor de jeugd: 'De eerste golf scoort, de tweede golf speelt slim.'"
+  - "Eerste golf: sprint altijd, ook zonder bal. Zo trek je verdedigers mee terug."
+  - Is er geen kans, speel dan terug en forceer niets.
+  - "Opbouwers: blijf breder staan dan de verdedigers die teruglopen."
 related: []
 board:
   v: 1

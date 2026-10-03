@@ -1288,6 +1288,7 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
 
 - **De testronde van Fase 5,** op productie, met test 15 (stopwatch).
 - **De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a.
+- **Lezen of kijken,** in dezelfde sessies met trainers. Een trainer opent een tactiek en legt die daarna uit aan een speler. Noteer per trainer of hij de tekst las of alleen naar de tekening keek. Dit toetst of trainers vooral doeners zijn (Kay, 3 oktober 2026). Met de uitkomst kiest Kay hoeveel tekst een tactiekpagina naast de tekening nodig heeft.
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
   - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (kaatsers).
 - **Eén aanval naar het eigen team sturen** en vragen wat ze zien.
@@ -1419,7 +1420,7 @@ Kay heeft de teksten van `/nl/` herschreven: kop, inleiding, kenmerken, de drie 
   - Jeugd en Keepers staan niet meer op `/nl/` en `/nl/tactics/`. Ze komen terug zodra er een Nederlandse tactiek in staat.
   - `soonCards` in `src/data/categories.ts` bepaalt per taal of een leeg onderwerp als "Soon" verschijnt; Engels doet dat nog.
   - HTML `/nl/` 4.431 → 4.305 B, `/nl/tactics/` 4.366 → 4.109 B. Engels ongewijzigd.
-  - Nog open: de meta-beschrijving van `/nl/tactics/` noemt nog "jeugd en keepers".
+  - De meta-beschrijving van `/nl/tactics/` noemde nog "jeugd en keepers". Gesloten bij de tactiekpagina's (hieronder).
 
 ### Teksten van het Nederlandse bord (Kay, 3 oktober 2026)
 
@@ -1431,6 +1432,30 @@ Op `/nl/board/`, `/link/` en `/qr/` zijn de paginatitel, de kop, de beschrijving
 - **"Dekking" past niet.** `e2e/layout.spec.ts` faalde staand in beide browsers (het woord is 42,5 tot 44,6 px; er is ongeveer 40 px). Daarom blijft het "Dekker".
 - **Geen test controleerde op de oude woorden:** de e2e-tests lezen de teksten uit `ui.ts`.
 - **HTML `/nl/board/`:** 5.891 → 5.852 B (gzip).
+
+### Teksten van de Nederlandse tactiekpagina's (Kay, 3 oktober 2026)
+
+Op `/nl/tactics/`, de twee onderwerpen en de twee tactieken zijn de teksten nieuw. Thema, niveau, `related` en de tekeningen zijn gelijk gebleven; het Engels ook.
+
+- **`/nl/tactics/`:** titel, beschrijving en inleiding.
+  - De titel noemt geen oefeningen meer: "Handbaltactieken met tekeningen | Handball Coachboard", 53 tekens (was 67).
+  - De beschrijving noemt geen jeugd en keepers meer. Dat sluit het open punt bij de homepage.
+- **De onderwerpen Aanval en Verdediging:** titel ("{label}: handbaltactieken"), inleiding en de oproep onderaan ("Teken je eigen aanval of verdediging"). De teksten van Jeugd en Keepers staan er nog; die pagina's bestaan niet op `/nl/`.
+- **"6-0-verdediging: de basis" heet nu "6-0-dekking: de basis",** zoals de kaart bij Verdediging. Bestandsnaam en slug blijven.
+- **De twee tactieken:** samenvatting (ook de meta-beschrijving), stappen en aandachtspunten.
+  - De samenvattingen zijn 149 en 151 tekens (was 234 en 198).
+  - De tweede golf heeft nu 6 stappen (was 5); de 6-0 houdt er 4.
+  - **De zinnen van de stappen zijn 54 tot 92 tekens, gemiddeld 71.** De linkberekening ("Linklengte en QR-grootte", Fase 9) rekende met 61. Voor besluit 3 (de limieten).
+- **Geen test controleerde op de oude teksten.**
+- **HTML (gzip):** Engels ongewijzigd.
+
+  | Pagina | Vóór | Na |
+  |---|--:|--:|
+  | `/nl/tactics/` | 4.109 B | 4.101 B |
+  | `/nl/tactics/attack/` | 3.934 B | 3.883 B |
+  | `/nl/tactics/defense/` | 3.937 B | 3.862 B |
+  | `/nl/tactics/6-0-defense-basics/` | 4.846 B | 4.756 B |
+  | `/nl/tactics/fast-break-second-wave/` | 4.502 B | 4.390 B |
 
 ### Preview-URL
 

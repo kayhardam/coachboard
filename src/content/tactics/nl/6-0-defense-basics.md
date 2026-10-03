@@ -1,21 +1,21 @@
 ---
-title: "6-0-verdediging: de basis"
+title: "6-0-dekking: de basis"
 category: defense
 theme: Positieverdediging
 level: Jeugd en senioren
 summary: >-
-  De 6-0 is de basis van de handbalverdediging: zes spelers op een lijn voor het doelgebied, die
-  passlijnen afsluiten en de aanval dwingen tot schoten van afstand. Elk jeugdteam moet hem beheersen
-  voordat het aan andere systemen begint.
+  In de 6-0-dekking staan zes verdedigers op een lijn, net buiten de 6 meter. Ze schuiven samen mee met
+  de bal. Zo moet de aanval van afstand schieten.
 steps:
-  - Zes verdedigers staan op de 6-meterlijn, schouder aan schouder.
-  - Elke verdediger dekt de aanvaller voor zich; stap pas uit als de bal aan jouw kant komt.
-  - Houd de cirkelloper altijd in het oog. Geef hem door aan je buurman; laat hem nooit achter je rug komen.
-  - Schuif zijwaarts mee met de bal; de hele lijn beweegt samen.
+  - Elke verdediger staat net buiten de 6 meter en dekt de aanvaller voor zich.
+  - Krijgt een aanvaller de bal, dan stapt zijn verdediger naar hem uit.
+  - De rest van de lijn schuift mee naar de kant van de bal.
+  - Loopt de cirkelloper langs de lijn, dan neemt de volgende verdediger hem over.
 coachingPoints:
-  - "Eerst praten: de middelste verdediger roept elke verschuiving."
-  - Armen omhoog en actief. Sluit passlijnen af, niet alleen het schot.
-  - Kruis nooit je voeten; kleine snelle passen houden de lijn heel.
+  - "Middenverdedigers: roep elke verschuiving."
+  - Houd de cirkelloper voor je, nooit achter je rug.
+  - "Houd je armen omhoog: zo hinder je de pass, niet alleen het schot."
+  - Schuif met kleine, snelle passen en kruis je voeten niet.
 related:
   - nl/fast-break-second-wave
 board:
