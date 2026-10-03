@@ -1339,7 +1339,7 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
   | Knop | Label NL | Titel NL | Label EN (titel EN) |
   |---|---|---|---|
   | verdediger | Dekker | Dekker | Defend |
-  | ongedaan maken | Terug | Ongedaan maken | Undo |
+  | ongedaan maken | Herstel | Ongedaan maken | Undo |
   | verwijderen | Weg | Verwijderen | Delete |
   | heel of half veld | Heel / Half | Heel veld / Half veld | Full / Half (Full court / Half court) |
 
@@ -1421,6 +1421,17 @@ Kay heeft de teksten van `/nl/` herschreven: kop, inleiding, kenmerken, de drie 
   - HTML `/nl/` 4.431 → 4.305 B, `/nl/tactics/` 4.366 → 4.109 B. Engels ongewijzigd.
   - Nog open: de meta-beschrijving van `/nl/tactics/` noemt nog "jeugd en keepers".
 
+### Teksten van het Nederlandse bord (Kay, 3 oktober 2026)
+
+Op `/nl/board/`, `/link/` en `/qr/` zijn de paginatitel, de kop, de beschrijving, de twee meldingen over een kapotte link, de melding als de QR-code niet laadt en de uitleg bij de QR-code nieuw.
+
+- **De paginatitel is nu 46 tekens** ("Tactiekbord voor handbal | Handball Coachboard"); was 69.
+- **De meldingen over een kapotte link zijn korter:** 65 en 74 tekens, was 95 en 104. Op 360 px zijn dat 2 regels in plaats van 3.
+- **"Terug" wordt "Herstel".** Het past, en de titel blijft "Ongedaan maken".
+- **"Dekking" past niet.** `e2e/layout.spec.ts` faalde staand in beide browsers (het woord is 42,5 tot 44,6 px; er is ongeveer 40 px). Daarom blijft het "Dekker".
+- **Geen test controleerde op de oude woorden:** de e2e-tests lezen de teksten uit `ui.ts`.
+- **HTML `/nl/board/`:** 5.891 → 5.852 B (gzip).
+
 ### Preview-URL
 
 `https://fase-10-nederlands-coachboard.hardamkay.workers.dev`, 3 oktober 2026. Workers Builds is groen.
@@ -1454,8 +1465,8 @@ Op de preview-URL hierboven. Testen ligt stil (besluit Kay, Fase 9); dit zijn de
 |--:|---|:-:|:-:|
 | 1 | Het domein zonder pad openen: kom je op `/nl/`? | | |
 | 2 | `/nl/`, de tactieken, een tactiek, over en privacy: alles in het Nederlands, niets afgekapt, staand en liggend? | | |
-| 3 | Het bord op `/nl/board/`: de afkortingen LH, LO, MO, RO, RH, CL en K, en alle labels heel (Schuif, Aanval, Dekker, Bal, Loop, Pass, Dribbel; Terug, Weg, Wissen, Heel, Delen, QR-code)? | | |
-| 4 | Lezen de labels goed? Vooral "Dekker", "Terug" (ongedaan maken) en "Weg" (verwijderen) | | |
+| 3 | Het bord op `/nl/board/`: de afkortingen LH, LO, MO, RO, RH, CL en K, en alle labels heel (Schuif, Aanval, Dekker, Bal, Loop, Pass, Dribbel; Herstel, Weg, Wissen, Heel, Delen, QR-code)? | | |
+| 4 | Lezen de labels goed? Vooral "Dekker", "Herstel" (ongedaan maken) en "Weg" (verwijderen) | | |
 | 5 | T1 in het Nederlands: Loop, twee looppijlen, Pass, een pass, Delen. Zes handelingen, en de link opent `/nl/board/link/` op een tweede telefoon? | | |
 | 6 | Een Nederlandse tactiek → "Open in het bord": de tactiek staat op het bord, met Nederlandse afkortingen | | |
 | 7 | De taallink in de footer (EN/NL) op een tactiek: kom je op dezelfde tactiek in de andere taal? | | |
