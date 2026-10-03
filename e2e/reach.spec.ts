@@ -9,7 +9,7 @@ const BESIDE = 21;
 
 async function fullCourt(page: Page) {
   await openBoard(page);
-  await page.getByRole("button", { name: "Full court" }).click();
+  await page.getByTitle("Full court").click();
 }
 
 /** Screen centre of a player. */

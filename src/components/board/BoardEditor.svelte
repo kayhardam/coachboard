@@ -461,11 +461,11 @@
     </a>
     <button type="button" class="tool" onclick={undo} disabled={past.length === 0} title={strings["board.undo"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.undo} /></svg>
-      <span>{strings["board.undo"]}</span>
+      <span>{strings["board.undoShort"]}</span>
     </button>
     <button type="button" class="tool" onclick={remove} disabled={!selected} title={strings["board.delete"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.delete} /></svg>
-      <span>{strings["board.delete"]}</span>
+      <span>{strings["board.deleteShort"]}</span>
     </button>
     <details class="menu" bind:open={clearOpen}>
       <summary class="tool" title={strings["board.clear"]}>
@@ -480,7 +480,7 @@
     </details>
     <button type="button" class="tool" onclick={toggleCourt} title={board.court === "half" ? strings["board.fullCourt"] : strings["board.halfCourt"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={board.court === "half" ? icons.courtFull : icons.court} /></svg>
-      <span>{board.court === "half" ? strings["board.fullCourt"] : strings["board.halfCourt"]}</span>
+      <span>{board.court === "half" ? strings["board.fullCourtShort"] : strings["board.halfCourtShort"]}</span>
     </button>
     <button type="button" class="tool" onclick={share} title={strings["board.share"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.share} /></svg>
