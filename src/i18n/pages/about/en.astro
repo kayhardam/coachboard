@@ -17,27 +17,31 @@ const { lang } = Astro.props;
 <h2>What it does</h2>
 <ul>
   <li>
-    Draw a play on <a href={getRelativeLocaleUrl(lang, boardPath)}>the board</a>: players, the
-    ball, runs, passes and dribbles, on a half or a full court.
+    Draw an attack or a defense on <a href={getRelativeLocaleUrl(lang, boardPath)}>the board</a>,
+    on a half or a full court.
   </li>
-  <li>Share it with your team as a link or a QR code. Players open it on their phone.</li>
+  <li>Drag your players into place and draw runs, passes and dribbles.</li>
   <li>
-    Browse the <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactics library</a> and open
-    any play in the board to adapt it.
+    Share your drawing with your team, as a link or QR code. Your players see it on their own phone,
+    without an app or account.
+  </li>
+  <li>
+    Browse the <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactics</a>. Open one in the board
+    and adapt it for your team.
   </li>
 </ul>
 
 <h2>Free, without an account</h2>
 <p>
-  The board and the tactics are free to use. There are no accounts, no cookies and no ads.
-  The <a href={getRelativeLocaleUrl(lang, "privacy/")}>privacy page</a> explains what happens
-  to your drawings.
+  The board is free. You and your players don't need an account. There are no cookies and no ads.
+  The <a href={getRelativeLocaleUrl(lang, "privacy/")}>privacy page</a> explains what happens to
+  your drawings.
 </p>
 
 <section id="contact">
   <h2>Contact</h2>
   <p>
-    Handball Coachboard is made by {owner}. A question, a mistake in a tactic, or a play you'd
-    like to see here? Email <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+    Handball Coachboard is made by {owner}. A question or an idea?
+    Email <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
   </p>
 </section>

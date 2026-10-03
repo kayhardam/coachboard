@@ -1,11 +1,9 @@
 ---
-// One card per category. A category without tactics in this language has no
-// page yet: its card says "Soon" and doesn't link anywhere, or, in a language
-// not in soonCards, isn't shown at all.
+// One card per category that has tactics in this language. The others have no
+// page yet, so they get no card until their first tactic.
 import { getRelativeLocaleUrl } from "astro:i18n";
-import { categoryInfo, categorySlugs, soonCards } from "../data/categories";
+import { categoryInfo, categorySlugs } from "../data/categories";
 import { tacticsFor } from "../data/tactics";
-import { t } from "../i18n/ui";
 import Icon from "./Icon.astro";
 
 interface Props {
@@ -15,34 +13,28 @@ interface Props {
 const { lang } = Astro.props;
 const tactics = await tacticsFor(lang);
 const cards = categorySlugs
+  .filter((slug) => tactics.some((tactic) => tactic.entry.data.category === slug))
   .map((slug) => ({
     ...categoryInfo(lang, slug),
-    href: tactics.some((tactic) => tactic.entry.data.category === slug)
-      ? getRelativeLocaleUrl(lang, `tactics/${slug}/`)
-      : undefined,
-  }))
-  .filter((c) => c.href || soonCards.includes(lang));
+    href: getRelativeLocaleUrl(lang, `tactics/${slug}/`),
+  }));
 ---
 
 <ul class="cards">
   {
-    cards.map((c) => {
-      const Tag = c.href ? "a" : "div";
-      return (
-        <li>
-          <Tag class:list={["card", { soon: !c.href }]} href={c.href}>
-            <span class="tile">
-              <Icon name={c.icon} />
-            </span>
-            <div class="text">
-              <h3>{c.label}</h3>
-              {c.desc && <p class="desc">{c.desc}</p>}
-            </div>
-            {!c.href && <span class="badge">{t(lang, "tactics.soon")}</span>}
-          </Tag>
-        </li>
-      );
-    })
+    cards.map((c) => (
+      <li>
+        <a class="card" href={c.href}>
+          <span class="tile">
+            <Icon name={c.icon} />
+          </span>
+          <div class="text">
+            <h3>{c.label}</h3>
+            {c.desc && <p class="desc">{c.desc}</p>}
+          </div>
+        </a>
+      </li>
+    ))
   }
 </ul>
 
@@ -65,7 +57,7 @@ const cards = categorySlugs
     border-radius: var(--radius);
     color: var(--color-text);
   }
-  a.card:hover {
+  .card:hover {
     text-decoration: none;
     border-color: var(--color-accent-dark);
     box-shadow: var(--shadow);
@@ -96,20 +88,6 @@ const cards = categorySlugs
   .desc {
     font-size: 0.9375rem;
     line-height: 1.4;
-    color: var(--color-text-muted);
-  }
-
-  .soon .tile {
-    background: var(--color-bg-soft);
-    color: var(--color-text-muted);
-  }
-
-  .badge {
-    flex-shrink: 0;
-    padding: 2px 10px;
-    border: 1px solid var(--color-border);
-    border-radius: 999px;
-    font-size: 0.8125rem;
     color: var(--color-text-muted);
   }
 

@@ -1481,9 +1481,52 @@ In de PR "Fase 10: afronding" (branch `fase-10-afronding`). Op `/nl/about/` en `
 
   - `/en/privacy/` is 25 B groter door de lijststijl, die in de pagina zelf staat. De Engelse tekst is gelijk.
 
+### Teksten van de Engelse pagina's (Kay, 3 oktober 2026)
+
+Stap 5, in PR #24 (branch `fase-10-afronding`, na de merge van #23). Het Engels volgt nu het Nederlands van stap 1 tot en met 4. Het Nederlands is ongewijzigd.
+
+- **`/en/`:** kop, inleiding, kenmerken, de drie stappen, de inleiding van de tactieken, het slot, de footer (op elke Engelse pagina) en de beschrijving. De inleiding onder "How it works" is weg, net als in het Nederlands.
+- **Het bord:** paginatitel, beschrijving, de uitleg bij de QR-code, de melding als die niet laadt en de twee meldingen over een kapotte link.
+  - De paginatitel is 44 tekens ("Handball tactics board | Handball Coachboard"); was 66.
+  - De meldingen over een kapotte link zijn 72 en 76 tekens; was 90 en 94.
+- **`/en/tactics/` en de onderwerpen:** titel, beschrijving en inleiding; de kaarten bij Attack en Defense ("Fast break, second wave", "6-0 defense"); de oproep onderaan de onderwerppagina's.
+  - De titel noemt geen drills meer: "Handball tactics with diagrams | Handball Coachboard", 52 tekens (was 63). Ook de titel van een onderwerp: "{label}: handball tactics".
+- **Geen "Soon"-kaarten meer.** Youth en Goalkeeping staan in het Engels niet meer op `/en/` en `/en/tactics/`, net als in het Nederlands. Daarmee gebruikte niets meer `soonCards`, de "Soon"-kaart of `tactics.soon`; die zijn weg. `CategoryCards` toont alleen onderwerpen met een tactiek, altijd als link.
+- **De twee tactieken:** titel, samenvatting (ook de meta-beschrijving), stappen en aandachtspunten. Thema, niveau, `related`, de tekeningen, bestandsnaam en slug blijven.
+  - "6-0 Defense: Basics" heet nu "6-0 defense: the basics", en "Fast Break: Second Wave Attack" heet "Fast break: the second wave".
+  - De samenvattingen zijn 155 en 152 tekens. De tweede golf heeft nu 6 stappen, zoals in het Nederlands.
+- **`/en/about/`:** de lijst "What it does" (vier punten), "Free, without an account" en "Contact". Titel, beschrijving, inleiding en koppen blijven.
+- **`/en/privacy/`:** de beschrijving, de inleiding en alle onderdelen behalve "Changes". "Last updated" is 3 October 2026.
+  - Wat Cloudflare Web Analytics krijgt, staat nu in een lijst, met de lijststijl van stap 4.
+  - De paden van een gedeelde link en een QR-code komen uit `sharePaths`, zoals in `nl.astro`: `/en/board/link/` en `/en/board/qr/` (was `/board/link/` en `/board/qr/`, zonder taal).
+- **Tests:** `e2e/board.spec.ts` controleerde de twee oude meldingen over een kapotte link letterlijk; die controleren nu de nieuwe tekst. Verder controleerde geen test op een oude Engelse tekst. Er is geen controle weggehaald.
+  - `npm run verify` groen (100 tests, 23 pagina's, 294 interne links). `npm run e2e`: 349 geslaagd, 1 overgeslagen, zoals vóór.
+- **HTML (gzip -9):**
+
+  | Pagina | Vóór | Na |
+  |---|--:|--:|
+  | `/en/` | 4.515 B | 4.210 B |
+  | `/en/board/` | 5.801 B | 5.781 B |
+  | `/en/board/link/` en `/qr/` | 5.603 B | 5.579 B |
+  | `/en/tactics/` | 4.364 B | 3.992 B |
+  | `/en/tactics/attack/` | 3.981 B | 3.851 B |
+  | `/en/tactics/defense/` | 3.939 B | 3.835 B |
+  | `/en/tactics/6-0-defense-basics/` | 4.838 B | 4.717 B |
+  | `/en/tactics/fast-break-second-wave/` | 4.516 B | 4.346 B |
+  | `/en/about/` | 2.358 B | 2.322 B |
+  | `/en/privacy/` | 3.036 B | 3.043 B |
+  | `/nl/` | 4.305 B | 4.251 B |
+  | `/nl/tactics/` | 4.101 B | 4.045 B |
+  | 404 | 2.075 B | 2.017 B |
+
+  - `/nl/` en `/nl/tactics/` zijn kleiner doordat de CSS van de "Soon"-kaart uit `CategoryCards` weg is; hun tekst is gelijk. De andere Nederlandse pagina's zijn byte voor byte even groot.
+  - De 404 toont de Engelse footertekst, die korter is.
+
 ### Preview-URL
 
 `https://fase-10-nederlands-coachboard.hardamkay.workers.dev`, 3 oktober 2026. Workers Builds is groen.
+
+PR #24 (stap 5, de Engelse teksten en deelafbeelding): `https://fase-10-afronding-coachboard.hardamkay.workers.dev`.
 
 - **`security.spec.ts`, `i18n.spec.ts`, `routing.spec.ts` en `analytics.spec.ts` met `E2E_BASE_URL` = de preview:** 218 geslaagd.
   - Geen CSP-meldingen, in beide talen.

@@ -8,12 +8,6 @@ export const categorySlugs = ["attack", "defense", "youth", "goalkeeping"] as co
 
 export type Category = (typeof categorySlugs)[number];
 
-/**
- * Languages whose category cards show a category without tactics as "Soon".
- * The others leave it out until it has a tactic (Dutch, Kay, phase 10).
- */
-export const soonCards: readonly string[] = ["en"];
-
 export interface CategoryInfo {
   slug: Category;
   icon: IconName;

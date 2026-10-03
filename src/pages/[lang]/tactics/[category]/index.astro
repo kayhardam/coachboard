@@ -10,7 +10,7 @@ import { locales } from "../../../../i18n/locales";
 import { t } from "../../../../i18n/ui";
 
 // Only categories with at least one tactic get a page, so search engines
-// never index an empty one. CategoryCards shows the rest as "Soon".
+// never index an empty one. CategoryCards shows no card for the rest.
 export async function getStaticPaths() {
   const paths = [];
   for (const lang of locales) {
