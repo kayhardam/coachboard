@@ -43,3 +43,14 @@ export async function tacticPaths() {
     props: { tactic },
   }));
 }
+
+/** The languages a tactic exists in: a translation has the same slug. */
+export async function tacticLanguages(slug: string): Promise<string[]> {
+  return (await allTactics()).filter((t) => t.slug === slug).map((t) => t.lang);
+}
+
+/** The languages that have a page for a category: those with a tactic in it. */
+export async function categoryLanguages(category: string): Promise<string[]> {
+  const langs = (await allTactics()).filter((t) => t.entry.data.category === category).map((t) => t.lang);
+  return [...new Set(langs)];
+}

@@ -4,6 +4,12 @@ import { footerOnly, nav } from "../data/nav";
 import { t } from "../i18n/ui";
 import { defaultLocale, locales } from "../i18n/locales";
 
+interface Props {
+  /** The languages this page exists in; the others link to their home page. */
+  languages: readonly string[];
+}
+
+const { languages: available } = Astro.props;
 const locale = Astro.currentLocale ?? defaultLocale;
 const siteLinks = [...nav, ...footerOnly].map((item) => ({
   href: getRelativeLocaleUrl(locale, item.path) + (item.hash ? `#${item.hash}` : ""),
@@ -17,7 +23,7 @@ const rest = Astro.url.pathname.startsWith(prefix)
   : "";
 const languages = locales.map((code) => ({
   code,
-  href: getRelativeLocaleUrl(code, rest),
+  href: getRelativeLocaleUrl(code, available.includes(code) ? rest : ""),
   current: code === locale ? ("page" as const) : undefined,
 }));
 ---
