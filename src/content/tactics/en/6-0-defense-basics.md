@@ -1,21 +1,21 @@
 ---
-title: "6-0 Defense: Basics"
+title: "6-0 defense: the basics"
 category: defense
 theme: Position defense
 level: Youth & Senior
 summary: >-
-  The 6-0 is the foundation of handball defense: six players in a line in front of the goal area,
-  covering passing lines and forcing long shots. Every youth team should master it before moving to
-  advanced systems.
+  In the 6-0 defense, six defenders form a line just outside the goal area. They shift together with
+  the ball. That forces the attack to shoot from distance.
 steps:
-  - Six defenders line up on the 6-meter line, shoulder to shoulder.
-  - Each defender covers the attacker in front of them; step out only when the ball comes to your side.
-  - Always keep sight of the pivot. Hand the pivot over to your neighbor; never let them get behind your back.
-  - Shift sideways as the ball moves; the whole line moves together.
+  - Each defender stands just outside the goal area and covers the attacker in front of them.
+  - When an attacker gets the ball, their defender steps out to them.
+  - The rest of the line shifts toward the ball.
+  - When the pivot moves along the line, the next defender picks them up.
 coachingPoints:
-  - "Communication first: the middle defender calls every shift."
-  - Arms up and active. Block passing lines, not just the shot.
-  - Never cross feet; small quick steps keep the line intact.
+  - "Center defenders: call every shift."
+  - Keep the pivot in front of you, never behind your back.
+  - "Keep your arms up: that way you disrupt the pass, not just the shot."
+  - Shift with small, quick steps and don't cross your feet.
 related:
   - en/fast-break-second-wave
 board:

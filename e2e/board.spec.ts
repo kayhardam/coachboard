@@ -73,7 +73,7 @@ test("a broken link keeps your own board, and says so until you edit", async ({ 
   await openBoard(other, brokenLink);
   const notice = other.getByRole("status");
   await expect(notice).toContainText(
-    "This link couldn't be opened. You're seeing your own board. Ask the sender for a new link.",
+    "This link doesn't work; ask for a new one. You're seeing your own board.",
   );
   await expect.poll(() => pieces(other)).toEqual(drawn);
   await other.waitForTimeout(600);
@@ -92,7 +92,7 @@ test("a broken link without a saved board shows the default lineup, until you di
   await openBoard(page, brokenLink);
   const notice = page.getByRole("status");
   await expect(notice).toContainText(
-    "This link couldn't be opened. You're seeing the default lineup. Ask the sender for a new link.",
+    "This link doesn't work; ask for a new one. You're seeing the default lineup.",
   );
   await expectBoard(page, defaultBoard);
 

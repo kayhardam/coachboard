@@ -1,22 +1,22 @@
 ---
-title: "Fast Break: Second Wave Attack"
+title: "Fast break: the second wave"
 category: attack
 theme: Transition
 level: Youth (U14+) & Senior
 summary: >-
-  When the first wave of a fast break is stopped, the second wave arrives: back court players who
-  cross the middle line a beat later and attack the unsettled defense before it can reorganize.
-  Timing and width are everything.
+  If the first wave is stopped, the second wave follows. The back court players cross the center line
+  a beat later. They attack before the defense is set.
 steps:
-  - Keeper or wing collects the ball after a save or turnover → immediate deep pass to the first wave.
-  - First wave attacks the goal; if stopped, pull the ball back out. Do not force it.
-  - Second-wave back court players spread wide left-center-right at 9 meters.
-  - Pivot posts up between the retreating defenders.
-  - "Play 3 quick passes around the top: shift the defense, then shoot from distance, feed the pivot, or release the wing again."
+  - After a save or a steal, the ball goes deep to the first wave straight away.
+  - If the first wave is stopped, the ball goes back to the back court players.
+  - "The back court players come up wide: left, center and right."
+  - The pivot runs through the retreating defenders and posts up in the middle.
+  - The back court players play three quick passes, so the defense has to shift.
+  - "Then they choose: a shot from distance, the pivot or the wing."
 coachingPoints:
-  - The second wave only works if the first wave sprints unconditionally. It pulls defenders away.
-  - "Width beats depth: back court players must be wider than the retreating defense."
-  - "Rule of thumb for youth: 'First wave scores, second wave plays smart.'"
+  - "First wave: always sprint, even without the ball. That pulls defenders back with you."
+  - If there's no chance, play it back and don't force it.
+  - "Back court players: stay wider than the retreating defenders."
 related: []
 board:
   v: 1

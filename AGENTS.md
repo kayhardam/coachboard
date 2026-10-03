@@ -131,7 +131,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
   - a `related` id that doesn't exist (`reference()`);
   - a `related` that points at itself or another language, a file outside a language folder, or a slug that is a category (`checkTactics()` in `src/lib/tactics.ts`, called by `src/data/tactics.ts`).
 - **Diagrams:** draw the play at `/<lang>/board/` in `npm run dev`, press "JSON" (dev only) and paste the output as `board:`. A translation keeps the board and uses its language's labels (the Dutch tactics have LH, LO, MO and so on). JSON is valid YAML. The existing files write it in YAML flow style, one player or arrow per line, which is easier to review. Tactic pages show `frames[0]`.
-- **Categories:** `categorySlugs` in `src/data/categories.ts` is the only list. Their texts are the `category.<slug>.*` keys in `ui.ts`, and each has an icon of the same name in `icons.ts`. A category page exists only when that language has a tactic in it; otherwise its card says "Soon" and has no link, so no empty pages get indexed.
+- **Categories:** `categorySlugs` in `src/data/categories.ts` is the only list. Their texts are the `category.<slug>.*` keys in `ui.ts`, and each has an icon of the same name in `icons.ts`. A category page and its card exist only when that language has a tactic in it, so no empty pages get indexed.
 - **Links into the board:** "Open in the board" carries the diagram in `#t=`, encoded at build time.
 - **Share image:** `src/pages/[lang]/tactics/[slug]/og.png.ts` renders the diagram with `courtPng()` (`svelte/server` + `sharp`) as a 1200×630 PNG next to the page. The only text in it is the player labels; without a font they drop out, and the build still passes.
 
