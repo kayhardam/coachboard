@@ -16,13 +16,13 @@ const texts = {
     file: "og-default.png",
     left: ["Draw", "a play."],
     right: ["Share it", "with your", "team."],
-    tagline: "Free tactics board for handball trainers",
+    tagline: "Tactics board for handball coaches",
   },
   nl: {
     file: "og-default-nl.png",
     left: ["Teken", "een", "aanval."],
     right: ["Deel hem", "met je", "team."],
-    tagline: "Gratis tactiekbord voor handbaltrainers",
+    tagline: "Tactiekbord voor handbaltrainers",
   },
 };
 

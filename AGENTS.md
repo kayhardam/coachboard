@@ -1,6 +1,6 @@
 # Handball Coachboard
 
-Static Astro 7 site for handball trainers. The product is the tactics board at `/en/board/`; the content pages lead to it. `CLAUDE.md` is a symlink to this file.
+Static Astro 7 site for handball coaches. The product is the tactics board at `/en/board/`; the content pages lead to it. `CLAUDE.md` is a symlink to this file.
 
 ## Commands
 
@@ -60,6 +60,19 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
 - Long page text (about, privacy) lives per language in `src/i18n/pages/<page>/<lang>.astro`; the page in `src/pages/[lang]/` keeps the layout and styles (with `:global()`, since scoped styles don't reach a child component). `pageText()` fails the build for a language without its file, so no English shows under `/nl/`.
 - Board labels must fit: a tool has about 40 px and an action about 48 px for its label on a 360 px phone. The action bar shows the `board.*Short` keys and keeps the full text as `title`. `e2e/layout.spec.ts` fails on a label cut off by its ellipsis, per language.
 - Astro's HTML compression drops a line break between text and an inline tag on the next line ("See the" + newline + `<a>` renders as "See the<a>"). Start the tag on the same line as the text before it.
+
+## Copy
+
+New or changed site text is agreed with Kay first. Take it over literally. If a text you need isn't agreed yet, ask. If an agreed text breaks a rule below, say so instead of changing it.
+
+- Say what the board does, in a coach's words. No slogans. One thought per sentence.
+- Promise only what exists and what has been measured. No "always" or "never" about what is free, about accounts, or about what we see.
+- "Gratis"/"free" appears in one place: the "Free, without an account" block on the about page (`src/i18n/pages/about/<lang>.astro`). Elsewhere, say what the board does; "no account or app needed" is fine.
+- Text that appears on every board says "the board" (`het bord`), not "the attack": a board can show a defense too.
+- Tactics: the steps say who does what; the coaching points are what you call out in the sports hall. Mention drills (`oefeningen`) only once there are drills.
+- Privacy: don't say we collect no personal data. Cloudflare processes IP addresses, and an email is personal data too.
+- Dutch: "6-0-dekking", not "6-0-verdediging". `handbaltrainer` is right in Dutch.
+- English follows the Dutch, with American spelling, like the URLs (`/defense/`). A coach is a "coach", never a "trainer". "Teken een aanval" is "draw a play"; overviews and categories say "attack". Balwinst = steal, opbouwers = back court players, cirkelloper = pivot, hoek = wing, de 6 meter = the goal area.
 
 ## Styling
 
