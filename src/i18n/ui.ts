@@ -14,16 +14,16 @@ const en = {
   "nav.about": "About",
   "nav.contact": "Contact",
   "footer.tagline":
-    "Free tactics board for handball trainers.",
+    "Free tactics board for handball coaches.",
   "footer.site": "Site",
-  "footer.madeBy": "Made by a handball trainer",
+  "footer.madeBy": "Made by a handball coach",
   "footer.language": "Language",
   "home.title": "Handball Coachboard: draw and share handball tactics",
   "home.description":
-    "Free tactics board for handball trainers. Draw a play and share it with a link or QR code. Your players open it without an app or account.",
+    "Free tactics board for handball coaches. Draw a play and share it with a link or QR code. Your players open it without an app or account.",
   "home.heading": "Draw a play. Share it with your team.",
   "home.lead":
-    "A tactics board for handball trainers. Your players see the play on their phone, through a link or QR code.",
+    "A tactics board for handball coaches. Your players see the play on their phone, through a link or QR code.",
   "home.note": "Free · No account or app needed",
   "home.browse": "Browse tactics",
   "home.howTitle": "How it works",
@@ -46,7 +46,7 @@ const en = {
   "privacy.heading": "Privacy",
   "about.title": "About | Handball Coachboard",
   "about.description":
-    "Handball Coachboard is a free tactics board for handball trainers, made by a handball trainer. What it does, and how to get in touch.",
+    "Handball Coachboard is a free tactics board for handball coaches, made by a handball coach. What it does, and how to get in touch.",
   "about.heading": "About Handball Coachboard",
   "category.attack.label": "Attack",
   "category.attack.desc": "Fast break, second wave",
@@ -281,6 +281,6 @@ export function boardStrings(locale: string): BoardStrings {
 
 /** Open Graph wants language_TERRITORY. */
 export const ogLocale: Record<string, string> = {
-  en: "en_GB",
+  en: "en_US",
   nl: "nl_NL",
 };
