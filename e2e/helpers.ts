@@ -42,7 +42,8 @@ export function allPages(): string[] {
   return walk(dist)
     .filter((f) => f.endsWith("index.html"))
     .map((f) => "/" + relative(dist, f).replace(/index\.html$/, ""))
-    .concat("/en/does-not-exist/")
+    // A missing page in each language: the host serves the one 404 page.
+    .concat("/en/does-not-exist/", "/nl/does-not-exist/")
     .sort();
 }
 
