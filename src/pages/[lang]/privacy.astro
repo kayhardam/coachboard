@@ -17,7 +17,7 @@ const Text = pageText(
 <BaseLayout title={t(lang, "privacy.title")} description={t(lang, "privacy.description")}>
   <article class="container">
     <h1>{t(lang, "privacy.heading")}</h1>
-    <Text />
+    <Text lang={lang} />
   </article>
 </BaseLayout>
 
@@ -50,6 +50,14 @@ const Text = pageText(
 
   article :global(p + p) {
     margin-top: 12px;
+  }
+
+  /* Lists as on the about page, with the space between paragraphs above and below. */
+  article :global(ul) {
+    display: grid;
+    gap: 8px;
+    margin-block: 12px;
+    padding-left: 24px;
   }
 
   article :global(code) {

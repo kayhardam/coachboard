@@ -17,27 +17,31 @@ const { lang } = Astro.props;
 <h2>Wat het doet</h2>
 <ul>
   <li>
-    Teken een aanval op <a href={getRelativeLocaleUrl(lang, boardPath)}>het bord</a>: spelers,
-    de bal, loopacties, passes en dribbels, op een half of een heel veld.
+    Teken een aanval of verdediging op <a href={getRelativeLocaleUrl(lang, boardPath)}>het bord</a>,
+    op een half of een heel veld.
   </li>
-  <li>Deel hem met je team als link of QR-code. Spelers openen hem op hun telefoon.</li>
+  <li>Sleep je spelers op hun plek en teken loopacties, passes en dribbels.</li>
   <li>
-    Blader door de <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactieken</a> en open elke
-    aanval in het bord om hem aan te passen.
+    Deel je tekening met je team, als link of QR-code. Je spelers zien hem op hun eigen telefoon,
+    zonder app of account.
+  </li>
+  <li>
+    Blader door de <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactieken</a>. Open er een in
+    het bord en pas die aan voor je team.
   </li>
 </ul>
 
 <h2>Gratis, zonder account</h2>
 <p>
-  Het bord en de tactieken zijn gratis. Er zijn geen accounts, geen cookies en geen advertenties.
-  Op de <a href={getRelativeLocaleUrl(lang, "privacy/")}>privacypagina</a> lees je wat er met je
-  tekeningen gebeurt.
+  Het bord is gratis. Jij en je spelers hebben geen account nodig. Er zijn geen cookies en geen
+  advertenties. Op de <a href={getRelativeLocaleUrl(lang, "privacy/")}>privacypagina</a> lees je
+  wat er met je tekeningen gebeurt.
 </p>
 
 <section id="contact">
   <h2>Contact</h2>
   <p>
-    Handball Coachboard is gemaakt door {owner}. Een vraag, een fout in een tactiek, of een aanval
-    die je hier graag zou zien? Mail naar <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+    Handball Coachboard is gemaakt door {owner}. Een vraag of een idee?
+    Mail naar <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
   </p>
 </section>
