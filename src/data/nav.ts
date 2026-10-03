@@ -20,6 +20,12 @@ export const nav: NavItem[] = [
 /** The header's call to action. */
 export const boardPath = "board/";
 
+/** Where Share and the QR code point (BoardPage.astro); the privacy page names them. */
+export const sharePaths = {
+  link: "board/link/",
+  qr: "board/qr/",
+};
+
 /** Footer only. */
 export const footerOnly: NavItem[] = [
   { path: "about/", label: "nav.about" },

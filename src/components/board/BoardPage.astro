@@ -7,6 +7,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { boardStrings, t } from "../../i18n/ui";
 import { beaconEndpoint, beaconSrc } from "../../data/analytics";
 import { defaultBoardFor } from "../../lib/board/defaults";
+import { sharePaths } from "../../data/nav";
 import Beacon from "../Beacon.astro";
 import BoardEditor from "./BoardEditor.svelte";
 import Court from "./Court.svelte";
@@ -28,8 +29,8 @@ Astro.csp?.insertDirective(`connect-src 'self' ${beaconEndpoint}`);
 const lang = Astro.currentLocale!;
 const lineup = defaultBoardFor(lang);
 const links = {
-  link: getRelativeLocaleUrl(lang, "board/link/"),
-  qr: getRelativeLocaleUrl(lang, "board/qr/"),
+  link: getRelativeLocaleUrl(lang, sharePaths.link),
+  qr: getRelativeLocaleUrl(lang, sharePaths.qr),
 };
 ---
 

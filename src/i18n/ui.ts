@@ -178,7 +178,7 @@ const nl: Record<UiKey, string> = {
   "home.ctaBody": "Open het bord in je browser. Gratis en zonder account.",
   "privacy.title": "Privacy | Handball Coachboard",
   "privacy.description":
-    "Handball Coachboard zet geen cookies en verzamelt geen persoonsgegevens. Wat de hostingpartij ziet, en hoe de statistieken werken.",
+    "Handball Coachboard zet geen cookies en heeft geen accounts. Lees wat er met je tekening gebeurt, wat Cloudflare ziet en wat de statistieken meten.",
   "privacy.heading": "Privacy",
   "about.title": "Over | Handball Coachboard",
   "about.description":
@@ -212,7 +212,7 @@ const nl: Record<UiKey, string> = {
   "category.title": "{label}: handbaltactieken | Handball Coachboard",
   "category.others": "Andere onderwerpen",
   "category.cta": "Teken je eigen aanval of verdediging",
-  "category.ctaBody": "Gratis, zonder account. Deel hem met je team als link of QR-code.",
+  "category.ctaBody": "Gratis, zonder account. Deel je tekening met je team, als link of QR-code.",
   "tactic.title": "{title} | Handball Coachboard",
   "tactic.breadcrumb": "Kruimelpad",
   "tactic.open": "Open in het bord",

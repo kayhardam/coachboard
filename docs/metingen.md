@@ -1289,6 +1289,7 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
 - **De testronde van Fase 5,** op productie, met test 15 (stopwatch).
 - **De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a.
 - **Lezen of kijken,** in dezelfde sessies met trainers. Een trainer opent een tactiek en legt die daarna uit aan een speler. Noteer per trainer of hij de tekst las of alleen naar de tekening keek. Dit toetst of trainers vooral doeners zijn (Kay, 3 oktober 2026). Met de uitkomst kiest Kay hoeveel tekst een tactiekpagina naast de tekening nodig heeft.
+- **Delen en vertrouwen:** vraag elke trainer of hij zijn eigen tactieken zou delen, en wanneer hij een tactiek van een ander vertrouwt. Dit toetst het idee van één kennisbank waar trainers zelf bijdragen, mits de kwaliteit gewaarborgd blijft (Kay, 3 oktober 2026). De uitkomst weegt mee bij besluit 9.
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
   - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (kaatsers).
 - **Eén aanval naar het eigen team sturen** en vragen wat ze zien.
@@ -1456,6 +1457,29 @@ Op `/nl/tactics/`, de twee onderwerpen en de twee tactieken zijn de teksten nieu
   | `/nl/tactics/defense/` | 3.937 B | 3.862 B |
   | `/nl/tactics/6-0-defense-basics/` | 4.846 B | 4.756 B |
   | `/nl/tactics/fast-break-second-wave/` | 4.502 B | 4.390 B |
+
+### Teksten van de Nederlandse over- en privacypagina (Kay, 3 oktober 2026)
+
+In de PR "Fase 10: afronding" (branch `fase-10-afronding`). Op `/nl/about/` en `/nl/privacy/` zijn de teksten nieuw, en de oproep onderaan de onderwerppagina's. Het Engels is ongewijzigd; dat volgt in stap 5.
+
+- **`/nl/about/`:** de lijst "Wat het doet" (nu vier punten), "Gratis, zonder account" en "Contact". Titel, beschrijving en inleiding blijven.
+- **`/nl/privacy/`:** de beschrijving (meta en `og:description`), de inleiding en alle onderdelen behalve "Wijzigingen". "Laatst bijgewerkt" is 3 oktober 2026.
+  - Wat Cloudflare Web Analytics krijgt, staat nu in een lijst. De privacypagina had nog geen lijststijl; die komt van de over-pagina, met boven en onder de lijst dezelfde ruimte als tussen alinea's (12 px).
+  - De paden van een gedeelde link en een QR-code noemen de taal: `/nl/board/link/` en `/nl/board/qr/`.
+  - Die paden komen uit `sharePaths` in `src/data/nav.ts`, dezelfde bron als Delen en de QR-code in `BoardPage.astro`. Ze kunnen dus niet uit elkaar lopen.
+- **De oproep op `/nl/tactics/attack/` en `/nl/tactics/defense/`:** "Gratis, zonder account. Deel je tekening met je team, als link of QR-code."
+- **Geen test controleerde op de oude teksten.**
+- **HTML (gzip):**
+
+  | Pagina | Vóór | Na |
+  |---|--:|--:|
+  | `/nl/about/` | 2.345 B | 2.355 B |
+  | `/nl/privacy/` | 3.064 B | 3.128 B |
+  | `/nl/tactics/attack/` | 3.883 B | 3.887 B |
+  | `/nl/tactics/defense/` | 3.862 B | 3.866 B |
+  | `/en/privacy/` | 3.011 B | 3.036 B |
+
+  - `/en/privacy/` is 25 B groter door de lijststijl, die in de pagina zelf staat. De Engelse tekst is gelijk.
 
 ### Preview-URL
 
