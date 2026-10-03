@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
-import { defaultBoard } from "../src/lib/board/defaults";
+import { defaultBoardFor } from "../src/lib/board/defaults";
 import { decode } from "../src/lib/board/format";
+import { t } from "../src/i18n/ui";
 import { expect, openBoard, saveOwnBoard, test } from "./helpers";
 
 // The tap budget: the shortest route for each measured task, counted in
@@ -10,6 +11,7 @@ import { expect, openBoard, saveOwnBoard, test } from "./helpers";
 // gain stays recorded. Change a budget only with the reason in the PR and the
 // new measurement in docs/metingen.md ("UX-metingen").
 // Opening the board doesn't count, nor does the phone's own share sheet.
+// The budget holds in every language: the routes run on /en/ and /nl/.
 const TAP_BUDGET = {
   // T1: an attack against a 6-0, three arrows (run, run, pass), shared.
   T1: 6,
@@ -66,51 +68,54 @@ async function stubShareSheet(page: Page) {
   return () => page.evaluate(() => (window as unknown as { shared: string[] }).shared);
 }
 
-// Players in the default lineup: 0 LW, 1 LB, 2 CB, 3 RB, 4 RW, 5 P.
+// Players in the default lineup: 0 LW, 1 LB, 2 CB, 3 RB, 4 RW, 5 P (in Dutch LH, LO, MO, RO, RH, CL).
 const [LB, CB, RB] = [1, 2, 3];
 
 /** T1 from the default lineup: two runs and a pass, then Share. */
-async function drawAndShare(page: Page, steps: ReturnType<typeof route>) {
-  const tool = (name: string) => page.getByRole("toolbar", { name: "Tools" }).getByRole("button", { name });
-  await steps.tap(tool("Run"));
+async function drawAndShare(page: Page, lang: string, steps: ReturnType<typeof route>) {
+  const tool = (name: string) =>
+    page.getByRole("toolbar", { name: t(lang, "board.tools") }).getByRole("button", { name });
+  await steps.tap(tool(t(lang, "board.tool.run")));
   await steps.drag(LB, 10, -40);
   await steps.drag(RB, -10, -40);
-  await steps.tap(tool("Pass"));
+  await steps.tap(tool(t(lang, "board.tool.pass")));
   await steps.dragTo(CB, RB);
-  await steps.tap(page.getByRole("button", { name: "Share" }));
+  await steps.tap(page.getByRole("button", { name: t(lang, "board.share") }));
 }
 
-async function expectSharedT1(shared: () => Promise<string[]>) {
+async function expectSharedT1(shared: () => Promise<string[]>, lang: string) {
   await expect.poll(shared).toHaveLength(1);
   const url = new URL((await shared())[0]!);
-  expect(url.pathname).toBe("/en/board/link/");
+  expect(url.pathname).toBe(`/${lang}/board/link/`);
   const frame = (await decode(url.hash.replace(/^#t=/, "")))?.frames[0];
-  // The attack against a 6-0 is the default lineup, untouched.
-  expect(frame?.players).toEqual(defaultBoard.frames[0]!.players);
+  // The attack against a 6-0 is the default lineup, untouched, labelled in the page's language.
+  expect(frame?.players).toEqual(defaultBoardFor(lang).frames[0]!.players);
   expect(frame?.arrows.map((a) => a.kind).sort()).toEqual(["pass", "run", "run"]);
 }
 
-test("T1: the shortest route takes exactly its tap budget", async ({ page }) => {
-  const shared = await stubShareSheet(page);
-  await openBoard(page);
-  const steps = route(page);
+for (const lang of ["en", "nl"]) {
+  test(`T1 (${lang}): the shortest route takes exactly its tap budget`, async ({ page }) => {
+    const shared = await stubShareSheet(page);
+    await openBoard(page, "", `/${lang}/board/`);
+    const steps = route(page);
 
-  await drawAndShare(page, steps);
+    await drawAndShare(page, lang, steps);
 
-  await expectSharedT1(shared);
-  expect(steps.count).toBe(TAP_BUDGET.T1);
-});
+    await expectSharedT1(shared, lang);
+    expect(steps.count).toBe(TAP_BUDGET.T1);
+  });
 
-test("T1 with your own board: back to the default lineup first", async ({ page }) => {
-  const shared = await stubShareSheet(page);
-  await saveOwnBoard(page);
-  await openBoard(page);
-  const steps = route(page);
+  test(`T1 (${lang}) with your own board: back to the default lineup first`, async ({ page }) => {
+    const shared = await stubShareSheet(page);
+    await saveOwnBoard(page);
+    await openBoard(page, "", `/${lang}/board/`);
+    const steps = route(page);
 
-  await steps.tap(page.getByTitle("Clear"));
-  await steps.tap(page.getByRole("button", { name: "Default lineup" }));
-  await drawAndShare(page, steps);
+    await steps.tap(page.getByTitle(t(lang, "board.clear")));
+    await steps.tap(page.getByRole("button", { name: t(lang, "board.resetLineup") }));
+    await drawAndShare(page, lang, steps);
 
-  await expectSharedT1(shared);
-  expect(steps.count).toBe(TAP_BUDGET["T1 with your own board"]);
-});
+    await expectSharedT1(shared, lang);
+    expect(steps.count).toBe(TAP_BUDGET["T1 with your own board"]);
+  });
+}

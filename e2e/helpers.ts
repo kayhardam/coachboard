@@ -3,6 +3,7 @@ import { join, relative } from "node:path";
 import { test as base, expect, type Page } from "@playwright/test";
 import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
 import type { Board } from "../src/lib/board/format";
+import { t } from "../src/i18n/ui";
 
 export { expect };
 
@@ -48,7 +49,8 @@ export function allPages(): string[] {
 /** Opens the board and waits until the editor has replaced the static fallback. */
 export async function openBoard(page: Page, hash = "", path = "/en/board/") {
   await page.goto(`${path}${hash}`);
-  await expect(page.getByRole("toolbar", { name: "Tools" })).toBeVisible();
+  const lang = path.split("/")[1]!;
+  await expect(page.getByRole("toolbar", { name: t(lang, "board.tools") })).toBeVisible();
 }
 
 /**
