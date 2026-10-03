@@ -52,9 +52,10 @@
   ]);
 
   // Astro passes props as $state, a proxy that structuredClone() can't copy:
-  // take a plain copy once. The lineup prop never changes.
+  // take a plain copy once (a board is plain JSON; $state.snapshot() would add
+  // runtime code). The lineup prop never changes.
   // svelte-ignore state_referenced_locally
-  const defaultLineup: Board = $state.snapshot(lineup);
+  const defaultLineup: Board = JSON.parse(JSON.stringify(lineup));
 
   let board = $state.raw<Board>(structuredClone(defaultLineup));
   let past = $state.raw<Board[]>([]);
