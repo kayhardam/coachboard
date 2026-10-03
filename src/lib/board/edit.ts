@@ -2,7 +2,6 @@
 // the old one alone, so the editor's undo history is a list of boards. The
 // first version edits frames[0] only.
 
-import { defaultBoard } from "./defaults";
 import {
   COURT_WIDTH,
   MAX_ARROWS,
@@ -140,8 +139,9 @@ export function clearArrows(board: Board): Board {
   });
 }
 
-export function resetLineup(): Board {
-  return structuredClone(defaultBoard);
+/** A fresh copy of `lineup`, the default lineup in the editor's language. */
+export function resetLineup(lineup: Board): Board {
+  return structuredClone(lineup);
 }
 
 export function emptyCourt(board: Board): Board {

@@ -105,7 +105,7 @@ describe("whole board", () => {
   });
 
   it("resets to a fresh copy of the default lineup", () => {
-    const reset = resetLineup();
+    const reset = resetLineup(defaultBoard);
     expect(reset).toEqual(defaultBoard);
     expect(reset).not.toBe(defaultBoard);
   });

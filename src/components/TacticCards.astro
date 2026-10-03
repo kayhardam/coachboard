@@ -18,7 +18,7 @@ const { lang, tactics } = Astro.props;
       <li>
         <a class="card" href={getRelativeLocaleUrl(lang, path)}>
           <span class="thumb" aria-hidden="true">
-            <Court board={entry.data.board} />
+            <Court board={entry.data.board} label={entry.data.title} />
           </span>
           <div class="text">
             <h3>{entry.data.title}</h3>

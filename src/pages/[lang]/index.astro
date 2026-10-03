@@ -7,7 +7,7 @@ import { boardPath } from "../../data/nav";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { localeParams } from "../../i18n/locales";
 import { t } from "../../i18n/ui";
-import { defaultBoard } from "../../lib/board/defaults";
+import { defaultBoardFor } from "../../lib/board/defaults";
 import type { IconName } from "../../lib/icons";
 
 export const getStaticPaths = localeParams;
@@ -32,7 +32,7 @@ const steps: { icon: IconName; title: string; body: string }[] = [
       </div>
       <p class="note">{t(lang, "home.note")}</p>
       <a class="preview" href={boardHref} tabindex="-1" aria-hidden="true">
-        <Court board={defaultBoard} />
+        <Court board={defaultBoardFor(lang)} label={t(lang, "board.court")} />
       </a>
     </div>
   </section>

@@ -6,7 +6,7 @@ import { getRelativeLocaleUrl } from "astro:i18n";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { boardStrings, t } from "../../i18n/ui";
 import { beaconEndpoint, beaconSrc } from "../../data/analytics";
-import { defaultBoard } from "../../lib/board/defaults";
+import { defaultBoardFor } from "../../lib/board/defaults";
 import Beacon from "../Beacon.astro";
 import BoardEditor from "./BoardEditor.svelte";
 import Court from "./Court.svelte";
@@ -26,6 +26,7 @@ Astro.csp?.insertScriptResource("'self'");
 Astro.csp?.insertScriptResource(beaconSrc);
 Astro.csp?.insertDirective(`connect-src 'self' ${beaconEndpoint}`);
 const lang = Astro.currentLocale!;
+const lineup = defaultBoardFor(lang);
 const links = {
   link: getRelativeLocaleUrl(lang, "board/link/"),
   qr: getRelativeLocaleUrl(lang, "board/qr/"),
@@ -34,9 +35,9 @@ const links = {
 
 <BaseLayout title={t(lang, "board.title")} description={t(lang, "board.description")} {noindex} fullscreen>
   <h1 class="visually-hidden">{t(lang, "board.heading")}</h1>
-  <BoardEditor client:only="svelte" strings={boardStrings(lang)} home={getRelativeLocaleUrl(lang)} {links}>
+  <BoardEditor client:only="svelte" strings={boardStrings(lang)} home={getRelativeLocaleUrl(lang)} {links} {lineup}>
     <div slot="fallback" class="fallback">
-      <div class="court"><Court board={defaultBoard} label={t(lang, "board.court")} /></div>
+      <div class="court"><Court board={lineup} label={t(lang, "board.court")} /></div>
       <noscript><p>{t(lang, "board.noscript")}</p></noscript>
     </div>
   </BoardEditor>

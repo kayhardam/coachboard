@@ -8,7 +8,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { BoardStrings } from "../../i18n/ui";
-  import { defaultBoard } from "../../lib/board/defaults";
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
   import { decode, encode, isBoard, type Board } from "../../lib/board/format";
@@ -20,12 +19,14 @@
   /**
    * `home`: the home page, linked from the bar in landscape, where the header is hidden.
    * `links`: the pages a shared link and a QR code open, so statistics can count them apart.
+   * `lineup`: the default lineup, labelled in the page's language.
    */
   let {
     strings,
     home,
     links,
-  }: { strings: BoardStrings; home: string; links: { link: string; qr: string } } = $props();
+    lineup,
+  }: { strings: BoardStrings; home: string; links: { link: string; qr: string }; lineup: Board } = $props();
 
   type Tool = "move" | "attack" | "defence" | "ball" | "run" | "pass" | "dribble";
   type XY = [number, number];
@@ -50,7 +51,12 @@
     { id: "dribble", label: strings["board.tool.dribble"] },
   ]);
 
-  let board = $state.raw<Board>(structuredClone(defaultBoard));
+  // Astro passes props as $state, a proxy that structuredClone() can't copy:
+  // take a plain copy once. The lineup prop never changes.
+  // svelte-ignore state_referenced_locally
+  const defaultLineup: Board = $state.snapshot(lineup);
+
+  let board = $state.raw<Board>(structuredClone(defaultLineup));
   let past = $state.raw<Board[]>([]);
   let draft = $state.raw<Board | null>(null);
   let tool = $state<Tool>("move");
@@ -467,7 +473,7 @@
       </summary>
       <div class="menu-panel">
         <button type="button" onclick={() => clearWith(edit.clearArrows(board))}>{strings["board.clearArrows"]}</button>
-        <button type="button" onclick={() => clearWith(edit.resetLineup())}>{strings["board.resetLineup"]}</button>
+        <button type="button" onclick={() => clearWith(edit.resetLineup(defaultLineup))}>{strings["board.resetLineup"]}</button>
         <button type="button" onclick={() => clearWith(edit.emptyCourt(board))}>{strings["board.emptyCourt"]}</button>
       </div>
     </details>
