@@ -17,6 +17,8 @@ Static Astro 7 site for handball trainers. The product is the tactics board at `
 | `node scripts/og-default.mjs nl` | Re-renders a language's default share image (`public/og-default-nl.png`; `en` is `og-default.png`). One-off, with local fonts; commit the PNG. |
 | `node scripts/favicons.mjs` | Renders `public/favicon.ico` and `public/apple-touch-icon.png` from `public/favicon.svg` (the brand mark). One-off; commit the results. |
 
+Commit only when `npm run verify` exits with code 0. Check the exit code itself, not the output: a pipe through `tail` or `head` hides a failure.
+
 When starting the dev server as an agent, use background mode: `npx astro dev --background`, and manage it with `astro dev stop`, `astro dev status` and `astro dev logs`.
 
 ## Code and tests
