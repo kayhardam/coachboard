@@ -7,9 +7,8 @@
 // apps crop a share image to that square for small previews. The headline
 // sits in the bands either side, which the square crop drops.
 //
-// public/og-default.png (English) still has the earlier layout, with the
-// headline on the left and five defenders; `node scripts/og-default.mjs en`
-// would re-render it in this one.
+// Both languages have this layout: public/og-default.png (English) and
+// public/og-default-nl.png (Dutch), with six defenders in a 6-0.
 import sharp from "sharp";
 
 const texts = {

@@ -1521,6 +1521,10 @@ Stap 5, in PR #24 (branch `fase-10-afronding`, na de merge van #23). Het Engels 
 
   - `/nl/` en `/nl/tactics/` zijn kleiner doordat de CSS van de "Soon"-kaart uit `CategoryCards` weg is; hun tekst is gelijk. De andere Nederlandse pagina's zijn byte voor byte even groot.
   - De 404 toont de Engelse footertekst, die korter is.
+- **De Engelse deelafbeelding** (`public/og-default.png`) heeft nu de indeling van de Nederlandse: zes verdedigers in een 6-0, en drie opbouwers met een pass en een loopactie. Tot nu toe had hij de oude indeling met vijf verdedigers (zie "Een Nederlandse deelafbeelding" hierboven).
+  - Opnieuw gemaakt met `node scripts/og-default.mjs en`, lokaal met systeemfonts. De tekst is gelijk gebleven: "Draw a play." en "Share it with your team.", met "Free tactics board for handball trainers".
+  - Het middelste vierkant van 630×630 is op zichzelf compleet: merknaam, veld en ondertitel. De kop staat in de zijstroken.
+  - 46,7 KB (was 50,5 KB). Het budget is 60 KB.
 
 ### Preview-URL
 
