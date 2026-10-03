@@ -40,7 +40,7 @@ const steps: { icon: IconName; title: string; body: string }[] = [
   <section class="section">
     <div class="container">
       <h2>{t(lang, "home.howTitle")}</h2>
-      <p class="sub">{t(lang, "home.howLead")}</p>
+      {t(lang, "home.howLead") && <p class="sub">{t(lang, "home.howLead")}</p>}
       <ol class="steps">
         {
           steps.map((step) => (

@@ -33,7 +33,7 @@ const cards = categorySlugs.map((slug) => ({
             </span>
             <div class="text">
               <h3>{c.label}</h3>
-              <p class="desc">{c.desc}</p>
+              {c.desc && <p class="desc">{c.desc}</p>}
             </div>
             {!c.href && <span class="badge">{t(lang, "tactics.soon")}</span>}
           </Tag>

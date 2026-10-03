@@ -1405,6 +1405,17 @@ Gzip -9, vóór (`main` @ `07a2f91`) en na:
 
 Accessibility, Best Practices en SEO waren 100 in elke run.
 
+### Teksten van de Nederlandse homepage (Kay, 3 oktober 2026)
+
+Kay heeft de teksten van `/nl/` herschreven: kop, inleiding, kenmerken, de drie stappen, de inleiding van de tactieken, het slot, de footer en de beschrijving (meta en `og:description`). De inleiding onder "Zo werkt het" is weg.
+
+- **De kaarten met onderwerpen noemen alleen wat erin zit:** "Break, tweede golf" bij Aanval en "6-0-dekking" bij Verdediging.
+  - Jeugd en Keepers hebben nog geen tactieken. Hun omschrijving is daarom leeg, en de kaart toont alleen "Binnenkort".
+  - Een lege tekst laat de pagina nu weg, zowel de inleiding onder "Zo werkt het" als de omschrijving op een kaart.
+  - De kaarten staan ook op `/nl/tactics/`.
+- **De footertekst** staat op elke Nederlandse pagina.
+- **Het Engels is ongewijzigd:** HTML `/en/` blijft 4.515 B. `/nl/` gaat van 4.536 naar 4.431 B (gzip).
+
 ### Preview-URL
 
 `https://fase-10-nederlands-coachboard.hardamkay.workers.dev`, 3 oktober 2026. Workers Builds is groen.
