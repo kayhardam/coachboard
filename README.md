@@ -1,6 +1,6 @@
 # Handball Coachboard
 
-A free digital coachboard for handball trainers: draw a play, share it as a link or QR code, and the whole team has it on their phone.
+Tactics board for handball coaches. Draw a play and share it with a link or QR code. Your players open it without an app or account.
 
 Static site built with [Astro](https://astro.build) 7 and hosted on Cloudflare Workers (static assets) at [handballcoachboard.com](https://handballcoachboard.com/en/).
 

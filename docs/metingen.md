@@ -1569,3 +1569,67 @@ Op de preview-URL hierboven. Testen ligt stil (besluit Kay, Fase 9); dit zijn de
 | 8 | Een oude link (`/en/tactics/defense/6-0-defense-basics/`) gaat naar de nieuwe URL | | |
 | 9 | Een link naar `/nl/` in WhatsApp: de Nederlandse deelafbeelding, ook als klein vierkant? | | |
 | 10 | Een niet-bestaande pagina (`/nl/bestaat-niet/`): de 404 in het Engels en het Nederlands | | |
+
+## Tekstcorrecties na Fase 10 (3 oktober 2026)
+
+Branch `teksten-coach-gratis`, na de merge van PR #24. Alleen tekst en de twee standaard-deelafbeeldingen; geen Lighthouse-meting, want er verandert geen code.
+
+### Wat er veranderd is
+
+- **"Coach" in plaats van "trainer" in het Engels.** In het Engels is een trainer een fitness- of medische trainer; wie een team traint en coacht, is een coach. Het Nederlands houdt "handbaltrainer".
+  - `src/i18n/ui.ts` (en): `footer.tagline`, `footer.madeBy`, `home.description`, `home.lead` en `about.description`. De rest van die zinnen bleef gelijk.
+  - `src/i18n/pages/about/en.astro`: de inleiding. `src/i18n/pages/privacy/en.astro`, onder Statistics: "whether coaches use the board".
+- **`og:locale` is `en_US`** (was `en_GB`): spelling en URL's zijn Amerikaans. `ogLocale` in `src/i18n/ui.ts`.
+- **"Gratis" en "free" staan alleen nog op de about-pagina,** in het blok "Gratis, zonder account" / "Free, without an account"; dat blok is ongewijzigd. Het stond op elke pagina (de footer) en op home drie keer, en het zegt wat het bord kost, niet wat het doet.
+  - `src/i18n/ui.ts` (nl en en): `footer.tagline`, `home.description`, `home.note`, `home.ctaBody`, `about.description`, `category.ctaBody` en `board.description`.
+  - `src/i18n/pages/about/nl.astro` en `en.astro`: de inleiding.
+  - `git grep -i -w -E "gratis|free"` vindt als sitetekst alleen nog die twee blokken (verder `README.md` vóór de laatste commit, en een codecommentaar over de vrijeworplijn in `geometry.ts`).
+- **De deelafbeeldingen:** de ondertitel in `scripts/og-default.mjs` is "Tactics board for handball coaches" en "Tactiekbord voor handbaltrainers". Beide opnieuw gemaakt met `node scripts/og-default.mjs en` en `nl`.
+- **Documentatie:** de regels voor sitetekst staan in `AGENTS.md` onder "Copy"; de eerste regel van `AGENTS.md` en regel 3 van `README.md` zeggen "coaches".
+
+### Groottes
+
+HTML (gzip -9), vóór en na:
+
+| Pagina | Vóór | Na |
+|---|--:|--:|
+| `/en/` | 4.210 B | 4.196 B |
+| `/en/about/` | 2.322 B | 2.308 B |
+| `/en/privacy/` | 3.043 B | 3.038 B |
+| `/en/board/` | 5.781 B | 5.781 B |
+| `/en/board/link/` en `/qr/` | 5.579 B | 5.580 B |
+| `/en/tactics/` | 3.992 B | 3.990 B |
+| `/en/tactics/attack/` | 3.851 B | 3.827 B |
+| `/en/tactics/defense/` | 3.835 B | 3.811 B |
+| `/en/tactics/6-0-defense-basics/` | 4.717 B | 4.710 B |
+| `/en/tactics/fast-break-second-wave/` | 4.346 B | 4.341 B |
+| `/nl/` | 4.251 B | 4.238 B |
+| `/nl/about/` | 2.355 B | 2.354 B |
+| `/nl/privacy/` | 3.128 B | 3.122 B |
+| `/nl/board/` | 5.852 B | 5.850 B |
+| `/nl/board/link/` en `/qr/` | 5.653 B | 5.650 B |
+| `/nl/tactics/` | 4.045 B | 4.042 B |
+| `/nl/tactics/attack/` | 3.887 B | 3.867 B |
+| `/nl/tactics/defense/` | 3.866 B | 3.845 B |
+| `/nl/tactics/6-0-defense-basics/` | 4.756 B | 4.752 B |
+| `/nl/tactics/fast-break-second-wave/` | 4.390 B | 4.385 B |
+| 404 | 2.017 B | 2.010 B |
+
+- Elke pagina verandert: de footer staat op elke contentpagina, `og:locale` op elke Engelse pagina en de beschrijving op het bord. De bordpagina's hebben geen footer.
+- `/en/board/` is na gzip even groot: de beschrijving is korter, maar gecomprimeerd valt dat weg.
+- De onderwerppagina's winnen het meest (20 tot 24 B): daar verdween "Free, no account needed." / "Gratis, zonder account." uit de oproep onderaan.
+
+Deelafbeeldingen (budget 60 KB):
+
+| Afbeelding | Vóór | Na |
+|---|--:|--:|
+| `og-default.png` (en) | 46,7 KB | 46,4 KB |
+| `og-default-nl.png` | 46,6 KB | 45,7 KB |
+
+Het middelste vierkant van 630×630 is in beide op zichzelf compleet: merknaam, veld en ondertitel.
+
+### Tests
+
+- Geen test controleerde een van deze teksten of `en_GB`; er is geen test aangepast of weggehaald.
+- `npm run verify` groen na elke commit (100 tests, 23 pagina's, 294 interne links, budget 73 controles).
+- `npm run e2e`: 349 geslaagd, 1 overgeslagen, zoals vóór.
