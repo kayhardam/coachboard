@@ -1633,3 +1633,7 @@ Het middelste vierkant van 630×630 is in beide op zichzelf compleet: merknaam, 
 - Geen test controleerde een van deze teksten of `en_GB`; er is geen test aangepast of weggehaald.
 - `npm run verify` groen na elke commit (100 tests, 23 pagina's, 294 interne links, budget 73 controles).
 - `npm run e2e`: 349 geslaagd, 1 overgeslagen, zoals vóór.
+
+### Preview-URL
+
+PR #25: `https://teksten-coach-gratis-coachboard.hardamkay.workers.dev`.
