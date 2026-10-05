@@ -58,7 +58,8 @@ test("an arrow next to a player can still be picked", async ({ page }) => {
   await page.mouse.click(lb.x + 100, lb.y);
   await expect(page.locator('.stage [data-kind="handle"]')).toHaveCount(0);
 
-  // Down the arrow: past the player's drawn touch area, within the reach.
+  // Down the arrow: past the player's drawn touch area, within the reach. It
+  // is LB's arrow, so it shows its bend and end handles (no start handle).
   await page.mouse.click(lb.x, lb.y + BESIDE);
-  await expect(page.locator('.stage [data-kind="handle"]')).toHaveCount(3);
+  await expect(page.locator('.stage [data-kind="handle"]')).toHaveCount(2);
 });

@@ -22,7 +22,7 @@ describe("nearestPiece", () => {
       { team: "d", at: [120, 100] },
       { team: "d", at: [150, 100] },
     ],
-    ball: [100, 130],
+    balls: [[100, 130]],
     arrows: [],
   };
 

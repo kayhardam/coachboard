@@ -1294,10 +1294,10 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
   - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (aanspeelpunten).
 - **Eén aanval naar het eigen team sturen** en vragen wat ze zien.
-- **De scantest,** vóór Fase 11: de QR-codes hierboven in de zaal scannen, op twee afstanden.
+- **De scantest,** vóór de merge van Fase 11 (besluit Kay, 5 oktober 2026): de QR-codes hierboven in de zaal scannen.
   - Telefoon bij telefoon: scherm naar camera, zoals bij het doorgeven van een bord.
-  - Op de afstand waarop spelers in de zaal staan als de trainer zijn scherm laat zien.
-  - Noteer per code en afstand: scant hij, en na hoeveel seconden. Daarna kiest Kay de limieten van de link.
+  - Op de afstand waarop spelers in de zaal staan als de trainer zijn scherm laat zien: 1 m en 2 m.
+  - Noteer per code en afstand: scant hij, en na hoeveel seconden. Daarna wordt besluit 3 (de limieten van de link) definitief. De tabel staat onder "Fase 11".
 - **De testlijst voor de telefoon (Fase 9).** De app verandert in Fase 9 niet; dit is wat de nulmeting met echte telefoons aanvult. Op productie (`https://handballcoachboard.com/en/board/`), per toestel (model, iOS/Android-versie, browser):
 
   | # | Test | iPhone | Android |
@@ -1753,3 +1753,214 @@ Groottes, gzip zoals `npm run budget`:
   - de bestaande test voor een kapotte link controleert dat een bekende versie niet herlaadt.
 - Een echte `2.`-lezer bestaat nog niet, dus de tests laten de grens zien: na één herlaad stopt het. Dat een herlaad de nieuwe code haalt, volgt uit de headers: de HTML is `cache-control: public, max-age=0, must-revalidate` (productie, gemeten met `curl`), en de JS heeft een hash in de naam.
 - `npm run e2e`: 349 → 353 geslaagd, 1 overgeslagen.
+
+## Fase 11: linkformaat v2 (5 oktober 2026)
+
+Branch `fase-11-linkformaat`. Het productplan (Fase 11) beschrijft wat v2 moet kunnen.
+
+### Besluit 3: de limieten van de link (Kay, 5 oktober 2026)
+
+- **Voorlopig 8 stappen en 100 tekens per zin.** Volgens de berekening van Fase 9 ("Linklengte en QR-grootte") is de grootste link dan ongeveer 1140 tekens: QR-versie 24 bij foutcorrectie L.
+- **Definitief na de scantest, vóór de merge van Fase 11.** Past de uitslag niet bij versie 24, dan verandert de limiet nog in deze PR.
+
+### Scantest (Kay, vóór de merge)
+
+De codes uit Fase 9 (lokaal in `scantest/`), op het scherm van de eigen telefoon, met dezelfde instellingen als de QR-dialoog van het bord (foutcorrectie L, rand 2). Per code en afstand: scant hij binnen 3 tellen?
+
+Toestel dat de code toont: … · Toestel dat scant: …
+
+| Code | QR-versie | Telefoon bij telefoon | 1 m | 2 m |
+|---|--:|:-:|:-:|:-:|
+| Nu (v1): 1 stap, 3 pijlen | 9 | | | |
+| Oefening: 4 stappen, aanspeelpunten, pionnen, 2 ballen | 16 | | | |
+| 4 stappen + tekst | 18 | | | |
+| 8 stappen + tekst | 22 | | | |
+| 8 stappen, zin ≤ 100 tekens | 24 | | | |
+| 12 stappen + tekst | 26 | | | |
+| 12 stappen, zin ≤ 100 tekens | 28 | | | |
+| 12 stappen, zin ≤ 140 tekens | 30 | | | |
+| **Grootste v2-bord binnen de limiet** (Fase 11, een echte link) | 24 | | | |
+
+- De nieuwe code staat lokaal in `scantest/scan/` en op de printpagina daar (`v24-v2-grootste.svg`).
+- Hij vervangt de schatting uit Fase 9: hij is gemaakt met de echte `encode()` (zie "Het grootste bord binnen de limiet").
+
+### Wat er veranderd is
+
+- **Links zijn nu versie 2** (`2.…`). `encode()` schrijft alleen nog v2, en `decode()` leest v1 en v2.
+  - De verpakking is gelijk aan v1: JSON → `deflate-raw` → base64url.
+  - De opzet staat bovenaan `src/lib/board/format.ts`.
+- **v1 blijft werken.** De v1-lezer is ongewijzigd. `toBoard()` zet wat hij leest om naar een v2-bord met dezelfde tekening: de pijlen houden hun eigen beginpunt, zonder speler.
+  - `toBoard()` leest ook borden die vóór v2 bewaard zijn: in `localStorage` en via `#own=` (workers.dev).
+  - Niet meer geldig: een v1-link met andere spelers in een latere stap, of met meer dan 8 stappen (besluiten Kay). Zulke links kunnen alleen met de hand gemaakt zijn; ze krijgen de melding voor een kapotte link.
+- **Het model:**
+  - één opstelling voor alle stappen;
+  - een titel en een zin per stap;
+  - ballen als lijst en pionnen per bord;
+  - aanspeelpunten als derde team, zonder label;
+  - blok, schot en stuit naast loop, pass en dribbel.
+  - `isBoard()` eist in elke stap dezelfde spelers, met hetzelfde team en label.
+- **Pijlen van een speler.** Een pijl die je vanaf een speler tekent, hoort bij die speler.
+  - Hij begint waar die speler dan is: op zijn plek, of aan het eind van zijn vorige loop, dribbel of blok in die stap.
+  - De link bewaart de speler in plaats van het beginpunt.
+  - Sleep je de speler, dan gaat de pijl mee. Sleep je de hele pijl, dan laat hij de speler los. Laat je het beginpunt van een losse pijl los op een speler, dan hoort hij bij die speler.
+- **Afwijking van het plan:** een pijl van een speler heeft geen beginhandvat meer.
+  - Zijn begin is de speler, dus een sleep daar verplaatst de speler, ook direct na het tekenen.
+  - Gevonden door de e2e-test: met handvat pakte je na het tekenen het handvat in plaats van de speler, en maakte je de pijl los.
+  - Losmaken gaat door de hele pijl te slepen.
+- **Schot en stuit:**
+  - Een schot hoort altijd bij een speler en eindigt in het doel dat het dichtst bij de schutter is, links, in het midden of rechts (x = 90, 100 of 110). De link bewaart alleen de kant.
+  - Een stuit is een pass. Het bord tekent het stuitpunt op 2/3 van de lijn.
+- **Court tekent de nieuwe stukken**, ook op tactiekpagina's en in de OG-afbeeldingen:
+  - aanspeelpunten blauw;
+  - pionnen als oranje driehoek;
+  - blok met een dwarsstreep;
+  - schot als dubbele lijn;
+  - stuit als stippellijn met een open stuitpunt.
+  - De vorm en de kleuren zijn een voorstel; Kay kiest uit de voorbeeldkaart in de PR.
+- **Nog niet in de editor** (Fase 13 en 14):
+  - nieuwe stukken en pijlsoorten maken: pionnen zijn er nog niet te kiezen;
+  - stappen, titel en zinnen tonen. De editor bewerkt nog alleen stap 1 en laat de rest ongewijzigd.
+  - Een speler toevoegen of verwijderen gebeurt wel in elke stap.
+- **De tactieken** staan in v2-YAML (`v: 2`, `cones`, `balls`). Hun pagina's zijn gelijk op de `#t=`-link en de markeringen van Svelte na, en hun `og.png` is byte-gelijk.
+- Geen nieuwe of gewijzigde teksten, geen nieuwe dependencies.
+
+### De opzet van v2, gekozen op lengte
+
+Met een eenmalig script (niet in de repo) op de borden van Fase 9: lengte van de hele link op `/nl/board/qr/`, met de QR-versie bij foutcorrectie L. Pijlen hebben hier al hun speler.
+
+| Bord | C: spelers per stap volledig | A: opstelling één keer, posities als paren | **B: zoals A, posities, ballen en pionnen plat** | D: zoals A, teams en labels als twee lijsten |
+|---|--:|--:|--:|--:|
+| 1 stap, 3 pijlen (zoals T1) | 206 (v9) | 208 (v9) | **204 (v9)** | 215 (v9) |
+| 4 stappen + tekst | 639 (v17) | 631 (v17) | **616 (v17)** | 635 (v17) |
+| 8 stappen + tekst | 964 (v22) | 943 (v22) | **926 (v21)** | 946 (v22) |
+| 12 stappen + tekst | 1267 (v25) | 1235 (v25) | **1211 (v25)** | 1239 (v25) |
+| Oefening | 550 (v16) | 548 (v16) | **536 (v16)** | 548 (v16) |
+| 8 stappen, zin = 100 | 1150 (v24) | 1138 (v24) | **1108 (v24)** | 1143 (v24) |
+
+- **B is het kortst,** 1 tot 4% korter dan C, en het is wat `encode()` nu schrijft.
+- Ook de opstelling plat maken (`[0,"LW",0,"LB",…]`) scheelde -6 tot +2 tekens. Dat is te weinig voor een lastiger formaat.
+- **Ruimte voor A+:** een `-1` op de plek van een positiepaar kan later "deze speler staat in deze stap niet op het veld" betekenen. v2 weigert dat nu nog (er is een test voor), dus alle v2-links blijven geldig als A+ komt.
+
+### Wat een speler per pijl kost
+
+Dezelfde borden, opzet A:
+
+| Bord | Zonder speler | Speler + beginpunt | **Speler in plaats van beginpunt** |
+|---|--:|--:|--:|
+| 1 stap, 3 pijlen | 212 (v9) | 215 (v9) | **208 (v9)** |
+| 4 stappen + tekst | 648 (v18) | 662 (v18) | **631 (v17)** |
+| 8 stappen + tekst | 984 (v22) | 1010 (v23) | **943 (v22)** |
+| 12 stappen + tekst | 1310 (v26) | 1344 (v26) | **1235 (v25)** |
+| Oefening | 552 (v16) | 560 (v16) | **548 (v16)** |
+| 8 stappen, zin = 100 | 1176 (v25) | 1195 (v25) | **1138 (v24)** |
+
+- **De speler in plaats van het beginpunt (besluit Kay) maakt links 1 tot 6% korter dan pijlen zonder speler.**
+- Bij 8 stappen met zinnen van 100 tekens scheelt dat net een QR-versie (25 → 24).
+
+### Lengte van de link, vóór en na
+
+Tekens van de link zelf (`2.…`, zonder het adres ervoor):
+
+| Bord | v1 | v2 | `/nl/board/qr/`, v1 → v2 |
+|---|--:|--:|--:|
+| Fixture `v1-empty` | 21 | 29 | 67 (v4) → 75 (v4) |
+| Fixture `v1-default` (standaardopstelling) | 140 | 148 | 186 (v8) → 194 (v9) |
+| Fixture `v1-full-lineup` | 204 | 210 | 250 (v10) → 256 (v10) |
+| T1 (standaardopstelling, 2 lopen en een pass) | 158 | 165 | |
+| Tactiek `en/6-0-defense-basics` | 197 | 199 | |
+| Tactiek `en/fast-break-second-wave` | 202 | 209 | |
+| Tactiek `nl/6-0-defense-basics` | 194 | 197 | |
+| Tactiek `nl/fast-break-second-wave` | 201 | 207 | |
+
+- **Een bord van één stap is in v2 2 tot 8 tekens langer:** titel, pionnen, zin en de ballen als lijst kosten samen een paar vaste tekens.
+  - De standaardopstelling op `/qr/` gaat daardoor van QR-versie 8 naar 9.
+  - In T1 levert de speler per pijl 1 teken op.
+- **Vanaf twee stappen is v2 korter:** de opstelling staat er maar één keer in, en pijlen bewaren hun speler (zie de tabellen hierboven).
+- De tactieken houden hun pijlen zonder speler, zodat hun tekening precies gelijk blijft.
+
+### Het grootste bord binnen de limiet
+
+`format.test.ts` bouwt dit bord uit de limieten (`MAX_STEPS`, `MAX_TEXT`, `MAX_TITLE`):
+- de standaardopstelling;
+- 8 stappen met elk een pass en 1 tot 3 lopen (elke derde gebogen), lopers die eindigen waar hun loop eindigt, en twee verdedigers die schuiven;
+- een titel van 40 tekens en zinnen van precies 100 tekens, uit dezelfde woordenlijst als in Fase 9.
+
+De test eist dat het past in QR-versie 24 (`QR_VERSION`).
+
+| Link | Tekens | QR (L) |
+|---|--:|--:|
+| `/nl/board/qr/` | 1106 | versie 24, 113×113 |
+| `/nl/board/link/` | 1108 | versie 24 |
+| Hetzelfde bord zonder titel en zinnen | 494 | |
+
+- **Ruimte per versie** (link op `/nl/board/qr/`): versie 22 tot 1003 tekens, 23 tot 1091, 24 tot 1171, 25 tot 1273, 26 tot 1367, 28 tot 1528. Het grootste bord heeft binnen versie 24 nog 65 tekens over.
+- **Dit is het grootste bord zoals een trainer een aanval tekent, niet het meeste wat het formaat toelaat.** 30 pijlen per stap geeft een veel grotere code.
+  - De editor tekent nu één stap, en die past ruim.
+  - Als Fase 14 stappen toevoegt, moet het bord laten zien wanneer een bord niet meer in een bruikbare QR-code past.
+- **Na de scantest:** scant versie 24 telefoon bij telefoon niet binnen 3 tellen, of scant er ruim meer, dan veranderen de limiet en `QR_VERSION` nog in deze PR. Geen fixture zit op de limiet, dus een andere limiet verandert geen fixture.
+
+### Groottes
+
+Gzip -9, vóór (`main` @ `50233af`) en na:
+
+| Bestand | Vóór | Na |
+|---|--:|--:|
+| `BoardEditor` (JS) | 9.533 B | 10.868 B |
+| Svelte-runtime (`client`) | 15.386 B | 15.386 B |
+| QR-bibliotheek (lazy) | 4.337 B | 4.337 B |
+| CSS van de site en van het bord | 1.691 + 1.433 B | gelijk |
+| HTML `/en/board/` | 5.488 B | 5.498 B |
+| HTML `/nl/board/` | 5.557 B | 5.565 B |
+| Contentpagina's | | gelijk, op de `#t=`-link en de markeringen van Svelte na |
+
+`npm run budget`:
+
+| Meting | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| JS van het bord | 25,4 KB | 26,7 KB | 32,5 KB |
+| Alle JS in `_astro/` | 29,7 KB | 31,1 KB | 32,5 KB |
+| Lazy JS | 4,3 KB | 4,3 KB | 10,0 KB |
+
+- **De editor wordt 1,3 KB groter:** de v2-lezer en -schrijver, `toBoard()`, `settle()`, de nieuwe stukken in Court en de pijlen van een speler.
+- Dat zit binnen de schatting van 0,9 tot 1,7 KB uit het productplan.
+- Onder het budget voor alle JS blijft 1,4 KB vrij. Fase 12a tot en met 14 moeten dus keuzes maken (besluit 8).
+
+### Tests
+
+- **`npm run verify`** groen na elke commit: 114 → 162 unittests, 23 pagina's, 300 interne links.
+  - `format.test.ts`: v1-fixtures openen als v2-bord; v2-fixtures; elke soort pijl, titel, zinnen, pionnen, aanspeelpunten; 19 soorten kapotte v2-links; de grens van `isNewerLink()` (nu vanaf `3.`); het grootste bord in QR-versie 24.
+  - `edit.test.ts`: pijlen van een speler (volgen, kettingen, loslaten, toewijzen, verwijderen), schoten, ballen als lijst, spelers in elke stap.
+  - `Court.test.ts`: de nieuwe stukken en hun handvatten.
+- **`npm run e2e`:** 353 → 367 geslaagd, 1 overgeslagen.
+  - Nieuw: `e2e/arrows.spec.ts` (een pijl volgt zijn speler en zijn volgende pijl begint aan het eind; slepen maakt los, het beginpunt op een speler laten los geeft hem aan die speler).
+  - Ook nieuw: een bord van vóór v2 in `localStorage` opent en wordt als v2 bewaard; een v1-link met andere spelers per stap geeft de melding; de drie v2-fixtures openen als link.
+  - Aangepast: links in de adresbalk zijn `2.…`, de "nieuwere versie" is nu `3.`, en een pijl van een speler heeft 2 handvatten (`reach.spec.ts`).
+- **Controle** (tijdelijk, niet gecommit): met een kapotte v1-lezer (teams verwisseld) falen 3 unittests en 4 e2e-tests (de v1-fixtures in beide browsers; de lege fixture heeft geen spelers).
+
+### Meettaken
+
+| Route | Vóór | Na |
+|---|--:|--:|
+| T1, eerste keer (en en nl) | 6 | **6** |
+| T1 met eigen bord (en en nl) | 8 | **8** |
+
+- `e2e/tasks.spec.ts` is groen in beide browsers, met hetzelfde budget. De gedeelde link is nu een v2-link; de check van de uitkomst decodeert hem.
+- T2 en T3 hebben nog geen route: de stappen komen in Fase 14 en de pionnen in Fase 13. T4 raakt deze fase niet. Seconden zijn geparkeerd.
+
+### Lighthouse
+
+Drie runs per URL met het commando uit de nulmeting, Lighthouse 13.5.0. Vóór: productie (`main` @ `50233af`). Na: de preview-URL van deze branch. SEO is 66 op elke preview-URL, door `X-Robots-Tag: noindex`; op productie 100.
+
+| URL | Vóór: Performance | Vóór: LCP (runs) | Na: Performance | Na: LCP (runs) | CLS | TBT | Overdracht vóór → na |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` | 99, 100, 100 | 1,93 / 0,80 / 0,81 s | 100, 100, 100 | 0,81 / 0,82 / 0,82 s | 0 | 0 ms | 55,9 → 57,8 KB |
+| `/en/board/` | 100, 100, 100 | 0,81 / 0,82 / 0,82 s | 100, 100, 100 | 0,83 / 0,81 / 0,81 s | 0 | 0 ms | 55,9 → 57,7 KB |
+| `/nl/tactics/6-0-defense-basics/` | 100, 100, 100 | 0,82 / 0,83 / 0,81 s | 100, 100, 100 | 0,84 / 0,83 / 0,86 s | 0 | 0 ms | 8,7 → 8,9 KB |
+
+- De eerste run vóór op `/nl/board/` (1,93 s) was een koude cache, zoals bij de vorige meting. De mediaan blijft 0,81 à 0,82 s.
+- **Het bord is 1,8 KB zwaarder om over te dragen,** vooral door de grotere editor (+1,3 KB gzip). De rest heb ik niet uitgesplitst.
+- Accessibility en Best Practices zijn 100 in elke run.
+
+### Preview-URL
+
+`https://fase-11-linkformaat-coachboard.hardamkay.workers.dev`

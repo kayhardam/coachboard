@@ -1,0 +1,343 @@
+{
+  "link": "2.jVJBasQwDPyK8VkUO46dhF73UOgTQg6mCDY09YbEod_vyE53YemhBzPyjDVolIyG9Pt2zDsnNSeVv5lzXBZOmsbRTPTnac5j0asnFJ0h2-C4ir2nwZO1AlDHMYD3hgRCU6BrybaVLQi6IHjAIEwFAzt4BHkPTxcExdSSqU9lKNR1hjKVO7uL4n7HKjfxs0Oo2BsMry-smLc9YwP7yoiuUoybunJWMSZQvKxHygrCclvv8pHUOt_Si5ZhzgU8BTzX8a-AbUsDWnwAiKOnUPeIi6fusU3J2t9r9xBaCE1BRyXY23OCUmX5zl-QWALnY86v6vP8A4T5uM6MXSDXNP0A",
+  "board": {
+    "v": 2,
+    "court": "half",
+    "title": "Kruisen in tweetallen",
+    "cones": [
+      [
+        70,
+        120
+      ],
+      [
+        130,
+        120
+      ],
+      [
+        85,
+        95
+      ],
+      [
+        115,
+        95
+      ]
+    ],
+    "frames": [
+      {
+        "players": [
+          {
+            "team": "a",
+            "at": [
+              60,
+              150
+            ]
+          },
+          {
+            "team": "a",
+            "at": [
+              60,
+              162
+            ]
+          },
+          {
+            "team": "a",
+            "at": [
+              60,
+              174
+            ]
+          },
+          {
+            "team": "a",
+            "at": [
+              140,
+              150
+            ]
+          },
+          {
+            "team": "a",
+            "at": [
+              140,
+              162
+            ]
+          },
+          {
+            "team": "a",
+            "at": [
+              140,
+              174
+            ]
+          },
+          {
+            "team": "p",
+            "at": [
+              40,
+              90
+            ]
+          },
+          {
+            "team": "p",
+            "at": [
+              160,
+              90
+            ]
+          },
+          {
+            "team": "d",
+            "label": "K",
+            "at": [
+              100,
+              8
+            ]
+          }
+        ],
+        "balls": [
+          [
+            64,
+            145
+          ],
+          [
+            136,
+            145
+          ]
+        ],
+        "arrows": [
+          {
+            "kind": "pass",
+            "from": 0,
+            "pts": [
+              [
+                60,
+                150
+              ],
+              [
+                40,
+                90
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "from": 0,
+            "pts": [
+              [
+                60,
+                150
+              ],
+              [
+                70,
+                120
+              ]
+            ]
+          },
+          {
+            "kind": "pass",
+            "from": 3,
+            "pts": [
+              [
+                140,
+                150
+              ],
+              [
+                160,
+                90
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "from": 3,
+            "pts": [
+              [
+                140,
+                150
+              ],
+              [
+                130,
+                120
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "pts": [
+              [
+                100,
+                196
+              ],
+              [
+                100,
+                180
+              ]
+            ]
+          }
+        ],
+        "text": "De eersten spelen naar het aanspeelpunt en lopen naar hun pion."
+      },
+      {
+        "players": [
+          {
+            "team": "a",
+            "at": [
+              70,
+              120
+            ]
+          },
+          {
+            "team": "a",
+            "at": [
+              60,
+              162
+            ]
+          },
+          {
+            "team": "a",
+            "at": [
+              60,
+              174
+            ]
+          },
+          {
+            "team": "a",
+            "at": [
+              130,
+              120
+            ]
+          },
+          {
+            "team": "a",
+            "at": [
+              140,
+              162
+            ]
+          },
+          {
+            "team": "a",
+            "at": [
+              140,
+              174
+            ]
+          },
+          {
+            "team": "p",
+            "at": [
+              40,
+              90
+            ]
+          },
+          {
+            "team": "p",
+            "at": [
+              160,
+              90
+            ]
+          },
+          {
+            "team": "d",
+            "label": "K",
+            "at": [
+              100,
+              8
+            ]
+          }
+        ],
+        "balls": [
+          [
+            44,
+            94
+          ],
+          [
+            156,
+            94
+          ]
+        ],
+        "arrows": [
+          {
+            "kind": "bounce",
+            "from": 6,
+            "pts": [
+              [
+                40,
+                90
+              ],
+              [
+                85,
+                95
+              ]
+            ]
+          },
+          {
+            "kind": "bounce",
+            "from": 7,
+            "pts": [
+              [
+                160,
+                90
+              ],
+              [
+                115,
+                95
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "from": 0,
+            "pts": [
+              [
+                70,
+                120
+              ],
+              [
+                85,
+                95
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "from": 3,
+            "pts": [
+              [
+                130,
+                120
+              ],
+              [
+                115,
+                95
+              ]
+            ]
+          },
+          {
+            "kind": "shot",
+            "from": 0,
+            "pts": [
+              [
+                85,
+                95
+              ],
+              [
+                110,
+                0
+              ]
+            ]
+          },
+          {
+            "kind": "shot",
+            "from": 3,
+            "pts": [
+              [
+                115,
+                95
+              ],
+              [
+                90,
+                0
+              ]
+            ]
+          }
+        ],
+        "text": "Het aanspeelpunt speelt in met een stuit; kruisen en schieten."
+      }
+    ]
+  }
+}

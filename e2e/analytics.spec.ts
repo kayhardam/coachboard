@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { analyticsToken, beaconSrc } from "../src/data/analytics";
-import type { Board } from "../src/lib/board/format";
+import type { BoardV1 } from "../src/lib/board/format";
 import { dragPlayer, expect, expectBoard, linkInAddressBar, openBoard, STORAGE_KEY, test, watchViolations } from "./helpers";
 
 // The statistics beacon (Cloudflare Web Analytics) on the board pages; see
@@ -8,7 +8,7 @@ import { dragPlayer, expect, expectBoard, linkInAddressBar, openBoard, STORAGE_K
 
 const fixture = JSON.parse(
   readFileSync(new URL("../src/lib/board/fixtures/v1-full-lineup.json", import.meta.url), "utf8"),
-) as { link: string; board: Board };
+) as { link: string; board: BoardV1 };
 
 for (const path of ["/en/board/", "/en/board/link/", "/en/board/qr/"]) {
   test(`the board on ${path} doesn't wait for the beacon`, async ({ page }) => {

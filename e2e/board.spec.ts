@@ -1,8 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { defaultBoard } from "../src/lib/board/defaults";
-import type { Board } from "../src/lib/board/format";
-import { dragPlayer, expect, expectBoard, openBoard, pieces, saved, saveOwnBoard, test } from "./helpers";
+import { toBoard, type Board, type BoardV1 } from "../src/lib/board/format";
+import { dragPlayer, expect, expectBoard, openBoard, pieces, saved, saveOwnBoard, STORAGE_KEY, test } from "./helpers";
 
 test("the board loads with the default lineup", async ({ page }) => {
   await openBoard(page);
@@ -11,17 +11,17 @@ test("the board loads with the default lineup", async ({ page }) => {
 
 test("dragging a player puts the new board in the address bar within a second", async ({ page }) => {
   await openBoard(page);
-  await expect(page).toHaveURL(/#t=1\./);
+  await expect(page).toHaveURL(/#t=2\./);
   const before = page.url();
 
   await dragPlayer(page, 5, 30, 30);
   await expect.poll(() => page.url(), { timeout: 1000 }).not.toBe(before);
-  expect(page.url()).toMatch(/#t=1\./);
+  expect(page.url()).toMatch(/#t=2\./);
 });
 
 test("a shared link opens the same board in a clean browser", async ({ page, browser }) => {
   await openBoard(page);
-  await expect(page).toHaveURL(/#t=1\./);
+  await expect(page).toHaveURL(/#t=2\./);
   const before = page.url();
   await dragPlayer(page, 5, 30, 30);
   await dragPlayer(page, 0, 20, 20);
@@ -43,7 +43,7 @@ for (const file of fixtures) {
   test(`fixture ${file} opens as a link`, async ({ page }) => {
     const { link, board } = JSON.parse(
       readFileSync(new URL(`../src/lib/board/fixtures/${file}`, import.meta.url), "utf8"),
-    ) as { link: string; board: Board };
+    ) as { link: string; board: Board | BoardV1 };
     await openBoard(page, `#t=${link}`);
     await expectBoard(page, board);
     await expect(page.getByRole("status")).toHaveCount(0);
@@ -55,12 +55,38 @@ test("opening a link doesn't touch the saved board", async ({ page, context }) =
 
   const fixture = JSON.parse(
     readFileSync(new URL("../src/lib/board/fixtures/v1-full-lineup.json", import.meta.url), "utf8"),
-  ) as { link: string; board: Board };
+  ) as { link: string; board: Board | BoardV1 };
   const other = await context.newPage();
   await openBoard(other, `#t=${fixture.link}`);
   await expectBoard(other, fixture.board);
   await other.waitForTimeout(600);
   expect(await saved(other)).toBe(own);
+});
+
+test("a board saved before version 2 opens, and is saved as version 2", async ({ page }) => {
+  const { board } = JSON.parse(
+    readFileSync(new URL("../src/lib/board/fixtures/v1-full-lineup.json", import.meta.url), "utf8"),
+  ) as { board: BoardV1 };
+  await page.goto("/en/");
+  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [STORAGE_KEY, JSON.stringify(board)]);
+
+  await openBoard(page);
+  await expectBoard(page, board);
+  await expect(page.getByRole("status")).toHaveCount(0);
+  await expect.poll(async () => JSON.parse((await saved(page)) ?? "null")).toEqual(toBoard(board));
+});
+
+/** A version 1 link from JSON, packed as encode() did. */
+async function v1Link(json: string) {
+  const stream = new Blob([json]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  return `1.${Buffer.from(await new Response(stream).arrayBuffer()).toString("base64url")}`;
+}
+
+test("a version 1 link with other players in a later step says it doesn't work", async ({ page }) => {
+  // Only a hand-made link can have that: the board has one lineup for all steps.
+  await openBoard(page, `#t=${await v1Link("[0,[[[[0,10,10]],0,[]],[[[1,10,10]],0,[]]]]")}`);
+  await expect(page.getByRole("status")).toContainText("This link doesn't work");
+  await expectBoard(page, defaultBoard);
 });
 
 const brokenLink = "#t=1.this-is-not-a-board";
@@ -117,9 +143,9 @@ test("a broken link without a saved board shows the default lineup, until you di
   await expect(notice).toBeHidden();
 });
 
-// No code reads version 2 yet, so after its one reload this link still fails:
+// No code reads version 3 yet, so after its one reload this link still fails:
 // the reload has to stop there and show the notice for a broken link.
-const newerLink = "#t=2.from-newer-code";
+const newerLink = "#t=3.from-newer-code";
 
 test("a link from a newer version reloads the page once, then says it doesn't work", async ({ page, context }) => {
   const own = await saveOwnBoard(page);

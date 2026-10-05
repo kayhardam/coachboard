@@ -1,0 +1,584 @@
+{
+  "link": "2.rVJBTsMwEPzKqucVit2mdc5ckGhViWuUQ9KaxE1IkOty4MQf-CEvYdYOiANIICEl9nrXHs_Musx4cesv7uzGlnb7t5fX7X7BZYn09mZRcQz2c7D7CO4-g48911sJFMDi_O2PAV9ZGl4ZXmaslGGVYZZ4M68LLVVJr9dxMqy17EY2N2xSXqcp15JTG4GTKzIpreUSzZoNSkpzRNaRpuKVXJeDCsTQ0bumsUOg86G7uJHGuvY0uLE_kx0peNsHenankY62762nB2uvRF5SkKBm-F8L2Kx4o38SgKLKTBX9VxFZGy5yAEd50DQvKukK9dK4QPWhC2AHQUM9tpH7k6_rNoA3NfVAThTQME2PX-gnpH-lXxQ4Ee1fcj57P_sekXIsoJC18L_e0rMNZMG2GaaeCYIab8Xz4zR5UYG2OGzppqmdNXST7b9oSKg_aZh7_zcNyXwYjZNFYr9ML7SItu_cmU6W6ViPcPQRLOE7xjs8J-ftIRB6cWnTWwJj61pUOzvcBxCvqnc",
+  "board": {
+    "v": 2,
+    "court": "half",
+    "title": "Kruising MO–LO",
+    "cones": [],
+    "frames": [
+      {
+        "players": [
+          {
+            "team": "a",
+            "label": "LH",
+            "at": [
+              8,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "LO",
+            "at": [
+              30,
+              118
+            ]
+          },
+          {
+            "team": "a",
+            "label": "MO",
+            "at": [
+              100,
+              130
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RO",
+            "at": [
+              170,
+              118
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RH",
+            "at": [
+              192,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "CL",
+            "at": [
+              100,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "label": "K",
+            "at": [
+              100,
+              8
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              22,
+              30
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              48,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              80,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              120,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              152,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              178,
+              30
+            ]
+          }
+        ],
+        "balls": [
+          [
+            106,
+            126
+          ]
+        ],
+        "arrows": [
+          {
+            "kind": "dribble",
+            "from": 2,
+            "pts": [
+              [
+                100,
+                130
+              ],
+              [
+                88,
+                112
+              ],
+              [
+                70,
+                112
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "from": 1,
+            "pts": [
+              [
+                30,
+                118
+              ],
+              [
+                40,
+                135
+              ]
+            ]
+          }
+        ],
+        "text": "MO dribbelt schuin naar links en trekt zijn dekker mee."
+      },
+      {
+        "players": [
+          {
+            "team": "a",
+            "label": "LH",
+            "at": [
+              8,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "LO",
+            "at": [
+              40,
+              135
+            ]
+          },
+          {
+            "team": "a",
+            "label": "MO",
+            "at": [
+              70,
+              112
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RO",
+            "at": [
+              170,
+              118
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RH",
+            "at": [
+              192,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "CL",
+            "at": [
+              100,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "label": "K",
+            "at": [
+              100,
+              8
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              22,
+              30
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              48,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              74,
+              72
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              120,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              152,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              178,
+              30
+            ]
+          }
+        ],
+        "balls": [
+          [
+            74,
+            108
+          ]
+        ],
+        "arrows": [
+          {
+            "kind": "run",
+            "from": 1,
+            "pts": [
+              [
+                40,
+                135
+              ],
+              [
+                70,
+                128
+              ],
+              [
+                95,
+                110
+              ]
+            ]
+          },
+          {
+            "kind": "pass",
+            "from": 2,
+            "pts": [
+              [
+                70,
+                112
+              ],
+              [
+                95,
+                110
+              ]
+            ]
+          }
+        ],
+        "text": "LO kruist achter MO langs en vraagt de bal in de loop."
+      },
+      {
+        "players": [
+          {
+            "team": "a",
+            "label": "LH",
+            "at": [
+              8,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "LO",
+            "at": [
+              95,
+              110
+            ]
+          },
+          {
+            "team": "a",
+            "label": "MO",
+            "at": [
+              70,
+              112
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RO",
+            "at": [
+              170,
+              118
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RH",
+            "at": [
+              192,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "CL",
+            "at": [
+              100,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "label": "K",
+            "at": [
+              100,
+              8
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              22,
+              30
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              48,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              74,
+              72
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              120,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              152,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              178,
+              30
+            ]
+          }
+        ],
+        "balls": [
+          [
+            99,
+            106
+          ]
+        ],
+        "arrows": [
+          {
+            "kind": "block",
+            "from": 5,
+            "pts": [
+              [
+                100,
+                66
+              ],
+              [
+                112,
+                70
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "from": 1,
+            "pts": [
+              [
+                95,
+                110
+              ],
+              [
+                100,
+                85
+              ]
+            ]
+          },
+          {
+            "kind": "shot",
+            "from": 1,
+            "pts": [
+              [
+                100,
+                85
+              ],
+              [
+                110,
+                0
+              ]
+            ]
+          }
+        ],
+        "text": "CL zet een blok, LO breekt door en schiet hoog in de hoek."
+      },
+      {
+        "players": [
+          {
+            "team": "a",
+            "label": "LH",
+            "at": [
+              8,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "LO",
+            "at": [
+              100,
+              85
+            ]
+          },
+          {
+            "team": "a",
+            "label": "MO",
+            "at": [
+              70,
+              112
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RO",
+            "at": [
+              170,
+              118
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RH",
+            "at": [
+              192,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "CL",
+            "at": [
+              112,
+              70
+            ]
+          },
+          {
+            "team": "d",
+            "label": "K",
+            "at": [
+              100,
+              8
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              22,
+              30
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              48,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              74,
+              72
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              120,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              152,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              178,
+              30
+            ]
+          }
+        ],
+        "balls": [],
+        "arrows": [
+          {
+            "kind": "run",
+            "from": 2,
+            "pts": [
+              [
+                70,
+                112
+              ],
+              [
+                90,
+                190
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "from": 3,
+            "pts": [
+              [
+                170,
+                118
+              ],
+              [
+                130,
+                190
+              ]
+            ]
+          }
+        ],
+        "text": "Mis je, dan lopen MO en RO direct terug naar de eigen helft."
+      }
+    ]
+  }
+}

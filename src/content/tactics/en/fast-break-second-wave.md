@@ -19,8 +19,9 @@ coachingPoints:
   - "Back court players: stay wider than the retreating defenders."
 related: []
 board:
-  v: 1
+  v: 2
   court: half
+  cones: []
   frames:
     - players:
         - { team: a, label: LW, at: [18, 52] }
@@ -36,7 +37,7 @@ board:
         - { team: d, at: [160, 52] }
         - { team: d, at: [80, 138] }
         - { team: d, at: [136, 146] }
-      ball: [30, 44]
+      balls: [[30, 44]]
       arrows:
         - { kind: run, pts: [[58, 188], [38, 122]] }
         - { kind: run, pts: [[100, 190], [100, 128]] }

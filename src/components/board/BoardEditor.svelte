@@ -8,7 +8,7 @@
   import type { BoardStrings } from "../../i18n/ui";
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
-  import { decode, encode, isBoard, isNewerLink, type Board } from "../../lib/board/format";
+  import { decode, encode, isNewerLink, toBoard, type Board } from "../../lib/board/format";
   import { HIT_R } from "../../lib/board/geometry";
   import { nearestPiece, reach } from "../../lib/board/hit";
   import { icons } from "../../lib/icons";
@@ -32,7 +32,7 @@
     | { type: "piece"; piece: Selection; start: Board; offset: XY; origin: XY; moved: boolean }
     | { type: "arrow"; index: number; start: Board; origin: XY; moved: boolean }
     | { type: "handle"; index: number; handle: 0 | 1 | 2; start: Board; moved: boolean }
-    | { type: "draw"; kind: "run" | "pass" | "dribble"; from: XY; to: XY };
+    | { type: "draw"; kind: "run" | "pass" | "dribble"; from: XY; to: XY; player?: number };
 
   const STORAGE_KEY = "coachboard.board";
   /** The last link that reloaded this tab, so it reloads only once (sessionStorage). */
@@ -149,8 +149,7 @@
   function movedBoard(): Board | undefined {
     if (!location.hash.startsWith("#own=")) return undefined;
     try {
-      const moved: unknown = JSON.parse(decodeURIComponent(location.hash.slice(5)));
-      return isBoard(moved) ? moved : undefined;
+      return toBoard(JSON.parse(decodeURIComponent(location.hash.slice(5)))) ?? undefined;
     } catch {
       return undefined;
     }
@@ -170,9 +169,10 @@
         // doesn't replace it with the default lineup.
         let own = false;
         try {
-          const saved: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null");
-          if (isBoard(saved)) board = saved;
-          own = isBoard(saved);
+          // A board saved by an earlier version is read as this version's board.
+          const saved = toBoard(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null"));
+          if (saved) board = saved;
+          own = saved !== null;
         } catch {
           // No storage (private mode, blocked): start from the default lineup.
         }
@@ -268,11 +268,14 @@
     if (hit?.kind === "handle" && selected?.kind === "arrow") {
       drag = { type: "handle", index: selected.index, handle: hit.index as 0 | 1 | 2, start: board, moved: false };
     } else if (isDrawTool(tool)) {
-      const from = hit?.kind === "player" ? [...frame.players[hit.index]!.at] as XY : at;
-      drag = { type: "draw", kind: tool, from, to: from };
+      // From a player, the arrow is theirs: it starts where they are by then,
+      // at the end of their run if they already have one.
+      const player = hit?.kind === "player" ? hit.index : undefined;
+      const from = player === undefined ? at : edit.endOf(frame, player);
+      drag = { type: "draw", kind: tool, from, to: from, player };
     } else if (hit?.kind === "player" || hit?.kind === "ball") {
       const piece: Selection = { kind: hit.kind, index: hit.index };
-      const pos = hit.kind === "player" ? frame.players[hit.index]!.at : frame.ball!;
+      const pos = hit.kind === "player" ? frame.players[hit.index]!.at : frame.balls[hit.index]!;
       drag = { type: "piece", piece, start: board, offset: [pos[0] - at[0], pos[1] - at[1]], origin: at, moved: false };
     } else if (hit?.kind === "arrow") {
       drag = { type: "arrow", index: hit.index, start: board, origin: at, moved: false };
@@ -294,7 +297,7 @@
 
     if (drag.type === "draw") {
       drag.to = at;
-      draft = edit.addArrow(board, drag.kind, drag.from, at);
+      draft = edit.addArrow(board, drag.kind, drag.from, at, drag.player);
       return;
     }
     if (drag.type !== "handle" && !drag.moved) {
@@ -321,9 +324,9 @@
     if (done.type === "draw") {
       // Released on (or near) a player: the arrow ends at that player.
       const at = toCourt(e);
-      const hit = nearestPiece({ ...frame, ball: undefined }, at, tapReach());
+      const hit = nearestPiece({ ...frame, balls: [] }, at, tapReach());
       const to = hit ? ([...frame.players[hit.index]!.at] as XY) : at;
-      if (commit(edit.addArrow(board, done.kind, done.from, to))) {
+      if (commit(edit.addArrow(board, done.kind, done.from, to, done.player))) {
         selected = { kind: "arrow", index: frame.arrows.length - 1 };
       } else {
         selected = null;
@@ -334,6 +337,11 @@
     if (done.moved) {
       // The drag already showed the moves; one undo step takes it all back.
       past = [...past.slice(1 - HISTORY), done.start];
+    }
+    if (done.type === "handle" && done.handle === 0 && done.moved) {
+      // A start let go on a player gives the arrow to that player.
+      const hit = nearestPiece({ ...frame, balls: [] }, toCourt(e), tapReach());
+      if (hit) board = edit.attachArrow(board, done.index, hit.index);
     }
     if (done.type === "piece") selected = done.piece;
     if (done.type === "arrow") selected = { kind: "arrow", index: done.index };

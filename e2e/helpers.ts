@@ -2,7 +2,7 @@ import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { test as base, expect, type Page } from "@playwright/test";
 import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
-import type { Board } from "../src/lib/board/format";
+import { toBoard, type Board, type BoardV1 } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
 
 export { expect };
@@ -70,17 +70,20 @@ export function pieces(page: Page): Promise<string[]> {
   );
 }
 
-/** Players and ball of a board, in the same form as `pieces()`; arrows only by count. */
-export function expectedPieces(board: Board) {
-  const frame = board.frames[0]!;
+/**
+ * Players and balls of a board, in the same form as `pieces()`; arrows only by
+ * count. A version 1 board (in fixtures and older saved boards) draws the same.
+ */
+export function expectedPieces(board: Board | BoardV1) {
+  const frame = toBoard(board)!.frames[0]!;
   return {
     players: frame.players.map((p, i) => `player:${i}:translate(${p.at[0]} ${p.at[1]})`),
-    ball: frame.ball ? [`ball:0:translate(${frame.ball[0]} ${frame.ball[1]})`] : [],
+    ball: frame.balls.map((b, i) => `ball:${i}:translate(${b[0]} ${b[1]})`),
     arrows: frame.arrows.length,
   };
 }
 
-export async function expectBoard(page: Page, board: Board) {
+export async function expectBoard(page: Page, board: Board | BoardV1) {
   const want = expectedPieces(board);
   await expect
     .poll(async () => {
@@ -123,7 +126,7 @@ export function saved(page: Page) {
 
 /** The `#t=` link in the address bar. */
 export async function linkInAddressBar(page: Page) {
-  await expect(page).toHaveURL(/#t=1\./, { timeout: 1000 });
+  await expect(page).toHaveURL(/#t=2\./, { timeout: 1000 });
   return page.url();
 }
 
