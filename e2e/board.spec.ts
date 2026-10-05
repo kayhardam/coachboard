@@ -122,8 +122,6 @@ test("a broken link without a saved board shows the default lineup, until you di
 const newerLink = "#t=2.from-newer-code";
 
 test("a link from a newer version reloads the page once, then says it doesn't work", async ({ page, context }) => {
-  // Finding 16 in docs/metingen.md: the link got the notice without a reload.
-  test.fail();
   const own = await saveOwnBoard(page);
   const drawn = await pieces(page);
 
@@ -140,8 +138,6 @@ test("a link from a newer version reloads the page once, then says it doesn't wo
 });
 
 test("a tab opened before a deploy reloads for a link from a newer version", async ({ page }) => {
-  // Finding 16 in docs/metingen.md: the open tab showed the notice without a reload.
-  test.fail();
   const loads = countLoads(page);
   await openBoard(page);
   await expect.poll(() => saved(page)).not.toBeNull();

@@ -8,7 +8,7 @@
   import type { BoardStrings } from "../../i18n/ui";
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
-  import { decode, encode, isBoard, type Board } from "../../lib/board/format";
+  import { decode, encode, isBoard, isNewerLink, type Board } from "../../lib/board/format";
   import { HIT_R } from "../../lib/board/geometry";
   import { nearestPiece, reach } from "../../lib/board/hit";
   import { icons } from "../../lib/icons";
@@ -35,6 +35,8 @@
     | { type: "draw"; kind: "run" | "pass" | "dribble"; from: XY; to: XY };
 
   const STORAGE_KEY = "coachboard.board";
+  /** The last link that reloaded this tab, so it reloads only once (sessionStorage). */
+  const RELOADED_KEY = "coachboard.reloaded";
   const HISTORY = 100;
   /** Pointer travel (dm) before a press counts as a drag rather than a tap. */
   const DRAG_START = 1.5;
@@ -124,6 +126,25 @@
     return decode(decodeURIComponent(location.hash.slice(3)));
   }
 
+  /**
+   * A link from a newer version reloads the page once: a tab opened before a
+   * deploy runs the old code, and the reload fetches the code that reads it.
+   * If that code doesn't read it either, the notice for a broken link follows.
+   */
+  function reloadForNewer(): boolean {
+    const link = decodeURIComponent(location.hash.slice(3));
+    if (!isNewerLink(link)) return false;
+    try {
+      if (sessionStorage.getItem(RELOADED_KEY) === link) return false;
+      sessionStorage.setItem(RELOADED_KEY, link);
+    } catch {
+      // No storage, so no way to stop at one reload: show the notice.
+      return false;
+    }
+    location.reload();
+    return true;
+  }
+
   /** The board you had on workers.dev, brought along as #own= by the redirect in board.astro. */
   function movedBoard(): Board | undefined {
     if (!location.hash.startsWith("#own=")) return undefined;
@@ -141,6 +162,8 @@
 
     (async () => {
       const shared = await fromHash();
+      // Before `loaded`, so the save doesn't replace the link in the address bar.
+      if (shared === null && reloadForNewer()) return;
       if (shared) board = linked = shared;
       else {
         // A broken link falls back to your own board, so the save below
@@ -169,7 +192,7 @@
         commit(shared);
         linked = shared;
         selected = null;
-      } else if (shared === null) show(strings["board.invalidLink"], true);
+      } else if (shared === null && !reloadForNewer()) show(strings["board.invalidLink"], true);
     };
     addEventListener("hashchange", onHash);
     return () => removeEventListener("hashchange", onHash);
