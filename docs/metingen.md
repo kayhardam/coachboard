@@ -1715,3 +1715,41 @@ Vóór en na zijn de posities gelijk tot op 0,1 px.
 ### Preview-URL
 
 `https://editor-stylesheet-coachboard.hardamkay.workers.dev`
+
+## Herladen bij een link van een nieuwere versie (5 oktober 2026)
+
+Branch `reload-newer-link`, vóór Fase 11 van het productplan. Lost bevinding 16 op.
+
+### Wat er veranderd is
+
+- **`isNewerLink()` in `format.ts`** herkent een link van een nieuwere versie dan de code: het deel vóór de punt is een geheel getal boven `LATEST` (nu 1). Een kapotte `1.`-link, `0.`, `abc.` of tekst zonder punt is geen nieuwere versie. `encode()` schrijft `LATEST`, zodat Fase 11 één getal ophoogt naast de nieuwe lezer.
+- **De editor herlaadt de pagina** voor zo'n link: bij het openen, en als hij in een open tabblad landt (`hashchange`). Bij het openen gebeurt dat vóór het opslaan begint, dus de link blijft in de adresbalk staan.
+- **Hooguit één keer per link per tabblad:** `sessionStorage` (`coachboard.reloaded`) houdt de link die het tabblad herlaadde. Kent de code de versie na het herladen nog niet, dan volgt de gewone melding voor een kapotte link, met je eigen bord of de standaardopstelling.
+- **Zonder `sessionStorage`** (geblokkeerd) herlaadt de pagina niet en volgt meteen de melding. Zonder marker kan het herladen niet begrensd worden.
+- Een kapotte link met een bekende versie herlaadt niet. Geen nieuwe teksten.
+
+### Vóór en na
+
+**Vóór** (`main` @ `dca85d9`), in Chromium en WebKit: een `#t=2.…`-link toonde direct de melding, bij het openen en in een open tabblad. De tests zijn eerst gecommit met `test.fail()` (`a6f7051`).
+
+**Na** (`4e12339`): de pagina laadt twee keer (één herlaad) en toont dan de melding; je opgeslagen bord blijft staan. Een `#t=1.…`-link die kapot is, laadt één keer, zoals vóór.
+
+Groottes, gzip zoals `npm run budget`:
+
+| Bestand | Vóór | Na |
+|---|--:|--:|
+| `BoardEditor` (JS) | 9.400 B | 9.515 B |
+| Alle JS in `_astro/` | 29.598 B | 29.713 B |
+
+- `npm run budget`: JS van het bord 25,3 → 25,4 KB (budget 32,5 KB). Onder het budget voor alle JS blijft 2,8 KB vrij voor Fase 11.
+- CSS en HTML veranderen niet.
+
+### Tests
+
+- Unit: 13 nieuwe in `format.test.ts` voor `isNewerLink()`; `npm run verify` geeft 101 → 114.
+- E2e (`e2e/board.spec.ts`), geteld met het `load`-event van de pagina (WebKit meldt het eerste verzoek voor een pagina twee keer, dus verzoeken tellen klopt daar niet):
+  - een link van een nieuwere versie herlaadt één keer en toont dan de melding; het opgeslagen bord verandert niet;
+  - een open tabblad herlaadt als zo'n link in de adresbalk landt;
+  - de bestaande test voor een kapotte link controleert dat een bekende versie niet herlaadt.
+- Een echte `2.`-lezer bestaat nog niet, dus de tests laten de grens zien: na één herlaad stopt het. Dat een herlaad de nieuwe code haalt, volgt uit de headers: de HTML is `cache-control: public, max-age=0, must-revalidate` (productie, gemeten met `curl`), en de JS heeft een hash in de naam.
+- `npm run e2e`: 349 → 353 geslaagd, 1 overgeslagen.

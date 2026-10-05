@@ -96,7 +96,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 - **Coordinates:** whole decimetres on a portrait court with the goal at the top. `x` runs 0–200 (sideline to sideline), `y` runs 0–400 from the goal line; a half court shows `y` 0–200.
 - **`format.ts` is a contract.** Links look like `1.<payload>` and end up in QR codes and team chats, so version 1 must decode forever.
   - Never edit the files in `src/lib/board/fixtures/`; the tests decode them.
-  - A change to the format gets a new prefix (`2.`) and its own reader in `decode()`, next to the v1 reader.
+  - A change to the format gets a new prefix (`2.`) and its own reader in `decode()`, next to the v1 reader. Raise `LATEST` with it: `encode()` writes that version, and `isNewerLink()` treats anything above it as a link from newer code.
   - To add a fixture, write `{ link: await encode(board), board }` once and commit it.
   - The budget test keeps a full lineup (7+7 players, ball, 6 arrows) at ≤ 300 characters.
   - `isBoard()` is hand-written so the client bundle needs no Zod; the content schema reuses it.
@@ -114,7 +114,8 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
   - its strings come in as a prop from `boardStrings()` in `ui.ts`, the paths for Share and the QR code as `links`, and the default lineup in the page's language as `lineup` (`defaultBoardFor(lang)` in `src/lib/board/defaults.ts`: LW, LB, CB, RB, RW, P, GK in English; LH, LO, MO, RO, RH, CL, K in Dutch). Astro passes props as `$state`, a proxy that `structuredClone()` can't copy, so the editor copies `lineup` once with JSON;
   - it loads `#t=` first, then `localStorage` (`coachboard.board`), then `#own=` (see below), then the default lineup;
   - every change is written to both (300 ms debounce), so the address bar is always a shareable link;
-  - a board that came from a `#t=` link reaches `localStorage` only after its first edit, so opening a shared play or a tactic doesn't replace your own saved board.
+  - a board that came from a `#t=` link reaches `localStorage` only after its first edit, so opening a shared play or a tactic doesn't replace your own saved board;
+  - a link from a newer version (`isNewerLink()`) reloads the page, on opening and in an open tab, because a tab opened before a deploy runs the old code. The same link reloads a tab only once (`coachboard.reloaded` in `sessionStorage`); after that, or without storage, it gets the notice for a broken link. A broken link of a known version (`1.…`) doesn't reload.
 - **Statistics:** Cloudflare Web Analytics, on the board pages only (`src/components/Beacon.astro`, token and URLs in `src/data/analytics.ts`). The privacy page names it and says what it sends.
   - It sits last in `<body>` as `type="module"`, the form of Cloudflare's snippet: deferred like `defer`, and fetched with CORS (Cloudflare sends `Access-Control-Allow-Origin: *`; the stub in `e2e/helpers.ts` does too). The editor loads through `<astro-island>` and a dynamic import, which never wait for it; `e2e/analytics.spec.ts` holds the beacon back and checks the board still works.
   - `"spa": false` in `data-cf-beacon`: otherwise, in Chromium, the beacon counts every `history.replaceState()` (each edit) as a page view.
