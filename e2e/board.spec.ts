@@ -1,8 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { defaultBoard } from "../src/lib/board/defaults";
-import type { Board, BoardV1 } from "../src/lib/board/format";
-import { dragPlayer, expect, expectBoard, openBoard, pieces, saved, saveOwnBoard, test } from "./helpers";
+import { toBoard, type Board, type BoardV1 } from "../src/lib/board/format";
+import { dragPlayer, expect, expectBoard, openBoard, pieces, saved, saveOwnBoard, STORAGE_KEY, test } from "./helpers";
 
 test("the board loads with the default lineup", async ({ page }) => {
   await openBoard(page);
@@ -61,6 +61,32 @@ test("opening a link doesn't touch the saved board", async ({ page, context }) =
   await expectBoard(other, fixture.board);
   await other.waitForTimeout(600);
   expect(await saved(other)).toBe(own);
+});
+
+test("a board saved before version 2 opens, and is saved as version 2", async ({ page }) => {
+  const { board } = JSON.parse(
+    readFileSync(new URL("../src/lib/board/fixtures/v1-full-lineup.json", import.meta.url), "utf8"),
+  ) as { board: BoardV1 };
+  await page.goto("/en/");
+  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [STORAGE_KEY, JSON.stringify(board)]);
+
+  await openBoard(page);
+  await expectBoard(page, board);
+  await expect(page.getByRole("status")).toHaveCount(0);
+  await expect.poll(async () => JSON.parse((await saved(page)) ?? "null")).toEqual(toBoard(board));
+});
+
+/** A version 1 link from JSON, packed as encode() did. */
+async function v1Link(json: string) {
+  const stream = new Blob([json]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+  return `1.${Buffer.from(await new Response(stream).arrayBuffer()).toString("base64url")}`;
+}
+
+test("a version 1 link with other players in a later step says it doesn't work", async ({ page }) => {
+  // Only a hand-made link can have that: the board has one lineup for all steps.
+  await openBoard(page, `#t=${await v1Link("[0,[[[[0,10,10]],0,[]],[[[1,10,10]],0,[]]]]")}`);
+  await expect(page.getByRole("status")).toContainText("This link doesn't work");
+  await expectBoard(page, defaultBoard);
 });
 
 const brokenLink = "#t=1.this-is-not-a-board";

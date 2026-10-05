@@ -62,9 +62,10 @@ describe("Court", () => {
     expect(count(body, 'stroke-width="4.2"')).toBe(1); // the shot's double line
     expect(count(body, "-head)")).toBe(3); // every arrow but the block has a head
     expect(count(body, 'r="1.8"')).toBe(1); // where the bounce touches the floor
-    // The shot moves only its end.
-    const picked = render(Court, { props: { board, selected: { kind: "arrow", index: 1 } } }).body;
-    expect(count(picked, 'data-kind="handle"')).toBe(1);
+    // A shot moves only its end; an arrow of a player has no start handle.
+    const handles = (index: number) =>
+      count(render(Court, { props: { board, selected: { kind: "arrow", index } } }).body, 'data-kind="handle"');
+    expect([0, 1, 2, 3].map(handles)).toEqual([2, 1, 3, 2]);
   });
 
   it("gives each instance its own marker id (Astro sets idPrefix per component)", () => {

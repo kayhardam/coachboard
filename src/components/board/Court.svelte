@@ -74,14 +74,19 @@
 
   const teamColor = { a: colors.attack, d: colors.defence, p: colors.passer };
 
-  /** Handles of the selected arrow as [x, y, handle]: start, bend, end; a shot moves only its end. */
+  /**
+   * Handles of the selected arrow as [x, y, handle]: start, bend, end. An
+   * arrow of a player has no start handle (it starts at the player, so a drag
+   * there moves the player); a shot moves only its end.
+   */
   const handles = $derived.by((): [number, number, number][] => {
     if (selected?.kind !== "arrow") return [];
     const a = current.arrows[selected.index];
     if (!a) return [];
-    const end = a.pts[a.pts.length - 1]!;
-    if (a.kind === "shot") return [[...end, 2]];
-    return [[...a.pts[0]!, 0], [...arrowMid(a), 1], [...end, 2]];
+    const end: [number, number, number] = [...a.pts[a.pts.length - 1]!, 2];
+    if (a.kind === "shot") return [end];
+    const rest: [number, number, number][] = [[...arrowMid(a), 1], end];
+    return a.from === undefined ? [[...a.pts[0]!, 0], ...rest] : rest;
   });
 </script>
 
