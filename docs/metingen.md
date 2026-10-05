@@ -1958,7 +1958,7 @@ Drie runs per URL met het commando uit de nulmeting, Lighthouse 13.5.0. Vóór: 
 | `/nl/tactics/6-0-defense-basics/` | 100, 100, 100 | 0,82 / 0,83 / 0,81 s | 100, 100, 100 | 0,84 / 0,83 / 0,86 s | 0 | 0 ms | 8,7 → 8,9 KB |
 
 - De eerste run vóór op `/nl/board/` (1,93 s) was een koude cache, zoals bij de vorige meting. De mediaan blijft 0,81 à 0,82 s.
-- **Het bord is 1,8 KB zwaarder om over te dragen:** de grotere editor, en de preview stuurt extra headers.
+- **Het bord is 1,8 KB zwaarder om over te dragen,** vooral door de grotere editor (+1,3 KB gzip). De rest heb ik niet uitgesplitst.
 - Accessibility en Best Practices zijn 100 in elke run.
 
 ### Preview-URL
