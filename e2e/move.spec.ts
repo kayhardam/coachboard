@@ -25,6 +25,10 @@ test.beforeEach(async ({ context, baseURL }) => {
   }
 });
 
+// The board fetches the QR library once it is idle, so a request can still be
+// on its way through these routes when a test ends.
+test.afterEach(({ context }) => context.unrouteAll({ behavior: "ignoreErrors" }));
+
 /** Opens the board at `url` and waits for the editor, wherever it ends up. */
 async function openAt(page: Page, url: string) {
   await page.goto(url);
