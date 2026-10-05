@@ -21,7 +21,7 @@ export function reach(scale: number): number {
 
 /**
  * The player or ball nearest to `at`, if it is within `radius` dm. On a tie
- * the piece drawn on top wins: the ball, then the later player.
+ * the piece drawn on top wins: a ball before a player, and the later of two.
  */
 export function nearestPiece(frame: Frame, at: Pt, radius: number): Piece | null {
   let best: Piece | null = null;
@@ -34,6 +34,6 @@ export function nearestPiece(frame: Frame, at: Pt, radius: number): Piece | null
     }
   };
   frame.players.forEach((player, index) => consider({ kind: "player", index }, player.at));
-  if (frame.ball) consider({ kind: "ball", index: 0 }, frame.ball);
+  frame.balls.forEach((ball, index) => consider({ kind: "ball", index }, ball));
   return best;
 }

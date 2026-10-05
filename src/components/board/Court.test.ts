@@ -2,11 +2,11 @@ import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 import { defaultBoard } from "../../lib/board/defaults";
 import fullLineup from "../../lib/board/fixtures/v1-full-lineup.json";
-import type { Board } from "../../lib/board/format";
+import { toBoard } from "../../lib/board/format";
 import Court from "./Court.svelte";
 
 const count = (html: string, text: string) => html.split(text).length - 1;
-const full = fullLineup.board as Board;
+const full = toBoard(fullLineup.board)!;
 
 describe("Court", () => {
   it("renders the default lineup without browser APIs", () => {

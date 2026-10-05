@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { renderSVG } from "uqr";
-import type { Board } from "../src/lib/board/format";
+import type { BoardV1 } from "../src/lib/board/format";
 import { dragPlayer, expect, expectBoard, linkInAddressBar, openBoard, test } from "./helpers";
 
 test("the QR dialog shows a QR code", async ({ page }) => {
@@ -31,7 +31,7 @@ test("without navigator.share, Share copies the link", async ({ page }) => {
   expect(copied).toHaveLength(1);
   // A shared link opens /board/link/, so statistics count it apart from the board.
   expect(new URL(copied[0]!, page.url()).pathname).toBe("/en/board/link/");
-  expect(copied[0]).toMatch(/#t=1\./);
+  expect(copied[0]).toMatch(/#t=2\./);
 });
 
 test("the QR code holds the board's link on /board/qr/", async ({ page }) => {
@@ -49,7 +49,7 @@ for (const via of ["link", "qr"]) {
   test(`a shared board opens on /board/${via}/, out of search results`, async ({ page }) => {
     const { link, board } = JSON.parse(
       readFileSync(new URL("../src/lib/board/fixtures/v1-full-lineup.json", import.meta.url), "utf8"),
-    ) as { link: string; board: Board };
+    ) as { link: string; board: BoardV1 };
     await openBoard(page, `#t=${link}`, `/en/board/${via}/`);
     await expectBoard(page, board);
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex");

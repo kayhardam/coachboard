@@ -19,8 +19,9 @@ coachingPoints:
 related:
   - en/fast-break-second-wave
 board:
-  v: 1
+  v: 2
   court: half
+  cones: []
   frames:
     - players:
         - { team: a, label: LW, at: [10, 50] }
@@ -36,7 +37,7 @@ board:
         - { team: d, at: [120, 66] }
         - { team: d, at: [152, 58] }
         - { team: d, at: [178, 30] }
-      ball: [110, 124]
+      balls: [[110, 124]]
       arrows:
         - { kind: pass, pts: [[108, 126], [48, 122]] }
         - { kind: run, pts: [[48, 58], [48, 92]] }

@@ -169,16 +169,16 @@
     </g>
   {/each}
 
-  <!-- Ball -->
-  {#if current.ball}
-    <g data-kind="ball" data-index="0" transform="translate({current.ball[0]} {current.ball[1]})">
+  <!-- Balls -->
+  {#each current.balls as ball, i (i)}
+    <g data-kind="ball" data-index={i} transform="translate({ball[0]} {ball[1]})">
       <circle r={HIT_R} fill="transparent" />
-      {#if selected?.kind === "ball"}
+      {#if selected?.kind === "ball" && selected.index === i}
         <circle r={BALL_R + 3} fill="none" stroke={colors.select} stroke-width="1.5" />
       {/if}
       <circle r={BALL_R} fill={colors.ball} stroke={colors.ballEdge} stroke-width="0.8" />
     </g>
-  {/if}
+  {/each}
 
   <!-- Handles of the selected arrow: start, bend, end -->
   {#each handles as [x, y], h (h)}

@@ -2,8 +2,9 @@ import type { Board } from "./format";
 
 /** Half court: six attackers against a 6-0 defence and its goalkeeper, labelled in English. */
 export const defaultBoard: Board = {
-  v: 1,
+  v: 2,
   court: "half",
+  cones: [],
   frames: [
     {
       players: [
@@ -21,7 +22,7 @@ export const defaultBoard: Board = {
         { team: "d", at: [152, 58] },
         { team: "d", at: [178, 30] },
       ],
-      ball: [110, 122],
+      balls: [[110, 122]],
       arrows: [],
     },
   ],
