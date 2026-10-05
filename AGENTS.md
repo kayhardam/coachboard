@@ -108,7 +108,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
   - these are the only pages that ship JS. `isBoard` in `scripts/check-budget.mjs` and `e2e/security.spec.ts` lists them.
 - **`BoardEditor.svelte`:**
   - it runs `client:only` on the board pages only;
-  - its CSS ships inside its JS (`<svelte:options css="injected" />`). As a stylesheet over Vite's 4 KB inline limit, Astro linked it on every page;
+  - its CSS is a stylesheet, `BoardEditor.css`, imported by `BoardPage.astro` only, so Astro links it on the board pages only and it stays out of the board's JS. Svelte doesn't scope it: every rule starts at `.editor`, or at `.qr` for the QR dialog next to it. Keep its styles out of the `.svelte` file: a `<style>` there would go into the bundle of every page, or into the JS with `css="injected"`;
   - the court fits the space the bars leave (letterboxed), in portrait and landscape; in landscape the header is hidden and the bars become columns at the sides, with a Home link in the right one. `e2e/layout.spec.ts` checks that every button stays on screen;
   - the static fallback in `BoardPage.astro` reserves the bars' space with the same tokens (`--board-bar`, `--board-gap`, `--board-side` in `tokens.css`), so the court doesn't move when the editor replaces it. Change the editor's box and the fallback's together; `e2e/layout.spec.ts` allows 1 px;
   - its strings come in as a prop from `boardStrings()` in `ui.ts`, the paths for Share and the QR code as `links`, and the default lineup in the page's language as `lineup` (`defaultBoardFor(lang)` in `src/lib/board/defaults.ts`: LW, LB, CB, RB, RW, P, GK in English; LH, LO, MO, RO, RH, CL, K in Dutch). Astro passes props as `$state`, a proxy that `structuredClone()` can't copy, so the editor copies `lineup` once with JSON;
@@ -168,12 +168,11 @@ Cloudflare Workers with static assets, deployed by Workers Builds (Git integrati
   - the TXT record that verifies the domain in Google Search Console: leave it, or the verification lapses;
   - Web Analytics (RUM) set to "Enable with JS Snippet installation", not automatic: an injected beacon would land on every page, above the CSP `<meta>`. Its token is `analyticsToken` in `src/data/analytics.ts`.
 - **The CSP is split in two.** Astro writes a `<meta>` CSP into every page (`security.csp` in `astro.config.mjs`), with `default-src 'self'` and a hash for each inline script it emits. Browsers ignore `frame-ancestors` in a `<meta>`, so that one is the header.
-  - `style-src` allows `'unsafe-inline'`: `BoardEditor` injects its CSS as a `<style>` at runtime, and that hash isn't known when Astro writes the `<meta>`. Scripts stay hash-only; never add `'unsafe-inline'` to `script-src`.
+  - `style-src` still allows `'unsafe-inline'`. Nothing injects a `<style>` at runtime any more (the editor's CSS is a stylesheet), but without it Astro adds a hash for every inline `<style>`, about 0.6 KB of HTML per page. Dropping it is a separate step. Scripts stay hash-only; never add `'unsafe-inline'` to `script-src`.
   - Anything from another origin (a script, font, image or `fetch`) is blocked until its origin is added. `e2e/security.spec.ts` fails on any CSP violation, and on any script from another origin in the page, which also catches one injected above the `<meta>` (a CSP `<meta>` only covers what comes after it).
   - The board pages add the statistics beacon per page with `Astro.csp` in `BoardPage.astro`: its script URL in `script-src` and `connect-src 'self' https://cloudflareinsights.com`. That must run before `BaseLayout` renders `<head>`, so not in `Beacon.astro`; and a script resource replaces Astro's default `'self'`, so `'self'` is inserted too. Content pages keep the plain CSP.
   - CSP isn't applied in `npm run dev`; check with `npm run build && npx wrangler dev` or `npm run e2e`.
   - Deployed, Cloudflare leaves the `_headers` off the 404 page (`wrangler dev` adds them), so only the `<meta>` CSP reaches it.
-  - Once the JS budget gets tight, the plan is to move the editor's CSS into a stylesheet that only `BoardPage.astro` imports and drop `'unsafe-inline'` (`docs/optimalisatieplan.md`, phase 6).
 - Dependabot (`.github/dependabot.yml`) opens update PRs weekly for npm and GitHub Actions: minor and patch grouped, each major on its own. Nothing merges automatically; each PR goes through CI and its preview URL.
 - `wrangler` is a devDependency, so these commands use the version in `package-lock.json`.
 - Try a change to any of these locally with `npm run build && npx wrangler dev`; `npm run e2e` tests the redirects, the headers and the 404 page against it.
@@ -187,7 +186,7 @@ Don't add these without a plan:
 ## Optimization work
 
 - `docs/optimalisatieplan.md` (Dutch) lays out the optimization work in phases, one branch and one PR per phase. Its rules apply to every phase.
-- **Size budgets** are the `BUDGETS` constant in `scripts/check-budget.mjs`, in KB of 1000 bytes, gzipped except PNGs: the board's JS and its lazy chunks, all JS in `_astro/`, CSS and HTML per page, and each PNG. Raise one only on purpose, with the reason in the PR and the new measurement in `docs/metingen.md`.
+- **Size budgets** are the `BUDGETS` constant in `scripts/check-budget.mjs`, in KB of 1000 bytes, gzipped except PNGs: the board's JS and its lazy chunks, all JS in `_astro/`, CSS and HTML per page (the board pages have their own CSS budget, `boardCss`, for the editor's stylesheet), and each PNG. Raise one only on purpose, with the reason in the PR and the new measurement in `docs/metingen.md`.
 - Measure before and after any change that affects speed, size or behaviour, and record both in `docs/metingen.md` (Dutch). Later phases run Lighthouse on their PR's preview URL, with the command listed there. Compare SEO only on production: preview URLs send `X-Robots-Tag: noindex`.
 
 ## Astro documentation

@@ -142,6 +142,22 @@ describe("checkBudget", () => {
     expect(row(rows, "PNG", "/og.png").measured).toBe(1234);
   });
 
+  it("gives the board pages their own CSS budget", () => {
+    const sheet = `<link rel="stylesheet" href="/_astro/a.css">`;
+    const files = {
+      "en/index.html": sheet,
+      "en/board/index.html": `${island}${sheet}`,
+      "_astro/Editor.js": editor,
+      "_astro/renderer.js": renderer,
+      "_astro/client.js": client,
+      "_astro/a.css": "body{margin:0}",
+    };
+    const css = gz("body{margin:0}");
+    const budgets = { ...BUDGETS, css: css - 1, boardCss: css };
+    // The same stylesheet: over the content budget, within the board's.
+    expect(build(files, budgets).errors.map((e) => e.split(":")[0])).toEqual(["CSS (gzip) /en/"]);
+  });
+
   it("fails a budget just over its limit and passes at the limit", () => {
     const files = {
       "en/board/index.html": island,
@@ -152,11 +168,11 @@ describe("checkBudget", () => {
     };
     const js = gz(editor) + gz(renderer) + gz(client);
     const html = gz(island);
-    const at = { boardJs: js, lazyJs: 0, allJs: js, css: 0, html, png: 100 };
+    const at = { boardJs: js, lazyJs: 0, allJs: js, css: 0, boardCss: 0, html, png: 100 };
     expect(build(files, at).errors).toEqual([]);
     rmSync(dist, { recursive: true, force: true });
 
-    const over = { boardJs: js - 1, lazyJs: 0, allJs: js - 1, css: 0, html: html - 1, png: 99 };
+    const over = { boardJs: js - 1, lazyJs: 0, allJs: js - 1, css: 0, boardCss: 0, html: html - 1, png: 99 };
     const { errors } = build(files, over);
     expect(errors.map((e) => e.split(":")[0])).toEqual([
       "JS (gzip) /en/board/",
