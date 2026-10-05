@@ -63,21 +63,39 @@ export function arrowMid(arrow: Arrow): XY {
   return arrow.pts.length === 3 ? [...arrow.pts[1]!] : lerp(arrow.pts[0]!, arrow.pts[1]!, 0.5);
 }
 
-/**
- * SVG path data for an arrow. `trimEnd` stops it short of its end point, so
- * the arrowhead isn't hidden under the player it points at.
- */
-export function arrowPath(arrow: Arrow, trimEnd = 0): string {
+/** The arrow's curve, stopped `trimEnd` short of its end point. */
+function trimmed(arrow: Arrow, trimEnd: number): [XY, XY, XY] {
   let q = curve(arrow);
   if (trimEnd > 0) {
     let t = 1;
     while (t > 0.3 && dist(at(q, t), q[2]) < trimEnd) t -= 0.01;
     if (t > 0.3) q = head(q, t);
   }
+  return q;
+}
 
+/**
+ * SVG path data for an arrow. `trimEnd` stops it short of its end point, so
+ * the arrowhead isn't hidden under the player it points at.
+ */
+export function arrowPath(arrow: Arrow, trimEnd = 0): string {
+  const q = trimmed(arrow, trimEnd);
   if (arrow.kind === "dribble") return wave(q);
   if (arrow.pts.length === 2) return `M ${fmt(q[0])} L ${fmt(q[2])}`;
   return `M ${fmt(q[0])} Q ${fmt(q[1])} ${fmt(q[2])}`;
+}
+
+/** The bar across the end of a block, where the blocker stands. */
+export function blockBar(arrow: Arrow, trimEnd = 0): string {
+  const [, c, [x, y]] = trimmed(arrow, trimEnd);
+  const d = dist(c, [x, y]) || 1;
+  const [nx, ny] = [((c[1] - y) / d) * 4, ((x - c[0]) / d) * 4];
+  return `M ${fmt([x + nx, y + ny])} L ${fmt([x - nx, y - ny])}`;
+}
+
+/** Where a bounce pass touches the floor: two thirds of the way. */
+export function bouncePoint(arrow: Arrow): XY {
+  return at(curve(arrow), 2 / 3);
 }
 
 /** A sine wave along the curve that flattens out at both ends. */

@@ -2,7 +2,7 @@ import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 import { defaultBoard } from "../../lib/board/defaults";
 import fullLineup from "../../lib/board/fixtures/v1-full-lineup.json";
-import { toBoard } from "../../lib/board/format";
+import { settle, toBoard, type Board } from "../../lib/board/format";
 import Court from "./Court.svelte";
 
 const count = (html: string, text: string) => html.split(text).length - 1;
@@ -31,6 +31,40 @@ describe("Court", () => {
     const picked = render(Court, { props: { board: full, selected: { kind: "arrow", index: 1 } } }).body;
     expect(count(none, 'data-kind="handle"')).toBe(0);
     expect(count(picked, 'data-kind="handle"')).toBe(3);
+  });
+
+  it("draws passers, cones, balls and every kind of arrow", () => {
+    const board: Board = settle({
+      v: 2,
+      court: "half",
+      cones: [[70, 120], [130, 120]],
+      frames: [
+        {
+          players: [
+            { team: "a", label: "LO", at: [40, 150] },
+            { team: "p", at: [20, 70] },
+          ],
+          balls: [[46, 145], [26, 66]],
+          arrows: [
+            { kind: "run", from: 0, pts: [[0, 0], [70, 112]] },
+            { kind: "shot", from: 0, pts: [[0, 0], [90, 0]] },
+            { kind: "block", pts: [[100, 80], [118, 72]] },
+            { kind: "bounce", from: 1, pts: [[0, 0], [40, 150]] },
+          ],
+        },
+      ],
+    });
+    const { body } = render(Court, { props: { board } });
+    expect(count(body, 'data-kind="cone"')).toBe(2);
+    expect(count(body, 'data-kind="ball"')).toBe(2);
+    expect(count(body, 'fill="#2563eb"')).toBe(1); // the passer
+    expect(count(body, 'data-kind="arrow"')).toBe(4);
+    expect(count(body, 'stroke-width="4.2"')).toBe(1); // the shot's double line
+    expect(count(body, "-head)")).toBe(3); // every arrow but the block has a head
+    expect(count(body, 'r="1.8"')).toBe(1); // where the bounce touches the floor
+    // The shot moves only its end.
+    const picked = render(Court, { props: { board, selected: { kind: "arrow", index: 1 } } }).body;
+    expect(count(picked, 'data-kind="handle"')).toBe(1);
   });
 
   it("gives each instance its own marker id (Astro sets idPrefix per component)", () => {

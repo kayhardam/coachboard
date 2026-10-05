@@ -12,6 +12,8 @@
     arrowPath,
     areaPath,
     BALL_R,
+    blockBar,
+    bouncePoint,
     HIT_R,
     PLAYER_R,
     POST_LEFT,
@@ -40,7 +42,10 @@
     ink: "#0f172a",
     attack: "#15803d",
     defence: "#0f172a",
+    passer: "#2563eb",
     ball: "#f59e0b",
+    cone: "#f97316",
+    coneEdge: "#7c2d12",
     ballEdge: "#78350f",
     select: "#16a34a",
   };
@@ -54,18 +59,29 @@
   }
 
   const arrows = $derived(
-    current.arrows.map((a) => ({
-      kind: a.kind,
-      d: arrowPath(a, trimFor(a.pts[a.pts.length - 1]!)),
-      hit: arrowPath({ ...a, kind: "run" }),
-    })),
+    current.arrows.map((a) => {
+      // A shot ends in the goal, never on a player.
+      const trim = a.kind === "shot" ? 0 : trimFor(a.pts[a.pts.length - 1]!);
+      return {
+        kind: a.kind,
+        d: arrowPath(a, trim),
+        bar: a.kind === "block" ? blockBar(a, trim) : null,
+        bounce: a.kind === "bounce" ? bouncePoint(a) : null,
+        hit: arrowPath({ ...a, kind: "run" }),
+      };
+    }),
   );
 
-  const handles = $derived.by(() => {
+  const teamColor = { a: colors.attack, d: colors.defence, p: colors.passer };
+
+  /** Handles of the selected arrow as [x, y, handle]: start, bend, end; a shot moves only its end. */
+  const handles = $derived.by((): [number, number, number][] => {
     if (selected?.kind !== "arrow") return [];
     const a = current.arrows[selected.index];
     if (!a) return [];
-    return [a.pts[0]!, arrowMid(a), a.pts[a.pts.length - 1]!];
+    const end = a.pts[a.pts.length - 1]!;
+    if (a.kind === "shot") return [[...end, 2]];
+    return [[...a.pts[0]!, 0], [...arrowMid(a), 1], [...end, 2]];
   });
 </script>
 
@@ -125,20 +141,49 @@
     />
   {/each}
 
-  <!-- Arrows -->
+  <!-- Cones: on the floor, under everything else -->
+  {#each board.cones as cone, i (i)}
+    <g data-kind="cone" data-index={i} transform="translate({cone[0]} {cone[1]})">
+      <path
+        d="M 0 -4.5 L 4 3 L -4 3 Z"
+        fill={colors.cone}
+        stroke={colors.coneEdge}
+        stroke-width="0.8"
+        stroke-linejoin="round"
+      />
+    </g>
+  {/each}
+
+  <!-- Arrows. A shot is a double line: a white line on a wide one. A block ends in a bar. -->
   {#each arrows as arrow, i (i)}
     <g data-kind="arrow" data-index={i}>
       <path d={arrow.hit} fill="none" stroke="transparent" stroke-width={HIT_R} />
+      {#if arrow.kind === "shot"}
+        <path d={arrow.d} fill="none" stroke={colors.ink} stroke-width="4.2" />
+      {/if}
       <path
         d={arrow.d}
         fill="none"
-        stroke={colors.ink}
+        stroke={arrow.kind === "shot" ? "#ffffff" : colors.ink}
         stroke-width="1.6"
         stroke-linecap="round"
         stroke-linejoin="round"
-        stroke-dasharray={arrow.kind === "pass" ? "4 3" : undefined}
-        marker-end="url(#{uid}-head)"
+        stroke-dasharray={arrow.kind === "pass" || arrow.kind === "bounce" ? "4 3" : undefined}
+        marker-end={arrow.kind === "block" ? undefined : `url(#${uid}-head)`}
       />
+      {#if arrow.bar}
+        <path d={arrow.bar} fill="none" stroke={colors.ink} stroke-width="1.6" stroke-linecap="round" />
+      {/if}
+      {#if arrow.bounce}
+        <circle
+          cx={arrow.bounce[0]}
+          cy={arrow.bounce[1]}
+          r="1.8"
+          fill="#ffffff"
+          stroke={colors.ink}
+          stroke-width="1"
+        />
+      {/if}
     </g>
   {/each}
 
@@ -149,12 +194,7 @@
       {#if selected?.kind === "player" && selected.index === i}
         <circle r={PLAYER_R + 3} fill="none" stroke={colors.select} stroke-width="1.5" />
       {/if}
-      <circle
-        r={PLAYER_R}
-        fill={player.team === "a" ? colors.attack : colors.defence}
-        stroke="#ffffff"
-        stroke-width="1"
-      />
+      <circle r={PLAYER_R} fill={teamColor[player.team]} stroke="#ffffff" stroke-width="1" />
       {#if player.label}
         <text
           y="0.5"
@@ -180,8 +220,8 @@
     </g>
   {/each}
 
-  <!-- Handles of the selected arrow: start, bend, end -->
-  {#each handles as [x, y], h (h)}
+  <!-- Handles of the selected arrow -->
+  {#each handles as [x, y, h] (h)}
     <g data-kind="handle" data-index={h} transform="translate({x} {y})">
       <circle r={HIT_R} fill="transparent" />
       <circle
