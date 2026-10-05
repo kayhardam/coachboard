@@ -1232,7 +1232,7 @@ Nagerekend met een eenmalig script (niet in de repo), met dezelfde compressie al
 - een titel en een Nederlandse zin per stap van 57 tot 65 tekens (gemiddeld 61);
 - voor het formaat is een prefix `2.` aangenomen en een pad onder `/nl/`. Geen van beide bestaat nog: de links openen geen bord.
 
-**De oefening** gebruikt wat er volgens de voorlopige uitkomst van de tekentest bij moet: een derde kleur (twee kaatsers), vier pionnen, twee ballen, en schot, blok en stuit als pijlsoorten.
+**De oefening** gebruikt wat er volgens de voorlopige uitkomst van de tekentest bij moet: een derde kleur (twee aanspeelpunten), vier pionnen, twee ballen, en schot, blok en stuit als pijlsoorten.
 
 **Twee manieren om de stappen te schrijven:**
 - (a) elke stap volledig, zoals de frames van v1;
@@ -1247,8 +1247,8 @@ Nagerekend met een eenmalig script (niet in de repo), met dezelfde compressie al
 | 8 stappen + tekst | b | 973 | 971 | versie 22, 105×105 | versie 25, 117×117 |
 | 12 stappen + tekst | a | 1325 | 1323 | versie 26, 121×121 | versie 30, 137×137 |
 | 12 stappen + tekst | b | 1282 | 1280 | versie 26, 121×121 | versie 30, 137×137 |
-| Oefening: 4 stappen, kaatsers, pionnen, 2 ballen | a | 560 | 558 | versie 16, 81×81 | versie 18, 89×89 |
-| Oefening: 4 stappen, kaatsers, pionnen, 2 ballen | b | 541 | 539 | versie 16, 81×81 | versie 18, 89×89 |
+| Oefening: 4 stappen, aanspeelpunten, pionnen, 2 ballen | a | 560 | 558 | versie 16, 81×81 | versie 18, 89×89 |
+| Oefening: 4 stappen, aanspeelpunten, pionnen, 2 ballen | b | 541 | 539 | versie 16, 81×81 | versie 18, 89×89 |
 
 - **Alleen opslaan wat verandert, levert bijna niets op:** 2 tot 3% korter, en de QR-code wordt hooguit één versie kleiner. `deflate-raw` haalt de herhaling tussen stappen er al uit. Voor de lengte hoeft v2 dus geen verschilformaat te hebben.
 - **De tekst kost het meest.** Zonder zinnen zijn dezelfde borden 425, 600 en 762 tekens (`/link/`, variant a). Dat is versie 13, 17 en 19 bij L.
@@ -1291,7 +1291,7 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
 - **Lezen of kijken,** in dezelfde sessies met trainers. Een trainer opent een tactiek en legt die daarna uit aan een speler. Noteer per trainer of hij de tekst las of alleen naar de tekening keek. Dit toetst of trainers vooral doeners zijn (Kay, 3 oktober 2026). Met de uitkomst kiest Kay hoeveel tekst een tactiekpagina naast de tekening nodig heeft.
 - **Delen en vertrouwen:** vraag elke trainer of hij zijn eigen tactieken zou delen, en wanneer hij een tactiek van een ander vertrouwt. Dit toetst het idee van één kennisbank waar trainers zelf bijdragen, mits de kwaliteit gewaarborgd blijft (Kay, 3 oktober 2026). De uitkomst weegt mee bij besluit 9.
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
-  - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (kaatsers).
+  - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (aanspeelpunten).
 - **Eén aanval naar het eigen team sturen** en vragen wat ze zien.
 - **De scantest,** vóór Fase 11: de QR-codes hierboven in de zaal scannen, op twee afstanden.
   - Telefoon bij telefoon: scherm naar camera, zoals bij het doorgeven van een bord.
@@ -1583,7 +1583,7 @@ Branch `teksten-coach-gratis`, na de merge van PR #24. Alleen tekst en de twee s
 - **"Gratis" en "free" staan alleen nog op de about-pagina,** in het blok "Gratis, zonder account" / "Free, without an account"; dat blok is ongewijzigd. Het stond op elke pagina (de footer) en op home drie keer, en het zegt wat het bord kost, niet wat het doet.
   - `src/i18n/ui.ts` (nl en en): `footer.tagline`, `home.description`, `home.note`, `home.ctaBody`, `about.description`, `category.ctaBody` en `board.description`.
   - `src/i18n/pages/about/nl.astro` en `en.astro`: de inleiding.
-  - `git grep -i -w -E "gratis|free"` vindt als sitetekst alleen nog die twee blokken (verder `README.md` vóór de laatste commit, en een codecommentaar over de vrijeworplijn in `geometry.ts`).
+  - `git grep -i -w -E "gratis|free"` vindt als sitetekst alleen nog die twee blokken (verder `README.md` tot commit `1cf2595`, en een codecommentaar over de vrijeworplijn in `geometry.ts`).
 - **De deelafbeeldingen:** de ondertitel in `scripts/og-default.mjs` is "Tactics board for handball coaches" en "Tactiekbord voor handbaltrainers". Beide opnieuw gemaakt met `node scripts/og-default.mjs en` en `nl`.
 - **Documentatie:** de regels voor sitetekst staan in `AGENTS.md` onder "Copy"; de eerste regel van `AGENTS.md` en regel 3 van `README.md` zeggen "coaches".
 
