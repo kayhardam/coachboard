@@ -1294,10 +1294,10 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
   - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (aanspeelpunten).
 - **Eén aanval naar het eigen team sturen** en vragen wat ze zien.
-- **De scantest,** vóór Fase 11: de QR-codes hierboven in de zaal scannen, op twee afstanden.
+- **De scantest,** vóór de merge van Fase 11 (besluit Kay, 5 oktober 2026): de QR-codes hierboven in de zaal scannen.
   - Telefoon bij telefoon: scherm naar camera, zoals bij het doorgeven van een bord.
-  - Op de afstand waarop spelers in de zaal staan als de trainer zijn scherm laat zien.
-  - Noteer per code en afstand: scant hij, en na hoeveel seconden. Daarna kiest Kay de limieten van de link.
+  - Op de afstand waarop spelers in de zaal staan als de trainer zijn scherm laat zien: 1 m en 2 m.
+  - Noteer per code en afstand: scant hij, en na hoeveel seconden. Daarna wordt besluit 3 (de limieten van de link) definitief. De tabel staat onder "Fase 11".
 - **De testlijst voor de telefoon (Fase 9).** De app verandert in Fase 9 niet; dit is wat de nulmeting met echte telefoons aanvult. Op productie (`https://handballcoachboard.com/en/board/`), per toestel (model, iOS/Android-versie, browser):
 
   | # | Test | iPhone | Android |
@@ -1753,3 +1753,29 @@ Groottes, gzip zoals `npm run budget`:
   - de bestaande test voor een kapotte link controleert dat een bekende versie niet herlaadt.
 - Een echte `2.`-lezer bestaat nog niet, dus de tests laten de grens zien: na één herlaad stopt het. Dat een herlaad de nieuwe code haalt, volgt uit de headers: de HTML is `cache-control: public, max-age=0, must-revalidate` (productie, gemeten met `curl`), en de JS heeft een hash in de naam.
 - `npm run e2e`: 349 → 353 geslaagd, 1 overgeslagen.
+
+## Fase 11: linkformaat v2 (5 oktober 2026)
+
+Branch `fase-11-linkformaat`. Het productplan (Fase 11) beschrijft wat v2 moet kunnen.
+
+### Besluit 3: de limieten van de link (Kay, 5 oktober 2026)
+
+- **Voorlopig 8 stappen en 100 tekens per zin.** Volgens de berekening van Fase 9 ("Linklengte en QR-grootte") is de grootste link dan ongeveer 1140 tekens: QR-versie 24 bij foutcorrectie L.
+- **Definitief na de scantest, vóór de merge van Fase 11.** Past de uitslag niet bij versie 24, dan verandert de limiet nog in deze PR.
+
+### Scantest (Kay, vóór de merge)
+
+De codes uit Fase 9 (lokaal in `scantest/`), op het scherm van de eigen telefoon, met dezelfde instellingen als de QR-dialoog van het bord (foutcorrectie L, rand 2). Per code en afstand: scant hij binnen 3 tellen?
+
+Toestel dat de code toont: … · Toestel dat scant: …
+
+| Code | QR-versie | Telefoon bij telefoon | 1 m | 2 m |
+|---|--:|:-:|:-:|:-:|
+| Nu (v1): 1 stap, 3 pijlen | 9 | | | |
+| Oefening: 4 stappen, aanspeelpunten, pionnen, 2 ballen | 16 | | | |
+| 4 stappen + tekst | 18 | | | |
+| 8 stappen + tekst | 22 | | | |
+| 8 stappen, zin ≤ 100 tekens | 24 | | | |
+| 12 stappen + tekst | 26 | | | |
+| 12 stappen, zin ≤ 100 tekens | 28 | | | |
+| 12 stappen, zin ≤ 140 tekens | 30 | | | |
