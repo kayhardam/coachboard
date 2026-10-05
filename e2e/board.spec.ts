@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
+import type { Page } from "@playwright/test";
 import { defaultBoard } from "../src/lib/board/defaults";
 import type { Board } from "../src/lib/board/format";
 import { dragPlayer, expect, expectBoard, openBoard, pieces, saved, saveOwnBoard, test } from "./helpers";
@@ -64,11 +65,22 @@ test("opening a link doesn't touch the saved board", async ({ page, context }) =
 
 const brokenLink = "#t=1.this-is-not-a-board";
 
+/**
+ * Counts the documents the page loads: a reload is one more. By load event,
+ * not by request: WebKit reports the first request for a page twice.
+ */
+function countLoads(page: Page) {
+  const loads = { count: 0 };
+  page.on("load", () => loads.count++);
+  return loads;
+}
+
 test("a broken link keeps your own board, and says so until you edit", async ({ page, context }) => {
   const own = await saveOwnBoard(page);
   const drawn = await pieces(page);
 
   const other = await context.newPage();
+  const loads = countLoads(other);
   await other.clock.install();
   await openBoard(other, brokenLink);
   const notice = other.getByRole("status");
@@ -78,6 +90,8 @@ test("a broken link keeps your own board, and says so until you edit", async ({ 
   await expect.poll(() => pieces(other)).toEqual(drawn);
   await other.waitForTimeout(600);
   expect(await saved(other)).toBe(own);
+  // A version this code knows: reloading wouldn't help.
+  expect(loads.count).toBe(1);
 
   // Other notices go after six seconds; this one stays.
   await other.clock.fastForward(10_000);
@@ -101,4 +115,40 @@ test("a broken link without a saved board shows the default lineup, until you di
 
   await notice.getByRole("button", { name: "Dismiss" }).click();
   await expect(notice).toBeHidden();
+});
+
+// No code reads version 2 yet, so after its one reload this link still fails:
+// the reload has to stop there and show the notice for a broken link.
+const newerLink = "#t=2.from-newer-code";
+
+test("a link from a newer version reloads the page once, then says it doesn't work", async ({ page, context }) => {
+  const own = await saveOwnBoard(page);
+  const drawn = await pieces(page);
+
+  const other = await context.newPage();
+  const loads = countLoads(other);
+  await openBoard(other, newerLink);
+  await expect(other.getByRole("status")).toContainText(
+    "This link doesn't work; ask for a new one. You're seeing your own board.",
+  );
+  await expect.poll(() => pieces(other)).toEqual(drawn);
+  await other.waitForTimeout(600);
+  expect(await saved(other)).toBe(own);
+  expect(loads.count).toBe(2);
+});
+
+test("a tab opened before a deploy reloads for a link from a newer version", async ({ page }) => {
+  const loads = countLoads(page);
+  await openBoard(page);
+  await expect.poll(() => saved(page)).not.toBeNull();
+  const own = await saved(page);
+
+  // A link pasted into the address bar of an open tab only changes the fragment.
+  await page.evaluate((hash) => (location.hash = hash), newerLink);
+  await expect(page.getByRole("status")).toContainText(
+    "This link doesn't work; ask for a new one. You're seeing your own board.",
+  );
+  await page.waitForTimeout(600);
+  expect(await saved(page)).toBe(own);
+  expect(loads.count).toBe(2);
 });

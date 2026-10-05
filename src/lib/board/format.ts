@@ -214,9 +214,23 @@ async function inflate(bytes: Uint8Array<ArrayBuffer>, max: number): Promise<str
 
 // ===== Links =====
 
+/** The newest version this code reads, and the one encode() writes. */
+const LATEST = 1;
+
 /** Works in the browser and in Node 22, so the build can write links too. */
 export async function encode(board: Board): Promise<string> {
-  return `1.${toBase64Url(await deflate(JSON.stringify(toV1(board))))}`;
+  return `${LATEST}.${toBase64Url(await deflate(JSON.stringify(toV1(board))))}`;
+}
+
+/**
+ * True for a link from a newer version of the board than this code, which a
+ * tab opened before a deploy can still be running. False for a broken link of
+ * a version this code knows.
+ */
+export function isNewerLink(link: string): boolean {
+  const dot = link.indexOf(".");
+  const version = link.slice(0, dot);
+  return dot > 0 && /^[1-9]\d*$/.test(version) && Number(version) > LATEST;
 }
 
 /** The board in a link, or null for anything that isn't a valid one. */

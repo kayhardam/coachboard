@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { defaultBoard } from "./defaults";
-import { decode, encode, isBoard, type Board } from "./format";
+import { decode, encode, isBoard, isNewerLink, type Board } from "./format";
 
 interface Fixture {
   link: string;
@@ -96,5 +96,35 @@ describe("decode rejects", () => {
     const link = await linkFromJson(padded);
     expect(link.length).toBeLessThan(4000);
     expect(await decode(link)).toBeNull();
+  });
+});
+
+describe("isNewerLink", () => {
+  const valid = fixtures["./fixtures/v1-default.json"]!.link;
+
+  it.each([
+    ["version 2", `2.${valid.slice(2)}`],
+    ["a broken link of version 2", "2.not-a-board"],
+    ["a two-digit version", "10.abc"],
+  ])("is true for %s", (_, link) => {
+    expect(isNewerLink(link)).toBe(true);
+  });
+
+  it.each([
+    ["a valid version 1 link", valid],
+    ["a broken version 1 link", "1.not-a-board"],
+    ["version 0", "0.abc"],
+    ["a version with a leading zero", "02.abc"],
+    ["a version that isn't a number", "abc.def"],
+    ["a negative version", "-2.abc"],
+    ["no version", ".abc"],
+    ["text without a dot", "22"],
+    ["an empty string", ""],
+  ])("is false for %s", (_, link) => {
+    expect(isNewerLink(link)).toBe(false);
+  });
+
+  it("is false for what encode() writes", async () => {
+    expect(isNewerLink(await encode(fullLineup))).toBe(false);
   });
 });
