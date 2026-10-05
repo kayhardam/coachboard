@@ -1946,3 +1946,21 @@ Gzip -9, vóór (`main` @ `50233af`) en na:
 
 - `e2e/tasks.spec.ts` is groen in beide browsers, met hetzelfde budget. De gedeelde link is nu een v2-link; de check van de uitkomst decodeert hem.
 - T2 en T3 hebben nog geen route: de stappen komen in Fase 14 en de pionnen in Fase 13. T4 raakt deze fase niet. Seconden zijn geparkeerd.
+
+### Lighthouse
+
+Drie runs per URL met het commando uit de nulmeting, Lighthouse 13.5.0. Vóór: productie (`main` @ `50233af`). Na: de preview-URL van deze branch. SEO is 66 op elke preview-URL, door `X-Robots-Tag: noindex`; op productie 100.
+
+| URL | Vóór: Performance | Vóór: LCP (runs) | Na: Performance | Na: LCP (runs) | CLS | TBT | Overdracht vóór → na |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` | 99, 100, 100 | 1,93 / 0,80 / 0,81 s | 100, 100, 100 | 0,81 / 0,82 / 0,82 s | 0 | 0 ms | 55,9 → 57,8 KB |
+| `/en/board/` | 100, 100, 100 | 0,81 / 0,82 / 0,82 s | 100, 100, 100 | 0,83 / 0,81 / 0,81 s | 0 | 0 ms | 55,9 → 57,7 KB |
+| `/nl/tactics/6-0-defense-basics/` | 100, 100, 100 | 0,82 / 0,83 / 0,81 s | 100, 100, 100 | 0,84 / 0,83 / 0,86 s | 0 | 0 ms | 8,7 → 8,9 KB |
+
+- De eerste run vóór op `/nl/board/` (1,93 s) was een koude cache, zoals bij de vorige meting. De mediaan blijft 0,81 à 0,82 s.
+- **Het bord is 1,8 KB zwaarder om over te dragen:** de grotere editor, en de preview stuurt extra headers.
+- Accessibility en Best Practices zijn 100 in elke run.
+
+### Preview-URL
+
+`https://fase-11-linkformaat-coachboard.hardamkay.workers.dev`
