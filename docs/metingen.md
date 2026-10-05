@@ -1812,11 +1812,11 @@ Toestel dat de code toont: … · Toestel dat scant: …
   - Een stuit is een pass. Het bord tekent het stuitpunt op 2/3 van de lijn.
 - **Court tekent de nieuwe stukken**, ook op tactiekpagina's en in de OG-afbeeldingen:
   - aanspeelpunten blauw;
-  - pionnen als oranje driehoek;
+  - pionnen als rode driehoek;
   - blok met een dwarsstreep;
   - schot als dubbele lijn;
   - stuit als stippellijn met een open stuitpunt.
-  - De vorm en de kleuren zijn een voorstel; Kay kiest uit de voorbeeldkaart in de PR.
+  - Kleuren: besluit Kay (5 oktober 2026), aanspeelpunt blauw en pion rood, uit drie varianten op een voorbeeldkaart.
 - **Nog niet in de editor** (Fase 13 en 14):
   - nieuwe stukken en pijlsoorten maken: pionnen zijn er nog niet te kiezen;
   - stappen, titel en zinnen tonen. De editor bewerkt nog alleen stap 1 en laat de rest ongewijzigd.
@@ -1964,3 +1964,21 @@ Drie runs per URL met het commando uit de nulmeting, Lighthouse 13.5.0. Vóór: 
 ### Preview-URL
 
 `https://fase-11-linkformaat-coachboard.hardamkay.workers.dev`
+
+### Testronde Fase 11 (Kay, 5 oktober 2026)
+
+Op de preview-URL, met de testlijst uit de PR:
+
+| # | Test | Uitslag |
+|--:|---|---|
+| 1 | Een oude link openen, of "Open in het bord" op een tactiekpagina | werkt |
+| 2 | De drie v2-testborden openen | werkt |
+| 3 | Een loop van LO volgt LO; zijn pass begint aan het eind van de loop | werkt |
+| 4 | De loop zelf slepen maakt hem los; zijn beginpunt op RO maakt hem van RO | werkt |
+| 5 | T1 met de hand: 6 handelingen | werkt |
+| 6 | De scantest | volgt, vóór de merge |
+| 7 | Na de merge: het eigen opgeslagen bord staat er nog | na de merge |
+
+- **Besluit Kay:** akkoord met de afwijking. Een pijl van een speler heeft geen beginhandvat; losmaken gaat door de hele pijl te slepen.
+- **Besluit Kay:** aanspeelpunt blauw (`#2563eb`), pion rood (`#dc2626`, rand `#7f1d1d`).
+- De scancodes staan lokaal ook als PNG in `scantest/scan/`: 10 px per module, voor het openen op Android.
