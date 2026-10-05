@@ -1232,7 +1232,7 @@ Nagerekend met een eenmalig script (niet in de repo), met dezelfde compressie al
 - een titel en een Nederlandse zin per stap van 57 tot 65 tekens (gemiddeld 61);
 - voor het formaat is een prefix `2.` aangenomen en een pad onder `/nl/`. Geen van beide bestaat nog: de links openen geen bord.
 
-**De oefening** gebruikt wat er volgens de voorlopige uitkomst van de tekentest bij moet: een derde kleur (twee kaatsers), vier pionnen, twee ballen, en schot, blok en stuit als pijlsoorten.
+**De oefening** gebruikt wat er volgens de voorlopige uitkomst van de tekentest bij moet: een derde kleur (twee aanspeelpunten), vier pionnen, twee ballen, en schot, blok en stuit als pijlsoorten.
 
 **Twee manieren om de stappen te schrijven:**
 - (a) elke stap volledig, zoals de frames van v1;
@@ -1247,8 +1247,8 @@ Nagerekend met een eenmalig script (niet in de repo), met dezelfde compressie al
 | 8 stappen + tekst | b | 973 | 971 | versie 22, 105×105 | versie 25, 117×117 |
 | 12 stappen + tekst | a | 1325 | 1323 | versie 26, 121×121 | versie 30, 137×137 |
 | 12 stappen + tekst | b | 1282 | 1280 | versie 26, 121×121 | versie 30, 137×137 |
-| Oefening: 4 stappen, kaatsers, pionnen, 2 ballen | a | 560 | 558 | versie 16, 81×81 | versie 18, 89×89 |
-| Oefening: 4 stappen, kaatsers, pionnen, 2 ballen | b | 541 | 539 | versie 16, 81×81 | versie 18, 89×89 |
+| Oefening: 4 stappen, aanspeelpunten, pionnen, 2 ballen | a | 560 | 558 | versie 16, 81×81 | versie 18, 89×89 |
+| Oefening: 4 stappen, aanspeelpunten, pionnen, 2 ballen | b | 541 | 539 | versie 16, 81×81 | versie 18, 89×89 |
 
 - **Alleen opslaan wat verandert, levert bijna niets op:** 2 tot 3% korter, en de QR-code wordt hooguit één versie kleiner. `deflate-raw` haalt de herhaling tussen stappen er al uit. Voor de lengte hoeft v2 dus geen verschilformaat te hebben.
 - **De tekst kost het meest.** Zonder zinnen zijn dezelfde borden 425, 600 en 762 tekens (`/link/`, variant a). Dat is versie 13, 17 en 19 bij L.
@@ -1291,7 +1291,7 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
 - **Lezen of kijken,** in dezelfde sessies met trainers. Een trainer opent een tactiek en legt die daarna uit aan een speler. Noteer per trainer of hij de tekst las of alleen naar de tekening keek. Dit toetst of trainers vooral doeners zijn (Kay, 3 oktober 2026). Met de uitkomst kiest Kay hoeveel tekst een tactiekpagina naast de tekening nodig heeft.
 - **Delen en vertrouwen:** vraag elke trainer of hij zijn eigen tactieken zou delen, en wanneer hij een tactiek van een ander vertrouwt. Dit toetst het idee van één kennisbank waar trainers zelf bijdragen, mits de kwaliteit gewaarborgd blijft (Kay, 3 oktober 2026). De uitkomst weegt mee bij besluit 9.
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
-  - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (kaatsers).
+  - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (aanspeelpunten).
 - **Eén aanval naar het eigen team sturen** en vragen wat ze zien.
 - **De scantest,** vóór Fase 11: de QR-codes hierboven in de zaal scannen, op twee afstanden.
   - Telefoon bij telefoon: scherm naar camera, zoals bij het doorgeven van een bord.
@@ -1583,7 +1583,7 @@ Branch `teksten-coach-gratis`, na de merge van PR #24. Alleen tekst en de twee s
 - **"Gratis" en "free" staan alleen nog op de about-pagina,** in het blok "Gratis, zonder account" / "Free, without an account"; dat blok is ongewijzigd. Het stond op elke pagina (de footer) en op home drie keer, en het zegt wat het bord kost, niet wat het doet.
   - `src/i18n/ui.ts` (nl en en): `footer.tagline`, `home.description`, `home.note`, `home.ctaBody`, `about.description`, `category.ctaBody` en `board.description`.
   - `src/i18n/pages/about/nl.astro` en `en.astro`: de inleiding.
-  - `git grep -i -w -E "gratis|free"` vindt als sitetekst alleen nog die twee blokken (verder `README.md` vóór de laatste commit, en een codecommentaar over de vrijeworplijn in `geometry.ts`).
+  - `git grep -i -w -E "gratis|free"` vindt als sitetekst alleen nog die twee blokken (verder `README.md` tot commit `1cf2595`, en een codecommentaar over de vrijeworplijn in `geometry.ts`).
 - **De deelafbeeldingen:** de ondertitel in `scripts/og-default.mjs` is "Tactics board for handball coaches" en "Tactiekbord voor handbaltrainers". Beide opnieuw gemaakt met `node scripts/og-default.mjs en` en `nl`.
 - **Documentatie:** de regels voor sitetekst staan in `AGENTS.md` onder "Copy"; de eerste regel van `AGENTS.md` en regel 3 van `README.md` zeggen "coaches".
 
@@ -1637,3 +1637,80 @@ Het middelste vierkant van 630×630 is in beide op zichzelf compleet: merknaam, 
 ### Preview-URL
 
 PR #25: `https://teksten-coach-gratis-coachboard.hardamkay.workers.dev`.
+
+## De CSS van de editor in een stylesheet (5 oktober 2026)
+
+Branch `editor-stylesheet`, vóór Fase 11 van het productplan. Fase 11 (linkformaat v2) kost naar schatting 0,9 tot 1,7 KB JS (gzip), en er was 1,1 KB vrij onder het budget voor alle JS. Het besluit uit Fase 6 ("terugkomen zodra het JS-budget knelt") is hiermee voor de helft uitgevoerd.
+
+### Wat er veranderd is
+
+- **De styles van `BoardEditor.svelte` staan in `src/components/board/BoardEditor.css`.** `<svelte:options css="injected" />` is weg. Alleen `BoardPage.astro` importeert het bestand, dus Astro linkt het alleen op de zes bordpagina's.
+- **Svelte schermt de CSS niet meer af.** Elke regel begint nu bij `.editor`, of bij `.qr` voor de QR-dialoog (die staat naast de editor). De specificiteit blijft gelijk: Svelte gaf elke selector een eigen klasse, nu doet `.editor` dat.
+- **De styles van de fallback** in `BoardPage.astro` stonden als `<style>` in de HTML. Astro voegt ze nu samen met de styles van de editor in één bestand (`BoardPage.*.css`).
+- **`'unsafe-inline'` blijft in `style-src`** (besluit Kay). Er voegt niets meer een `<style>` in tijdens het draaien, maar zonder `'unsafe-inline'` zet Astro een hash voor elke inline `<style>` in de HTML, ongeveer 0,6 KB per pagina. Dat volgt apart.
+- **Budget:** de bordpagina's krijgen een eigen CSS-budget, `boardCss`: 3,3 KB (gemeten 3,1 KB plus een kleine marge). Contentpagina's houden 2,0 KB; daar past de stylesheet van de editor niet bij, dus het budget vangt het als hij op een contentpagina terechtkomt.
+
+### Groottes
+
+Gzip -9, vóór (`main` @ `0621098`) en na:
+
+| Bestand | Vóór | Na |
+|---|--:|--:|
+| `BoardEditor` (JS) | 11.005 B | 9.424 B |
+| Svelte-runtime (`client`) | 15.505 B | 15.393 B |
+| CSS van de site (`BaseLayout`) | 1.692 B | 1.692 B |
+| CSS van het bord (`BoardPage`) | — | 1.435 B |
+| HTML `/nl/board/` | 5.874 B | 5.581 B |
+| HTML `/en/board/` | 5.800 B | 5.511 B |
+| HTML `/nl/board/link/` | 5.674 B | 5.379 B |
+| HTML `/nl/` en de andere contentpagina's | gelijk | gelijk |
+
+`npm run budget`:
+
+| Meting | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| JS van het bord | 27,0 KB | 25,3 KB | 32,5 KB |
+| Alle JS in `_astro/` | 31,3 KB | 29,6 KB | 32,5 KB |
+| CSS bordpagina | 1,7 KB | 3,1 KB | 2,0 → 3,3 KB (`boardCss`) |
+| CSS contentpagina | 1,7 KB | 1,7 KB | 2,0 KB |
+
+- **JS −1,7 KB:** de CSS van de editor (1,6 KB) en de code in de runtime die hem invoegt (0,1 KB). Onder het budget voor alle JS is nu 2,9 KB vrij.
+- **De bordpagina samen is 0,6 KB lichter:** JS −1,7 KB, CSS +1,4 KB, HTML −0,3 KB (de styles van de fallback staan niet meer in de HTML).
+- **Eén verzoek meer** op het bord: de stylesheet, van hetzelfde domein, in de `<head>`.
+- Interne links: 294 → 300. `check-links.mjs` telt de nieuwe stylesheet-link op de zes bordpagina's mee.
+
+### Lighthouse (preview-URL's)
+
+Drie runs per URL met het commando uit de nulmeting, Lighthouse 13.5.0, Chrome 154. Vóór: de preview van PR #25 (dezelfde code als `main`). Na: de preview van deze branch. SEO is 66 op elke preview-URL, door `X-Robots-Tag: noindex`.
+
+| URL | Vóór: Performance | Vóór: LCP (runs) | Na: Performance | Na: LCP (runs) | CLS | TBT | Overdracht vóór → na |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` | 99, 100, 100 | 1,94 / 0,81 / 0,81 s | 100, 100, 100 | 0,85 / 0,81 / 0,81 s | 0 | 0 ms | 56,5 → 56,2 KB |
+| `/en/board/` | 100, 100, 100 | 0,81 / 0,82 / 0,83 s | 100, 100, 100 | 0,82 / 0,82 / 0,81 s | 0 | 0 ms | 56,5 → 56,2 KB |
+| `/nl/` | 100, 100, 100 | 0,85 / 0,85 / 0,83 s | 100, 100, 100 | 0,83 / 0,83 / 0,82 s | 0 | 0 ms | 8,4 → 8,4 KB |
+
+- De eerste run vóór op `/nl/board/` (1,94 s) was een koude cache van de preview. De mediaan is 0,81 s, vóór en na.
+- Accessibility en Best Practices zijn 100 in elke run.
+
+### Verspringt het veld?
+
+Gemeten zoals bij bevinding 14: Playwright op de preview-URL, `/nl/board/`, halve veld met de standaardopstelling. "Fallback" is gemeten met de scripts van de pagina vastgehouden, daarna de editor, in dezelfde paginalading. De stylesheet laadt los van de scripts, dus de fallback heeft hem al.
+
+| Viewport | Fallback (x, y) | Editor (x, y) | Breedte | Verschuiving vóór | Verschuiving na |
+|---|--:|--:|--:|--:|--:|
+| iPhone SE staand 320×568 | 19,3, 126,0 | 19,3, 126,0 | 281,5 → 281,5 | geen | geen |
+| iPhone 15 staand 393×659 | 22,0, 138,7 | 22,0, 138,7 | 349,1 → 349,1 | geen | geen |
+| Pixel 7 staand 412×839 | 22,7, 220,2 | 22,7, 220,2 | 366,7 → 366,7 | geen | geen |
+| iPhone 15 liggend 734×343 | 216,1, 25,1 | 216,1, 25,1 | 301,8 → 301,8 | geen | geen |
+| Pixel 7 liggend 863×360 | 272,9, 26,2 | 272,9, 26,2 | 317,1 → 317,1 | geen | geen |
+
+Vóór en na zijn de posities gelijk tot op 0,1 px.
+
+### Tests
+
+- `npm run verify` groen na elke commit: 101 tests (een nieuwe in `check-budget.test.mjs`: de bordpagina's hebben hun eigen CSS-budget), 23 pagina's, 300 interne links.
+- `npm run e2e`: 349 geslaagd, 1 overgeslagen, zoals vóór. De layouttests (balken in beeld, labels niet afgekapt, veld verspringt niet) en `e2e/security.spec.ts` (geen CSP-meldingen) blijven groen.
+
+### Preview-URL
+
+`https://editor-stylesheet-coachboard.hardamkay.workers.dev`

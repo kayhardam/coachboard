@@ -10,7 +10,8 @@
 // - The board's JS: the files its page loads plus everything they import
 //   statically. Dynamic imports count as its lazy JS.
 // - All JS: every .js file in _astro/, so code moved into a lazy chunk still counts.
-// - CSS and HTML per page, and every PNG.
+// - CSS and HTML per page, and every PNG. The board pages have their own CSS
+//   budget: they also link the editor's stylesheet.
 //
 // Sizes are in KB of 1000 bytes; JS, CSS and HTML are gzipped (zlib default
 // level), as in the baseline in docs/metingen.md. PNGs are counted raw.
@@ -26,6 +27,9 @@ export const BUDGETS = {
   lazyJs: 10_000, // 0 KB
   allJs: 32_500, // 28.3 KB
   css: 2_000, // 1.6 KB per page
+  // The board pages also link the editor's stylesheet (BoardEditor.css). Content
+  // pages stay at `css`, which is too small to take that stylesheet as well.
+  boardCss: 3_300, // 3.1 KB (docs/metingen.md, editor CSS as a stylesheet)
   html: 6_500, // 5.5 KB on the board, the largest page
   png: 60_000, // 50.5 KB for og-default.png, the largest
 };
@@ -166,7 +170,7 @@ export function checkBudget(dist, budgets = BUDGETS) {
     }
 
     const css = stylesheets.map((href) => resolve(href, url)).filter(Boolean);
-    measure("CSS (gzip)", url, sum(new Set(css)), budgets.css);
+    measure("CSS (gzip)", url, sum(new Set(css)), board ? budgets.boardCss : budgets.css);
     measure("HTML (gzip)", url, gzipped(file), budgets.html);
   }
 

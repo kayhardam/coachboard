@@ -162,6 +162,7 @@ Werk de geordende lijst uit Fase 3 af. Per punt: hypothese → kleine wijziging 
 - **Aanpassing van het plan: de CSP staat niet helemaal in `public/_headers`.** De hashes van de inline scripts kent pas de build, en `_headers` is een vast bestand. Astro 7 schrijft ze zelf in een `<meta>`-CSP op elke pagina (`security.csp`). Browsers negeren `frame-ancestors` in een `<meta>`, dus het verbod op inbedden staat als header in `_headers` (`frame-ancestors 'none'` en `X-Frame-Options: DENY`).
 - **Besluit Kay: `'unsafe-inline'` alleen voor `style-src`.** Scripts houden hun hashes. De gemeten opties staan in `docs/metingen.md` onder "Fase 6".
 - **Terugkomen op dit besluit zodra het JS-budget knelt** (besluit Kay). Dan gaat de CSS van de editor naar een stylesheet die alleen `board.astro` importeert, en valt `'unsafe-inline'` weg. Dat haalt ongeveer 1,6 KB (gzip) uit de JS van het bord. Het kost ongeveer 0,6 KB HTML per pagina (de hashes van de styles), een extra verzoek op het bord, en de scoping van Svelte. In Fase 6 is met een proef nagegaan dat Astro zo'n stylesheet alleen op de bordpagina linkt.
+  - **Gedaan, voor de helft (5 oktober 2026, branch `editor-stylesheet`, vóór Fase 11 van het productplan).** De CSS van de editor staat nu in `BoardEditor.css`, die alleen `BoardPage.astro` importeert. `'unsafe-inline'` blijft voorlopig staan (besluit Kay); dat volgt apart. Metingen in `docs/metingen.md`.
 
 ## Fase 7: Lancering op handballcoachboard.com
 
