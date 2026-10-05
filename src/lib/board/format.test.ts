@@ -1,5 +1,6 @@
+import { encode as qrCode } from "uqr";
 import { describe, expect, it } from "vitest";
-import { defaultBoard } from "./defaults";
+import { defaultBoard, defaultBoardFor } from "./defaults";
 import {
   decode,
   encode,
@@ -10,9 +11,11 @@ import {
   MAX_STEPS,
   MAX_TEXT,
   MAX_TITLE,
+  settle,
   toBoard,
   type Board,
   type BoardV1,
+  type Pt,
 } from "./format";
 
 interface Fixture {
@@ -39,6 +42,7 @@ describe("fixtures", () => {
   it("exist for both versions", () => {
     const names = Object.keys(fixtures);
     expect(names.filter((n) => n.includes("/v1-")).length).toBeGreaterThanOrEqual(3);
+    expect(names.filter((n) => n.includes("/v2-")).length).toBeGreaterThanOrEqual(3);
   });
 
   // A version 1 fixture keeps its version 1 board; it opens as this version's board.
@@ -277,5 +281,85 @@ describe("isNewerLink", () => {
 
   it("is false for what encode() writes", async () => {
     expect(isNewerLink(await encode(fullLineup))).toBe(false);
+  });
+});
+
+/**
+ * The largest QR code the board may make: the biggest version that still
+ * scans from phone to phone (decision 3, provisional until the scan test;
+ * docs/metingen.md, phase 11).
+ */
+const QR_VERSION = 24;
+
+// Words for sentences that don't repeat, so compression finds no help between
+// steps: about as long a link as real Dutch sentences (docs/metingen.md, phase 9).
+const WORDS = (
+  "bal pass loop schot blok stuit hoek cirkel paal doel lijn veld rij pion speler verdediger aanval " +
+  "opbouwer midden links rechts snel kort lang breed diep terug vooruit draai dreig kruis vang speel " +
+  "neem zet wacht sprint stop wissel ruimte tempo moment kans druk balans voet hand arm schouder hoofd " +
+  "ogen kijk roep wijs teken trek duw houd laat volg leid open dicht eerst daarna dan meteen samen " +
+  "alleen weer nog altijd vaak soms naar van met door over onder achter voor naast tussen langs bij " +
+  "uit binnen buiten hoog laag ver dichtbij vrij gedekt actief rustig scherp zacht hard strak los vast mee tegen"
+).split(" ");
+
+/**
+ * The largest board within the limits, drawn the way a coach draws a play: the
+ * default lineup, MAX_STEPS steps with a pass and one to three runs each (every
+ * third one bent), runners ending where their run ends, two defenders shifting,
+ * a title of MAX_TITLE and sentences of MAX_TEXT characters. Not the most the
+ * format allows (30 arrows a step would make a far bigger code), but the most a
+ * play needs.
+ */
+function largestBoard(): Board {
+  let seed = 7;
+  const random = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const sentence = (n: number) => {
+    let s = "";
+    while (s.length < n) s += (s ? " " : "") + WORDS[Math.floor(random() * WORDS.length)];
+    s = s.slice(0, n - 1).trimEnd();
+    return (s.charAt(0).toUpperCase() + s.slice(1)).padEnd(n - 1, "e") + ".";
+  };
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, Math.round(v)));
+  const board = defaultBoardFor("nl");
+  board.title = sentence(MAX_TITLE);
+  const frames: Board["frames"] = [];
+  let players = board.frames[0]!.players;
+  let ball: Pt = [110, 122];
+  let holder = 2;
+  for (let s = 0; s < MAX_STEPS; s++) {
+    const order = [1, 3, 5, 0, 4, 2];
+    const pick = order[(s * 5 + 1) % 6]!;
+    const receiver = pick === holder ? (holder + 1) % 6 : pick;
+    const arrows: Board["frames"][number]["arrows"] = [{ kind: "pass", from: holder, pts: [players[holder]!.at, players[receiver]!.at] }];
+    const next = structuredClone(players);
+    const runners = [0, 1, 2, 3, 4, 5].filter((i) => i !== receiver).slice(s % 3, (s % 3) + 1 + (s % 3));
+    for (const i of runners) {
+      const [x, y] = players[i]!.at;
+      const to: Pt = [clamp(x + ((s * 37 + i * 23) % 50) - 25, 4, 196), clamp(y - 10 - ((s * 13 + i * 7) % 30), 30, 190)];
+      const bend: Pt = [clamp((x + to[0]) / 2 + 12, 4, 196), clamp((y + to[1]) / 2, 30, 190)];
+      arrows.push({ kind: "run", from: i, pts: s % 3 === 2 ? [[x, y], bend, to] : [[x, y], to] });
+      next[i]!.at = to;
+    }
+    for (const d of [7 + (s % 6), 7 + ((s + 3) % 6)]) {
+      const [x, y] = players[d]!.at;
+      next[d]!.at = [clamp(x + (s % 2 ? 6 : -6), 4, 196), clamp(y + (s % 2 ? 4 : -4), 4, 120)];
+    }
+    frames.push({ players, balls: [ball], arrows, text: sentence(MAX_TEXT) });
+    players = next;
+    ball = [clamp(players[receiver]!.at[0] + 6, 0, 200), clamp(players[receiver]!.at[1] - 4, 0, 200)];
+    holder = receiver;
+  }
+  return settle({ ...board, frames });
+}
+
+describe("the largest board within the limits", () => {
+  it(`fits in a QR code of version ${QR_VERSION} on /nl/board/qr/`, async () => {
+    const board = largestBoard();
+    expect(isBoard(board)).toBe(true);
+    expect(board.frames).toHaveLength(MAX_STEPS);
+    expect(board.frames.every((f) => f.text!.length === MAX_TEXT)).toBe(true);
+    const url = `https://handballcoachboard.com/nl/board/qr/#t=${await encode(board)}`;
+    // The QR dialog's settings (BoardEditor.svelte): error correction L.
+    expect(qrCode(url, { ecc: "L" }).version).toBeLessThanOrEqual(QR_VERSION);
   });
 });

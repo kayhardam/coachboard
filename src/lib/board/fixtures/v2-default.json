@@ -1,0 +1,162 @@
+{
+  "link": "2.bY6xDsMwCET_hfkGIIlD1nbokA5Vlw6I__-NgmN3qmT7HmcE5wwiuKc8PxTocBtwn_D-wex5lQrocXb4e_PJ425YDQtDxCCcWryP-tD6Lbu1LgbV6k53M9jl6yWblid7jasVkkNUo-cXrIyDe7wF0kYh0LksAxFFxBc",
+  "board": {
+    "v": 2,
+    "court": "half",
+    "cones": [],
+    "frames": [
+      {
+        "players": [
+          {
+            "team": "a",
+            "label": "LW",
+            "at": [
+              8,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "LB",
+            "at": [
+              30,
+              118
+            ]
+          },
+          {
+            "team": "a",
+            "label": "CB",
+            "at": [
+              100,
+              130
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RB",
+            "at": [
+              170,
+              118
+            ]
+          },
+          {
+            "team": "a",
+            "label": "RW",
+            "at": [
+              192,
+              48
+            ]
+          },
+          {
+            "team": "a",
+            "label": "P",
+            "at": [
+              100,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "label": "GK",
+            "at": [
+              100,
+              8
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              22,
+              30
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              48,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              80,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              120,
+              66
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              152,
+              58
+            ]
+          },
+          {
+            "team": "d",
+            "at": [
+              178,
+              30
+            ]
+          }
+        ],
+        "balls": [
+          [
+            110,
+            122
+          ]
+        ],
+        "arrows": [
+          {
+            "kind": "run",
+            "from": 1,
+            "pts": [
+              [
+                30,
+                118
+              ],
+              [
+                40,
+                90
+              ]
+            ]
+          },
+          {
+            "kind": "run",
+            "from": 3,
+            "pts": [
+              [
+                170,
+                118
+              ],
+              [
+                160,
+                90
+              ]
+            ]
+          },
+          {
+            "kind": "pass",
+            "from": 2,
+            "pts": [
+              [
+                100,
+                130
+              ],
+              [
+                170,
+                118
+              ]
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
