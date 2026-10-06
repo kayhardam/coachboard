@@ -44,8 +44,8 @@
     defence: "#0f172a",
     passer: "#2563eb",
     ball: "#f59e0b",
-    cone: "#f97316",
-    coneEdge: "#7c2d12",
+    cone: "#dc2626",
+    coneEdge: "#7f1d1d",
     ballEdge: "#78350f",
     select: "#16a34a",
   };

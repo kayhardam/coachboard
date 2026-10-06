@@ -1294,7 +1294,7 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
   - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (aanspeelpunten).
 - **Eén aanval naar het eigen team sturen** en vragen wat ze zien.
-- **De scantest,** vóór de merge van Fase 11 (besluit Kay, 5 oktober 2026): de QR-codes hierboven in de zaal scannen.
+- **De scantest,** na de merge van Fase 11 in een eigen PR (besluit Kay, 5 oktober 2026; PR #28 is gemerged vóór de scantest): de QR-codes hierboven in de zaal scannen.
   - Telefoon bij telefoon: scherm naar camera, zoals bij het doorgeven van een bord.
   - Op de afstand waarop spelers in de zaal staan als de trainer zijn scherm laat zien: 1 m en 2 m.
   - Noteer per code en afstand: scant hij, en na hoeveel seconden. Daarna wordt besluit 3 (de limieten van de link) definitief. De tabel staat onder "Fase 11".
@@ -1761,9 +1761,9 @@ Branch `fase-11-linkformaat`. Het productplan (Fase 11) beschrijft wat v2 moet k
 ### Besluit 3: de limieten van de link (Kay, 5 oktober 2026)
 
 - **Voorlopig 8 stappen en 100 tekens per zin.** Volgens de berekening van Fase 9 ("Linklengte en QR-grootte") is de grootste link dan ongeveer 1140 tekens: QR-versie 24 bij foutcorrectie L.
-- **Definitief na de scantest, vóór de merge van Fase 11.** Past de uitslag niet bij versie 24, dan verandert de limiet nog in deze PR.
+- **Definitief na de scantest, in een eigen PR.** PR #28 is op 5 oktober om 14:46 gemerged, vóór de scantest. Past de uitslag niet bij versie 24, dan veranderen de limiet en `QR_VERSION` in die PR.
 
-### Scantest (Kay, vóór de merge)
+### Scantest (Kay, in een eigen PR)
 
 De codes uit Fase 9 (lokaal in `scantest/`), op het scherm van de eigen telefoon, met dezelfde instellingen als de QR-dialoog van het bord (foutcorrectie L, rand 2). Per code en afstand: scant hij binnen 3 tellen?
 
@@ -1812,11 +1812,11 @@ Toestel dat de code toont: … · Toestel dat scant: …
   - Een stuit is een pass. Het bord tekent het stuitpunt op 2/3 van de lijn.
 - **Court tekent de nieuwe stukken**, ook op tactiekpagina's en in de OG-afbeeldingen:
   - aanspeelpunten blauw;
-  - pionnen als oranje driehoek;
+  - pionnen als rode driehoek;
   - blok met een dwarsstreep;
   - schot als dubbele lijn;
   - stuit als stippellijn met een open stuitpunt.
-  - De vorm en de kleuren zijn een voorstel; Kay kiest uit de voorbeeldkaart in de PR.
+  - Kleuren: besluit Kay (5 oktober 2026), aanspeelpunt blauw en pion rood, uit drie varianten op een voorbeeldkaart.
 - **Nog niet in de editor** (Fase 13 en 14):
   - nieuwe stukken en pijlsoorten maken: pionnen zijn er nog niet te kiezen;
   - stappen, titel en zinnen tonen. De editor bewerkt nog alleen stap 1 en laat de rest ongewijzigd.
@@ -1897,7 +1897,7 @@ De test eist dat het past in QR-versie 24 (`QR_VERSION`).
 - **Dit is het grootste bord zoals een trainer een aanval tekent, niet het meeste wat het formaat toelaat.** 30 pijlen per stap geeft een veel grotere code.
   - De editor tekent nu één stap, en die past ruim.
   - Als Fase 14 stappen toevoegt, moet het bord laten zien wanneer een bord niet meer in een bruikbare QR-code past.
-- **Na de scantest:** scant versie 24 telefoon bij telefoon niet binnen 3 tellen, of scant er ruim meer, dan veranderen de limiet en `QR_VERSION` nog in deze PR. Geen fixture zit op de limiet, dus een andere limiet verandert geen fixture.
+- **Na de scantest:** scant versie 24 telefoon bij telefoon niet binnen 3 tellen, of scant er ruim meer, dan veranderen de limiet en `QR_VERSION` in de PR van de scantest. Geen fixture zit op de limiet, dus een andere limiet verandert geen fixture.
 
 ### Groottes
 
@@ -1964,3 +1964,21 @@ Drie runs per URL met het commando uit de nulmeting, Lighthouse 13.5.0. Vóór: 
 ### Preview-URL
 
 `https://fase-11-linkformaat-coachboard.hardamkay.workers.dev`
+
+### Testronde Fase 11 (Kay, 5 oktober 2026)
+
+Op de preview-URL, met de testlijst uit de PR. Test 7 op productie, na de merge.
+
+| # | Test | Uitslag |
+|--:|---|---|
+| 1 | Een oude link openen, of "Open in het bord" op een tactiekpagina | werkt |
+| 2 | De drie v2-testborden openen | werkt |
+| 3 | Een loop van LO volgt LO; zijn pass begint aan het eind van de loop | werkt |
+| 4 | De loop zelf slepen maakt hem los; zijn beginpunt op RO maakt hem van RO | werkt |
+| 5 | T1 met de hand: 6 handelingen | werkt |
+| 6 | De scantest | volgt, in een eigen PR |
+| 7 | Na de merge, op productie: het eigen opgeslagen bord staat er nog | werkt |
+
+- **Besluit Kay:** akkoord met de afwijking. Een pijl van een speler heeft geen beginhandvat; losmaken gaat door de hele pijl te slepen.
+- **Besluit Kay:** aanspeelpunt blauw (`#2563eb`), pion rood (`#dc2626`, rand `#7f1d1d`).
+- De scancodes staan lokaal ook als PNG in `scantest/scan/`, voor het openen op Android: per code een kopie van het QR-scherm van het bord (telefoon in portret, code over 92% van de breedte, hele pixels per module, met de hint eronder).
