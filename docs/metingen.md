@@ -474,12 +474,13 @@ Legenda als in de nulmeting. Vul per toestel in (model, iOS/Android-versie, brow
 | 12 | Tablet: staand en liggend | | |
 | 13 | Snel twee keer op een knop tikken: zoomt de pagina in? (bevinding 8) | | |
 | 14 | Na het laden vliegtuigmodus aan: slepen, tekenen, QR-code openen? | | |
-| 15 | Stopwatch: openen → tekenen → gedeeld in de teamapp, in seconden | | |
+| 15 | Stopwatch: openen → tekenen → gedeeld in de teamapp, in seconden | 10–15 s | 10–15 s |
 | 16 | Een gedeelde link openen in een privévenster: zie je eerst de standaardopstelling voordat de tactiek verschijnt, en stoort dat? | | |
 | 17 | Het bord openen, staand en liggend: blijft het veld staan terwijl de knoppenbalken verschijnen? (bevinding 14) | | |
 
 De nummers 8 tot en met 15 zijn die van de nulmeting. 16 en 17 kwamen erbij met de fix van bevinding 14.
 
+- **Test 15** is gemeten als T1 in seconden, vóór Fase 12a (Kay, 7 oktober 2026): zie "UX-metingen" → "Per taak en toestel". De rest van deze testronde staat nog open.
 - **Waarom test 16:** de fallback tekent altijd de standaardopstelling; pas de editor leest `#t=` en tekent de tactiek. In een privévenster staat er niets in de cache, dus duurt dat het langst.
 
 ## Bevinding 14: het veld verspringt niet meer (29 september 2026)
@@ -1198,8 +1199,16 @@ Leeg tot de metingen met mensen er zijn. "Route" is het aantal handelingen uit `
 
 | Toestel | Route | Kay: tikken (mediaan) | Kay: seconden (mediaan) | Trainers: seconden (n, mediaan) | Vastgelopen op |
 |---|--:|--:|--:|--:|---|
-| iPhone (Safari) | 6 (8 met eigen bord) | | | | |
-| Android (Chrome) | 6 (8 met eigen bord) | | | | |
+| iPhone (Safari) | 6 (8 met eigen bord) | | 10–15 s | | |
+| Android (Chrome) | 6 (8 met eigen bord) | | 10–15 s | | |
+
+**T1 in seconden, vóór Fase 12a** (Kay, 7 oktober 2026):
+
+- op productie (`handballcoachboard.com`), drie keer, op iPhone en op Android: 10 tot 15 s;
+- per toestel niet uitgesplitst, dus de mediaan is onbekend;
+- **beginpunt:** het openen van de link of bladwijzer, dus het laden telt mee (in het lab ongeveer 1 s). De meetmethode hierboven begint bij de eerste tik op het bord; deze meting begint eerder. De meting na Fase 12a gebruikt hetzelfde beginpunt;
+- **eindpunt:** de link verstuurd in WhatsApp.
+- Dit is ook test 15 uit de testronde van Fase 5 ("openen → tekenen → gedeeld in de teamapp"), op beide toestellen.
 
 **T2** (nu als vier losse borden)
 
@@ -1287,8 +1296,8 @@ Nagerekend met een eenmalig script (niet in de repo), met dezelfde compressie al
 
 Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die ze nodig heeft:
 
-- **De testronde van Fase 5,** op productie, met test 15 (stopwatch).
-- **De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a.
+- **De testronde van Fase 5,** op productie. Test 15 (stopwatch) is gedaan als T1 in seconden (7 oktober 2026); de rest staat open.
+- **De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a. T1 door Kay is gedaan (7 oktober 2026, zie "Per taak en toestel").
 - **Lezen of kijken,** in dezelfde sessies met trainers. Een trainer opent een tactiek en legt die daarna uit aan een speler. Noteer per trainer of hij de tekst las of alleen naar de tekening keek. Dit toetst of trainers vooral doeners zijn (Kay, 3 oktober 2026). Met de uitkomst kiest Kay hoeveel tekst een tactiekpagina naast de tekening nodig heeft.
 - **Delen en vertrouwen:** vraag elke trainer of hij zijn eigen tactieken zou delen, en wanneer hij een tactiek van een ander vertrouwt. Dit toetst het idee van één kennisbank waar trainers zelf bijdragen, mits de kwaliteit gewaarborgd blijft (Kay, 3 oktober 2026). De uitkomst weegt mee bij besluit 9.
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
