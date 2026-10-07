@@ -15,8 +15,9 @@ import {
   removeSelected,
   resetLineup,
   setCourt,
+  setTitle,
 } from "./edit";
-import { isBoard, MAX_PLAYERS, type Board } from "./format";
+import { isBoard, MAX_PLAYERS, MAX_TITLE, type Board } from "./format";
 
 const empty: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], balls: [], arrows: [] }] };
 const frame = (b: Board) => b.frames[0]!;
@@ -240,5 +241,37 @@ describe("whole board", () => {
     expect(frame(half).balls).toEqual([[100, 200]]);
     expect(frame(half).arrows[0]!.pts).toEqual([[10, 150], [10, 200]]);
     expect(setCourt(half, "full").court).toBe("full");
+  });
+});
+
+describe("title", () => {
+  it("is set, trimmed, and stays a valid board", () => {
+    const next = setTitle(defaultBoard, "  Kruising MO–LO ");
+    expect(next.title).toBe("Kruising MO–LO");
+    expect(isBoard(next)).toBe(true);
+    expect(defaultBoard.title).toBeUndefined();
+  });
+
+  it("is removed when it is empty", () => {
+    const titled = setTitle(defaultBoard, "Wissel");
+    expect("title" in setTitle(titled, "   ")).toBe(false);
+  });
+
+  it("keeps the same board when nothing changes, so there is no undo step", () => {
+    const titled = setTitle(defaultBoard, "Wissel");
+    expect(setTitle(titled, " Wissel ")).toBe(titled);
+    expect(setTitle(defaultBoard, "")).toBe(defaultBoard);
+  });
+
+  it("is one line of at most MAX_TITLE characters", () => {
+    const long = setTitle(defaultBoard, "x".repeat(MAX_TITLE + 10));
+    expect(long.title).toHaveLength(MAX_TITLE);
+    expect(setTitle(defaultBoard, "a\tb\nc").title).toBe("a b c");
+    expect(isBoard(setTitle(defaultBoard, "a\u0000b"))).toBe(true);
+  });
+
+  it("doesn't cut an emoji in half at the limit", () => {
+    const title = setTitle(defaultBoard, "x".repeat(MAX_TITLE - 1) + "🤾").title!;
+    expect(title).toBe("x".repeat(MAX_TITLE - 1));
   });
 });

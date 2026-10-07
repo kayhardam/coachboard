@@ -1,8 +1,19 @@
 import { readdirSync, readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { defaultBoard } from "../src/lib/board/defaults";
-import { toBoard, type Board, type BoardV1 } from "../src/lib/board/format";
-import { dragPlayer, expect, expectBoard, openBoard, pieces, saved, saveOwnBoard, STORAGE_KEY, test } from "./helpers";
+import { decode, MAX_TITLE, toBoard, type Board, type BoardV1 } from "../src/lib/board/format";
+import {
+  dragPlayer,
+  expect,
+  expectBoard,
+  linkInAddressBar,
+  openBoard,
+  pieces,
+  saved,
+  saveOwnBoard,
+  STORAGE_KEY,
+  test,
+} from "./helpers";
 
 test("the board loads with the default lineup", async ({ page }) => {
   await openBoard(page);
@@ -177,4 +188,45 @@ test("a tab opened before a deploy reloads for a link from a newer version", asy
   await page.waitForTimeout(600);
   expect(await saved(page)).toBe(own);
   expect(loads.count).toBe(2);
+});
+
+/** The title in the board of the #t= link in the address bar. */
+async function titleInLink(page: Page) {
+  return (await decode(new URL(await linkInAddressBar(page)).hash.slice(3)))?.title;
+}
+
+test("a tap on the title edits it; Enter keeps it, in the link and after a reload", async ({ page }) => {
+  await openBoard(page);
+  await page.getByRole("button", { name: "Add title" }).click();
+  const input = page.getByRole("textbox", { name: "Edit title" });
+  await expect(input).toBeFocused();
+  await input.fill("Cross LB–CB");
+  await input.press("Enter");
+
+  await expect(page.getByRole("button", { name: "Cross LB–CB" })).toBeVisible();
+  await expect.poll(() => titleInLink(page)).toBe("Cross LB–CB");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Cross LB–CB" })).toBeVisible();
+
+  // One step for Undo.
+  await page.getByRole("button", { name: "Cross LB–CB" }).click();
+  await page.getByRole("textbox", { name: "Edit title" }).fill("Cross");
+  await page.getByRole("textbox", { name: "Edit title" }).blur();
+  await expect(page.getByRole("button", { name: "Cross", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByRole("button", { name: "Cross LB–CB" })).toBeVisible();
+});
+
+test("Escape leaves the title as it was, and it takes at most MAX_TITLE characters", async ({ page }) => {
+  await openBoard(page);
+  await page.getByRole("button", { name: "Add title" }).click();
+  const input = page.getByRole("textbox", { name: "Edit title" });
+  await input.pressSequentially("Never mind");
+  await input.press("Escape");
+  await expect(page.getByRole("button", { name: "Add title" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
+
+  await page.getByRole("button", { name: "Add title" }).click();
+  await input.pressSequentially("x".repeat(MAX_TITLE + 5));
+  await expect(input).toHaveValue("x".repeat(MAX_TITLE));
 });

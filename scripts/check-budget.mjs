@@ -29,7 +29,7 @@ export const BUDGETS = {
   css: 2_000, // 1.6 KB per page
   // The board pages also link the editor's stylesheet (BoardEditor.css). Content
   // pages stay at `css`, which is too small to take that stylesheet as well.
-  boardCss: 3_300, // 3.1 KB (docs/metingen.md, editor CSS as a stylesheet)
+  boardCss: 3_650, // 3.4 KB plus 0.2 KB (docs/metingen.md, phase 12a: the title bar)
   html: 6_500, // 5.5 KB on the board, the largest page
   png: 60_000, // 50.5 KB for og-default.png, the largest
 };

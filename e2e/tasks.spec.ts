@@ -2,7 +2,7 @@ import type { Locator, Page } from "@playwright/test";
 import { defaultBoardFor } from "../src/lib/board/defaults";
 import { decode } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
-import { expect, openBoard, saveOwnBoard, test } from "./helpers";
+import { expect, moreButton, openBoard, saveOwnBoard, test } from "./helpers";
 
 // The tap budget: the shortest route for each measured task, counted in
 // actions (every tap, drag and key press is one). The count must equal the
@@ -111,7 +111,7 @@ for (const lang of ["en", "nl"]) {
     await openBoard(page, "", `/${lang}/board/`);
     const steps = route(page);
 
-    await steps.tap(page.getByTitle(t(lang, "board.clear")));
+    await steps.tap(moreButton(page, lang));
     await steps.tap(page.getByRole("button", { name: t(lang, "board.resetLineup") }));
     await drawAndShare(page, lang, steps);
 

@@ -1,6 +1,6 @@
 import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
 import { t } from "../src/i18n/ui";
-import { allPages, expect, openBoard, test, watchViolations } from "./helpers";
+import { allPages, expect, fromMenu, openBoard, test, watchViolations } from "./helpers";
 
 // The headers come from public/_headers, which `wrangler dev` applies. The CSP
 // for scripts and styles is a <meta> that Astro writes (security.csp in
@@ -75,7 +75,7 @@ for (const lang of ["en", "nl"]) {
   test(`no CSP violations while using the board (${lang})`, async ({ page }) => {
     const violations = await watchViolations(page);
     await openBoard(page, "", `/${lang}/board/`);
-    await page.getByRole("button", { name: t(lang, "board.qr") }).click();
+    await fromMenu(page, "board.qr", lang);
     await expect(page.getByRole("dialog", { name: t(lang, "board.qr") }).locator("svg")).toBeVisible();
     // The editor's CSS arrives as a <style> that Svelte injects; a blocked one leaves the bars unstyled.
     await expect(page.locator(".editor")).toHaveCSS("display", "grid");

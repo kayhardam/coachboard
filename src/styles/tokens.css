@@ -31,9 +31,10 @@
   --container: 1080px;
   --tap: 44px; /* minimum touch target */
 
-  /* The board's bars. The static fallback in board.astro reserves this space
-     too, so the court doesn't move when the editor loads. */
-  --board-bar: 48px; /* minimum height of a bar, portrait (its content: 46.1px) */
+  /* The board's bars. The static fallback in BoardPage.astro reserves this
+     space too, so the court doesn't move when the editor loads. */
+  --board-title: 56px; /* minimum height of the title bar, portrait (its buttons: 44px) */
+  --board-bar: 48px; /* minimum height of the tool bar, portrait (its content: 46.1px) */
   --board-gap: 6px;
   --board-side: 64px; /* width of a bar, phone in landscape */
 }

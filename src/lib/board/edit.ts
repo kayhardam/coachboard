@@ -6,6 +6,7 @@ import {
   COURT_WIDTH,
   MAX_ARROWS,
   MAX_PLAYERS,
+  MAX_TITLE,
   MOVES,
   settle,
   type Arrow,
@@ -201,4 +202,21 @@ export function setCourt(board: Board, court: Board["court"]): Board {
     for (const a of f.arrows) a.pts = clamp(a.pts);
   }
   return settle(next);
+}
+
+/**
+ * The board's title as typed: one line, at most MAX_TITLE characters, spaces
+ * trimmed. An empty title removes it. The same title returns the same board,
+ * so the editor makes no undo step for it.
+ */
+export function setTitle(board: Board, text: string): Board {
+  let title = text.replace(/[\0-\x1f\x7f]/g, " ").trim().slice(0, MAX_TITLE);
+  // Don't cut a character that takes two code units (an emoji) in half.
+  if (/[\ud800-\udbff]$/.test(title)) title = title.slice(0, -1);
+  title = title.trimEnd();
+  if ((board.title ?? "") === title) return board;
+  const next = { ...board };
+  if (title) next.title = title;
+  else delete next.title;
+  return next;
 }

@@ -8,14 +8,14 @@
   import type { BoardStrings } from "../../i18n/ui";
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
-  import { decode, encode, isNewerLink, toBoard, type Board } from "../../lib/board/format";
+  import { decode, encode, isNewerLink, MAX_TITLE, toBoard, type Board } from "../../lib/board/format";
   import { HIT_R } from "../../lib/board/geometry";
   import { nearestPiece, reach } from "../../lib/board/hit";
   import { icons } from "../../lib/icons";
   import Court from "./Court.svelte";
 
   /**
-   * `home`: the home page, linked from the bar in landscape, where the header is hidden.
+   * `home`: the home page, linked from the title bar (the board has no site header).
    * `links`: the pages a shared link and a QR code open, so statistics can count them apart.
    * `lineup`: the default lineup, labelled in the page's language.
    */
@@ -63,7 +63,8 @@
   let tool = $state<Tool>("move");
   let selected = $state<Selection | null>(null);
   let notice = $state<string | null>(null);
-  let clearOpen = $state(false);
+  let menuOpen = $state(false);
+  let editingTitle = $state(false);
   let manualLink = $state<string | null>(null);
   let qr = $state<string | null>(null);
   let qrDialog: HTMLDialogElement;
@@ -261,6 +262,8 @@
 
   function onpointerdown(e: PointerEvent) {
     if (drag || !e.isPrimary || e.button > 0) return;
+    // A tap on the court only closes an open menu.
+    if (menuOpen) return void (menuOpen = false);
     const at = toCourt(e);
     const hit = hitAt(e.target, at);
     stage.setPointerCapture(e.pointerId);
@@ -363,6 +366,7 @@
       remove();
     } else if (e.key === "Escape") {
       selected = null;
+      menuOpen = false;
     }
   }
 
@@ -377,12 +381,30 @@
   function clearWith(next: Board) {
     commit(next);
     selected = null;
-    clearOpen = false;
+    menuOpen = false;
   }
 
   function toggleCourt() {
-    commit(edit.setCourt(board, board.court === "half" ? "full" : "half"));
-    selected = null;
+    clearWith(edit.setCourt(board, board.court === "half" ? "full" : "half"));
+  }
+
+  // ===== Title =====
+
+  /** Enter, or a tap elsewhere, keeps what was typed; Escape leaves first, so the blur after it keeps nothing. */
+  function saveTitle(e: Event) {
+    if (!editingTitle) return;
+    editingTitle = false;
+    commit(edit.setTitle(board, (e.currentTarget as HTMLInputElement).value));
+  }
+
+  function titleKey(e: KeyboardEvent) {
+    if (e.key === "Enter") saveTitle(e);
+    else if (e.key === "Escape") editingTitle = false;
+  }
+
+  function focusTitle(input: HTMLInputElement) {
+    input.focus();
+    input.select();
   }
 
   // ===== Sharing =====
@@ -419,11 +441,13 @@
       show(strings["board.qrFailed"]);
       return;
     }
+    menuOpen = false;
     qr = renderSVG(await shareUrl("qr"), { ecc: "L", border: 2 });
     qrDialog.showModal();
   }
 
   async function copyJson() {
+    menuOpen = false;
     await navigator.clipboard.writeText(JSON.stringify(board));
     show("Board JSON copied.");
   }
@@ -432,6 +456,51 @@
 <svelte:window {onkeydown} />
 
 <div class="editor">
+  <div class="titlebar" role="toolbar" aria-label={strings["board.actions"]}>
+    <a class="icon home" href={home} aria-label={strings["board.home"]} title={strings["board.home"]}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.court} /></svg>
+    </a>
+    {#if editingTitle}
+      <input
+        class="title"
+        value={board.title ?? ""}
+        maxlength={MAX_TITLE}
+        enterkeyhint="done"
+        aria-label={strings["board.editTitle"]}
+        use:focusTitle
+        onkeydown={titleKey}
+        onblur={saveTitle}
+      />
+    {:else}
+      <button type="button" class="title" class:empty={!board.title} title={strings["board.editTitle"]} onclick={() => (editingTitle = true)}>
+        <span>{board.title ?? strings["board.addTitle"]}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.draw} /></svg>
+      </button>
+    {/if}
+    <button type="button" class="icon" onclick={undo} disabled={past.length === 0} aria-label={strings["board.undo"]} title={strings["board.undo"]}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.undo} /></svg>
+    </button>
+    <button type="button" class="share" onclick={share}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.share} /></svg>
+      <span>{strings["board.share"]}</span>
+    </button>
+    <details class="menu" bind:open={menuOpen}>
+      <summary class="icon" aria-label={strings["board.more"]} title={strings["board.more"]}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.more} /></svg>
+      </summary>
+      <div class="menu-panel">
+        <button type="button" onclick={showQr}>{strings["board.qr"]}</button>
+        <button type="button" onclick={toggleCourt}>{board.court === "half" ? strings["board.fullCourt"] : strings["board.halfCourt"]}</button>
+        <button type="button" onclick={() => clearWith(edit.clearArrows(board))}>{strings["board.clearArrows"]}</button>
+        <button type="button" onclick={() => clearWith(edit.resetLineup(defaultLineup))}>{strings["board.resetLineup"]}</button>
+        <button type="button" onclick={() => clearWith(edit.emptyCourt(board))}>{strings["board.emptyCourt"]}</button>
+        {#if import.meta.env.DEV}
+          <button type="button" onclick={copyJson}>JSON (dev)</button>
+        {/if}
+      </div>
+    </details>
+  </div>
+
   <div
     class="stage"
     bind:this={stage}
@@ -444,6 +513,14 @@
   >
     <Court board={draft ?? board} {selected} label={strings["board.court"]} />
   </div>
+
+  <!-- Over the court, so the court doesn't move when it comes and goes. -->
+  {#if selected}
+    <button type="button" class="delete" onclick={remove} title={strings["board.delete"]}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.delete} /></svg>
+      <span>{strings["board.delete"]}</span>
+    </button>
+  {/if}
 
   {#if manualLink}
     <div class="notice" role="status">
@@ -481,50 +558,6 @@
         <span>{t.label}</span>
       </button>
     {/each}
-  </div>
-
-  <div class="bar actions" role="toolbar" aria-label={strings["board.actions"]}>
-    <a class="tool home" href={home} title={strings["board.home"]}>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.court} /></svg>
-      <span>{strings["board.home"]}</span>
-    </a>
-    <button type="button" class="tool" onclick={undo} disabled={past.length === 0} title={strings["board.undo"]}>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.undo} /></svg>
-      <span>{strings["board.undoShort"]}</span>
-    </button>
-    <button type="button" class="tool" onclick={remove} disabled={!selected} title={strings["board.delete"]}>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.delete} /></svg>
-      <span>{strings["board.deleteShort"]}</span>
-    </button>
-    <details class="menu" bind:open={clearOpen}>
-      <summary class="tool" title={strings["board.clear"]}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.clear} /></svg>
-        <span>{strings["board.clear"]}</span>
-      </summary>
-      <div class="menu-panel">
-        <button type="button" onclick={() => clearWith(edit.clearArrows(board))}>{strings["board.clearArrows"]}</button>
-        <button type="button" onclick={() => clearWith(edit.resetLineup(defaultLineup))}>{strings["board.resetLineup"]}</button>
-        <button type="button" onclick={() => clearWith(edit.emptyCourt(board))}>{strings["board.emptyCourt"]}</button>
-      </div>
-    </details>
-    <button type="button" class="tool" onclick={toggleCourt} title={board.court === "half" ? strings["board.fullCourt"] : strings["board.halfCourt"]}>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={board.court === "half" ? icons.courtFull : icons.court} /></svg>
-      <span>{board.court === "half" ? strings["board.fullCourtShort"] : strings["board.halfCourtShort"]}</span>
-    </button>
-    <button type="button" class="tool" onclick={share} title={strings["board.share"]}>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.share} /></svg>
-      <span>{strings["board.share"]}</span>
-    </button>
-    <button type="button" class="tool" onclick={showQr} title={strings["board.qr"]}>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.qr} /></svg>
-      <span>{strings["board.qr"]}</span>
-    </button>
-    {#if import.meta.env.DEV}
-      <button type="button" class="tool" onclick={copyJson} title="Copy JSON (dev only)">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.json} /></svg>
-        <span>JSON</span>
-      </button>
-    {/if}
   </div>
 </div>
 
