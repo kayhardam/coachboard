@@ -36,7 +36,9 @@
   --board-title: 56px; /* minimum height of the title bar, portrait (its buttons: 44px) */
   --board-bar: 48px; /* minimum height of the tool bar, portrait (its content: 46.1px) */
   --board-gap: 6px;
-  --board-side: 64px; /* width of a bar, phone in landscape */
+  --board-tools: 118px; /* width of the tools panel, phone in landscape */
+  --board-panel: 146px; /* width of the title panel, phone in landscape */
+  --board-wide-side: 168px; /* width of the columns beside the court, wide screens */
 }
 
 @media (min-width: 560px) {

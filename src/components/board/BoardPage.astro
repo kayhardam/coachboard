@@ -110,10 +110,31 @@ const links = {
     inset: 0;
   }
 
-  /* The bars are columns at the sides, as on the board (see BoardEditor.css). */
+  /* Wide: the title bar across, a column on each side of the court (see BoardEditor.css). */
+  @media (min-width: 860px) and (min-height: 560px) {
+    .fallback {
+      grid-template: minmax(var(--board-title), auto) minmax(0, 1fr) / var(--board-wide-side) minmax(0, 1fr) var(--board-wide-side);
+      max-width: none;
+      padding: 0 16px 16px;
+      gap: 12px;
+    }
+    .titlebar {
+      grid-column: 1 / -1;
+      margin-inline: -16px;
+      padding-inline: 16px;
+    }
+    .court {
+      grid-column: 2;
+    }
+    .fallback > :global(noscript) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* The bars are panels at the sides, as on the board (see BoardEditor.css). */
   @media (orientation: landscape) and (max-height: 559px) {
     .fallback {
-      grid-template: minmax(0, 1fr) / var(--board-side) minmax(0, 1fr) var(--board-side);
+      grid-template: minmax(0, 1fr) / var(--board-tools) minmax(0, 1fr) var(--board-panel);
       max-width: none;
       padding: 4px 4px max(4px, env(safe-area-inset-bottom));
     }

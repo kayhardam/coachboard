@@ -477,16 +477,18 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.draw} /></svg>
       </button>
     {/if}
-    <button type="button" class="icon" onclick={undo} disabled={past.length === 0} aria-label={strings["board.undo"]} title={strings["board.undo"]}>
+    <button type="button" class="icon" onclick={undo} disabled={past.length === 0} title={strings["board.undo"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.undo} /></svg>
+      <span class="label">{strings["board.undo"]}</span>
     </button>
     <button type="button" class="share" onclick={share}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.share} /></svg>
       <span>{strings["board.share"]}</span>
     </button>
     <details class="menu" bind:open={menuOpen}>
-      <summary class="icon" aria-label={strings["board.more"]} title={strings["board.more"]}>
+      <summary class="icon" title={strings["board.more"]}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.more} /></svg>
+        <span class="label">{strings["board.more"]}</span>
       </summary>
       <div class="menu-panel">
         <button type="button" onclick={showQr}>{strings["board.qr"]}</button>
@@ -514,7 +516,7 @@
     <Court board={draft ?? board} {selected} label={strings["board.court"]} />
   </div>
 
-  <!-- Over the court, so the court doesn't move when it comes and goes. -->
+  <!-- Over the court's box (in landscape: under the title bar), so the court doesn't move when it comes and goes. -->
   {#if selected}
     <button type="button" class="delete" onclick={remove} title={strings["board.delete"]}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.delete} /></svg>

@@ -14,6 +14,17 @@ function landscape() {
   return devices[phone]!.viewport;
 }
 
+/** A laptop: the wide layout. */
+const WIDE = { width: 1280, height: 720 };
+
+type Orientation = "portrait" | "landscape" | "wide";
+const ORIENTATIONS: Orientation[] = ["portrait", "landscape", "wide"];
+
+async function orient(page: Page, orientation: Orientation) {
+  if (orientation === "landscape") await page.setViewportSize(landscape());
+  if (orientation === "wide") await page.setViewportSize(WIDE);
+}
+
 async function toCourt(page: Page, court: "half" | "full") {
   if (court === "full") await fromMenu(page, "board.fullCourt");
 }
@@ -21,6 +32,9 @@ async function toCourt(page: Page, court: "half" | "full") {
 async function expectEverythingOnScreen(page: Page) {
   for (const button of await page.locator(".editor [role=toolbar] :is(button, summary, a):visible").all()) {
     await expect(button).toBeInViewport({ ratio: 1, timeout: 2000 });
+    // A tap target is at least 44 px high (--tap); the title is text, and may be lower.
+    const { height } = (await button.boundingBox())!;
+    if (!(await button.evaluate((b) => b.classList.contains("title")))) expect(height).toBeGreaterThanOrEqual(43.5);
   }
   await expect(page.locator(".stage svg")).toBeInViewport({ ratio: 1 });
   const overflow = await page.evaluate(() => {
@@ -33,19 +47,15 @@ async function expectEverythingOnScreen(page: Page) {
 /** The court's surface, not the <svg>: that fills its box and letterboxes the court in it. */
 const surface = (page: Page) => page.locator(".stage svg > rect:first-of-type").boundingBox();
 
-for (const court of ["half", "full"] as const) {
-  test(`portrait, ${court} court: every button and the whole court are on screen`, async ({ page }) => {
-    await openBoard(page);
-    await toCourt(page, court);
-    await expectEverythingOnScreen(page);
-  });
-
-  test(`landscape, ${court} court: every button and the whole court are on screen`, async ({ page }) => {
-    await page.setViewportSize(landscape());
-    await openBoard(page);
-    await toCourt(page, court);
-    await expectEverythingOnScreen(page);
-  });
+for (const orientation of ORIENTATIONS) {
+  for (const court of ["half", "full"] as const) {
+    test(`${orientation}, ${court} court: every button and the whole court are on screen`, async ({ page }) => {
+      await orient(page, orientation);
+      await openBoard(page);
+      await toCourt(page, court);
+      await expectEverythingOnScreen(page);
+    });
+  }
 }
 
 test("turning the phone to landscape keeps everything on screen", async ({ page }) => {
@@ -82,11 +92,26 @@ test("the title bar takes the site header's place and links home, in both orient
   expect(middle.x + middle.width).toBeLessThanOrEqual(right.x);
 });
 
+test("wide, the title bar runs across the top and the tools stand beside the court", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await openBoard(page);
+  const [bar, tools, court] = await Promise.all(
+    [page.getByRole("toolbar", { name: "Actions" }), page.getByRole("toolbar", { name: "Tools" }), page.locator(".stage svg")].map(
+      async (l) => (await l.boundingBox())!,
+    ),
+  );
+  expect(bar.width).toBe(WIDE.width);
+  expect(bar.y + bar.height).toBeLessThanOrEqual(tools.y);
+  expect(tools.x + tools.width).toBeLessThanOrEqual(court.x);
+  // Larger than the portrait layout gave a laptop (478 px, docs/metingen.md).
+  expect((await surface(page))!.width).toBeGreaterThan(520);
+});
+
 // Finding 14 in docs/metingen.md: the static fallback didn't reserve the bars'
 // space, so the court jumped when the editor replaced it.
-for (const orientation of ["portrait", "landscape"] as const) {
+for (const orientation of ORIENTATIONS) {
   test(`${orientation}: the court stays put when the editor loads`, async ({ page }) => {
-    if (orientation === "landscape") await page.setViewportSize(landscape());
+    await orient(page, orientation);
     // Hold the scripts, so the fallback stays on screen during this one page load.
     let release!: () => void;
     const gate = new Promise<void>((resolve) => (release = resolve));
@@ -117,9 +142,9 @@ for (const orientation of ["portrait", "landscape"] as const) {
   });
 }
 
-for (const orientation of ["portrait", "landscape"] as const) {
+for (const orientation of ORIENTATIONS) {
   test(`${orientation}: the More menu opens on screen`, async ({ page }) => {
-    if (orientation === "landscape") await page.setViewportSize(landscape());
+    await orient(page, orientation);
     await openBoard(page);
     await moreButton(page).click();
     for (const name of ["QR code", "Full court", "Clear arrows and ball", "Default lineup", "Empty court"]) {
@@ -127,17 +152,25 @@ for (const orientation of ["portrait", "landscape"] as const) {
     }
   });
 
-  test(`${orientation}: Delete is there only with a selection, and the court stays put`, async ({ page }) => {
-    if (orientation === "landscape") await page.setViewportSize(landscape());
+  test(`${orientation}: Delete is there only with a selection, and it neither moves nor covers the court`, async ({ page }) => {
+    await orient(page, orientation);
     await openBoard(page);
     const remove = page.getByRole("button", { name: "Delete" });
     await expect(remove).toHaveCount(0);
-    const before = await surface(page);
+    const before = (await surface(page))!;
 
     // Move is the tool on opening: a tap on the pivot selects them.
     await page.locator('.stage [data-kind="player"][data-index="5"]').click();
     await expect(remove).toBeInViewport({ ratio: 1 });
     expect(await surface(page)).toEqual(before);
+    // On the half court it sits beside the court, never on it (a wing stands in the corner).
+    const box = (await remove.boundingBox())!;
+    const apart =
+      box.x >= before.x + before.width ||
+      box.x + box.width <= before.x ||
+      box.y + box.height <= before.y ||
+      box.y >= before.y + before.height;
+    expect(apart, `${JSON.stringify(box)} on ${JSON.stringify(before)}`).toBe(true);
 
     await remove.click();
     await expect(page.locator(".stage [data-kind=player]")).toHaveCount(defaultBoard.frames[0]!.players.length - 1);
@@ -149,16 +182,19 @@ for (const orientation of ["portrait", "landscape"] as const) {
 // ellipsis when they don't fit. Dutch words are longer ("Verdedig"), so every
 // language is checked on a narrow phone (360 px) and in landscape.
 for (const lang of ["en", "nl"]) {
-  for (const orientation of ["portrait", "landscape"] as const) {
+  for (const orientation of ORIENTATIONS) {
     test(`${lang}, ${orientation}: no label is cut off`, async ({ page }) => {
-      await page.setViewportSize(orientation === "portrait" ? { width: 360, height: 740 } : landscape());
+      await page.setViewportSize(
+        orientation === "portrait" ? { width: 360, height: 740 } : orientation === "wide" ? WIDE : landscape(),
+      );
       await openBoard(page, "", `/${lang}/board/`);
       // A selection, so Delete shows its label too.
       await page.locator('.stage [data-kind="player"][data-index="5"]').click();
-      const labels = page.locator(".editor :is(.tool, .share, .delete) span");
+      // .label is only shown in landscape; elsewhere it is 1 px, for screen readers.
+      const labels = page.locator(".editor :is(.tool, .share, .delete) span, .editor .label");
       await expect(labels.first()).toBeVisible();
       const cut = await labels.evaluateAll((spans) =>
-        spans.filter((s) => s.scrollWidth > s.clientWidth).map((s) => s.textContent),
+        spans.filter((s) => s.clientWidth > 1 && s.scrollWidth > s.clientWidth).map((s) => s.textContent),
       );
       expect(cut).toEqual([]);
     });
@@ -166,7 +202,7 @@ for (const lang of ["en", "nl"]) {
 }
 
 test("a long title gets an ellipsis and pushes no button off screen", async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 568 });
+  await page.setViewportSize({ width: 360, height: 740 });
   const title = "Kruising MO–LO met een blok van de cirkel";
   await page.addInitScript(
     ([key, board]) => localStorage.setItem(key, JSON.stringify(board)),
@@ -177,4 +213,18 @@ test("a long title gets an ellipsis and pushes no button off screen", async ({ p
   await expect(shown).toHaveText(title.slice(0, MAX_TITLE));
   expect(await shown.evaluate((s) => s.scrollWidth > s.clientWidth)).toBe(true);
   await expectEverythingOnScreen(page);
+});
+
+test("on a narrow phone the title bar shows only the pencil, and a wider one shows the title", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await openBoard(page);
+  const title = page.getByTitle("Edit title");
+  await expect(title.locator("span")).toBeHidden();
+  await expect(title.locator("svg")).toBeInViewport({ ratio: 1 });
+  // Still a button with a name, from its title.
+  await expect(page.getByRole("button", { name: "Edit title" })).toBeVisible();
+
+  await page.setViewportSize({ width: 393, height: 659 });
+  await expect(title.locator("span")).toHaveText("Add title");
+  await expect(title.locator("span")).toBeVisible();
 });

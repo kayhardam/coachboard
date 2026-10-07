@@ -114,6 +114,26 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* When almost nothing of the title would fit (a 320 px phone leaves 18 px of
+   text, "T…"), only the pencil shows; the button's title then names it. */
+.editor button.title {
+  container-type: inline-size;
+}
+@container (max-width: 60px) {
+  .editor .title span {
+    display: none;
+  }
+}
+
+/* The text of an icon button: read out, and shown in landscape only. */
+.editor .label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .editor .title svg {
   width: 16px;
   height: 16px;
@@ -277,60 +297,138 @@
 }
 
 /*
- * A phone in landscape has no height to spare. The bars become columns at the
- * sides, in reach of both thumbs, so the court gets the full height: the tools
- * on the left, the title bar's buttons on the right (without the title).
- * Same query as in BoardPage.astro.
+ * Wide (a laptop, a tablet in landscape): room to prepare. The title bar runs
+ * across the top, the tools stand in a column beside a larger court, and the
+ * column on the right stays free for the steps (phase 14). A phone in
+ * landscape can be this wide too, so this needs the height as well.
+ */
+@media (min-width: 860px) and (min-height: 560px) {
+  .editor {
+    grid-template:
+      "title title title" minmax(var(--board-title), auto)
+      "tools stage ." minmax(0, 1fr) / var(--board-wide-side) minmax(0, 1fr) var(--board-wide-side);
+    max-width: none;
+    padding: 0 16px 16px;
+    gap: 12px;
+  }
+  .editor .titlebar {
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+  .editor .bar {
+    grid-auto-flow: row;
+    grid-auto-rows: var(--board-bar);
+    align-content: start;
+    gap: 6px;
+  }
+  .editor .tool {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 0 12px;
+    font-size: 0.9375rem;
+  }
+}
+
+/*
+ * A phone in landscape has no height to spare, but room beside the court. The
+ * bars become panels at the sides, in reach of both thumbs, so the court gets
+ * the full height: the tools on the left, with their labels beside them; on the
+ * right the title and the title bar's buttons, and Delete below them, where it
+ * never covers the court. Same query as in BoardPage.astro.
  */
 @media (orientation: landscape) and (max-height: 559px) {
   .editor {
-    grid-template: "tools stage title" minmax(0, 1fr) / auto minmax(0, 1fr) auto;
+    grid-template:
+      "tools stage title" minmax(0, 1fr)
+      "tools stage delete" var(--tap) / var(--board-tools) minmax(0, 1fr) var(--board-panel);
     max-width: none;
     padding: 4px 4px max(4px, env(safe-area-inset-bottom));
   }
   .editor .bar {
     grid-auto-flow: row;
     grid-auto-rows: minmax(0, 1fr);
-    width: var(--board-side);
     gap: 2px;
+  }
+  .editor :is(.tool, .titlebar .icon:not(.home), .share) {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 0 10px;
+    font-size: 0.8125rem;
+  }
+  .editor .tool svg {
+    width: 20px;
+    height: 20px;
   }
   .editor .titlebar {
     flex-direction: column;
     align-items: stretch;
     gap: 2px;
-    width: var(--board-side);
     margin: 0;
     padding: 0;
     border: 0;
   }
+  /* Every button keeps a full tap target; the title takes what is left. */
   .editor .titlebar > * {
     flex: 1 1 0;
+    min-height: var(--tap);
+  }
+  /* min-height too: More's <summary> doesn't stretch to fill its <details>. */
+  .editor .titlebar .icon:not(.home) {
+    display: flex;
     width: auto;
     height: auto;
-    min-height: 0;
+    min-height: var(--tap);
+    text-align: left;
+  }
+  .editor .home {
+    flex: 0 0 auto;
+    justify-items: start;
+    width: auto;
+    padding-left: 6px;
   }
   .editor .title {
-    display: none;
+    flex: 1.4 1 0;
+    min-height: 0;
+    align-items: flex-start;
+    padding: 2px 6px;
+    font-size: 0.9375rem;
   }
-  .editor .share {
-    flex-direction: column;
-    justify-content: center;
-    gap: 2px;
-    padding: 4px 2px;
-    font-size: 0.6875rem;
+  .editor .title span {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    white-space: normal;
+  }
+  .editor input.title {
+    flex: 0 0 var(--tap);
+  }
+  .editor .label {
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
+    white-space: normal;
   }
   .editor .menu {
     display: grid;
   }
-  .editor .menu > .icon {
-    width: auto;
-    height: auto;
-  }
-  /* More is at the bottom of its column: the menu opens to the left and up. */
+  /* The menu opens to the left of More, and up, so it stays on screen. */
   .editor .menu-panel {
     top: auto;
     right: calc(100% + 6px);
     bottom: 0;
+  }
+  .editor .delete {
+    grid-area: delete;
+    align-self: stretch;
+    justify-self: stretch;
+    margin: 0;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    box-shadow: none;
+    font-size: 0.8125rem;
   }
 }
 
