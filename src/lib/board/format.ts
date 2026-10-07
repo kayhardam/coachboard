@@ -72,7 +72,10 @@ export const COURT_LENGTH = 400;
 
 export const MAX_PLAYERS = 30;
 export const MAX_ARROWS = 30;
-/** The link limits (decision 3, provisional until the scan test): see docs/metingen.md, phase 11. */
+/**
+ * The link limits (decision 3, final after the scan test): see docs/metingen.md, phase 11.
+ * A limit can grow later; a tighter one breaks shared boards.
+ */
 export const MAX_STEPS = 8;
 export const MAX_TEXT = 100;
 export const MAX_TITLE = 40;
