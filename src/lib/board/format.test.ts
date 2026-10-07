@@ -285,9 +285,10 @@ describe("isNewerLink", () => {
 });
 
 /**
- * The largest QR code the board may make: the biggest version that still
- * scans from phone to phone (decision 3, provisional until the scan test;
- * docs/metingen.md, phase 11).
+ * The QR version the largest board within the limits must fit in (decision 3;
+ * docs/metingen.md, phase 11). The scan test read every code up to version 30
+ * from phone to phone; the room above 24 is margin for busy boards and older
+ * phones.
  */
 const QR_VERSION = 24;
 

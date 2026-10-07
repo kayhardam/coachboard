@@ -1295,6 +1295,7 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
   - De voorlopige uitkomst, van Kay: er ontbreken blok, schot, stuit, pionnen, meerdere ballen en een derde kleur (aanspeelpunten).
 - **Eén aanval naar het eigen team sturen** en vragen wat ze zien.
 - **De scantest,** na de merge van Fase 11 in een eigen PR (besluit Kay, 5 oktober 2026; PR #28 is gemerged vóór de scantest): de QR-codes hierboven in de zaal scannen.
+  - **Gedaan (7 oktober 2026):** alle negen codes scanden binnen 1 à 2 tellen. De uitslag staat in de tabel onder "Fase 11" ("Scantest").
   - Telefoon bij telefoon: scherm naar camera, zoals bij het doorgeven van een bord.
   - Op de afstand waarop spelers in de zaal staan als de trainer zijn scherm laat zien: 1 m en 2 m.
   - Noteer per code en afstand: scant hij, en na hoeveel seconden. Daarna wordt besluit 3 (de limieten van de link) definitief. De tabel staat onder "Fase 11".
@@ -1761,25 +1762,33 @@ Branch `fase-11-linkformaat`. Het productplan (Fase 11) beschrijft wat v2 moet k
 ### Besluit 3: de limieten van de link (Kay, 5 oktober 2026)
 
 - **Voorlopig 8 stappen en 100 tekens per zin.** Volgens de berekening van Fase 9 ("Linklengte en QR-grootte") is de grootste link dan ongeveer 1140 tekens: QR-versie 24 bij foutcorrectie L.
-- **Definitief na de scantest, in een eigen PR.** PR #28 is op 5 oktober om 14:46 gemerged, vóór de scantest. Past de uitslag niet bij versie 24, dan veranderen de limiet en `QR_VERSION` in die PR.
+- **Definitief na de scantest (Kay, 7 oktober 2026): 8 stappen, 100 tekens per zin en een titel van 40, zoals nu.** `MAX_STEPS`, `MAX_TEXT`, `MAX_TITLE` en `QR_VERSION` (24) blijven gelijk. PR #28 was al gemerged vóór de scantest; de uitslag staat hieronder, in de PR `fase-11-scantest`.
+- **Ook versie 30 scant, en toch gaat de limiet niet omhoog:**
+  - verhogen breekt later geen links, verlagen na Fase 14 wel: dan kunnen trainers borden tot de limiet delen, en een lagere limiet weigert die links;
+  - de ruimte tot versie 30 is marge voor drukke borden en oudere telefoons.
 
-### Scantest (Kay, in een eigen PR)
+### Scantest (Kay)
 
-De codes uit Fase 9 (lokaal in `scantest/`), op het scherm van de eigen telefoon, met dezelfde instellingen als de QR-dialoog van het bord (foutcorrectie L, rand 2). Per code en afstand: scant hij binnen 3 tellen?
+De codes uit Fase 9 (lokaal in `scantest/scan/`), op het scherm van de eigen telefoon, met dezelfde instellingen als de QR-dialoog van het bord (foutcorrectie L, rand 2). Per code en afstand: scant hij binnen 3 tellen?
 
-Toestel dat de code toont: … · Toestel dat scant: …
+Toestel dat de codes toont: een Android-telefoon · Gescand met: een iPhone en een Android-telefoon. De modellen en versies zijn niet genoteerd.
 
 | Code | QR-versie | Telefoon bij telefoon | 1 m | 2 m |
 |---|--:|:-:|:-:|:-:|
-| Nu (v1): 1 stap, 3 pijlen | 9 | | | |
-| Oefening: 4 stappen, aanspeelpunten, pionnen, 2 ballen | 16 | | | |
-| 4 stappen + tekst | 18 | | | |
-| 8 stappen + tekst | 22 | | | |
-| 8 stappen, zin ≤ 100 tekens | 24 | | | |
-| 12 stappen + tekst | 26 | | | |
-| 12 stappen, zin ≤ 100 tekens | 28 | | | |
-| 12 stappen, zin ≤ 140 tekens | 30 | | | |
-| **Grootste v2-bord binnen de limiet** (Fase 11, een echte link) | 24 | | | |
+| Nu (v1): 1 stap, 3 pijlen | 9 | ja | ja | ja |
+| Oefening: 4 stappen, aanspeelpunten, pionnen, 2 ballen | 16 | ja | ja | ja |
+| 4 stappen + tekst | 18 | ja | ja | ja |
+| 8 stappen + tekst | 22 | ja | ja | ja |
+| 8 stappen, zin ≤ 100 tekens | 24 | ja | ja | ja |
+| 12 stappen + tekst | 26 | ja | ja | ja |
+| 12 stappen, zin ≤ 100 tekens | 28 | ja | ja | ja |
+| 12 stappen, zin ≤ 140 tekens | 30 | ja | ja | ja |
+| **Grootste v2-bord binnen de limiet** (Fase 11, een echte link) | 24 | ja | ja | ja |
+
+"ja": beide telefoons scanden de code binnen 3 tellen.
+
+- **Alle negen codes scanden binnen 1 à 2 tellen,** met beide telefoons en op alle drie de afstanden. Tot en met versie 30 scant dus alles; groter is niet getest.
+- Daarmee is besluit 3 definitief (zie hierboven).
 
 - De nieuwe code staat lokaal in `scantest/scan/` en op de printpagina daar (`v24-v2-grootste.svg`).
 - Hij vervangt de schatting uit Fase 9: hij is gemaakt met de echte `encode()` (zie "Het grootste bord binnen de limiet").
@@ -1897,7 +1906,8 @@ De test eist dat het past in QR-versie 24 (`QR_VERSION`).
 - **Dit is het grootste bord zoals een trainer een aanval tekent, niet het meeste wat het formaat toelaat.** 30 pijlen per stap geeft een veel grotere code.
   - De editor tekent nu één stap, en die past ruim.
   - Als Fase 14 stappen toevoegt, moet het bord laten zien wanneer een bord niet meer in een bruikbare QR-code past.
-- **Na de scantest:** scant versie 24 telefoon bij telefoon niet binnen 3 tellen, of scant er ruim meer, dan veranderen de limiet en `QR_VERSION` in de PR van de scantest. Geen fixture zit op de limiet, dus een andere limiet verandert geen fixture.
+  - De scantest geeft daarvoor de grens: tot en met versie 30 scanden beide telefoons alles.
+- **Na de scantest blijven de limiet en `QR_VERSION` (24) gelijk** (besluit 3). Geen fixture zit op de limiet, dus ook een ruimere limiet later verandert geen fixture.
 
 ### Groottes
 
@@ -1976,7 +1986,7 @@ Op de preview-URL, met de testlijst uit de PR. Test 7 op productie, na de merge.
 | 3 | Een loop van LO volgt LO; zijn pass begint aan het eind van de loop | werkt |
 | 4 | De loop zelf slepen maakt hem los; zijn beginpunt op RO maakt hem van RO | werkt |
 | 5 | T1 met de hand: 6 handelingen | werkt |
-| 6 | De scantest | volgt, in een eigen PR |
+| 6 | De scantest | werkt: alle negen codes binnen 1 à 2 tellen (zie "Scantest") |
 | 7 | Na de merge, op productie: het eigen opgeslagen bord staat er nog | werkt |
 
 - **Besluit Kay:** akkoord met de afwijking. Een pijl van een speler heeft geen beginhandvat; losmaken gaat door de hele pijl te slepen.
