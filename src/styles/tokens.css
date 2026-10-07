@@ -6,7 +6,8 @@
  *   @media (min-width: 560px)  — large phone / small tablet
  *   @media (min-width: 860px)  — tablet landscape and up
  * The board alone also uses (orientation: landscape) and (max-height: 559px)
- * for a phone on its side.
+ * for a phone on its side, and (min-width: 860px) and (min-height: 560px) for
+ * wide screens, so a large phone on its side keeps the landscape layout.
  */
 :root {
   --color-primary: #0f172a; /* dark navy */

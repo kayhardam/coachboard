@@ -2001,3 +2001,144 @@ Op de preview-URL, met de testlijst uit de PR. Test 7 op productie, na de merge.
 - **Besluit Kay:** akkoord met de afwijking. Een pijl van een speler heeft geen beginhandvat; losmaken gaat door de hele pijl te slepen.
 - **Besluit Kay:** aanspeelpunt blauw (`#2563eb`), pion rood (`#dc2626`, rand `#7f1d1d`).
 - De scancodes staan lokaal ook als PNG in `scantest/scan/`, voor het openen op Android: per code een kopie van het QR-scherm van het bord (telefoon in portret, code over 92% van de breedte, hele pixels per module, met de hint eronder).
+
+## Fase 12a: nieuwe indeling van het bord (7 oktober 2026)
+
+Branch `fase-12a-indeling`, vanaf `main` @ `4c6368b`. Het productplan (Fase 12a, besluit 5) beschrijft de opdracht.
+
+### Wat er veranderd is
+
+- **Staand volgt het canvas** (besluit 5). Een titelbalk vervangt de siteheader, met daarin:
+  - Home;
+  - de titel: tik om te wijzigen, Enter bewaart, Escape breekt af, hooguit 40 tekens. Zonder titel staat er "Titel toevoegen";
+  - Ongedaan;
+  - Delen, dat meteen deelt, zoals vóór;
+  - Meer.
+- **De actiebalk is weg.** Meer bevat, plat onder elkaar: QR-code, Heel/Half veld, Pijlen en bal wissen, Standaardopstelling en Leeg veld. Een tik op het veld of Escape sluit het menu.
+- **Verwijderen verschijnt alleen bij een selectie.** Staand en breed staat het rechtsboven in het vak van het veld; op het halve veld valt het in de lege strook boven het veld. Liggend staat het onder het rechterpaneel. Het veld verspringt niet en wordt niet bedekt.
+- **Liggend: L-B** (keuze Kay uit drie varianten in schermafbeeldingen).
+  - Links het gereedschap met de labels ernaast.
+  - Rechts de titel, Ongedaan, Delen en Meer met tekst, en daaronder een vaste plek voor Verwijderen.
+  - Elke knop blijft minstens 44 px hoog.
+- **Breed: B-A** (keuze Kay). Vanaf 860 px breed en 560 px hoog staat de titelbalk over de volle breedte, met links het gereedschap als kolom. Rechts blijft een kolom vrij voor de stappen (Fase 14).
+- **Aanpassingen van Kay bij de keuze:**
+  - liggend staat Verwijderen in het rechterpaneel, zodat het nooit een hoekspeler bedekt;
+  - op een smal scherm toont de titelbalk alleen het potlood, als er bijna niets van de titel past. Op 320 px is er 18 px voor tekst, op 360 px 58 px; de grens ligt op 60 px (`@container`).
+- **De siteheader** staat niet meer op de bordpagina's. De fallback heeft een statische titelbalk met de Home-link, ook zonder JavaScript.
+- **Nieuwe teksten** (akkoord Kay): Meer/More, Titel wijzigen/Edit title, Titel toevoegen/Add title. De korte labels van de actiebalk (`board.*Short`, `board.clear`) zijn vervallen.
+- Geen nieuwe dependencies. `format.ts` verandert niet: de titel zat al in v2.
+
+### De varianten
+
+Schermafbeeldingen van drie varianten voor liggend en drie voor breed, gemaakt als extra CSS over de echte editor (de variantcode staat niet in de repo). Ze staan op een privé-pagina van Kay.
+
+| Variant | Halve veld, iPhone SE liggend | iPhone 15 liggend | Laptop 1280×720 |
+|---|--:|--:|--:|
+| L-A (optie B bijgewerkt) | 281 px | 302 px | |
+| **L-B (zijpanelen met titel)** | **263 px** | **302 px** | |
+| L-C (titelbalk boven) | 229 px | 250 px; een tool valt buiten beeld | |
+| Nu (staande indeling, 720 px breed) | | | 478 px |
+| **B-A (tools links, rechts vrij)** | | | **573 px** |
+| B-B (als B-A, Meer als knoppen) | | | 573 px |
+| B-C (als B-A, met siteheader) | | | 514 px |
+
+### Layout vóór en na
+
+Playwright tegen `wrangler dev`, `/nl/board/`. Het veld is de `rect` van het speelveld. "Knoppen" betekent: elke knop helemaal in beeld. "Kleinste" is de kleinste knop (b×h).
+
+| Viewport | Veld | Veld op scherm (px) | px/dm | Knoppen | Kleinste |
+|---|---|--:|--:|:-:|--:|
+| iPhone SE staand 320×568 | half | 282×282 → 282×282 | 1,41 → 1,41 | ja → ja | 40×48 → 40×48 |
+| iPhone SE staand 320×568 | heel | 177×354 → 208×415 | 0,89 → 1,04 | ja → ja | 40×48 → 40×48 |
+| iPhone SE liggend 568×320 | half | 281×281 → 263×263 | 1,41 → 1,31 | ja → ja | 64×44 → 118×44 |
+| iPhone SE liggend 568×320 | heel | 146×292 → 146×292 | 0,73 → 0,73 | ja → ja | 64×44 → 118×44 |
+| iPhone 15 staand 393×659 | half | 349×349 → 349×349 | 1,75 → 1,75 | ja → ja | 50×48 → 44×44 |
+| iPhone 15 staand 393×659 | heel | 220×439 → 250×500 | 1,10 → 1,25 | ja → ja | 50×48 → 44×44 |
+| iPhone 15 liggend 734×343 | half | 302×302 → 302×302 | 1,51 → 1,51 | ja → ja | 64×46 → 118×46 |
+| iPhone 15 liggend 734×343 | heel | 156×313 → 156×313 | 0,78 → 0,78 | ja → ja | 64×46 → 118×46 |
+| Pixel 7 staand 412×839 | half | 367×367 → 367×367 | 1,83 → 1,83 | ja → ja | 53×48 → 44×44 |
+| Pixel 7 staand 412×839 | heel | 304×608 → 334×668 | 1,52 → 1,67 | ja → ja | 53×48 → 44×44 |
+| Pixel 7 liggend 863×360 | half | 317×317 → 317×317 | 1,59 → 1,59 | ja → ja | 64×47 → 118×49 |
+| Pixel 7 liggend 863×360 | heel | 164×329 → 164×329 | 0,82 → 0,82 | ja → ja | 64×47 → 118×49 |
+| iPad staand 820×1180 | half | 652×652 → 652×652 | 3,26 → 3,26 | ja → ja | 97×48 → 44×44 |
+| iPad staand 820×1180 | heel | 463×926 → 494×987 | 2,32 → 2,47 | ja → ja | 97×48 → 44×44 |
+| iPad liggend 1180×820 | half | 568×568 → 663×663 | 2,84 → 3,32 | ja → ja | 97×48 → 44×44 |
+| iPad liggend 1180×820 | heel | 295×590 → 344×688 | 1,47 → 1,72 | ja → ja | 97×48 → 44×44 |
+| Laptop 1280×720 | half | 478×478 → 573×573 | 2,39 → 2,86 | ja → ja | 97×48 → 44×44 |
+| Laptop 1280×720 | heel | 248×496 → 297×594 | 1,24 → 1,49 | ja → ja | 97×48 → 44×44 |
+
+- **Staand:**
+  - het halve veld blijft even groot; het is door de breedte begrensd en staat nu lager. De vrije strook erboven en eronder is voor de stappenbalk en de uitleg (Fase 14);
+  - het hele veld wordt op telefoons 10 tot 18% groter, op een iPad 7%.
+- **Liggend:** op de iPhone SE wordt het halve veld 6% kleiner, door de bredere panelen. Op de andere telefoons blijft het gelijk.
+- **Breed:** het veld wordt 17 tot 20% groter.
+- **De kleinste knop** is staand nu 44×44: de iconen in de titelbalk. Op de iPhone SE staand blijven de tools 40 px breed, zoals vóór.
+- **Het veld verspringt niet** als de editor laadt: hooguit 1 px, staand, liggend en breed (`e2e/layout.spec.ts`).
+
+### Groottes
+
+Gzip -9, vóór (`main` @ `4c6368b`) en na:
+
+| Bestand | Vóór | Na |
+|---|--:|--:|
+| `BoardEditor` (JS) | 10.853 B | 11.115 B |
+| Svelte-runtime (`client`) | 15.374 B | 15.613 B |
+| CSS van de site (`BaseLayout`) | 1.668 B | 1.658 B |
+| CSS van het bord (`BoardPage`) | 1.412 B | 2.169 B |
+| HTML `/nl/board/` | 5.577 B | 5.389 B |
+| HTML `/en/board/` | 5.506 B | 5.321 B |
+
+`npm run budget`:
+
+| Meting | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| JS van het bord | 26,7 KB | 27,2 KB | 32,5 KB |
+| Alle JS in `_astro/` | 31,1 KB | 31,6 KB | 32,5 KB |
+| CSS bordpagina | 3,1 KB | 3,8 KB | 3,3 → **4,0 KB** (`boardCss`) |
+| CSS contentpagina | 1,7 KB | 1,7 KB | 2,0 KB |
+| HTML `/nl/board/` | 5,6 KB | 5,4 KB | 6,5 KB |
+
+- **JS +0,5 KB** (schatting in het plan: +0,35 tot 0,65 KB):
+  - de editor +0,26 KB (titelbalk, titel wijzigen, Meer, Verwijderen bij een selectie);
+  - de Svelte-runtime +0,24 KB, voor de nieuwe sjabloononderdelen (`use:`, `class:`).
+  - Onder het budget voor alle JS blijft 0,95 KB vrij (besluit 8).
+- **CSS +0,76 KB:** de titelbalk, het menu, de pil, en de liggende en brede indeling. `boardCss` gaat van 3,3 naar 4,0 KB: de meting plus 0,2 KB (akkoord Kay).
+- **HTML −0,2 KB:** de siteheader staat niet meer op de bordpagina's.
+- Interne links: 300 → 290 (de siteheader op de zes bordpagina's).
+
+### Tests
+
+- `npm run verify` groen: 162 → 167 unittests (`setTitle()` in `edit.test.ts`), 23 pagina's, 290 interne links.
+- `npm run e2e`: 367 → 395 geslaagd, 1 overgeslagen.
+  - `e2e/layout.spec.ts`:
+    - alles in beeld en minstens 44 px hoog, staand, liggend en breed;
+    - geen siteheader, de Home-link in beeld;
+    - Meer opent in beeld;
+    - Verwijderen alleen bij een selectie, zonder dat het veld verspringt of bedekt wordt;
+    - geen label afgekapt (nl en en);
+    - een lange titel krijgt een ellips;
+    - op 320 px alleen het potlood.
+  - `e2e/board.spec.ts`: de titel wijzigen, in de link en na herladen; Ongedaan; Escape; hooguit 40 tekens.
+  - Aangepast: QR-code, Heel veld en Standaardopstelling via Meer (`share`, `security`, `reach`, `tasks`).
+  - `e2e/reach.spec.ts` draait nu op 393×659 in beide browsers. Op de Pixel 7 is het hele veld groter geworden, en daar valt 21 px naast een speler binnen het getekende tikvlak.
+
+### Meettaken
+
+| Route | Vóór | Na |
+|---|--:|--:|
+| T1, eerste keer (en en nl) | 6 | **6** |
+| T1 met eigen bord (en en nl) | 8 (Wissen → Standaardopstelling) | **8** (Meer → Standaardopstelling) |
+
+- `TAP_BUDGET` blijft 6 en 8.
+- **Seconden:** vóór 10–15 s op productie (zie "UX-metingen"). Na: Kay op de preview-URL, met hetzelfde beginpunt (het openen), drie keer per toestel. **Risico:** Delen staat nu rechtsboven in plaats van in de onderbalk, verder van de duim.
+
+### Lighthouse
+
+Vóór: productie (`main` @ `4c6368b`), drie runs per URL met het commando uit de nulmeting, Lighthouse 13.5.0.
+
+| URL | Performance | Accessibility | Best Practices | SEO | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` | 100 | 100 | 100 | 100 | 0,82 / 0,82 / 0,80 s | 0 | 0 ms | 57,5 KB |
+| `/en/board/` | 100 | 100 | 100 | 100 | 0,80 / 0,80 / 0,80 s | 0 | 0 ms | 57,5 KB |
+
+Na: volgt op de preview-URL.
