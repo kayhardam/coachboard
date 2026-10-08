@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   byDate,
+  copyOf,
   deleteBoard,
   folders,
   isUntouchedDefault,
@@ -11,6 +12,7 @@ import {
   renameFolder,
   saveBoard,
   STORE_KEY,
+  update,
   withFolder,
   write,
   type Saved,
@@ -145,9 +147,9 @@ describe("isUntouchedDefault", () => {
     }
   });
 
-  it("is false for labels of one language mixed with another", () => {
+  it("is false with an attacker where a defender stood", () => {
     const board = defaultBoardFor("nl");
-    board.frames[0]!.players[0]!.label = "LW";
+    board.frames[0]!.players[7]!.team = "a";
     expect(isUntouchedDefault(board)).toBe(false);
   });
 });
@@ -196,31 +198,56 @@ describe("folders", () => {
 describe("two tabs", () => {
   it("each save reads the list again and replaces only its own board", () => {
     const s = storage();
-    saveBoard(s, saved("a", 1));
-    saveBoard(s, saved("b", 2));
-    // Both tabs opened with this list; then each changes its own board.
+    saveBoard(s, "a", edited(), true, 1);
+    saveBoard(s, "b", edited(), true, 2);
+    // Both tabs have this list open; each changes its own board.
     const tab1 = read(s);
     const tab2 = read(s);
-    const a2 = { ...tab1.boards.find((b) => b.id === "a")!, board: edited("nl"), at: 3 };
-    const b2 = { ...tab2.boards.find((b) => b.id === "b")!, folder: "Dinsdag", at: 4 };
-    saveBoard(s, a2);
-    saveBoard(s, b2);
-    // Tab 1 makes a new board after tab 2's change, from its old list.
-    saveBoard(s, saved("c", 5));
+    expect(tab1).toEqual(tab2);
+    saveBoard(s, "a", edited("nl"), true, 3); // tab 1
+    update(s, (store) => ({ ...store, boards: store.boards.map((b) => (b.id === "b" ? withFolder(b, "Dinsdag") : b)) })); // tab 2
+    saveBoard(s, "b", defaultBoardFor("nl"), true, 4); // tab 2 again: keeps its folder
+    saveBoard(s, "c", edited(), true, 5); // tab 1, a new board, from its old list
     const { boards, current } = read(s);
-    expect(boards.find((b) => b.id === "a")).toEqual(a2);
-    expect(boards.find((b) => b.id === "b")).toEqual(b2);
+    expect(boards.find((b) => b.id === "a")).toEqual({ id: "a", board: edited("nl"), at: 3 });
+    expect(boards.find((b) => b.id === "b")).toEqual({ id: "b", board: defaultBoardFor("nl"), folder: "Dinsdag", at: 4 });
     expect(boards.map((b) => b.id).sort()).toEqual(["a", "b", "c"]);
     expect(current).toBe("c");
   });
 
+  it("saves a board without opening it, for the board the editor leaves", () => {
+    const s = storage();
+    saveBoard(s, "a", edited(), true, 1);
+    saveBoard(s, "b", edited("nl"), false, 2);
+    expect(read(s).current).toBe("a");
+    expect(read(s).boards.map((b) => b.id).sort()).toEqual(["a", "b"]);
+  });
+
   it("a delete in one tab keeps what the other tab saved", () => {
     const s = storage();
-    saveBoard(s, saved("a", 1));
-    saveBoard(s, saved("b", 2));
-    const b2 = { ...saved("b", 3), folder: "Dinsdag" };
-    saveBoard(s, b2); // tab 2
+    saveBoard(s, "a", edited(), true, 1);
+    saveBoard(s, "b", edited(), true, 2);
+    saveBoard(s, "b", edited("nl"), true, 3); // tab 2
     deleteBoard(s, "a"); // tab 1, which still had the old b
-    expect(read(s).boards).toEqual([b2]);
+    expect(read(s)).toEqual({ current: "b", boards: [{ id: "b", board: edited("nl"), at: 3 }] });
+  });
+});
+
+describe("copyOf", () => {
+  it("adds the suffix to the title under a new id", () => {
+    const s = { ...saved("a", 1, "Dinsdag"), board: { ...edited(), title: "Kruising MO–LO" } };
+    const copy = copyOf(s, " (kopie)", 5);
+    expect(copy.id).not.toBe("a");
+    expect(copy).toMatchObject({ folder: "Dinsdag", at: 5, board: { title: "Kruising MO–LO (kopie)" } });
+    expect(s.board.title).toBe("Kruising MO–LO");
+  });
+
+  it("cuts a long title short, so the whole stays within 40 characters", () => {
+    const s = { ...saved("a", 1), board: { ...edited(), title: "Opwarmen in drie rijen met twee ballen xx" } };
+    expect(copyOf(s, " (copy)").board.title).toBe("Opwarmen in drie rijen met twee b (copy)");
+  });
+
+  it("leaves a board without a title without one", () => {
+    expect(copyOf(saved("a", 1), " (copy)").board).not.toHaveProperty("title");
   });
 });

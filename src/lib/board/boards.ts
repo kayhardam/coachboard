@@ -6,8 +6,7 @@
 // that is), not when it opens: a received link, a tactic or a new board stays
 // out until you change it.
 
-import { defaultBoardFor } from "./defaults";
-import { toBoard, type Board, type Pt } from "./format";
+import { MAX_TITLE, toBoard, type Board } from "./format";
 
 /** A board you keep. `at` is when it last changed (ms since 1970). */
 export interface Saved {
@@ -72,22 +71,30 @@ export function write(storage: Storage, store: Store) {
 }
 
 /**
- * Saves one board: reads the list again first and replaces only that board
- * (or puts it first), so a board another tab saved in the meantime stays.
- * Makes it the board last opened. Returns the list as it is now.
+ * Changes the list as it is in `storage` now: reads it again, applies
+ * `change` and writes the result. Every change goes through here, so a board
+ * another tab saved in the meantime stays. Returns the list as written.
  */
-export function saveBoard(storage: Storage, entry: Saved): Store {
-  const store = { current: entry.id, boards: put(read(storage).boards, entry) };
+export function update(storage: Storage, change: (store: Store) => Store): Store {
+  const store = change(read(storage));
   write(storage, store);
   return store;
 }
 
-/** Deletes one board, from the list as it is now (see saveBoard()). */
+/**
+ * Saves one board under `id` and, with `open`, makes it the board last
+ * opened. Only that board changes; it keeps its folder. A new board goes first.
+ */
+export function saveBoard(storage: Storage, id: string, board: Board, open = true, at = Date.now()): Store {
+  return update(storage, ({ current, boards }) => {
+    const folder = boards.find((s) => s.id === id)?.folder;
+    return { current: open ? id : current, boards: put(boards, folder ? { id, board, folder, at } : { id, board, at }) };
+  });
+}
+
+/** Deletes one board (see update()). */
 export function deleteBoard(storage: Storage, id: string): Store {
-  const { current, boards } = read(storage);
-  const store = { current: current === id ? null : current, boards: remove(boards, id) };
-  write(storage, store);
-  return store;
+  return update(storage, ({ current, boards }) => ({ current: current === id ? null : current, boards: remove(boards, id) }));
 }
 
 /** The list with `entry` in place of the board with its id, or first if it is new. */
@@ -104,6 +111,17 @@ export const byDate = (boards: Saved[]) => boards.slice().sort((a, b) => b.at - 
 
 /** The folders in use, the one with the most recently changed board first. */
 export const folders = (boards: Saved[]) => [...new Set(byDate(boards).flatMap((s) => (s.folder ? [s.folder] : [])))];
+
+/**
+ * A copy of `s` under a new id, its title followed by `suffix` (" (copy)"),
+ * the title cut short so the whole stays within MAX_TITLE. A board without a
+ * title stays without one.
+ */
+export function copyOf(s: Saved, suffix: string, at = Date.now()): Saved {
+  const board = structuredClone(s.board);
+  if (board.title) board.title = board.title.slice(0, MAX_TITLE - suffix.length).trimEnd() + suffix;
+  return { ...s, id: newId(), board, at };
+}
 
 /** `s` in `folder`: one line, trimmed, at most MAX_FOLDER characters; none when empty. */
 export function withFolder(s: Saved, folder: string): Saved {
@@ -122,30 +140,25 @@ export const renameFolder = (boards: Saved[], from: string, to: string) =>
  * Where the attackers of the default lineup stood in each version that could
  * have saved it: LW, LB, CB, RB, RW, P. Since 22 September 2026, 2 October
  * (pivot into the defence, backs wider) and 2 October again (backs at 3.0 m).
+ * The goalkeeper and the six defenders, and the ball, never moved.
  */
-const ATTACK: Pt[][] = [
-  [[8, 48], [45, 118], [100, 130], [155, 118], [192, 48], [100, 78]],
-  [[8, 48], [35, 118], [100, 130], [165, 118], [192, 48], [100, 66]],
-  [[8, 48], [30, 118], [100, 130], [170, 118], [192, 48], [100, 66]],
+const ATTACK = [
+  "8,48,45,118,100,130,155,118,192,48,100,78",
+  "8,48,35,118,100,130,165,118,192,48,100,66",
+  "8,48,30,118,100,130,170,118,192,48,100,66",
 ];
-
-/** The players as text, to compare lineups. */
-const lineupOf = (board: Board) => JSON.stringify(board.frames[0]!.players.map((p) => [p.team, p.label, p.at]));
+const DEFENCE = "100,8,22,30,48,58,80,66,120,66,152,58,178,30";
 
 /**
- * True for a default lineup nobody changed, in English or Dutch, as any
- * version could have saved it: nothing to keep.
+ * True for a default lineup nobody changed, as any version could have saved
+ * it: nothing to keep. Labels can't be changed on the board, so the places of
+ * six attackers, then the goalkeeper and six defenders, are enough.
  */
 export function isUntouchedDefault(board: Board): boolean {
   const [frame, ...more] = board.frames;
-  if (more.length || board.court !== "half" || board.title || board.cones.length) return false;
-  if (frame!.arrows.length || frame!.text || JSON.stringify(frame!.balls) !== "[[110,122]]") return false;
-  const lineup = lineupOf(board);
-  return ["en", "nl"].some((lang) =>
-    ATTACK.some((attack) => {
-      const lineupBoard = defaultBoardFor(lang);
-      attack.forEach((at, i) => (lineupBoard.frames[0]!.players[i]!.at = at));
-      return lineupOf(lineupBoard) === lineup;
-    }),
-  );
+  const { players, balls, arrows, text } = frame!;
+  if (more.length || board.court !== "half" || board.title || board.cones.length || arrows.length || text) return false;
+  const teams = players.map((p) => p.team).join("");
+  const places = players.map((p) => p.at).join();
+  return balls.join() === "110,122" && teams === "aaaaaaddddddd" && ATTACK.some((a) => places === `${a},${DEFENCE}`);
 }
