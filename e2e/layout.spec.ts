@@ -228,3 +228,36 @@ test("on a narrow phone the title bar shows only the pencil, and a wider one sho
   await expect(title.locator("span")).toHaveText("Add title");
   await expect(title.locator("span")).toBeVisible();
 });
+
+// Without the site header, the largest text on the board was the editor's
+// title, which comes with the JS: on a slow phone the LCP waited for it (2.5 s
+// in Lighthouse with real throttling, phase 12a in docs/metingen.md). The
+// fallback shows the same placeholder, so the LCP paints with the HTML.
+test("the largest text paints with the HTML, not after the editor's JS", async ({ page }) => {
+  test.skip(test.info().project.name === "iphone", "WebKit has no largest-contentful-paint entries");
+  await page.addInitScript(() => {
+    const seen: string[] = [];
+    (window as unknown as { lcp: string[] }).lcp = seen;
+    new PerformanceObserver((list) => {
+      for (const e of list.getEntries() as (PerformanceEntry & { element?: Element })[]) {
+        seen.push(e.element?.closest(".fallback, .editor")?.className.split(" ")[0] ?? "other");
+      }
+    }).observe({ type: "largest-contentful-paint", buffered: true });
+  });
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  await page.route(/\/_astro\/.*\.js$/, async (route) => {
+    await gate;
+    await route.continue();
+  });
+  const lcp = () => page.evaluate(() => (window as unknown as { lcp: string[] }).lcp);
+
+  await page.goto("/en/board/", { waitUntil: "commit" });
+  await expect(page.locator(".fallback .title")).toHaveText("Add title");
+  await expect.poll(lcp).toEqual(["fallback"]);
+  release();
+  await expect(page.getByRole("button", { name: "Add title" })).toBeVisible();
+  // The editor's title is no larger, so it doesn't become a later LCP.
+  await page.waitForTimeout(300);
+  expect(await lcp()).toEqual(["fallback"]);
+});
