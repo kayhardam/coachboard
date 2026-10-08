@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   byDate,
+  deleteBoard,
   folders,
   isUntouchedDefault,
   OLD_KEY,
@@ -8,6 +9,7 @@ import {
   read,
   remove,
   renameFolder,
+  saveBoard,
   STORE_KEY,
   withFolder,
   write,
@@ -65,6 +67,23 @@ describe("read", () => {
   it("leaves a broken board of an earlier version out", () => {
     expect(read(storage({ [OLD_KEY]: "{not json" })).boards).toEqual([]);
     expect(read(storage({ [OLD_KEY]: '{"v":2}' })).boards).toEqual([]);
+  });
+
+  it("brings the earlier board along once: after deleting every board it doesn't come back", () => {
+    const s = storage({ [OLD_KEY]: JSON.stringify(edited("nl")) });
+    const { boards } = read(s);
+    expect(boards).toHaveLength(1);
+    expect(read(s).boards).toEqual(boards); // read again: the same board, not a second one
+    deleteBoard(s, boards[0]!.id);
+    expect(read(s)).toEqual({ current: null, boards: [] });
+    expect(s.map.get(OLD_KEY)).toBe(JSON.stringify(edited("nl"))); // still there, for a rollback
+  });
+
+  it("looks at the earlier board once, also when it was an untouched default lineup", () => {
+    const s = storage({ [OLD_KEY]: JSON.stringify(defaultBoardFor("nl")) });
+    expect(read(s).boards).toEqual([]);
+    s.setItem(OLD_KEY, JSON.stringify(edited("nl"))); // an old tab saves after all
+    expect(read(s).boards).toEqual([]);
   });
 
   it("ignores the earlier version once the list exists", () => {
@@ -171,5 +190,37 @@ describe("folders", () => {
       "Donderdag",
       "Training dinsdag",
     ]);
+  });
+});
+
+describe("two tabs", () => {
+  it("each save reads the list again and replaces only its own board", () => {
+    const s = storage();
+    saveBoard(s, saved("a", 1));
+    saveBoard(s, saved("b", 2));
+    // Both tabs opened with this list; then each changes its own board.
+    const tab1 = read(s);
+    const tab2 = read(s);
+    const a2 = { ...tab1.boards.find((b) => b.id === "a")!, board: edited("nl"), at: 3 };
+    const b2 = { ...tab2.boards.find((b) => b.id === "b")!, folder: "Dinsdag", at: 4 };
+    saveBoard(s, a2);
+    saveBoard(s, b2);
+    // Tab 1 makes a new board after tab 2's change, from its old list.
+    saveBoard(s, saved("c", 5));
+    const { boards, current } = read(s);
+    expect(boards.find((b) => b.id === "a")).toEqual(a2);
+    expect(boards.find((b) => b.id === "b")).toEqual(b2);
+    expect(boards.map((b) => b.id).sort()).toEqual(["a", "b", "c"]);
+    expect(current).toBe("c");
+  });
+
+  it("a delete in one tab keeps what the other tab saved", () => {
+    const s = storage();
+    saveBoard(s, saved("a", 1));
+    saveBoard(s, saved("b", 2));
+    const b2 = { ...saved("b", 3), folder: "Dinsdag" };
+    saveBoard(s, b2); // tab 2
+    deleteBoard(s, "a"); // tab 1, which still had the old b
+    expect(read(s).boards).toEqual([b2]);
   });
 });

@@ -35,8 +35,10 @@ export const newId = () => Date.now().toString(36) + Math.random().toString(36).
 /**
  * The list in `storage`. Without one yet, the board an earlier version kept
  * becomes the first, unless it is an untouched default lineup (that version
- * saved the lineup on the first visit). Boards that don't read are left out.
- * Throws when there is no storage.
+ * saved the lineup on the first visit). That happens once: the new list is
+ * written at once, so the old board doesn't come back when you later delete
+ * every board. Boards that don't read are left out. Throws when there is no
+ * storage.
  */
 export function read(storage: Storage): Store {
   const raw = storage.getItem(STORE_KEY);
@@ -48,7 +50,9 @@ export function read(storage: Storage): Store {
       // Not JSON: nothing to bring along.
     }
     const boards = old && !isUntouchedDefault(old) ? [{ id: newId(), board: old, at: Date.now() }] : [];
-    return { current: boards[0]?.id ?? null, boards };
+    const store = { current: boards[0]?.id ?? null, boards };
+    write(storage, store);
+    return store;
   }
   try {
     const data = JSON.parse(raw) as Partial<Store>;
@@ -65,6 +69,25 @@ export function read(storage: Storage): Store {
 
 export function write(storage: Storage, store: Store) {
   storage.setItem(STORE_KEY, JSON.stringify(store));
+}
+
+/**
+ * Saves one board: reads the list again first and replaces only that board
+ * (or puts it first), so a board another tab saved in the meantime stays.
+ * Makes it the board last opened. Returns the list as it is now.
+ */
+export function saveBoard(storage: Storage, entry: Saved): Store {
+  const store = { current: entry.id, boards: put(read(storage).boards, entry) };
+  write(storage, store);
+  return store;
+}
+
+/** Deletes one board, from the list as it is now (see saveBoard()). */
+export function deleteBoard(storage: Storage, id: string): Store {
+  const { current, boards } = read(storage);
+  const store = { current: current === id ? null : current, boards: remove(boards, id) };
+  write(storage, store);
+  return store;
 }
 
 /** The list with `entry` in place of the board with its id, or first if it is new. */
