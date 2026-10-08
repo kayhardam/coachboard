@@ -119,9 +119,9 @@ Kays eigen woorden:
 | 12 | Tablet: staand en liggend | — | |
 | 13 | Snel twee keer op een knop tikken: zoomt de pagina in? | — | |
 | 14 | Na het laden vliegtuigmodus aan: kun je nog slepen, tekenen en de QR-code openen? | — | |
-| 15 | Stopwatch: openen → tekenen → gedeeld in de teamapp, in seconden | — | |
+| 15 | ~~Stopwatch: openen → tekenen → gedeeld in de teamapp, in seconden~~ Vervallen (besluit Kay, 8 oktober 2026) | — | |
 
-De punten met — (8, 9 en 12 tot en met 15) en de verdeling per toestel schuiven door naar de testronde van Fase 5, op de preview-URL.
+De punten met — (8, 9 en 12 tot en met 14) en de verdeling per toestel schuiven door naar de testronde van Fase 5, op de preview-URL. Test 15 vervalt: we meten niet meer in seconden.
 
 ### Bevindingen
 
@@ -474,13 +474,13 @@ Legenda als in de nulmeting. Vul per toestel in (model, iOS/Android-versie, brow
 | 12 | Tablet: staand en liggend | | |
 | 13 | Snel twee keer op een knop tikken: zoomt de pagina in? (bevinding 8) | | |
 | 14 | Na het laden vliegtuigmodus aan: slepen, tekenen, QR-code openen? | | |
-| 15 | Stopwatch: openen → tekenen → gedeeld in de teamapp, in seconden | deels: 10–15 s zonder het laden | deels: 10–15 s zonder het laden |
+| 15 | ~~Stopwatch: openen → tekenen → gedeeld in de teamapp, in seconden~~ Vervallen (besluit Kay, 8 oktober 2026) | deels: 10–15 s zonder het laden | deels: 10–15 s zonder het laden |
 | 16 | Een gedeelde link openen in een privévenster: zie je eerst de standaardopstelling voordat de tactiek verschijnt, en stoort dat? | | |
 | 17 | Het bord openen, staand en liggend: blijft het veld staan terwijl de knoppenbalken verschijnen? (bevinding 14) | | |
 
 De nummers 8 tot en met 15 zijn die van de nulmeting. 16 en 17 kwamen erbij met de fix van bevinding 14.
 
-- **Test 15** is deels gemeten, als T1 in seconden vóór Fase 12a (Kay, 7 oktober 2026): zie "UX-metingen" → "Per taak en toestel". Die meting begint bij de eerste tik op het bord, dus het openen en laden van het bord ontbreekt. Dat deel en de rest van deze testronde staan nog open.
+- **Test 15** is deels gemeten, als T1 in seconden vóór Fase 12a (Kay, 7 oktober 2026): zie "UX-metingen" → "Per taak en toestel". Die meting begint bij de eerste tik op het bord, dus het openen en laden van het bord ontbreekt. Dat deel meten we niet meer: test 15 vervalt (besluit Kay, 8 oktober 2026), de meting blijft staan. De rest van deze testronde staat nog open.
 - **Waarom test 16:** de fallback tekent altijd de standaardopstelling; pas de editor leest `#t=` en tekent de tactiek. In een privévenster staat er niets in de cache, dus duurt dat het langst.
 
 ## Bevinding 14: het veld verspringt niet meer (29 september 2026)
@@ -1115,7 +1115,7 @@ LB en RB staan een halve meter breder: LB van [35, 118] naar [30, 118], RB van [
 
 Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bord veranderen. De app zelf verandert in Fase 9 niet.
 
-**Testen met mensen is geparkeerd:** de stopwatch, de trainers, de testronde van Fase 5 (ook test 15), de tekentest en de scantest. Tot die er zijn, is het aantal handelingen van de kortste e2e-route de nulmeting. Seconden volgen later.
+**Testen met mensen is geparkeerd:** de trainers, de testronde van Fase 5, de tekentest en de scantest. Tot die er zijn, is het aantal handelingen van de kortste e2e-route de nulmeting. ~~Seconden volgen later.~~ Vervallen (besluit Kay, 8 oktober 2026): we meten niet in seconden.
 
 ### Meettaken
 
@@ -1124,7 +1124,7 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
 | T1 | Open het bord, zet een aanval tegen een 6-0 neer, teken drie pijlen (loop, pass, loop) en deel de link in de teamapp | telefoon | ja |
 | T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | als vier losse borden; als route zodra het bord stappen heeft |
 | T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, twee pionnen, een bal en de kruising | telefoon | met spelers als pionnen; als route zodra het bord pionnen heeft |
-| T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf; als route zodra er meerdere borden te bewaren zijn |
+| T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf (route sinds Fase 12b); met Mijn borden zodra die er zijn |
 
 ### Meetmethode
 
@@ -1137,10 +1137,8 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
 - **Budget.** `TAP_BUDGET` in die test moet precies kloppen.
   - Vraagt de route een handeling meer, dan faalt de test. Vraagt hij er een minder, dan faalt hij ook. Zo blijft elke winst vastgelegd.
   - Het budget gaat alleen bewust omhoog of omlaag, met de reden in de PR en de nieuwe meting hieronder.
-- **Seconden** (geparkeerd). Met een stopwatch, van de eerste tik tot "gedeeld" of "klaar".
-- **Wie** (geparkeerd).
-  - Kay doet elke taak drie keer en noteert de mediaan.
-  - Drie tot vijf andere trainers, liefst jeugdtrainers, doen elke taak één keer zonder hulp. Noteer ook waar ze vastlopen.
+- **Geen seconden** (besluit Kay, 8 oktober 2026): de stopwatch vervalt, ook bij de sessies met trainers.
+- **Wie** (geparkeerd, vóór Fase 14): drie tot vijf trainers, liefst jeugdtrainers, doen elke taak één keer zonder hulp. Kay kijkt alleen waar ze vastlopen.
 - **Per fase.** Elke fase meet de taken die ze raakt opnieuw, vóór en na, en noteert dat hier.
 
 ### Nulmeting in tikken: T1
@@ -1191,57 +1189,55 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 | T1 met eigen bord | **8** | **8** |
 
 - `TAP_BUDGET` blijft 6 en 8. Elke tik gaat naar een knop die al in beeld staat.
-- De seconden na Fase 12a meet Kay op de preview-URL (zie "Per taak en toestel" en "Fase 12a").
+- ~~De seconden na Fase 12a meet Kay op de preview-URL (zie "Per taak en toestel" en "Fase 12a").~~ Vervallen (besluit Kay, 8 oktober 2026): geen seconden.
+
+### T4: nulmeting met links naar jezelf (Fase 12b, 8 oktober 2026)
+
+`main` @ `fb73f11`, in `e2e/tasks.spec.ts`. Twee toestellen in één test: een laptop (1280×720, eigen opslag) en de telefoon van het project.
+
+- **De borden:** drie keer de standaardopstelling met één looppijl, van LB, CB en RB (LO, MO en RO). Geen titel: typen telt per toets.
+- **Telt niet:** het bord openen, en alles buiten de pagina: het deelvenster, de link naar jezelf sturen, de link in de chat aantikken.
+
+| # | Handeling (laptop) |
+|--:|---|
+| 1 | Tik "Run" |
+| 2 | Sleep een looppijl vanaf LB |
+| 3 | Tik "Share" |
+| 4–5 | Meer → Standaardopstelling |
+| 6 | Sleep een looppijl vanaf CB |
+| 7 | Tik "Share" |
+| 8–11 | Hetzelfde voor RB |
+
+| Route | `/en/` | `/nl/` |
+|---|--:|--:|
+| T4 met links naar jezelf | **11** | **11** |
+
+- Op de telefoon kost het niets: elke link opent zijn bord. De test controleert dat.
+- Op de laptop blijft alleen bord 3 staan. Bord 1 en 2 bestaan alleen nog als link.
+- **Controle** (tijdelijk, niet gecommit): met het budget op 10 en op 12 faalt de test ("Expected: 10, Received: 11" en "Expected: 12, Received: 11").
 
 ### Doelen (besluit Kay, 2 oktober 2026)
 
 | Taak | Nulmeting (route) | Doel | `TAP_BUDGET` |
 |---|--:|--:|--:|
 | T1 | 6 handelingen | **5** | 6 |
-| T2, T3, T4 | — | zodra hun route bestaat | — |
+| T4, met links naar jezelf | 11 handelingen | Kay kiest, na de route met Mijn borden (Fase 12b) | 11 |
+| T2, T3 | — | zodra hun route bestaat | — |
 
 - **Het budget blijft 6** tot een fase de route echt korter maakt. Die fase verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
-- **Doelen in seconden** volgen na de stopwatch (geparkeerd).
+- ~~**Doelen in seconden** volgen na de stopwatch (geparkeerd).~~ Vervallen (besluit Kay, 8 oktober 2026): alleen doelen in handelingen.
 
 ### Per taak en toestel
 
-Leeg tot de metingen met mensen er zijn. "Route" is het aantal handelingen uit `e2e/tasks.spec.ts`.
-
-**T1**
-
-| Toestel | Route | Kay: tikken (mediaan) | Kay: seconden (mediaan) | Trainers: seconden (n, mediaan) | Vastgelopen op |
-|---|--:|--:|--:|--:|---|
-| iPhone (Safari) | 6 (8 met eigen bord) | | 10–15 s | | |
-| Android (Chrome) | 6 (8 met eigen bord) | | 10–15 s | | |
+De routes in handelingen staan hierboven, per taak. De sessies met trainers (vóór Fase 14) noteren hier per taak waar ze vastlopen. De tabellen voor seconden zijn weg: seconden vervallen (besluit Kay, 8 oktober 2026).
 
 **T1 in seconden, vóór Fase 12a** (Kay, 7 oktober 2026):
 
 - op productie (`handballcoachboard.com`), drie keer, op iPhone en op Android: 10 tot 15 s;
 - per toestel niet uitgesplitst, dus de mediaan is onbekend;
-- **beginpunt:** de eerste tik op het bord, zoals de meetmethode hierboven. Het laden telt niet mee. De meting na Fase 12a begint ook bij de eerste tik;
+- **beginpunt:** de eerste tik op het bord, zoals de meetmethode hierboven. Het laden telt niet mee. ~~De meting na Fase 12a begint ook bij de eerste tik;~~ Vervallen (8 oktober 2026): er komt geen meting na Fase 12a;
 - **eindpunt:** de link verstuurd in WhatsApp.
-- **Test 15** uit de testronde van Fase 5 ("openen → tekenen → gedeeld in de teamapp") is hiermee maar deels gedaan: het openen en laden van het bord ontbreekt (in het lab ongeveer 1 s, LCP 0,8 s).
-
-**T2** (nu als vier losse borden)
-
-| Toestel | Route | Kay: tikken (mediaan) | Kay: seconden (mediaan) | Trainers: seconden (n, mediaan) | Vastgelopen op |
-|---|--:|--:|--:|--:|---|
-| iPhone (Safari) | — | | | | |
-| Android (Chrome) | — | | | | |
-
-**T3** (nu met spelers als pionnen)
-
-| Toestel | Route | Kay: tikken (mediaan) | Kay: seconden (mediaan) | Trainers: seconden (n, mediaan) | Vastgelopen op |
-|---|--:|--:|--:|--:|---|
-| iPhone (Safari) | — | | | | |
-| Android (Chrome) | — | | | | |
-
-**T4** (nu met links naar jezelf)
-
-| Toestellen | Route | Kay: tikken (mediaan) | Kay: seconden (mediaan) | Trainers: seconden (n, mediaan) | Vastgelopen op |
-|---|--:|--:|--:|--:|---|
-| laptop → iPhone | — | | | | |
-| laptop → Android | — | | | | |
+- **Test 15** uit de testronde van Fase 5 ("openen → tekenen → gedeeld in de teamapp") is hiermee maar deels gedaan: het openen en laden van het bord ontbreekt (in het lab ongeveer 1 s, LCP 0,8 s). Dat deel vervalt (besluit Kay, 8 oktober 2026); deze meting blijft staan.
 
 ### Linklengte en QR-grootte
 
@@ -1308,8 +1304,8 @@ Nagerekend met een eenmalig script (niet in de repo), met dezelfde compressie al
 
 Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die ze nodig heeft:
 
-- **De testronde van Fase 5,** op productie. Test 15 (stopwatch) is deels gedaan als T1 in seconden (7 oktober 2026), zonder het laden; dat deel en de rest staan open.
-- **De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a. T1 door Kay is gedaan (7 oktober 2026, zie "Per taak en toestel").
+- **De testronde van Fase 5,** op productie. Test 15 (stopwatch) vervalt (besluit Kay, 8 oktober 2026); de rest staat open.
+- ~~**De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a. T1 door Kay is gedaan (7 oktober 2026, zie "Per taak en toestel").~~ Vervallen (besluit Kay, 8 oktober 2026): geen seconden. **De sessies met trainers** blijven, vóór Fase 14, zonder stopwatch: drie tot vijf trainers doen elke meettaak één keer zonder hulp, en Kay kijkt alleen waar ze vastlopen.
 - **Lezen of kijken,** in dezelfde sessies met trainers. Een trainer opent een tactiek en legt die daarna uit aan een speler. Noteer per trainer of hij de tekst las of alleen naar de tekening keek. Dit toetst of trainers vooral doeners zijn (Kay, 3 oktober 2026). Met de uitkomst kiest Kay hoeveel tekst een tactiekpagina naast de tekening nodig heeft.
 - **Delen en vertrouwen:** vraag elke trainer of hij zijn eigen tactieken zou delen, en wanneer hij een tactiek van een ander vertrouwt. Dit toetst het idee van één kennisbank waar trainers zelf bijdragen, mits de kwaliteit gewaarborgd blijft (Kay, 3 oktober 2026). De uitkomst weegt mee bij besluit 9.
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
@@ -1326,7 +1322,7 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
   |--:|---|:-:|:-:|
   | 1 | T1 met de hand vanaf de standaardopstelling ("Run", twee looppijlen, "Pass", een pass, "Share"): 6 handelingen, zonder scrollen? | | |
   | 2 | T1 met een eigen bord ("Clear" → "Default lineup" eerst): 8 handelingen? | | |
-  | 3 | T1 met de stopwatch, drie keer: de mediaan in seconden, tot "gedeeld" in de teamapp | | |
+  | 3 | ~~T1 met de stopwatch, drie keer: de mediaan in seconden, tot "gedeeld" in de teamapp~~ Vervallen (besluit Kay, 8 oktober 2026) | | |
   | 4 | De gedeelde link openen op een tweede telefoon: opent `/en/board/link/` met de drie pijlen? | | |
   | 5 | De scantest hierboven, op beide afstanden | | |
   | 6 | iPhone: Coachboard op het beginscherm zetten en dan een link uit WhatsApp openen. Opent hij in Safari of in de app? (Fase 12b) | | — |
@@ -1976,7 +1972,7 @@ Gzip -9, vóór (`main` @ `50233af`) en na:
 | T1 met eigen bord (en en nl) | 8 | **8** |
 
 - `e2e/tasks.spec.ts` is groen in beide browsers, met hetzelfde budget. De gedeelde link is nu een v2-link; de check van de uitkomst decodeert hem.
-- T2 en T3 hebben nog geen route: de stappen komen in Fase 14 en de pionnen in Fase 13. T4 raakt deze fase niet. Seconden zijn geparkeerd.
+- T2 en T3 hebben nog geen route: de stappen komen in Fase 14 en de pionnen in Fase 13. T4 raakt deze fase niet. ~~Seconden zijn geparkeerd.~~ Vervallen (besluit Kay, 8 oktober 2026).
 
 ### Lighthouse
 
@@ -2142,7 +2138,7 @@ Gzip -9, vóór (`main` @ `4c6368b`) en na:
 | T1 met eigen bord (en en nl) | 8 (Wissen → Standaardopstelling) | **8** (Meer → Standaardopstelling) |
 
 - `TAP_BUDGET` blijft 6 en 8.
-- **Seconden:** vóór 10–15 s op productie (zie "UX-metingen"). Na: Kay op de preview-URL, op dezelfde manier: van de eerste tik op het bord tot de link verstuurd is in WhatsApp, drie keer per toestel. **Risico:** Delen staat nu rechtsboven in plaats van in de onderbalk, verder van de duim.
+- **Seconden:** vóór 10–15 s op productie (zie "UX-metingen"). ~~Na: Kay op de preview-URL, op dezelfde manier: van de eerste tik op het bord tot de link verstuurd is in WhatsApp, drie keer per toestel.~~ Vervallen (besluit Kay, 8 oktober 2026): geen seconden. **Risico:** Delen staat nu rechtsboven in plaats van in de onderbalk, verder van de duim.
 
 ### Lighthouse
 
@@ -2174,3 +2170,16 @@ Vóór: productie (`main` @ `4c6368b`), drie runs per URL met het commando uit d
 ### Preview-URL
 
 `https://fase-12a-indeling-coachboard.hardamkay.workers.dev`
+
+
+## Fase 12b-1: metingen en T4-nulmeting (8 oktober 2026)
+
+Branch `fase-12b1-metingen`, vanaf `main` @ `fb73f11`. Eerste van drie PR's voor Fase 12b (Mijn borden). De app verandert niet.
+
+- **Seconden en de stopwatch** zijn overal doorgehaald waar ze nog als open punt stonden (besluit Kay, 8 oktober 2026). Gemeten getallen blijven staan.
+- **T4** heeft een route: 11 handelingen met links naar jezelf (zie "UX-metingen").
+- `e2e/helpers.ts`: `stubBeacon()` vangt de beacon af in een context die een test zelf maakt, zoals de laptop van T4.
+- **Groottes:** gelijk, `npm run budget` geeft dezelfde tabel als na Fase 12a.
+- **Tests:**
+  - `npm run verify` groen, zoals vóór;
+  - `npm run e2e`: 396 → 400 geslaagd, 2 overgeslagen. Dat zijn de twee T4-routes (en, nl), elk in twee browsers.
