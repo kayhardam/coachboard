@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { defaultBoardFor } from "../src/lib/board/defaults";
-import type { Board } from "../src/lib/board/format";
+import { decode, type Board } from "../src/lib/board/format";
 import {
   dragPlayer,
   expect,
   expectBoard,
+  expectedPieces,
   fromMenu,
   OLD_KEY,
   openBoard,
@@ -31,8 +32,24 @@ async function openList(page: Page) {
   await expect(list(page)).toBeVisible();
 }
 
-/** Waits for the save after an edit (300 ms), so a reload comes after it. */
-const settled = (page: Page) => page.waitForTimeout(600);
+/**
+ * Waits until the address bar holds the board on the court. The editor
+ * decides whether to save just before it writes the link (300 ms after a
+ * change), so after this a check of storage or a reload sees that decision.
+ * Not a fixed wait: a CI machine is slower than a Mac.
+ */
+async function settled(page: Page) {
+  const drawn = (list: string[]) => [...list.filter((p) => !p.startsWith("arrow:")), `arrows:${list.filter((p) => p.startsWith("arrow:")).length}`].sort();
+  await expect
+    .poll(async () => {
+      const board = await decode(new URL(page.url()).hash.replace(/^#t=/, ""));
+      if (!board) return false;
+      const want = expectedPieces(board);
+      const inLink = drawn([...want.players, ...want.ball, ...Array.from({ length: want.arrows }, () => "arrow:")]);
+      return JSON.stringify(inLink) === JSON.stringify(drawn(await pieces(page)));
+    })
+    .toBe(true);
+}
 
 async function setTitle(page: Page, title: string) {
   await page.getByRole("button", { name: "Add title" }).click();
@@ -88,6 +105,9 @@ test.describe("your board from before My boards", () => {
     await list(page).getByTitle("More for Kruising", { exact: true }).click();
     await list(page).getByRole("button", { name: "Delete" }).click();
     expect(await savedBoards(page)).toEqual([]);
+    // The default lineup takes the deleted board's place, also in the address bar.
+    await expectBoard(page, defaultBoardFor("en"));
+    await settled(page);
 
     await page.reload();
     await expect(page.getByRole("toolbar", { name: "Tools" })).toBeVisible();
