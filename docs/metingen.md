@@ -1124,7 +1124,7 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
 | T1 | Open het bord, zet een aanval tegen een 6-0 neer, teken drie pijlen (loop, pass, loop) en deel de link in de teamapp | telefoon | ja |
 | T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | als vier losse borden; als route zodra het bord stappen heeft |
 | T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, twee pionnen, een bal en de kruising | telefoon | met spelers als pionnen; als route zodra het bord pionnen heeft |
-| T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf; als route zodra er meerdere borden te bewaren zijn |
+| T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf (route sinds Fase 12b); met Mijn borden zodra die er zijn |
 
 ### Meetmethode
 
@@ -1191,12 +1191,38 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 - `TAP_BUDGET` blijft 6 en 8. Elke tik gaat naar een knop die al in beeld staat.
 - ~~De seconden na Fase 12a meet Kay op de preview-URL (zie "Per taak en toestel" en "Fase 12a").~~ Vervallen (besluit Kay, 8 oktober 2026): geen seconden.
 
+### T4: nulmeting met links naar jezelf (Fase 12b, 8 oktober 2026)
+
+`main` @ `fb73f11`, in `e2e/tasks.spec.ts`. Twee toestellen in één test: een laptop (1280×720, eigen opslag) en de telefoon van het project.
+
+- **De borden:** drie keer de standaardopstelling met één looppijl, van LB, CB en RB (LO, MO en RO). Geen titel: typen telt per toets.
+- **Telt niet:** het bord openen, en alles buiten de pagina: het deelvenster, de link naar jezelf sturen, de link in de chat aantikken.
+
+| # | Handeling (laptop) |
+|--:|---|
+| 1 | Tik "Run" |
+| 2 | Sleep een looppijl vanaf LB |
+| 3 | Tik "Share" |
+| 4–5 | Meer → Standaardopstelling |
+| 6 | Sleep een looppijl vanaf CB |
+| 7 | Tik "Share" |
+| 8–11 | Hetzelfde voor RB |
+
+| Route | `/en/` | `/nl/` |
+|---|--:|--:|
+| T4 met links naar jezelf | **11** | **11** |
+
+- Op de telefoon kost het niets: elke link opent zijn bord. De test controleert dat.
+- Op de laptop blijft alleen bord 3 staan. Bord 1 en 2 bestaan alleen nog als link.
+- **Controle** (tijdelijk, niet gecommit): met het budget op 10 en op 12 faalt de test ("Expected: 10, Received: 11" en "Expected: 12, Received: 11").
+
 ### Doelen (besluit Kay, 2 oktober 2026)
 
 | Taak | Nulmeting (route) | Doel | `TAP_BUDGET` |
 |---|--:|--:|--:|
 | T1 | 6 handelingen | **5** | 6 |
-| T2, T3, T4 | — | zodra hun route bestaat | — |
+| T4, met links naar jezelf | 11 handelingen | Kay kiest, na de route met Mijn borden (Fase 12b) | 11 |
+| T2, T3 | — | zodra hun route bestaat | — |
 
 - **Het budget blijft 6** tot een fase de route echt korter maakt. Die fase verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
 - ~~**Doelen in seconden** volgen na de stopwatch (geparkeerd).~~ Vervallen (besluit Kay, 8 oktober 2026): alleen doelen in handelingen.
@@ -2144,3 +2170,16 @@ Vóór: productie (`main` @ `4c6368b`), drie runs per URL met het commando uit d
 ### Preview-URL
 
 `https://fase-12a-indeling-coachboard.hardamkay.workers.dev`
+
+
+## Fase 12b-1: metingen en T4-nulmeting (8 oktober 2026)
+
+Branch `fase-12b1-metingen`, vanaf `main` @ `fb73f11`. Eerste van drie PR's voor Fase 12b (Mijn borden). De app verandert niet.
+
+- **Seconden en de stopwatch** zijn overal doorgehaald waar ze nog als open punt stonden (besluit Kay, 8 oktober 2026). Gemeten getallen blijven staan.
+- **T4** heeft een route: 11 handelingen met links naar jezelf (zie "UX-metingen").
+- `e2e/helpers.ts`: `stubBeacon()` vangt de beacon af in een context die een test zelf maakt, zoals de laptop van T4.
+- **Groottes:** gelijk, `npm run budget` geeft dezelfde tabel als na Fase 12a.
+- **Tests:**
+  - `npm run verify` groen, zoals vóór;
+  - `npm run e2e`: 396 → 400 geslaagd, 2 overgeslagen. Dat zijn de twee T4-routes (en, nl), elk in twee browsers.

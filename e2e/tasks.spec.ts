@@ -1,8 +1,8 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Browser, Locator, Page } from "@playwright/test";
 import { defaultBoardFor } from "../src/lib/board/defaults";
 import { decode } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
-import { expect, moreButton, openBoard, saveOwnBoard, test } from "./helpers";
+import { expect, expectBoard, moreButton, openBoard, saveOwnBoard, stubBeacon, test } from "./helpers";
 
 // The tap budget: the shortest route for each measured task, counted in
 // actions (every tap, drag and key press is one). The count must equal the
@@ -17,6 +17,8 @@ const TAP_BUDGET = {
   T1: 6,
   // T1 for a returning coach: their own board is on the court first.
   "T1 with your own board": 8,
+  // T4: three boards prepared on a laptop and opened on the phone, sent as links to yourself.
+  "T4 as links to yourself": 11,
 };
 
 /** Counts the actions of a route. Every tap is on a button that's already on screen. */
@@ -68,6 +70,14 @@ async function stubShareSheet(page: Page) {
   return () => page.evaluate(() => (window as unknown as { shared: string[] }).shared);
 }
 
+/** A laptop next to the project's phone: a second device with its own storage, and a stubbed share sheet. */
+async function laptop(browser: Browser, baseURL: string | undefined) {
+  const context = await browser.newContext({ baseURL, viewport: { width: 1280, height: 720 } });
+  await stubBeacon(context);
+  const page = await context.newPage();
+  return { context, page, shared: await stubShareSheet(page) };
+}
+
 // Players in the default lineup: 0 LW, 1 LB, 2 CB, 3 RB, 4 RW, 5 P (in Dutch LH, LO, MO, RO, RH, CL).
 const [LB, CB, RB] = [1, 2, 3];
 
@@ -117,5 +127,42 @@ for (const lang of ["en", "nl"]) {
 
     await expectSharedT1(shared, lang);
     expect(steps.count).toBe(TAP_BUDGET["T1 with your own board"]);
+  });
+
+  // T4: prepare a training on the laptop and open it on the phone the next day.
+  // Three boards, each the default lineup with one run (from LB, CB and RB).
+  // No titles: typing counts per key and would measure the typing. The boards
+  // go to the phone as links to yourself: Share, then a chat or mail, which is
+  // outside the page and doesn't count, nor does tapping a link there.
+  test(`T4 (${lang}): three boards from the laptop to the phone, as links to yourself`, async ({ browser, baseURL, page }) => {
+    const desk = await laptop(browser, baseURL);
+    await openBoard(desk.page, "", `/${lang}/board/`);
+    const steps = route(desk.page);
+    const runs = [LB, CB, RB];
+
+    await steps.tap(desk.page.getByRole("toolbar", { name: t(lang, "board.tools") }).getByRole("button", { name: t(lang, "board.tool.run") }));
+    for (const [i, player] of runs.entries()) {
+      if (i > 0) {
+        // The next board starts from the default lineup, in place of the one before.
+        await steps.tap(moreButton(desk.page, lang));
+        await steps.tap(desk.page.getByRole("button", { name: t(lang, "board.resetLineup") }));
+      }
+      await steps.drag(player, 0, -40);
+      await steps.tap(desk.page.getByRole("button", { name: t(lang, "board.share") }));
+    }
+
+    // The next day, on the phone: each link opens its board.
+    await expect.poll(desk.shared).toHaveLength(runs.length);
+    for (const [i, link] of (await desk.shared()).entries()) {
+      const url = new URL(link);
+      expect(url.pathname).toBe(`/${lang}/board/link/`);
+      const board = (await decode(url.hash.replace(/^#t=/, "")))!;
+      expect(board.frames[0]!.players).toEqual(defaultBoardFor(lang).frames[0]!.players);
+      expect(board.frames[0]!.arrows).toMatchObject([{ kind: "run", from: runs[i] }]);
+      await openBoard(page, url.hash, url.pathname);
+      await expectBoard(page, board);
+    }
+    expect(steps.count).toBe(TAP_BUDGET["T4 as links to yourself"]);
+    await desk.context.close();
   });
 }
