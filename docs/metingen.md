@@ -2096,9 +2096,9 @@ Gzip -9, vóór (`main` @ `4c6368b`) en na:
 | `BoardEditor` (JS) | 10.853 B | 11.115 B |
 | Svelte-runtime (`client`) | 15.374 B | 15.613 B |
 | CSS van de site (`BaseLayout`) | 1.668 B | 1.658 B |
-| CSS van het bord (`BoardPage`) | 1.412 B | 2.169 B |
-| HTML `/nl/board/` | 5.577 B | 5.389 B |
-| HTML `/en/board/` | 5.506 B | 5.321 B |
+| CSS van het bord (`BoardPage`) | 1.412 B | 2.183 B |
+| HTML `/nl/board/` | 5.577 B | 5.487 B |
+| HTML `/en/board/` | 5.506 B | 5.421 B |
 
 `npm run budget`:
 
@@ -2108,20 +2108,20 @@ Gzip -9, vóór (`main` @ `4c6368b`) en na:
 | Alle JS in `_astro/` | 31,1 KB | 31,6 KB | 32,5 KB |
 | CSS bordpagina | 3,1 KB | 3,8 KB | 3,3 → **4,0 KB** (`boardCss`) |
 | CSS contentpagina | 1,7 KB | 1,7 KB | 2,0 KB |
-| HTML `/nl/board/` | 5,6 KB | 5,4 KB | 6,5 KB |
+| HTML `/nl/board/` | 5,6 KB | 5,5 KB | 6,5 KB |
 
 - **JS +0,5 KB** (schatting in het plan: +0,35 tot 0,65 KB):
   - de editor +0,26 KB (titelbalk, titel wijzigen, Meer, Verwijderen bij een selectie);
   - de Svelte-runtime +0,24 KB, voor de nieuwe sjabloononderdelen (`use:`, `class:`).
   - Onder het budget voor alle JS blijft 0,95 KB vrij (besluit 8).
-- **CSS +0,76 KB:** de titelbalk, het menu, de pil, en de liggende en brede indeling. `boardCss` gaat van 3,3 naar 4,0 KB: de meting plus 0,2 KB (akkoord Kay).
-- **HTML −0,2 KB:** de siteheader staat niet meer op de bordpagina's.
+- **CSS +0,77 KB:** de titelbalk, het menu, de pil, en de liggende en brede indeling. `boardCss` gaat van 3,3 naar 4,0 KB: de meting plus 0,2 KB (akkoord Kay).
+- **HTML −0,1 KB:** de siteheader staat niet meer op de bordpagina's (−0,2 KB). De fallback heeft er een titel bij (+0,1 KB, zie Lighthouse).
 - Interne links: 300 → 290 (de siteheader op de zes bordpagina's).
 
 ### Tests
 
 - `npm run verify` groen: 162 → 167 unittests (`setTitle()` in `edit.test.ts`), 23 pagina's, 290 interne links.
-- `npm run e2e`: 367 → 395 geslaagd, 1 overgeslagen.
+- `npm run e2e`: 367 → 396 geslaagd; overgeslagen 1 → 2 (de LCP-test draait alleen in Chromium: WebKit kent geen LCP-metingen).
   - `e2e/layout.spec.ts`:
     - alles in beeld en minstens 44 px hoog, staand, liggend en breed;
     - geen siteheader, de Home-link in beeld;
@@ -2153,4 +2153,24 @@ Vóór: productie (`main` @ `4c6368b`), drie runs per URL met het commando uit d
 | `/nl/board/` | 100 | 100 | 100 | 100 | 0,82 / 0,82 / 0,80 s | 0 | 0 ms | 57,5 KB |
 | `/en/board/` | 100 | 100 | 100 | 100 | 0,80 / 0,80 / 0,80 s | 0 | 0 ms | 57,5 KB |
 
-Na: volgt op de preview-URL.
+**Na:** de preview-URL van deze branch, op dezelfde manier. SEO is 66 op elke preview-URL, door `X-Robots-Tag: noindex`.
+
+| URL | Performance | Accessibility | Best Practices | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` | 100 | 100 | 100 | 0,96 / 0,81 / 0,86 s | 0 | 0 ms | 59,3 KB |
+| `/en/board/` | 100 | 100 | 100 | 0,81 / 0,82 / 0,82 s | 0 | 0 ms | 59,2 KB |
+
+**Gevonden en opgelost: de LCP wachtte op de JS.**
+
+- Vóór was het LCP-element het logo in de siteheader, dat met de HTML verschijnt. Zonder siteheader werd het de tekst "Titel toevoegen" in de titelbalk van de editor, die pas met de JS komt.
+- De eerste meting op de preview gaf:
+  - gesimuleerd: LCP 1,89 tot 2,02 s, Performance 98 tot 100;
+  - met echte vertraging (`--throttling-method=devtools`): FCP 1,29 s en LCP 2,54 s. Dat is boven de grens van 2,5 s. Productie, op dezelfde manier: 1,30 s, gelijk aan de FCP.
+- **De oplossing:** de titelbalk van de fallback toont dezelfde tekst, even groot. Die verschijnt met de HTML, en de editor maakt hem niet groter.
+- **Na de oplossing,** met echte vertraging: `/nl/board/` FCP = LCP = 1,29 s, `/en/board/` 1,32 s, telkens op de tekst van de fallback.
+- **Test:** `e2e/layout.spec.ts` houdt de scripts vast en eist dat de LCP op de fallback blijft (alleen in Chromium). Zonder de oplossing faalt hij.
+- **Blijft over:** heeft het bord een titel die breder is dan "Titel toevoegen", dan wordt die titel een latere LCP. Dat geldt voor een eigen bord met titel, of een gedeelde link met titel. Zulke borden komen er pas veel bij Fase 14; de kijkmodus (Fase 15) krijgt eigen pagina's. Volg het met de Core Web Vitals van echte bezoekers (Fase 8b).
+
+### Preview-URL
+
+`https://fase-12a-indeling-coachboard.hardamkay.workers.dev`
