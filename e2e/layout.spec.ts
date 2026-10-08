@@ -1,7 +1,8 @@
 import { devices, type Page } from "@playwright/test";
-import { defaultBoard } from "../src/lib/board/defaults";
+import { defaultBoard, defaultBoardFor } from "../src/lib/board/defaults";
 import { MAX_TITLE } from "../src/lib/board/format";
-import { expect, fromMenu, moreButton, openBoard, STORAGE_KEY, test } from "./helpers";
+import { t } from "../src/i18n/ui";
+import { expect, fromMenu, moreButton, OLD_KEY, openBoard, STORE_KEY, test } from "./helpers";
 
 // Finding 1 and 2 in docs/metingen.md: the court scaled to the screen's width
 // only, so the full court (and, in landscape, the half court too) pushed both
@@ -147,7 +148,7 @@ for (const orientation of ORIENTATIONS) {
     await orient(page, orientation);
     await openBoard(page);
     await moreButton(page).click();
-    for (const name of ["QR code", "Full court", "Clear arrows and ball", "Default lineup", "Empty court"]) {
+    for (const name of ["My boards", "New board", "QR code", "Full court", "Clear arrows and ball", "Default lineup", "Empty court"]) {
       await expect(page.getByRole("button", { name, exact: true })).toBeInViewport({ ratio: 1 });
     }
   });
@@ -206,7 +207,7 @@ test("a long title gets an ellipsis and pushes no button off screen", async ({ p
   const title = "Kruising MO–LO met een blok van de cirkel";
   await page.addInitScript(
     ([key, board]) => localStorage.setItem(key, JSON.stringify(board)),
-    [STORAGE_KEY, { ...defaultBoard, title: title.slice(0, MAX_TITLE) }] as const,
+    [OLD_KEY, { ...defaultBoard, title: title.slice(0, MAX_TITLE) }] as const,
   );
   await openBoard(page);
   const shown = page.locator(".title span");
@@ -260,4 +261,66 @@ test("the largest text paints with the HTML, not after the editor's JS", async (
   // The editor's title is no larger, so it doesn't become a later LCP.
   await page.waitForTimeout(300);
   expect(await lcp()).toEqual(["fallback"]);
+});
+
+/** Three boards in My boards before the page loads: two in a folder, one with a long title, one without. */
+async function withBoards(page: Page, lang: string) {
+  const board = (x: number, title?: string) => {
+    const b = defaultBoardFor(lang);
+    b.frames[0]!.players[1]!.at = [x, 100];
+    if (title) b.title = title;
+    return b;
+  };
+  const store = {
+    current: "a",
+    boards: [
+      { id: "a", board: board(40, "Kruising MO–LO"), folder: "Training dinsdag", at: 3 },
+      { id: "b", board: board(50, "Opwarmen in drie rijen met twee ballen"), folder: "Training dinsdag", at: 2 },
+      { id: "c", board: board(60), at: 1 },
+    ],
+  };
+  await page.addInitScript(([key, value]) => localStorage.setItem(key, value), [STORE_KEY, JSON.stringify(store)] as const);
+}
+
+for (const lang of ["en", "nl"]) {
+  for (const orientation of ORIENTATIONS) {
+    test(`${lang}, ${orientation}: My boards fits, every button is big enough, and no label is cut off`, async ({ page }) => {
+      await orient(page, orientation);
+      await withBoards(page, lang);
+      await openBoard(page, "", `/${lang}/board/`);
+      await fromMenu(page, "board.myBoards", lang);
+      const list = page.getByRole("dialog", { name: t(lang, "board.myBoards") });
+      await expect(list).toBeVisible();
+      const newBoard = list.getByRole("button", { name: t(lang, "board.newBoard"), exact: true });
+      for (const button of [newBoard, list.getByRole("button", { name: t(lang, "board.close") })]) {
+        await expect(button).toBeInViewport({ ratio: 1 });
+      }
+      // Landscape: New board sits in the bar beside the heading, so more boards fit.
+      if (orientation === "landscape") {
+        const [bar, button] = await Promise.all([list.locator(".boards-bar").boundingBox(), newBoard.boundingBox()]);
+        expect(button!.y + button!.height).toBeLessThanOrEqual(bar!.y + bar!.height);
+      }
+      await list.locator("summary").first().click();
+      for (const button of await list.locator(":is(button, summary):visible").all()) {
+        expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+      }
+      const cut = await list
+        .locator(":is(h2, h3, .new, .actions-panel button)")
+        .evaluateAll((els) => els.filter((e) => e.clientWidth > 1 && e.scrollWidth > e.clientWidth).map((e) => e.textContent));
+      expect(cut).toEqual([]);
+      expect(await list.evaluate((d) => d.scrollWidth - d.clientWidth)).toBe(0);
+    });
+  }
+}
+
+test("wide, My boards is a panel on the right, and the tools stay in view beside it", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await withBoards(page, "en");
+  await openBoard(page);
+  await fromMenu(page, "board.myBoards");
+  const panel = (await page.getByRole("dialog", { name: "My boards" }).boundingBox())!;
+  expect(panel.width).toBeLessThanOrEqual(440);
+  expect(panel.x + panel.width).toBeCloseTo(WIDE.width, 0);
+  const tools = (await page.getByRole("toolbar", { name: "Tools" }).boundingBox())!;
+  expect(tools.x + tools.width).toBeLessThanOrEqual(panel.x);
 });

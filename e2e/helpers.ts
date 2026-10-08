@@ -2,6 +2,7 @@ import { readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { test as base, expect, type BrowserContext, type Page } from "@playwright/test";
 import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
+import { STORE_KEY } from "../src/lib/board/boards";
 import { toBoard, type Board, type BoardV1 } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
 
@@ -42,7 +43,8 @@ export const test = base.extend<{ beacon: { sent: string[] } }>({
   ],
 });
 
-export const STORAGE_KEY = "coachboard.board";
+/** My boards in localStorage, and the one board earlier versions kept (src/lib/board/boards.ts). */
+export { OLD_KEY, STORE_KEY } from "../src/lib/board/boards";
 
 /** Every page in the build, plus a URL that gets the 404 page. The webServer builds before the tests run. */
 export function allPages(): string[] {
@@ -141,8 +143,20 @@ export async function watchViolations(page: Page) {
   return () => page.evaluate(() => (window as unknown as { cspViolations: string[] }).cspViolations);
 }
 
+/**
+ * The boards in My boards as JSON, or null before the list exists. Opening a
+ * board doesn't change it; saving or deleting one does.
+ */
 export function saved(page: Page) {
-  return page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
+  return page.evaluate((key) => {
+    const raw = localStorage.getItem(key);
+    return raw === null ? null : JSON.stringify(JSON.parse(raw).boards);
+  }, STORE_KEY);
+}
+
+/** The boards in My boards, parsed. */
+export async function savedBoards(page: Page): Promise<{ id: string; board: Board; folder?: string }[]> {
+  return JSON.parse((await saved(page)) ?? "[]");
 }
 
 /** The `#t=` link in the address bar. */
@@ -153,11 +167,10 @@ export async function linkInAddressBar(page: Page) {
 
 /**
  * Makes and saves a board of your own: moves the pivot, which no other piece
- * covers, and waits until that move (not the default lineup) is in storage.
+ * covers, and waits until it is in My boards (an untouched lineup isn't saved).
  */
 export async function saveOwnBoard(page: Page) {
   await openBoard(page);
-  await expect.poll(() => saved(page)).not.toBeNull();
   const before = await saved(page);
   await dragPlayer(page, 5, 30, 30);
   await expect.poll(() => saved(page)).not.toBe(before);

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { analyticsToken, beaconSrc } from "../src/data/analytics";
 import type { BoardV1 } from "../src/lib/board/format";
-import { dragPlayer, expect, expectBoard, linkInAddressBar, openBoard, STORAGE_KEY, test, watchViolations } from "./helpers";
+import { dragPlayer, expect, expectBoard, linkInAddressBar, openBoard, STORE_KEY, test, watchViolations } from "./helpers";
 
 // The statistics beacon (Cloudflare Web Analytics) on the board pages; see
 // src/components/Beacon.astro. Other specs answer it with an empty script.
@@ -31,9 +31,9 @@ test("the real beacon sends no board and stores nothing", async ({ page, context
   await openBoard(page, `?via=test#t=${fixture.link}`, "/en/board/link/");
   await expectBoard(page, fixture.board);
   await dragPlayer(page, 5, 30, 30);
-  // The edit is saved: the board's key is the only thing in storage.
+  // The edit is saved: My boards' key is the only thing in storage.
   const storage = () => page.evaluate(() => ({ local: Object.keys(localStorage), session: sessionStorage.length }));
-  await expect.poll(storage).toEqual({ local: [STORAGE_KEY], session: 0 });
+  await expect.poll(storage).toEqual({ local: [STORE_KEY], session: 0 });
   expect(await violations()).toEqual([]);
 
   // The beacon sends on load and again when the page is left. WebKit doesn't

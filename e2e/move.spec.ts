@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { toBoard, type BoardV1 } from "../src/lib/board/format";
-import { dragPlayer, expect, expectBoard, pieces, saved, STORAGE_KEY, test } from "./helpers";
+import { dragPlayer, expect, expectBoard, OLD_KEY, pieces, saved, savedBoards, test } from "./helpers";
 
 // The board on the old production host sends you to handballcoachboard.com
 // (the script in board.astro). These hosts are served from wrangler dev, so
@@ -38,7 +38,7 @@ async function openAt(page: Page, url: string) {
 /** Saves a board in the old host's storage, from a content page (no redirect). Boards there are version 1. */
 async function saveOnOldHost(page: Page, board: BoardV1) {
   await page.goto(`${OLD}/en/`);
-  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [STORAGE_KEY, JSON.stringify(board)]);
+  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [OLD_KEY, JSON.stringify(board)]);
 }
 
 test("a workers.dev link opens on handballcoachboard.com with the same board", async ({ page }) => {
@@ -54,15 +54,14 @@ test("your own board on workers.dev comes along and is saved on the new domain",
   await openAt(page, `${OLD}/en/board/`);
   await expect(page).toHaveURL(new RegExp(`^${NEW}/en/board/`));
   await expectBoard(page, fixture.board);
-  // Saved as this version's board.
-  await expect.poll(async () => JSON.parse((await saved(page)) ?? "null")).toEqual(toBoard(fixture.board));
+  // Saved in My boards, as this version's board.
+  await expect.poll(async () => (await savedBoards(page)).map((s) => s.board)).toEqual([toBoard(fixture.board)]);
   // #own= gives way to the usual link.
   await expect(page).toHaveURL(/#t=2\./);
 });
 
 test("a board already saved on the new domain wins over the one from workers.dev", async ({ page }) => {
   await openAt(page, `${NEW}/en/board/`);
-  await expect.poll(() => saved(page)).not.toBeNull();
   const before = await saved(page);
   await dragPlayer(page, 5, 30, 30);
   await expect.poll(() => saved(page)).not.toBe(before);

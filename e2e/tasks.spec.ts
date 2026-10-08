@@ -2,7 +2,7 @@ import type { Browser, Locator, Page } from "@playwright/test";
 import { defaultBoardFor } from "../src/lib/board/defaults";
 import { decode } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
-import { expect, expectBoard, moreButton, openBoard, saveOwnBoard, stubBeacon, test } from "./helpers";
+import { expect, expectBoard, moreButton, openBoard, savedBoards, saveOwnBoard, stubBeacon, test } from "./helpers";
 
 // The tap budget: the shortest route for each measured task, counted in
 // actions (every tap, drag and key press is one). The count must equal the
@@ -115,17 +115,20 @@ for (const lang of ["en", "nl"]) {
     expect(steps.count).toBe(TAP_BUDGET.T1);
   });
 
-  test(`T1 (${lang}) with your own board: back to the default lineup first`, async ({ page }) => {
+  test(`T1 (${lang}) with your own board: a new board first, which keeps yours`, async ({ page }) => {
     const shared = await stubShareSheet(page);
-    await saveOwnBoard(page);
+    const own = await saveOwnBoard(page);
     await openBoard(page, "", `/${lang}/board/`);
     const steps = route(page);
 
     await steps.tap(moreButton(page, lang));
-    await steps.tap(page.getByRole("button", { name: t(lang, "board.resetLineup") }));
+    await steps.tap(page.getByRole("button", { name: t(lang, "board.newBoard"), exact: true }));
     await drawAndShare(page, lang, steps);
 
     await expectSharedT1(shared, lang);
+    // Your own board is still in My boards, next to the new one.
+    await expect.poll(async () => (await savedBoards(page)).length).toBe(2);
+    expect(await savedBoards(page)).toContainEqual(JSON.parse(own)[0]);
     expect(steps.count).toBe(TAP_BUDGET["T1 with your own board"]);
   });
 
@@ -143,9 +146,9 @@ for (const lang of ["en", "nl"]) {
     await steps.tap(desk.page.getByRole("toolbar", { name: t(lang, "board.tools") }).getByRole("button", { name: t(lang, "board.tool.run") }));
     for (const [i, player] of runs.entries()) {
       if (i > 0) {
-        // The next board starts from the default lineup, in place of the one before.
+        // The next board is a new one: the one before stays in My boards.
         await steps.tap(moreButton(desk.page, lang));
-        await steps.tap(desk.page.getByRole("button", { name: t(lang, "board.resetLineup") }));
+        await steps.tap(desk.page.getByRole("button", { name: t(lang, "board.newBoard"), exact: true }));
       }
       await steps.drag(player, 0, -40);
       await steps.tap(desk.page.getByRole("button", { name: t(lang, "board.share") }));
@@ -163,6 +166,8 @@ for (const lang of ["en", "nl"]) {
       await expectBoard(page, board);
     }
     expect(steps.count).toBe(TAP_BUDGET["T4 as links to yourself"]);
+    // All three boards are kept on the laptop.
+    await expect.poll(async () => (await savedBoards(desk.page)).length).toBe(runs.length);
     await desk.context.close();
   });
 }
