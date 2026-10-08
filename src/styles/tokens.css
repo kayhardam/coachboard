@@ -6,7 +6,8 @@
  *   @media (min-width: 560px)  — large phone / small tablet
  *   @media (min-width: 860px)  — tablet landscape and up
  * The board alone also uses (orientation: landscape) and (max-height: 559px)
- * for a phone on its side.
+ * for a phone on its side, and (min-width: 860px) and (min-height: 560px) for
+ * wide screens, so a large phone on its side keeps the landscape layout.
  */
 :root {
   --color-primary: #0f172a; /* dark navy */
@@ -31,11 +32,14 @@
   --container: 1080px;
   --tap: 44px; /* minimum touch target */
 
-  /* The board's bars. The static fallback in board.astro reserves this space
-     too, so the court doesn't move when the editor loads. */
-  --board-bar: 48px; /* minimum height of a bar, portrait (its content: 46.1px) */
+  /* The board's bars. The static fallback in BoardPage.astro reserves this
+     space too, so the court doesn't move when the editor loads. */
+  --board-title: 56px; /* minimum height of the title bar, portrait (its buttons: 44px) */
+  --board-bar: 48px; /* minimum height of the tool bar, portrait (its content: 46.1px) */
   --board-gap: 6px;
-  --board-side: 64px; /* width of a bar, phone in landscape */
+  --board-tools: 118px; /* width of the tools panel, phone in landscape */
+  --board-panel: 146px; /* width of the title panel, phone in landscape */
+  --board-wide-side: 168px; /* width of the columns beside the court, wide screens */
 }
 
 @media (min-width: 560px) {

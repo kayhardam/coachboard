@@ -1,15 +1,17 @@
 import type { Page } from "@playwright/test";
-import { expect, openBoard, test } from "./helpers";
+import { expect, fromMenu, openBoard, test } from "./helpers";
 
-// On the full court a piece's drawn touch area is under 44 px on a phone
-// (29 px on an iPhone 15, 40 px on a Pixel 7); a press within 22 px of a
-// piece still takes it (src/lib/board/hit.ts). 21 px is outside the drawn
-// area on both.
+// On the full court a piece's drawn touch area is under 44 px on a phone:
+// 33 px across at 393×659 (an iPhone 15), where these tests run in both
+// browsers; a press within 22 px of a piece still takes it
+// (src/lib/board/hit.ts). 21 px is outside the drawn area there. On a taller
+// phone (a Pixel 7) the full court is larger, and the drawn area is about 44 px.
 const BESIDE = 21;
+test.use({ viewport: { width: 393, height: 659 } });
 
 async function fullCourt(page: Page) {
   await openBoard(page);
-  await page.getByTitle("Full court").click();
+  await fromMenu(page, "board.fullCourt");
 }
 
 /** Screen centre of a player. */

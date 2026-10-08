@@ -54,6 +54,17 @@ export async function openBoard(page: Page, hash = "", path = "/en/board/") {
   await expect(page.getByRole("toolbar", { name: t(lang, "board.tools") })).toBeVisible();
 }
 
+/** The title bar's More button, which opens the menu with the QR code, the court size and clearing. */
+export function moreButton(page: Page, lang = "en") {
+  return page.getByTitle(t(lang, "board.more"), { exact: true });
+}
+
+/** Opens the More menu and picks `item` (a key of src/i18n/ui.ts). */
+export async function fromMenu(page: Page, item: Parameters<typeof t>[1], lang = "en") {
+  await moreButton(page, lang).click();
+  await page.getByRole("button", { name: t(lang, item), exact: true }).click();
+}
+
 /**
  * The pieces the editor draws, as `kind:index:position`. Links are compared by
  * what they draw, not by their text: compression may give other bytes per browser.

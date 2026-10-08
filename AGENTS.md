@@ -52,13 +52,13 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
   - `lang` and `og:locale` from the page's locale;
   - hreflang for each language in `languages` (every language unless the page passes fewer, as tactic and category pages do) + `x-default` to the English page. Translations share the path after the prefix;
   - `noindex` (the 404, `board/link/`, `board/qr/`) drops canonical, `og:url` and hreflang.
-- `BaseLayout` renders `Header`, `<main id="main">` and `Footer`. With `fullscreen` (the board page) the body fills the viewport and there is no footer. The footer has the language links on every content page; a language the page doesn't exist in links to its home page.
+- `BaseLayout` renders `Header`, `<main id="main">` and `Footer`. With `fullscreen` (the board pages) the body fills the viewport and there is no site header or footer: the board has its own title bar. The footer has the language links on every content page; a language the page doesn't exist in links to its home page.
 - `404.astro` is one page for the whole site (the host serves `dist/404.html` for any missing path), so it shows the text in every language.
 - Menu and footer links come from `src/data/nav.ts`. Labels and short page texts come from `t(locale, key)` in `src/i18n/ui.ts`; `t(locale, key, { title })` fills `{title}` placeholders.
 - The site owner's name and contact address are in `src/data/site.ts` (about and privacy pages).
 - English is the source dictionary. A language may leave keys out (they fall back to English per key), but a launched one shouldn't: Dutch is typed `Record<UiKey, string>`, so `npm run check` fails on a missing key.
 - Long page text (about, privacy) lives per language in `src/i18n/pages/<page>/<lang>.astro`; the page in `src/pages/[lang]/` keeps the layout and styles (with `:global()`, since scoped styles don't reach a child component). `pageText()` fails the build for a language without its file, so no English shows under `/nl/`.
-- Board labels must fit: a tool has about 40 px and an action about 48 px for its label on a 360 px phone. The action bar shows the `board.*Short` keys and keeps the full text as `title`. `e2e/layout.spec.ts` fails on a label cut off by its ellipsis, per language.
+- Board labels must fit: a tool has about 40 px for its label on a 360 px phone, and Share's label sits in the title bar beside the title. Undo and More show only their icon, except in landscape (`.label`). `e2e/layout.spec.ts` fails on a label cut off by its ellipsis, per language, in portrait, landscape and wide.
 - Astro's HTML compression drops a line break between text and an inline tag on the next line ("See the" + newline + `<a>` renders as "See the<a>"). Start the tag on the same line as the text before it.
 
 ## Copy
@@ -80,7 +80,10 @@ New or changed site text is agreed with Kay first. Take it over literally. If a 
   - `src/styles/tokens.css`: custom properties;
   - `src/styles/base.css`: reset, typography, focus ring, `.container`, `.btn`, `.btn-primary`, `.btn-secondary`.
 - **Everything else is a scoped `<style>`** in the component or page. No inline `style` attributes.
-- **Mobile-first.** Base styles are for phones. Wider layouts go in `@media (min-width: 560px)` or `@media (min-width: 860px)`, and only those two. The one exception is the board on a phone in landscape: `@media (orientation: landscape) and (max-height: 559px)` (in `BoardEditor.svelte`, `BaseLayout.astro` and `BoardPage.astro`).
+- **Mobile-first.** Base styles are for phones. Wider layouts go in `@media (min-width: 560px)` or `@media (min-width: 860px)`, and only those two. The exceptions are on the board (`BoardEditor.css` and `BoardPage.astro`):
+  - a phone in landscape: `@media (orientation: landscape) and (max-height: 559px)`;
+  - wide screens: `@media (min-width: 860px) and (min-height: 560px)`, so a large phone in landscape (863 px wide) keeps the landscape layout;
+  - the title shows only its pencil below 60 px of room: `@container (max-width: 60px)` on the title button.
 - **Green behind or as text** uses `--color-accent-dark` (5.0:1 on white). `--color-accent` is for fills and icons only (3.3:1).
 - **Touch targets** are at least `var(--tap)` (44px) high.
 - **The narrow-screen menu** is a `<details>` element, without JavaScript. Content pages ship no JS: `scripts/check-budget.mjs` fails on any `<script>` (JSON-LD excepted), `<astro-island>` or modulepreload outside the board pages (see "Board pages" under The board). On those, the only script from another origin it allows is the statistics beacon, once.
@@ -113,8 +116,9 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 - **`BoardEditor.svelte`:**
   - it runs `client:only` on the board pages only;
   - its CSS is a stylesheet, `BoardEditor.css`, imported by `BoardPage.astro` only, so Astro links it on the board pages only and it stays out of the board's JS. Svelte doesn't scope it: every rule starts at `.editor`, or at `.qr` for the QR dialog next to it. Keep its styles out of the `.svelte` file: a `<style>` there would go into the bundle of every page, or into the JS with `css="injected"`;
-  - the court fits the space the bars leave (letterboxed), in portrait and landscape; in landscape the header is hidden and the bars become columns at the sides, with a Home link in the right one. `e2e/layout.spec.ts` checks that every button stays on screen;
-  - the static fallback in `BoardPage.astro` reserves the bars' space with the same tokens (`--board-bar`, `--board-gap`, `--board-side` in `tokens.css`), so the court doesn't move when the editor replaces it. Change the editor's box and the fallback's together; `e2e/layout.spec.ts` allows 1 px;
+  - a title bar takes the site header's place: Home, the title (tap to edit, `setTitle()` in `edit.ts`), Undo, Share and More. More (a `<details>`) holds the QR code, the court size and the three ways to clear, flat, so the T1 route with your own board stays two taps to the default lineup. Delete shows only with a selection, over the top right of the court's box (in landscape: below the right panel), so it never moves or covers the court;
+  - the court fits the space the bars leave (letterboxed), in three layouts: portrait (title bar, court, tools); a phone in landscape (tools panel left, title panel right, both with labels); wide (title bar across, tools column left, a free column right for the steps). `e2e/layout.spec.ts` checks that every button stays on screen and is at least 44 px high;
+  - the static fallback in `BoardPage.astro` reserves the bars' space with the same tokens (`--board-title`, `--board-bar`, `--board-gap`, `--board-tools`, `--board-panel`, `--board-wide-side` in `tokens.css`), so the court doesn't move when the editor replaces it, and has the title bar's Home link, for the way back without JavaScript. Change the editor's box and the fallback's together; `e2e/layout.spec.ts` allows 1 px;
   - its strings come in as a prop from `boardStrings()` in `ui.ts`, the paths for Share and the QR code as `links`, and the default lineup in the page's language as `lineup` (`defaultBoardFor(lang)` in `src/lib/board/defaults.ts`: LW, LB, CB, RB, RW, P, GK in English; LH, LO, MO, RO, RH, CL, K in Dutch). Astro passes props as `$state`, a proxy that `structuredClone()` can't copy, so the editor copies `lineup` once with JSON;
   - it loads `#t=` first, then `localStorage` (`coachboard.board`), then `#own=` (see below), then the default lineup;
   - every change is written to both (300 ms debounce), so the address bar is always a shareable link;

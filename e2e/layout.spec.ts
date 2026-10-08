@@ -1,5 +1,7 @@
 import { devices, type Page } from "@playwright/test";
-import { expect, openBoard, test } from "./helpers";
+import { defaultBoard } from "../src/lib/board/defaults";
+import { MAX_TITLE } from "../src/lib/board/format";
+import { expect, fromMenu, moreButton, openBoard, STORAGE_KEY, test } from "./helpers";
 
 // Finding 1 and 2 in docs/metingen.md: the court scaled to the screen's width
 // only, so the full court (and, in landscape, the half court too) pushed both
@@ -12,16 +14,27 @@ function landscape() {
   return devices[phone]!.viewport;
 }
 
+/** A laptop: the wide layout. */
+const WIDE = { width: 1280, height: 720 };
+
+type Orientation = "portrait" | "landscape" | "wide";
+const ORIENTATIONS: Orientation[] = ["portrait", "landscape", "wide"];
+
+async function orient(page: Page, orientation: Orientation) {
+  if (orientation === "landscape") await page.setViewportSize(landscape());
+  if (orientation === "wide") await page.setViewportSize(WIDE);
+}
+
 async function toCourt(page: Page, court: "half" | "full") {
-  if (court === "full") {
-    // evaluate(): before the fix this button was off screen, and click() would scroll to it.
-    await page.locator('.editor [title="Full court"]').evaluate((b: HTMLElement) => b.click());
-  }
+  if (court === "full") await fromMenu(page, "board.fullCourt");
 }
 
 async function expectEverythingOnScreen(page: Page) {
   for (const button of await page.locator(".editor [role=toolbar] :is(button, summary, a):visible").all()) {
     await expect(button).toBeInViewport({ ratio: 1, timeout: 2000 });
+    // A tap target is at least 44 px high (--tap); the title is text, and may be lower.
+    const { height } = (await button.boundingBox())!;
+    if (!(await button.evaluate((b) => b.classList.contains("title")))) expect(height).toBeGreaterThanOrEqual(43.5);
   }
   await expect(page.locator(".stage svg")).toBeInViewport({ ratio: 1 });
   const overflow = await page.evaluate(() => {
@@ -31,19 +44,18 @@ async function expectEverythingOnScreen(page: Page) {
   expect(overflow).toEqual({ x: 0, y: 0 });
 }
 
-for (const court of ["half", "full"] as const) {
-  test(`portrait, ${court} court: every button and the whole court are on screen`, async ({ page }) => {
-    await openBoard(page);
-    await toCourt(page, court);
-    await expectEverythingOnScreen(page);
-  });
+/** The court's surface, not the <svg>: that fills its box and letterboxes the court in it. */
+const surface = (page: Page) => page.locator(".stage svg > rect:first-of-type").boundingBox();
 
-  test(`landscape, ${court} court: every button and the whole court are on screen`, async ({ page }) => {
-    await page.setViewportSize(landscape());
-    await openBoard(page);
-    await toCourt(page, court);
-    await expectEverythingOnScreen(page);
-  });
+for (const orientation of ORIENTATIONS) {
+  for (const court of ["half", "full"] as const) {
+    test(`${orientation}, ${court} court: every button and the whole court are on screen`, async ({ page }) => {
+      await orient(page, orientation);
+      await openBoard(page);
+      await toCourt(page, court);
+      await expectEverythingOnScreen(page);
+    });
+  }
 }
 
 test("turning the phone to landscape keeps everything on screen", async ({ page }) => {
@@ -53,31 +65,53 @@ test("turning the phone to landscape keeps everything on screen", async ({ page 
   await expectEverythingOnScreen(page);
 });
 
-test("in landscape the header makes way, and the bar links home", async ({ page }) => {
+test("the title bar takes the site header's place and links home, in both orientations", async ({ page }) => {
   await openBoard(page);
   const home = page.getByRole("link", { name: "Home" });
-  await expect(page.locator(".site-header")).toBeVisible();
-  await expect(home).toBeHidden();
-
-  await page.setViewportSize(landscape());
-  await expect(page.locator(".site-header")).toBeHidden();
+  await expect(page.locator(".site-header")).toHaveCount(0);
   await expect(home).toBeInViewport({ ratio: 1 });
   await expect(home).toHaveAttribute("href", "/en/");
-  // The tools on the left, the actions on the right, the court between them.
-  const [tools, court, actions] = await Promise.all(
+  // Portrait: the title bar above the court, the tools below it.
+  const [bar, court, tools] = await Promise.all(
+    [page.getByRole("toolbar", { name: "Actions" }), page.locator(".stage svg"), page.getByRole("toolbar", { name: "Tools" })].map(
+      async (l) => (await l.boundingBox())!,
+    ),
+  );
+  expect(bar.y + bar.height).toBeLessThanOrEqual(court.y);
+  expect(court.y + court.height).toBeLessThanOrEqual(tools.y);
+
+  await page.setViewportSize(landscape());
+  await expect(home).toBeInViewport({ ratio: 1 });
+  // Landscape: the tools on the left, the title bar's buttons on the right, the court between them.
+  const [left, middle, right] = await Promise.all(
     [page.getByRole("toolbar", { name: "Tools" }), page.locator(".stage svg"), page.getByRole("toolbar", { name: "Actions" })].map(
       async (l) => (await l.boundingBox())!,
     ),
   );
+  expect(left.x + left.width).toBeLessThanOrEqual(middle.x);
+  expect(middle.x + middle.width).toBeLessThanOrEqual(right.x);
+});
+
+test("wide, the title bar runs across the top and the tools stand beside the court", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await openBoard(page);
+  const [bar, tools, court] = await Promise.all(
+    [page.getByRole("toolbar", { name: "Actions" }), page.getByRole("toolbar", { name: "Tools" }), page.locator(".stage svg")].map(
+      async (l) => (await l.boundingBox())!,
+    ),
+  );
+  expect(bar.width).toBe(WIDE.width);
+  expect(bar.y + bar.height).toBeLessThanOrEqual(tools.y);
   expect(tools.x + tools.width).toBeLessThanOrEqual(court.x);
-  expect(court.x + court.width).toBeLessThanOrEqual(actions.x);
+  // Larger than the portrait layout gave a laptop (478 px, docs/metingen.md).
+  expect((await surface(page))!.width).toBeGreaterThan(520);
 });
 
 // Finding 14 in docs/metingen.md: the static fallback didn't reserve the bars'
 // space, so the court jumped when the editor replaced it.
-for (const orientation of ["portrait", "landscape"] as const) {
+for (const orientation of ORIENTATIONS) {
   test(`${orientation}: the court stays put when the editor loads`, async ({ page }) => {
-    if (orientation === "landscape") await page.setViewportSize(landscape());
+    await orient(page, orientation);
     // Hold the scripts, so the fallback stays on screen during this one page load.
     let release!: () => void;
     const gate = new Promise<void>((resolve) => (release = resolve));
@@ -88,14 +122,13 @@ for (const orientation of ["portrait", "landscape"] as const) {
 
     // "commit": the held scripts would keep the load event from firing.
     await page.goto("/en/board/", { waitUntil: "commit" });
-    // The court's surface, not the <svg>: that fills its box and letterboxes the court in it.
     const fallback = page.locator(".fallback svg > rect:first-of-type");
     await expect(fallback).toBeInViewport({ ratio: 1 });
     const before = (await fallback.boundingBox())!;
 
     release();
     await expect(page.getByRole("toolbar", { name: "Tools" })).toBeVisible();
-    const after = (await page.locator(".stage svg > rect:first-of-type").boundingBox())!;
+    const after = (await surface(page))!;
 
     const moved = {
       x: Math.abs(after.x - before.x),
@@ -109,31 +142,122 @@ for (const orientation of ["portrait", "landscape"] as const) {
   });
 }
 
-for (const orientation of ["portrait", "landscape"] as const) {
-  test(`${orientation}: the Clear menu opens on screen`, async ({ page }) => {
-    if (orientation === "landscape") await page.setViewportSize(landscape());
+for (const orientation of ORIENTATIONS) {
+  test(`${orientation}: the More menu opens on screen`, async ({ page }) => {
+    await orient(page, orientation);
     await openBoard(page);
-    await page.getByTitle("Clear").click();
-    for (const name of ["Clear arrows and ball", "Default lineup", "Empty court"]) {
-      await expect(page.getByRole("button", { name })).toBeInViewport({ ratio: 1 });
+    await moreButton(page).click();
+    for (const name of ["QR code", "Full court", "Clear arrows and ball", "Default lineup", "Empty court"]) {
+      await expect(page.getByRole("button", { name, exact: true })).toBeInViewport({ ratio: 1 });
     }
+  });
+
+  test(`${orientation}: Delete is there only with a selection, and it neither moves nor covers the court`, async ({ page }) => {
+    await orient(page, orientation);
+    await openBoard(page);
+    const remove = page.getByRole("button", { name: "Delete" });
+    await expect(remove).toHaveCount(0);
+    const before = (await surface(page))!;
+
+    // Move is the tool on opening: a tap on the pivot selects them.
+    await page.locator('.stage [data-kind="player"][data-index="5"]').click();
+    await expect(remove).toBeInViewport({ ratio: 1 });
+    expect(await surface(page)).toEqual(before);
+    // On the half court it sits beside the court, never on it (a wing stands in the corner).
+    const box = (await remove.boundingBox())!;
+    const apart =
+      box.x >= before.x + before.width ||
+      box.x + box.width <= before.x ||
+      box.y + box.height <= before.y ||
+      box.y >= before.y + before.height;
+    expect(apart, `${JSON.stringify(box)} on ${JSON.stringify(before)}`).toBe(true);
+
+    await remove.click();
+    await expect(page.locator(".stage [data-kind=player]")).toHaveCount(defaultBoard.frames[0]!.players.length - 1);
+    await expect(remove).toHaveCount(0);
   });
 }
 
-// The tool labels sit under their icons and get an ellipsis when they don't
-// fit. Dutch words are longer ("Verdedig"), so every language is checked on
-// a narrow phone (360 px) and in landscape.
+// The labels sit under their icons (and next to it, on Share) and get an
+// ellipsis when they don't fit. Dutch words are longer ("Verdedig"), so every
+// language is checked on a narrow phone (360 px) and in landscape.
 for (const lang of ["en", "nl"]) {
-  for (const orientation of ["portrait", "landscape"] as const) {
-    test(`${lang}, ${orientation}: no tool label is cut off`, async ({ page }) => {
-      await page.setViewportSize(orientation === "portrait" ? { width: 360, height: 740 } : landscape());
+  for (const orientation of ORIENTATIONS) {
+    test(`${lang}, ${orientation}: no label is cut off`, async ({ page }) => {
+      await page.setViewportSize(
+        orientation === "portrait" ? { width: 360, height: 740 } : orientation === "wide" ? WIDE : landscape(),
+      );
       await openBoard(page, "", `/${lang}/board/`);
-      const labels = page.locator(".editor .tool span");
+      // A selection, so Delete shows its label too.
+      await page.locator('.stage [data-kind="player"][data-index="5"]').click();
+      // .label is only shown in landscape; elsewhere it is 1 px, for screen readers.
+      const labels = page.locator(".editor :is(.tool, .share, .delete) span, .editor .label");
       await expect(labels.first()).toBeVisible();
       const cut = await labels.evaluateAll((spans) =>
-        spans.filter((s) => s.scrollWidth > s.clientWidth).map((s) => s.textContent),
+        spans.filter((s) => s.clientWidth > 1 && s.scrollWidth > s.clientWidth).map((s) => s.textContent),
       );
       expect(cut).toEqual([]);
     });
   }
 }
+
+test("a long title gets an ellipsis and pushes no button off screen", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  const title = "Kruising MO–LO met een blok van de cirkel";
+  await page.addInitScript(
+    ([key, board]) => localStorage.setItem(key, JSON.stringify(board)),
+    [STORAGE_KEY, { ...defaultBoard, title: title.slice(0, MAX_TITLE) }] as const,
+  );
+  await openBoard(page);
+  const shown = page.locator(".title span");
+  await expect(shown).toHaveText(title.slice(0, MAX_TITLE));
+  expect(await shown.evaluate((s) => s.scrollWidth > s.clientWidth)).toBe(true);
+  await expectEverythingOnScreen(page);
+});
+
+test("on a narrow phone the title bar shows only the pencil, and a wider one shows the title", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await openBoard(page);
+  const title = page.getByTitle("Edit title");
+  await expect(title.locator("span")).toBeHidden();
+  await expect(title.locator("svg")).toBeInViewport({ ratio: 1 });
+  // Still a button with a name, from its title.
+  await expect(page.getByRole("button", { name: "Edit title" })).toBeVisible();
+
+  await page.setViewportSize({ width: 393, height: 659 });
+  await expect(title.locator("span")).toHaveText("Add title");
+  await expect(title.locator("span")).toBeVisible();
+});
+
+// Without the site header, the largest text on the board was the editor's
+// title, which comes with the JS: on a slow phone the LCP waited for it (2.5 s
+// in Lighthouse with real throttling, phase 12a in docs/metingen.md). The
+// fallback shows the same placeholder, so the LCP paints with the HTML.
+test("the largest text paints with the HTML, not after the editor's JS", async ({ page }) => {
+  test.skip(test.info().project.name === "iphone", "WebKit has no largest-contentful-paint entries");
+  await page.addInitScript(() => {
+    const seen: string[] = [];
+    (window as unknown as { lcp: string[] }).lcp = seen;
+    new PerformanceObserver((list) => {
+      for (const e of list.getEntries() as (PerformanceEntry & { element?: Element })[]) {
+        seen.push(e.element?.closest(".fallback, .editor")?.className.split(" ")[0] ?? "other");
+      }
+    }).observe({ type: "largest-contentful-paint", buffered: true });
+  });
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  await page.route(/\/_astro\/.*\.js$/, async (route) => {
+    await gate;
+    await route.continue();
+  });
+  const lcp = () => page.evaluate(() => (window as unknown as { lcp: string[] }).lcp);
+
+  await page.goto("/en/board/", { waitUntil: "commit" });
+  await expect(page.locator(".fallback .title")).toHaveText("Add title");
+  await expect.poll(lcp).toEqual(["fallback"]);
+  release();
+  await expect(page.getByRole("button", { name: "Add title" })).toBeVisible();
+  // The editor's title is no larger, so it doesn't become a later LCP.
+  await page.waitForTimeout(300);
+  expect(await lcp()).toEqual(["fallback"]);
+});

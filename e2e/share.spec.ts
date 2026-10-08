@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs";
 import { renderSVG } from "uqr";
 import type { BoardV1 } from "../src/lib/board/format";
-import { dragPlayer, expect, expectBoard, linkInAddressBar, openBoard, test } from "./helpers";
+import { dragPlayer, expect, expectBoard, fromMenu, linkInAddressBar, openBoard, test } from "./helpers";
 
 test("the QR dialog shows a QR code", async ({ page }) => {
   await openBoard(page);
-  await page.getByRole("button", { name: "QR code" }).click();
+  await fromMenu(page, "board.qr");
   const dialog = page.getByRole("dialog", { name: "QR code" });
   await expect(dialog).toBeVisible();
   await expect(dialog.locator("svg")).toBeVisible();
@@ -38,7 +38,7 @@ test("the QR code holds the board's link on /board/qr/", async ({ page }) => {
   await openBoard(page);
   await dragPlayer(page, 5, 30, 30);
   const { hash, origin } = new URL(await linkInAddressBar(page));
-  await page.getByRole("button", { name: "QR code" }).click();
+  await fromMenu(page, "board.qr");
   const modules = await page.getByRole("dialog", { name: "QR code" }).locator(".code path").getAttribute("d");
   // The same browser encodes the address bar and the QR code, so the bytes match.
   const expected = renderSVG(`${origin}/en/board/qr/${hash}`, { ecc: "L", border: 2 });
@@ -72,6 +72,6 @@ test("the QR code still opens after going offline", async ({ page, context }) =>
     );
   await expect.poll(qrChunkLoaded).toBe(true);
   await context.setOffline(true);
-  await page.getByRole("button", { name: "QR code" }).click();
+  await fromMenu(page, "board.qr");
   await expect(page.getByRole("dialog", { name: "QR code" }).locator("svg")).toBeVisible();
 });

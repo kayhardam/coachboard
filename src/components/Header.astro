@@ -15,7 +15,6 @@ const links = nav.map((item) => {
   };
 });
 const boardHref = getRelativeLocaleUrl(locale, boardPath);
-const onBoard = Astro.url.pathname === boardHref;
 ---
 
 <a class="skip-link" href="#main">{t(locale, "a11y.skip")}</a>
@@ -29,7 +28,7 @@ const onBoard = Astro.url.pathname === boardHref;
       </ul>
     </nav>
 
-    {!onBoard && <a href={boardHref} class="btn btn-primary cta">{t(locale, "cta.board")}</a>}
+    <a href={boardHref} class="btn btn-primary cta">{t(locale, "cta.board")}</a>
 
     <details class="nav-narrow">
       <summary class="btn btn-secondary">{t(locale, "nav.menu")}</summary>

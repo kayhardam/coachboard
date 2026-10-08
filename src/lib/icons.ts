@@ -17,6 +17,7 @@ export const icons = {
   json: "M8 4H6v16h2m8-16h2v16h-2",
   share: "M12 3v12m0-12-4 4m4-4 4 4M5 13v7h14v-7",
   qr: "M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h2v2h-2zm4 4h2v2h-2zm-4 2h2m2-6h2",
+  more: "M5 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 1 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 1 0 0-2z",
 
   // Tactic categories
   attack: "M13 2 4 14h7l-1 8 9-12h-7l1-8z",
