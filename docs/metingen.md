@@ -1124,7 +1124,7 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
 | T1 | Open het bord, zet een aanval tegen een 6-0 neer, teken drie pijlen (loop, pass, loop) en deel de link in de teamapp | telefoon | ja |
 | T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | als vier losse borden; als route zodra het bord stappen heeft |
 | T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, twee pionnen, een bal en de kruising | telefoon | met spelers als pionnen; als route zodra het bord pionnen heeft |
-| T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf (route sinds Fase 12b); met Mijn borden zodra die er zijn |
+| T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf (route sinds Fase 12b); ~~met Mijn borden zodra die er zijn~~ met export en import (route sinds Fase 12b-3) |
 
 ### Meetmethode
 
@@ -1233,6 +1233,7 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 |---|--:|--:|--:|
 | T1 | 6 handelingen | **5** | 6 |
 | T4, met links naar jezelf | 11 handelingen | Kay kiest, na de route met Mijn borden (Fase 12b) | 11 |
+| T4, met export en import (Fase 12b-3) | 21 handelingen; 14 tot de borden in Mijn borden op de telefoon staan | Kay kiest (B6) | 21 |
 | T2, T3 | — | zodra hun route bestaat | — |
 
 - **Het budget blijft 6** tot een fase de route echt korter maakt. Die fase verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
@@ -1338,6 +1339,9 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
   | 5 | De scantest hierboven, op beide afstanden | | |
   | 6 | iPhone: Coachboard op het beginscherm zetten en dan een link uit WhatsApp openen. Opent hij in Safari of in de app? (Fase 12b) | | — |
   | 7 | Android: na "Toevoegen aan startscherm" een bord tekenen in Chrome. Staat het ook in de geïnstalleerde app? (Fase 12b) | — | |
+  | 8 | Mijn borden → Alle borden exporteren: waar komt het bestand terecht (iPhone: Bestanden › Downloads?), en heet het `coachboard-borden-<datum>.json`? (Fase 12b-3) | | |
+  | 9 | Borden importeren: is het bestand te kiezen, uit Bestanden, na AirDrop en uit een mail of chat? Komen de borden erbij met hun map? (Fase 12b-3) | | |
+  | 10 | Hetzelfde bestand nog eens importeren: "Alle borden uit dit bestand staan er al."? (Fase 12b-3) | | |
 
 
 ## Fase 10: Nederlands (3 oktober 2026)
@@ -2342,3 +2346,82 @@ Vóór: productie (`main` @ `e6d7d4f`). Na: de preview-URL. Drie runs per URL, L
 ### Preview-URL
 
 `https://fase-12b-js-besparen-coachboard.hardamkay.workers.dev`
+
+## Fase 12b-3: exporteren en importeren (9 oktober 2026)
+
+Branch `fase-12b3-verhuizen`, vanaf `main` @ `8267b7f`. Plek, teksten en gedrag volgens de besluiten van Kay: B10 (onderaan de lijst, [schermafbeeldingen](https://claude.ai/artifact/Cmw1AbXgPqGbs56PgT81Yu)), B13 (de volledige URL in het bestand), dubbele borden overslaan, en de tekst als opslaan niet lukt (9 oktober 2026).
+
+### Wat er veranderd is
+
+- **Mijn borden**, onderaan de lijst: de uitleg, Alle borden exporteren en Borden importeren. Exporteren staat er alleen als er borden zijn.
+- **Het bestand:** per bord de link (`https://…/board/#t=2.…`), de map en de datum. Een export blijft altijd te importeren (`fixtures/export/export-1.json`).
+- **Exporteren** bewaart eerst het bord op het veld als dat nog op zijn opslag (300 ms) wacht: onder zijn eigen nummer, zonder kopie.
+- **Importeren** voegt alleen toe, met de map en de datum uit het bestand. Een bord dat er al staat, in welke map ook, wordt overgeslagen. `sameBoard()` vergelijkt de borden, niet de tekst van de link.
+- **Privacypagina:** ", als link of als bestand" achter de laatste zin van "Het bord" (B8).
+
+### Groottes
+
+`npm run budget`, vóór (`main` @ `8267b7f`) en na:
+
+| Meting | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| JS van het bord | 28,9 KB | 29,6 KB | 32,5 KB |
+| Alle JS in `_astro/` | 32,9 KB (32.931 B) | 33,6 KB (33.639 B) | 33,15 → **33,85 KB** |
+| Later geladen JS (QR-code) | 4,0 KB | 4,0 KB | 10,0 KB |
+| CSS bordpagina | 4,65 KB | 4,78 KB | 4,85 → **4,98 KB** |
+| HTML `/nl/board/` | 5,69 KB | 5,90 KB | 6,5 KB |
+| HTML `/en/board/` | 5,62 KB | 5,81 KB | 6,5 KB |
+
+- **Budgetten** volgens B1: de meting + 0,2 KB.
+- **Per functie,** gemeten door het onderdeel tijdelijk weg te laten uit het geheel (alle JS):
+
+  | Onderdeel | Alle JS |
+  |---|--:|
+  | Exporteren, met eerst bewaren | +0,29 KB |
+  | Importeren, met de meldingen | +0,47 KB |
+  | waarvan: dubbele borden overslaan (`sameBoard()`) | +0,04 KB |
+  | Samen, vergeleken met `main` | +0,71 KB |
+
+  Het plan schatte +0,67 tot 0,76 KB. Alles laadt meteen (B2).
+- **HTML +0,2 KB:** de nieuwe teksten gaan als prop mee.
+
+### T4 met export en import
+
+Twee toestellen in één test (`e2e/tasks.spec.ts`), elk met een eigen, lege opslag. Dezelfde drie borden als de route met links. Telt niet: het bord openen, de download, het bestand naar de telefoon sturen, het bestand kiezen in het venster van de telefoon.
+
+| # | Toestel | Handeling |
+|--:|---|---|
+| 1 | laptop | Tik "Run" |
+| 2 | laptop | Sleep een looppijl vanaf LB |
+| 3–4 | laptop | Meer → Nieuw bord |
+| 5 | laptop | Sleep vanaf CB |
+| 6–7 | laptop | Meer → Nieuw bord |
+| 8 | laptop | Sleep vanaf RB |
+| 9–11 | laptop | Meer → Mijn borden → Alle borden exporteren |
+| 12–14 | telefoon | Meer → Mijn borden → Borden importeren ("3 borden toegevoegd.") |
+| 15 | telefoon | Tik bord 1 |
+| 16–18 | telefoon | Meer → Mijn borden → bord 2 |
+| 19–21 | telefoon | Meer → Mijn borden → bord 3 |
+
+| Route | `/en/` | `/nl/` |
+|---|--:|--:|
+| T4 met links naar jezelf | 11 | 11 |
+| T4 met export en import, tot de borden in Mijn borden staan | 14 | 14 |
+| T4 met export en import, tot elk bord op het veld stond | **21** | **21** |
+| T1 / T1 met eigen bord | 6 / 8 | 6 / 8 |
+
+- De links blijven de kortste route. Met export en import staan de borden daarna wel blijvend in Mijn borden op de telefoon.
+- `TAP_BUDGET` krijgt "T4 with export and import": 21. Het doel kiest Kay (B6).
+- **Controle** (tijdelijk, niet gecommit): met het budget op 20 en op 22 faalt de test ("Expected: 20, Received: 21" en "Expected: 22, Received: 21").
+
+### Tests
+
+- `npm run verify` groen: 194 → 206 unittests (`boards.test.ts`, `format.test.ts`).
+- `npm run e2e`: 448 → 478 geslaagd, 2 overgeslagen.
+  - `e2e/boards.spec.ts`: exporteren binnen 300 ms na een wijziging (met een stilgezette klok), importeren met map en datum, dubbele borden, de meldingen, herladen na import, en geen Exporteren zonder borden.
+  - `e2e/tasks.spec.ts`: de T4-route hierboven, in en en nl, iPhone en Android.
+  - `e2e/layout.spec.ts`: de knoppen staand, liggend en breed, minstens 44 px hoog en niet afgekapt; ook de lege lijst. Op de iPhone staand staat Importeren met drie borden al onder de rand: op een telefoon scroll je ernaar, breed staat alles in beeld.
+  - `e2e/a11y.spec.ts`: axe op de lege lijst, nl en en.
+  - `e2e/security.spec.ts`: geen CSP-melding bij exporteren (een download van een `blob:`-URL) en importeren, nl en en.
+  - **Controle** (tijdelijk, niet gecommit): zonder het bewaren vooraf faalt de test van de 300 ms.
+
