@@ -2324,3 +2324,21 @@ Gemeten in een kopie van het project, bovenop de besparingen:
 - `npm run verify` groen: 194 unittests, budget OK.
 - `npm run e2e`: 448 geslaagd, 2 overgeslagen, zoals vóór. Daarin onder meer de QR-code (gelijk aan `renderSVG` van `uqr`, ook offline), het tapbudget, de redirect van workers.dev en de CSP.
 - De gebouwde HTML is gelijk aan die van `main`, op de bestandsnamen van de chunks en de `uid` van `<astro-island>` na.
+
+### Lighthouse
+
+Vóór: productie (`main` @ `e6d7d4f`). Na: de preview-URL. Drie runs per URL, Lighthouse 13.5.0, mobiel. SEO is 66 op elke preview-URL, door `X-Robots-Tag: noindex`; op productie 100.
+
+| URL | Performance | Accessibility | Best Practices | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` vóór | 100 | 100 | 100 | 0,83 / 0,81 / 0,80 s | 0 | 0 ms | 63,1 KB |
+| `/nl/board/` na | 100 | 100 | 100 | 0,91 / 0,80 / 0,81 s | 0 | 0 ms | 61,9 KB |
+| `/en/board/` vóór | 100 | 100 | 100 | 0,80 / 0,81 / 0,81 s | 0 | 0 ms | 63,1 KB |
+| `/en/board/` na | 100 | 100 | 100 | 0,82 / 0,85 / 0,81 s | 0 | 0 ms | 61,8 KB |
+
+- De overdracht daalt 1,2 tot 1,3 KB. Daarin zit ook de QR-code, die laadt zodra het bord klaar is. De overdracht is met de compressie van Cloudflare en met headers, dus niet gelijk aan de gzip-getallen hierboven; de twee doorgeefbestanden kosten elk een eigen verzoek met headers.
+- LCP blijft gelijk (mediaan 0,81 s vóór en na). De ene run van 0,91 s zag 12b-2 ook op zijn preview: één trage eerste run.
+
+### Preview-URL
+
+`https://fase-12b-js-besparen-coachboard.hardamkay.workers.dev`
