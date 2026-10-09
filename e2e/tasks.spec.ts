@@ -29,8 +29,10 @@ const TAP_BUDGET = {
   // T1 for a returning coach: their own board is on the court first.
   "T1 with your own board": 8,
   // T4: three boards prepared on a laptop and opened on the phone, sent as links to yourself.
+  // Kept for comparison; T4's goal is set on the route below.
   "T4 as links to yourself": 11,
-  // T4 again, the boards moved as one exported file, until each has been on the phone's court.
+  // T4, the route that counts: the boards moved as one exported file, until each has been on
+  // the phone's court. Goal 20 (docs/metingen.md): smart arrows (phase 13) drop the tap on Run.
   "T4 with export and import": 21,
 };
 /** Of those, the actions until the three boards are in My boards on the phone. */

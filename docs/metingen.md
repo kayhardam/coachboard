@@ -1227,16 +1227,17 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 - Na T4 staan alle drie de borden in Mijn borden op de laptop; vóór alleen het laatste.
 - `TAP_BUDGET` blijft 6, 8 en 11 (B7, besluit Kay: T1 met eigen bord via Nieuw bord).
 
-### Doelen (besluit Kay, 2 oktober 2026)
+### Doelen (besluit Kay, 2 oktober 2026; T4 op 9 oktober 2026)
 
 | Taak | Nulmeting (route) | Doel | `TAP_BUDGET` |
 |---|--:|--:|--:|
 | T1 | 6 handelingen | **5** | 6 |
-| T4, met links naar jezelf | 11 handelingen | Kay kiest, na de route met Mijn borden (Fase 12b) | 11 |
-| T4, met export en import (Fase 12b-3) | 21 handelingen; 14 tot de borden in Mijn borden op de telefoon staan | Kay kiest (B6) | 21 |
+| T4, met links naar jezelf | 11 handelingen | ~~Kay kiest, na de route met Mijn borden (Fase 12b)~~ geen: ter vergelijking (B6) | 11 |
+| T4, met export en import (Fase 12b-3) | 21 handelingen; 14 tot de borden in Mijn borden op de telefoon staan | **20** (B6) | 21 |
 | T2, T3 | — | zodra hun route bestaat | — |
 
 - **Het budget blijft 6** tot een fase de route echt korter maakt. Die fase verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
+- **T4 (B6, besluit Kay, 9 oktober 2026):** de route met export en import telt, tot elk bord één keer op het veld van de telefoon stond (21, ook het budget). Het doel is 20: met de slimme pijlen uit Fase 13 valt de tik op "Run" weg, net als bij T1. `TAP_BUDGET` blijft 21 tot die fase. De route met links (11) blijft in `e2e/tasks.spec.ts`, ter vergelijking.
 - ~~**Doelen in seconden** volgen na de stopwatch (geparkeerd).~~ Vervallen (besluit Kay, 8 oktober 2026): alleen doelen in handelingen.
 
 ### Per taak en toestel
