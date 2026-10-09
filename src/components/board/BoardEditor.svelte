@@ -316,7 +316,8 @@
     // Swedish writes the date as 2026-10-09, in local time.
     a.download = strings["board.exportFile"].replace("{date}", new Date().toLocaleDateString("sv"));
     a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    // Safari on the iPhone asks first whether to download; revoke late, as FileSaver.js does.
+    setTimeout(() => URL.revokeObjectURL(a.href), 40_000);
   }
 
   /** Adds the boards in an exported file to My boards, leaving out those already there; nothing is overwritten. */

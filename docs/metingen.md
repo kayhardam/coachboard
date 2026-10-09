@@ -2356,6 +2356,7 @@ Branch `fase-12b3-verhuizen`, vanaf `main` @ `8267b7f`. Plek, teksten en gedrag 
 - **Mijn borden**, onderaan de lijst: de uitleg, Alle borden exporteren en Borden importeren. Exporteren staat er alleen als er borden zijn.
 - **Het bestand:** per bord de link (`https://…/board/#t=2.…`), de map en de datum. Een export blijft altijd te importeren (`fixtures/export/export-1.json`).
 - **Exporteren** bewaart eerst het bord op het veld als dat nog op zijn opslag (300 ms) wacht: onder zijn eigen nummer, zonder kopie.
+- De download (een `blob:`-URL) blijft 40 seconden geldig, zoals in FileSaver.js: Safari op de iPhone vraagt eerst of je wilt downloaden.
 - **Importeren** voegt alleen toe, met de map en de datum uit het bestand. Een bord dat er al staat, in welke map ook, wordt overgeslagen. `sameBoard()` vergelijkt de borden, niet de tekst van de link.
 - **Privacypagina:** ", als link of als bestand" achter de laatste zin van "Het bord" (B8).
 
@@ -2366,7 +2367,7 @@ Branch `fase-12b3-verhuizen`, vanaf `main` @ `8267b7f`. Plek, teksten en gedrag 
 | Meting | Vóór | Na | Budget |
 |---|--:|--:|--:|
 | JS van het bord | 28,9 KB | 29,6 KB | 32,5 KB |
-| Alle JS in `_astro/` | 32,9 KB (32.931 B) | 33,6 KB (33.639 B) | 33,15 → **33,85 KB** |
+| Alle JS in `_astro/` | 32,9 KB (32.931 B) | 33,6 KB (33.640 B) | 33,15 → **33,85 KB** |
 | Later geladen JS (QR-code) | 4,0 KB | 4,0 KB | 10,0 KB |
 | CSS bordpagina | 4,65 KB | 4,78 KB | 4,85 → **4,98 KB** |
 | HTML `/nl/board/` | 5,69 KB | 5,90 KB | 6,5 KB |
