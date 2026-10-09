@@ -11,7 +11,7 @@
   import { decode, encode, isNewerLink, MAX_TITLE, toBoard, type Board } from "../../lib/board/format";
   import { HIT_R } from "../../lib/board/geometry";
   import { nearestPiece, reach } from "../../lib/board/hit";
-  import { icons } from "../../lib/icons";
+  import { boardIcons as icons } from "../../lib/icons";
   import * as store from "../../lib/board/boards";
   import Court from "./Court.svelte";
 
@@ -136,8 +136,8 @@
    * It is fetched once the board is up, so the QR code still opens after the
    * phone goes offline.
    */
-  let qrLibrary: Promise<typeof import("uqr")> | undefined;
-  const loadQr = () => (qrLibrary ??= import("uqr"));
+  let qrLibrary: Promise<typeof import("../../lib/board/qr")> | undefined;
+  const loadQr = () => (qrLibrary ??= import("../../lib/board/qr"));
 
   // ===== Loading and saving =====
 
@@ -599,7 +599,7 @@
   }
 
   async function showQr() {
-    let renderSVG: (typeof import("uqr"))["renderSVG"];
+    let renderSVG: (typeof import("../../lib/board/qr"))["renderSVG"];
     try {
       ({ renderSVG } = await loadQr());
     } catch {
