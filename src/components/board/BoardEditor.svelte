@@ -11,7 +11,7 @@
   import { decode, encode, isNewerLink, MAX_TITLE, toBoard, type Board } from "../../lib/board/format";
   import { HIT_R } from "../../lib/board/geometry";
   import { nearestPiece, reach } from "../../lib/board/hit";
-  import { icons } from "../../lib/icons";
+  import { boardIcons as icons } from "../../lib/icons";
   import * as store from "../../lib/board/boards";
   import Court from "./Court.svelte";
 
