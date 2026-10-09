@@ -125,6 +125,20 @@ const en = {
   "board.copyManually": "Copy this link:",
   "board.dismiss": "Dismiss",
   "board.home": "Home",
+  "board.myBoards": "My boards",
+  "board.newBoard": "New board",
+  "board.untitled": "Untitled",
+  "board.noBoards": "No boards yet. Once you draw something, your board shows up here.",
+  "board.moreFor": "More for {title}",
+  "board.moreForUntitled": "More for this board",
+  "board.duplicate": "Duplicate",
+  "board.copySuffix": " (copy)",
+  "board.deleted": "Board deleted.",
+  "board.folder": "Folder",
+  "board.noFolder": "No folder",
+  "board.newFolder": "New folder",
+  "board.folderName": "Folder name",
+  "board.renameFolder": "Rename folder",
 } as const;
 
 export type UiKey = keyof typeof en;
@@ -255,6 +269,20 @@ const nl: Record<UiKey, string> = {
   "board.copyManually": "Kopieer deze link:",
   "board.dismiss": "Sluiten",
   "board.home": "Home",
+  "board.myBoards": "Mijn borden",
+  "board.newBoard": "Nieuw bord",
+  "board.untitled": "Zonder titel",
+  "board.noBoards": "Nog geen borden. Zodra je iets tekent, staat je bord hier.",
+  "board.moreFor": "Meer voor {title}",
+  "board.moreForUntitled": "Meer voor dit bord",
+  "board.duplicate": "Dupliceren",
+  "board.copySuffix": " (kopie)",
+  "board.deleted": "Bord verwijderd.",
+  "board.folder": "Map",
+  "board.noFolder": "Geen map",
+  "board.newFolder": "Nieuwe map",
+  "board.folderName": "Naam van de map",
+  "board.renameFolder": "Map hernoemen",
 };
 
 /** A language may leave keys out; those fall back to English. Dutch has them all. */

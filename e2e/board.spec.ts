@@ -11,7 +11,8 @@ import {
   pieces,
   saved,
   saveOwnBoard,
-  STORAGE_KEY,
+  OLD_KEY,
+  savedBoards,
   test,
 } from "./helpers";
 
@@ -79,12 +80,13 @@ test("a board saved before version 2 opens, and is saved as version 2", async ({
     readFileSync(new URL("../src/lib/board/fixtures/v1-full-lineup.json", import.meta.url), "utf8"),
   ) as { board: BoardV1 };
   await page.goto("/en/");
-  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [STORAGE_KEY, JSON.stringify(board)]);
+  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [OLD_KEY, JSON.stringify(board)]);
 
   await openBoard(page);
   await expectBoard(page, board);
   await expect(page.getByRole("status")).toHaveCount(0);
-  await expect.poll(async () => JSON.parse((await saved(page)) ?? "null")).toEqual(toBoard(board));
+  // It is the first board in My boards.
+  expect((await savedBoards(page)).map((s) => s.board)).toEqual([toBoard(board)]);
 });
 
 /** A version 1 link from JSON, packed as encode() did. */
@@ -176,9 +178,7 @@ test("a link from a newer version reloads the page once, then says it doesn't wo
 
 test("a tab opened before a deploy reloads for a link from a newer version", async ({ page }) => {
   const loads = countLoads(page);
-  await openBoard(page);
-  await expect.poll(() => saved(page)).not.toBeNull();
-  const own = await saved(page);
+  const own = await saveOwnBoard(page);
 
   // A link pasted into the address bar of an open tab only changes the fragment.
   await page.evaluate((hash) => (location.hash = hash), newerLink);

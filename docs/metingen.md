@@ -1216,6 +1216,17 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 - Op de laptop blijft alleen bord 3 staan. Bord 1 en 2 bestaan alleen nog als link.
 - **Controle** (tijdelijk, niet gecommit): met het budget op 10 en op 12 faalt de test ("Expected: 10, Received: 11" en "Expected: 12, Received: 11").
 
+### T1 en T4 met Mijn borden (Fase 12b-2, 8 oktober 2026)
+
+| Route | Vóór | Na |
+|---|--:|--:|
+| T1, eerste keer (en en nl) | 6 | **6** |
+| T1 met eigen bord (en en nl) | 8 (Meer → Standaardopstelling, overschrijft je bord) | **8** (Meer → Nieuw bord, je bord blijft) |
+| T4 met links naar jezelf (en en nl) | 11 (Meer → Standaardopstelling) | **11** (Meer → Nieuw bord) |
+
+- Na T4 staan alle drie de borden in Mijn borden op de laptop; vóór alleen het laatste.
+- `TAP_BUDGET` blijft 6, 8 en 11 (B7, besluit Kay: T1 met eigen bord via Nieuw bord).
+
 ### Doelen (besluit Kay, 2 oktober 2026)
 
 | Taak | Nulmeting (route) | Doel | `TAP_BUDGET` |
@@ -2183,3 +2194,79 @@ Branch `fase-12b1-metingen`, vanaf `main` @ `fb73f11`. Eerste van drie PR's voor
 - **Tests:**
   - `npm run verify` groen, zoals vóór;
   - `npm run e2e`: 396 → 400 geslaagd, 2 overgeslagen. Dat zijn de twee T4-routes (en, nl), elk in twee browsers.
+
+
+## Fase 12b-2: Mijn borden (8 oktober 2026)
+
+Branch `fase-12b-mijn-borden`, vanaf `main` @ `ceb3fe0`. Indeling, teksten en budgetten volgens de besluiten van Kay (B1 tot en met B9, productplan Fase 12b).
+
+### Wat er veranderd is
+
+- **Meer** begint met Mijn borden en Nieuw bord. Liggend staat Meer in twee kolommen: zeven items passen niet op 320 px hoog.
+- **Mijn borden:**
+  - rijen met een kleine tekening, de titel en de datum; mappen eerst;
+  - per bord: Dupliceren (met " (kopie)"), de map, Nieuwe map, en onderaan Verwijderen, met Ongedaan maken in de melding;
+  - liggend staat Nieuw bord in de kop, breed is het een paneel rechts.
+- **Opslaan** gebeurt pas bij de eerste echte wijziging: de link verschilt van het bord zoals het geopend werd. Het eerste bezoek bewaart dus niets meer.
+- **Herladen** opent je eigen bord via het nummer in de geschiedenis van het tabblad (`history.state`), niet via de link.
+- **Overzetten:** het oude bord (`coachboard.board`) wordt één keer het eerste bord, behalve een onaangeroerde standaardopstelling.
+- **Gevonden met de T4-route:** wie binnen 300 ms na een wijziging Nieuw bord koos, verloor die wijziging. Een ander bord openen bewaart nu eerst het bord dat je verlaat.
+- **Privacypagina:** de tekst van Kay (B8).
+
+### Groottes
+
+`npm run budget`, vóór (`main` @ `ceb3fe0`) en na:
+
+| Meting | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| JS van het bord | 27,2 KB | 30,2 KB | 32,5 KB |
+| Alle JS in `_astro/` | 31,6 KB | 34,5 KB | 32,5 → **34,7 KB** |
+| Later geladen JS (QR-code) | 4,3 KB | 4,3 KB | 10,0 KB |
+| CSS bordpagina | 3,8 KB | 4,6 KB | 4,0 → **4,85 KB** |
+| HTML `/nl/board/` | 5,5 KB | 5,7 KB | 6,5 KB |
+
+- **Alle JS +2,94 KB** (B1: de meting + 0,2 KB). Het plan schatte +1,6 tot 1,9 KB; het prototype kostte +1,57 KB. Wat de echte code meer kost:
+  - herladen met het nummer in `history.state`, en de terugval als dat nummer weg is;
+  - het verlaten bord eerst bewaren;
+  - de invoer voor een nieuwe map of een nieuwe naam, met Escape;
+  - Ongedaan maken na Verwijderen (0,1 KB) en de lege lijst.
+- Apart gemeten, door het onderdeel tijdelijk weg te laten:
+  - mapjes 0,44 KB;
+  - de controle op een onaangeroerde standaardopstelling 0,37 KB, met de standaardopstelling uit `defaults.ts`. Met alleen de posities is het 0,18 KB.
+- **Gevolg voor 12b-3:** het plan schat daar +0,9 KB. Dan komt alle JS op ongeveer 35,4 KB, boven de bovengrens van 35,0 KB (B1).
+- **CSS +0,8 KB:** het scherm Mijn borden, staand, liggend en breed, en het menu in twee kolommen.
+- **Opslag:** 100 borden zijn 75 KB (standaardopstelling) tot 280 KB (een aanval van vier stappen) in localStorage. Dat is ruim binnen de ongeveer 5 MB die een browser geeft.
+
+### Tests
+
+- `npm run verify` groen: 167 → 194 unittests (`boards.test.ts`).
+- `npm run e2e`: 400 → 448 geslaagd, 2 overgeslagen.
+  - `e2e/boards.spec.ts`:
+    - opslaan pas na een echte wijziging;
+    - een bewerkte link maakt een nieuw bord;
+    - overzetten één keer, zonder onaangeroerde standaardopstelling;
+    - herladen na je eigen bord, een tactiek, een gedeelde link, zonder nummer, en na een geplakte link met Terug;
+    - twee tabbladen;
+    - nieuw, openen, dupliceren, verwijderen met Ongedaan maken;
+    - mappen.
+  - **Controles** (tijdelijk, niet gecommit):
+    - laat elk tabblad zijn eigen, oude lijst wegschrijven, dan faalt de test met twee tabbladen (unittest en e2e);
+    - zonder het wegschrijven bij het overzetten falen de twee unittests daarvoor.
+  - `e2e/layout.spec.ts`: Mijn borden in beide talen, staand, liggend en breed. Alles in beeld, minstens 44 px hoog en niets afgekapt. Liggend staat Nieuw bord in de kop. Meer liggend toont alle zeven items.
+  - `e2e/a11y.spec.ts`: axe met Mijn borden en het menu van een bord open, nl en en.
+  - Aangepast: de tests die de oude sleutel lazen (`board`, `move`, `tactics`, `analytics`, `layout`).
+
+### Lighthouse
+
+Vóór: productie (`main` @ `ceb3fe0`). Na: de preview-URL. Drie runs per URL, Lighthouse 13.5.0. SEO is 66 op elke preview-URL, door `X-Robots-Tag: noindex`.
+
+| URL | Performance | Accessibility | Best Practices | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` vóór | 100 | 100 | 100 | 0,83 / 0,83 / 0,81 s | 0 | 0 ms | 58,9 KB |
+| `/nl/board/` na | 100 | 100 | 100 | 0,91 / 0,80 / 0,81 s | 0 | 0–12 ms | 63,5 KB |
+| `/en/board/` vóór | 100 | 100 | 100 | 0,80 / 0,82 / 0,81 s | 0 | 0 ms | 58,8 KB |
+| `/en/board/` na | 100 | 100 | 100 | 0,87 / 0,83 / 0,82 s | 0 | 0 ms | 63,5 KB |
+
+### Preview-URL
+
+`https://fase-12b-mijn-borden-coachboard.hardamkay.workers.dev`

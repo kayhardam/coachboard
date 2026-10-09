@@ -12,6 +12,7 @@
   import { HIT_R } from "../../lib/board/geometry";
   import { nearestPiece, reach } from "../../lib/board/hit";
   import { icons } from "../../lib/icons";
+  import * as store from "../../lib/board/boards";
   import Court from "./Court.svelte";
 
   /**
@@ -34,7 +35,6 @@
     | { type: "handle"; index: number; handle: 0 | 1 | 2; start: Board; moved: boolean }
     | { type: "draw"; kind: "run" | "pass" | "dribble"; from: XY; to: XY; player?: number };
 
-  const STORAGE_KEY = "coachboard.board";
   /** The last link that reloaded this tab, so it reloads only once (sessionStorage). */
   const RELOADED_KEY = "coachboard.reloaded";
   const HISTORY = 100;
@@ -68,14 +68,31 @@
   let manualLink = $state<string | null>(null);
   let qr = $state<string | null>(null);
   let qrDialog: HTMLDialogElement;
+  let listDialog: HTMLDialogElement;
+  /** My boards is open: notices show there, above the list. */
+  let listOpen = $state(false);
+  /** The board whose new folder is being named, or the folder being renamed. */
+  let naming = $state<string | null>(null);
+  let renaming = $state<string | null>(null);
   let loaded = $state(false);
   let stage: HTMLDivElement;
   let drag: Drag | null = null;
-  /** The board as it came from a #t= link, until the first edit. */
-  let linked: Board | null = null;
+  /** Your boards on this device (boards.ts). */
+  let boards = $state.raw<store.Saved[]>([]);
+  /** The id of the board on the court in My boards; null until a new or received board is first saved. */
+  let current = $state<string | null>(null);
+  /**
+   * The board as it was opened or last saved, and its link. A board that
+   * draws differently is a real change, and only that is saved: a received
+   * board, a tactic or a new board stays out of My boards until then.
+   */
+  let kept: Board | null = null;
+  let keptLink: Promise<string> | null = null;
   let noticeTimer: ReturnType<typeof setTimeout> | undefined;
   /** The board a lasting notice was shown for; the first edit clears it. */
   let noticeBoard = $state.raw<Board | null>(null);
+  /** A button in the notice, e.g. Undo after deleting a board. */
+  let noticeAction = $state<{ label: string; run: () => void } | null>(null);
 
   const frame = $derived(board.frames[0]!);
 
@@ -95,9 +112,10 @@
   }
 
   /** Shows a notice for six seconds, or with `lasting` until it is dismissed or the board is edited. */
-  function show(text: string, lasting = false) {
+  function show(text: string, lasting = false, action: typeof noticeAction = null) {
     clearTimeout(noticeTimer);
     notice = text;
+    noticeAction = action;
     noticeBoard = lasting ? board : null;
     if (!lasting) noticeTimer = setTimeout(() => (notice = null), 6000);
   }
@@ -105,6 +123,7 @@
   function dismiss() {
     notice = null;
     noticeBoard = null;
+    noticeAction = null;
   }
 
   // Every edit makes a new board (edit.ts is pure), so a new board means an edit.
@@ -164,65 +183,212 @@
       const shared = await fromHash();
       // Before `loaded`, so the save doesn't replace the link in the address bar.
       if (shared === null && reloadForNewer()) return;
-      if (shared) board = linked = shared;
+      const list = readList() ?? { current: null, boards: [] };
+      boards = list.boards;
+      const find = (id: unknown) => list.boards.find((s) => s.id === id);
+      // Your own board after a reload or Back: this tab keeps its id in its
+      // history, next to the link and not in it. Without that (a browser that
+      // lost the tab's history), the link must draw the board you had open.
+      let own = find(history.state?.board);
+      const last = find(list.current);
+      if (!own && last && (!shared || (await encode(last.board)) === (await encode(shared)))) own = last;
+      if (own) open(own.board, own.id);
+      else if (shared) open(shared, null);
       else {
-        // A broken link falls back to your own board, so the save below
-        // doesn't replace it with the default lineup.
-        let own = false;
-        try {
-          // A board saved by an earlier version is read as this version's board.
-          const saved = toBoard(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null"));
-          if (saved) board = saved;
-          own = saved !== null;
-        } catch {
-          // No storage (private mode, blocked): start from the default lineup.
-        }
-        // Not linked, so the save below keeps it. A board already saved on
-        // this domain wins, and the address bar gets its #t= instead.
-        const moved = own ? undefined : movedBoard();
-        if (moved) board = moved;
-        if (shared === null) show(strings[own ? "board.invalidLink" : "board.invalidLinkDefault"], true);
+        // The board you had on workers.dev, only on a device without boards
+        // here, and only if you changed it (an untouched lineup says nothing).
+        const moved = list.boards.length ? undefined : movedBoard();
+        if (moved && !store.isUntouchedDefault(moved)) board = moved;
+        else open(board, null);
       }
+      if (shared === null) show(strings[own ? "board.invalidLink" : "board.invalidLinkDefault"], true);
       loaded = true;
     })();
 
     // A pasted link in the same tab only changes the fragment.
+    // Back to one of your boards brings its id along; anything else is a received board.
     const onHash = async () => {
-      const shared = await fromHash();
-      if (shared) {
-        commit(shared);
-        linked = shared;
-        selected = null;
-      } else if (shared === null && !reloadForNewer()) show(strings["board.invalidLink"], true);
+      const own = readList()?.boards.find((s) => s.id === history.state?.board);
+      const shared = own ? undefined : await fromHash();
+      if (own) open(own.board, own.id);
+      else if (shared) open(shared, null);
+      else if (shared === null && !reloadForNewer()) show(strings["board.invalidLink"], true);
     };
     addEventListener("hashchange", onHash);
     return () => removeEventListener("hashchange", onHash);
   });
 
-  // Every change lands in localStorage and in the URL, so a reload or a
-  // copied address bar always has the latest board.
+  // Every change lands in the URL, so a copied address bar always has the
+  // latest board, and every real change in My boards.
   $effect(() => {
     if (!loaded) return;
-    const current = board;
+    const now = board;
     const timer = setTimeout(async () => {
-      // Opening someone's link (or a tactic) doesn't replace your own saved
-      // board; editing it does.
-      if (current !== linked) {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
-        } catch {
-          // Storage full or blocked: the URL still holds the board.
-        }
+      const link = await encode(now);
+      if (now !== kept && link !== (await keptLink)) {
+        if (board !== now) return; // changed meanwhile: the next run saves it
+        save(now, link);
       }
-      const link = await encode(current);
       try {
-        history.replaceState(history.state, "", `#t=${link}`);
+        history.replaceState({ ...history.state, board: current }, "", `#t=${link}`);
       } catch {
         // Safari throttles replaceState (100 calls per 30 s); the next change retries.
       }
     }, 300);
     return () => clearTimeout(timer);
   });
+
+  // ===== My boards =====
+
+  /** The list in localStorage; null without storage (private mode, blocked). */
+  function readList(): store.Store | null {
+    try {
+      return store.read(localStorage);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Changes the list in localStorage (see store.update()) and shows the result. */
+  function change(run: (storage: Storage) => store.Store) {
+    try {
+      boards = run(localStorage).boards;
+    } catch {
+      // Storage full or blocked: the URL still holds the board.
+    }
+  }
+
+  function keep(next: Board, link: string | Promise<string> = encode(next)) {
+    kept = next;
+    keptLink = Promise.resolve(link);
+  }
+
+  /** Saves the board on the court: a new board gets an id and goes first. */
+  function save(next: Board, link: string) {
+    keep(next, link);
+    const id = (current ??= store.newId());
+    change((storage) => store.saveBoard(storage, id, next));
+  }
+
+  /**
+   * Saves the board on the court if it changed since it was kept, before
+   * another board takes its place: its save may still be waiting (300 ms).
+   */
+  function flush() {
+    const [left, was, id] = [board, keptLink, current];
+    if (!loaded || left === kept) return;
+    encode(left).then(async (link) => {
+      if (link !== (await was)) change((storage) => store.saveBoard(storage, id ?? store.newId(), left, false));
+    });
+  }
+
+  /** Puts a board on the court with its own undo history: one of yours (`id`), or one not saved yet. */
+  function open(next: Board, id: string | null) {
+    flush();
+    board = next;
+    keep(next);
+    current = id;
+    past = [];
+    selected = null;
+    try {
+      history.replaceState({ ...history.state, board: id }, "");
+    } catch {
+      // Throttled: the next save writes it.
+    }
+    if (id) change((storage) => store.update(storage, (list) => ({ ...list, current: id })));
+  }
+
+  function openList() {
+    menuOpen = false;
+    listDialog.showModal();
+    listOpen = true;
+  }
+
+  function newBoard() {
+    menuOpen = false;
+    listDialog.close();
+    open(structuredClone(defaultLineup), null);
+  }
+
+  function openSaved(s: store.Saved) {
+    listDialog.close();
+    open(s.board, s.id);
+  }
+
+  /** Closes the ⋯ menu a button or field sits in. */
+  function closeMenu(e?: Event) {
+    const menu = (e?.currentTarget as Element | undefined)?.closest("details");
+    if (menu) menu.open = false;
+  }
+
+  function duplicate(s: store.Saved, e: Event) {
+    closeMenu(e);
+    const copy = store.copyOf(s, strings["board.copySuffix"]);
+    change((storage) => store.update(storage, (list) => ({ ...list, boards: store.put(list.boards, copy) })));
+  }
+
+  function deleteSaved(s: store.Saved, e: Event) {
+    closeMenu(e);
+    const wasOpen = s.id === current;
+    change((storage) => store.deleteBoard(storage, s.id));
+    if (wasOpen) {
+      kept = board; // deleted: not to be saved again on the way out
+      open(structuredClone(defaultLineup), null);
+    }
+    show(strings["board.deleted"], false, {
+      label: strings["board.undo"],
+      run() {
+        change((storage) => store.update(storage, (list) => ({ ...list, boards: store.put(list.boards, s) })));
+        if (wasOpen) open(s.board, s.id);
+      },
+    });
+  }
+
+  function moveTo(s: store.Saved, folder: string, e?: Event) {
+    closeMenu(e);
+    change((storage) =>
+      store.update(storage, (list) => ({
+        ...list,
+        boards: list.boards.map((b) => (b.id === s.id ? store.withFolder(b, folder) : b)),
+      })),
+    );
+  }
+
+  /** Enter or leaving the field keeps a folder name; Escape drops it (and keeps the list open). */
+  function finishFolder(e: Event, keepName: boolean) {
+    const name = (e.currentTarget as HTMLInputElement).value;
+    const s = boards.find((b) => b.id === naming);
+    const from = renaming;
+    naming = renaming = null;
+    if (!keepName) return;
+    if (s) moveTo(s, name, e);
+    else if (from !== null) {
+      change((storage) => store.update(storage, (list) => ({ ...list, boards: store.renameFolder(list.boards, from, name) })));
+    }
+  }
+
+  function folderKey(e: KeyboardEvent) {
+    if (e.key === "Enter") finishFolder(e, true);
+    else if (e.key === "Escape") {
+      e.preventDefault();
+      finishFolder(e, false);
+    }
+  }
+
+  /** Folders first, the most recently changed first, then the boards without one. */
+  const folders = $derived(store.folders(boards));
+  const groups = $derived.by(() => {
+    const sorted = store.byDate(boards);
+    return [...folders, undefined]
+      .map((folder) => [folder, sorted.filter((s) => s.folder === folder)] as const)
+      .filter(([, list]) => list.length > 0);
+  });
+
+  const titleOf = (s: store.Saved) => s.board.title ?? strings["board.untitled"];
+  const moreFor = (s: store.Saved) =>
+    s.board.title ? strings["board.moreFor"].replace("{title}", s.board.title) : strings["board.moreForUntitled"];
+  const date = (at: number) =>
+    new Date(at).toLocaleDateString(document.documentElement.lang, { day: "numeric", month: "short" });
 
   // ===== Pointer input =====
 
@@ -491,6 +657,8 @@
         <span class="label">{strings["board.more"]}</span>
       </summary>
       <div class="menu-panel">
+        <button type="button" onclick={openList}>{strings["board.myBoards"]}</button>
+        <button type="button" class="last" onclick={newBoard}>{strings["board.newBoard"]}</button>
         <button type="button" onclick={showQr}>{strings["board.qr"]}</button>
         <button type="button" onclick={toggleCourt}>{board.court === "half" ? strings["board.fullCourt"] : strings["board.halfCourt"]}</button>
         <button type="button" onclick={() => clearWith(edit.clearArrows(board))}>{strings["board.clearArrows"]}</button>
@@ -524,19 +692,8 @@
     </button>
   {/if}
 
-  {#if manualLink}
-    <div class="notice" role="status">
-      <label>
-        {strings["board.copyManually"]}
-        <input readonly value={manualLink} onfocus={(e) => e.currentTarget.select()} />
-      </label>
-      <button type="button" class="dismiss" onclick={() => (manualLink = null)} aria-label={strings["board.dismiss"]}>×</button>
-    </div>
-  {:else if notice}
-    <div class="notice" role="status">
-      <span>{notice}</span>
-      <button type="button" class="dismiss" onclick={dismiss} aria-label={strings["board.dismiss"]}>×</button>
-    </div>
+  {#if !listOpen}
+    {@render noticeBar()}
   {/if}
 
   <div class="bar tools" role="toolbar" aria-label={strings["board.tools"]}>
@@ -562,6 +719,112 @@
     {/each}
   </div>
 </div>
+
+{#snippet noticeBar()}
+  {#if manualLink}
+    <div class="notice" role="status">
+      <label>
+        {strings["board.copyManually"]}
+        <input readonly value={manualLink} onfocus={(e) => e.currentTarget.select()} />
+      </label>
+      <button type="button" class="dismiss" onclick={() => (manualLink = null)} aria-label={strings["board.dismiss"]}>×</button>
+    </div>
+  {:else if notice}
+    <div class="notice" role="status">
+      <span>{notice}</span>
+      {#if noticeAction}
+        {@const action = noticeAction}
+        <button type="button" class="action" onclick={() => (action.run(), dismiss())}>{action.label}</button>
+      {/if}
+      <button type="button" class="dismiss" onclick={dismiss} aria-label={strings["board.dismiss"]}>×</button>
+    </div>
+  {/if}
+{/snippet}
+
+<dialog
+  class="boards"
+  bind:this={listDialog}
+  aria-labelledby="boards-title"
+  onclose={() => {
+    listOpen = false;
+    naming = renaming = null;
+  }}
+>
+  <div class="boards-bar">
+    <h2 id="boards-title">{strings["board.myBoards"]}</h2>
+    <button type="button" class="dismiss" onclick={() => listDialog.close()} aria-label={strings["board.close"]}>×</button>
+  </div>
+  <!-- Below the bar; in landscape in it (BoardEditor.css), so more boards fit. -->
+  <button type="button" class="new" onclick={newBoard}>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.plus} /></svg>
+    {strings["board.newBoard"]}
+  </button>
+  {#if listOpen}
+    {@render noticeBar()}
+  {/if}
+  {#if boards.length === 0}
+    <p class="empty">{strings["board.noBoards"]}</p>
+  {/if}
+  {#each groups as [folder, list] (folder ?? "")}
+    <h3>
+      {#if folder === undefined}
+        {strings["board.noFolder"]}
+      {:else if renaming === folder}
+        <input
+          value={folder}
+          maxlength={store.MAX_FOLDER}
+          aria-label={strings["board.folderName"]}
+          use:focusTitle
+          onkeydown={folderKey}
+          onblur={(e) => renaming !== null && finishFolder(e, true)}
+        />
+      {:else}
+        <button type="button" title={strings["board.renameFolder"]} onclick={() => (renaming = folder)}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.folder} /></svg>
+          {folder}
+        </button>
+      {/if}
+    </h3>
+    <ul>
+      {#each list as s (s.id)}
+        <li class:current={s.id === current}>
+          <button type="button" class="open" onclick={() => openSaved(s)}>
+            <span class="thumb" aria-hidden="true"><Court board={s.board} label={titleOf(s)} /></span>
+            <span class="name">{titleOf(s)}</span>
+            <time datetime={new Date(s.at).toISOString()}>{date(s.at)}</time>
+          </button>
+          <details class="actions">
+            <summary aria-label={moreFor(s)} title={moreFor(s)}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.more} /></svg>
+            </summary>
+            <div class="actions-panel">
+              <button type="button" onclick={(e) => duplicate(s, e)}>{strings["board.duplicate"]}</button>
+              <p>{strings["board.folder"]}</p>
+              {#each ["", ...folders] as f (f)}
+                <button type="button" aria-pressed={(s.folder ?? "") === f} onclick={(e) => moveTo(s, f, e)}>
+                  {#if (s.folder ?? "") === f}<svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.check} /></svg>{/if}
+                  {f || strings["board.noFolder"]}
+                </button>
+              {/each}
+              {#if naming === s.id}
+                <input
+                  maxlength={store.MAX_FOLDER}
+                  aria-label={strings["board.folderName"]}
+                  use:focusTitle
+                  onkeydown={folderKey}
+                  onblur={(e) => naming !== null && finishFolder(e, true)}
+                />
+              {:else}
+                <button type="button" onclick={() => (naming = s.id)}>{strings["board.newFolder"]}</button>
+              {/if}
+              <button type="button" class="delete-board" onclick={(e) => deleteSaved(s, e)}>{strings["board.delete"]}</button>
+            </div>
+          </details>
+        </li>
+      {/each}
+    </ul>
+  {/each}
+</dialog>
 
 <dialog class="qr" bind:this={qrDialog} aria-label={strings["board.qr"]} onclose={() => (qr = null)}>
   <button type="button" class="dismiss close" onclick={() => qrDialog.close()} aria-label={strings["board.close"]}>×</button>
