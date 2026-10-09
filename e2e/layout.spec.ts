@@ -2,7 +2,7 @@ import { devices, type Page } from "@playwright/test";
 import { defaultBoard, defaultBoardFor } from "../src/lib/board/defaults";
 import { MAX_TITLE } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
-import { expect, fromMenu, moreButton, OLD_KEY, openBoard, STORE_KEY, test } from "./helpers";
+import { dragPlayer, expect, fromMenu, moreButton, OLD_KEY, openBoard, STORE_KEY, test } from "./helpers";
 
 // Finding 1 and 2 in docs/metingen.md: the court scaled to the screen's width
 // only, so the full court (and, in landscape, the half court too) pushed both
@@ -160,7 +160,7 @@ for (const orientation of ORIENTATIONS) {
     await expect(remove).toHaveCount(0);
     const before = (await surface(page))!;
 
-    // Move is the tool on opening: a tap on the pivot selects them.
+    // A tap on the pivot selects them, also with Arrow, the tool on opening.
     await page.locator('.stage [data-kind="player"][data-index="5"]').click();
     await expect(remove).toBeInViewport({ ratio: 1 });
     expect(await surface(page)).toEqual(before);
@@ -198,6 +198,44 @@ for (const lang of ["en", "nl"]) {
         spans.filter((s) => s.clientWidth > 1 && s.scrollWidth > s.clientWidth).map((s) => s.textContent),
       );
       expect(cut).toEqual([]);
+    });
+  }
+}
+
+// The bar over the court (phase 13-2): the starting lineups on a new board, the
+// kinds for an arrow, the teams for a player. In portrait and landscape it sits
+// over the bottom of the court's box, above the tools; wide, at the top of the
+// free column right of the court. Every button on screen, 44 px high, no label cut off.
+for (const lang of ["en", "nl"]) {
+  for (const orientation of ORIENTATIONS) {
+    test(`${lang}, ${orientation}: the bars over the court fit, with their labels`, async ({ page }) => {
+      await page.setViewportSize(
+        orientation === "portrait" ? { width: 360, height: 740 } : orientation === "wide" ? WIDE : landscape(),
+      );
+      await openBoard(page, "", `/${lang}/board/`);
+      const court = (await surface(page))!;
+      const tools = (await page.getByRole("toolbar", { name: t(lang, "board.tools") }).boundingBox())!;
+      const bars = [
+        { name: t(lang, "board.setup"), pick: async () => {} },
+        { name: t(lang, "board.kind"), pick: () => dragPlayer(page, 1, 0, -60) },
+        { name: t(lang, "board.team"), pick: () => page.locator('.stage [data-kind="player"][data-index="5"]').click() },
+      ];
+      for (const { name, pick } of bars) {
+        await pick();
+        const bar = page.getByRole("toolbar", { name });
+        await expect(bar).toBeInViewport({ ratio: 1 });
+        await expectEverythingOnScreen(page);
+        const cut = await bar.locator(".tool span").evaluateAll((spans) =>
+          spans.filter((s) => s.scrollWidth > s.clientWidth).map((s) => s.textContent),
+        );
+        expect(cut, name).toEqual([]);
+        const box = (await bar.boundingBox())!;
+        if (orientation === "wide") expect(box.x, name).toBeGreaterThanOrEqual(court.x + court.width);
+        else if (orientation === "portrait") expect(box.y + box.height, name).toBeLessThanOrEqual(tools.y);
+        else expect(box.x, name).toBeGreaterThanOrEqual(tools.x + tools.width);
+      }
+      // The court never moves for a bar.
+      expect(await surface(page)).toEqual(court);
     });
   }
 }

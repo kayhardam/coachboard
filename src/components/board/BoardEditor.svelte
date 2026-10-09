@@ -9,8 +9,9 @@
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
   import { decode, encode, isNewerLink, MAX_TITLE, toBoard, type Board } from "../../lib/board/format";
+  import { SETUPS, setup } from "../../lib/board/defaults";
   import { HIT_R } from "../../lib/board/geometry";
-  import { nearestPiece, reach } from "../../lib/board/hit";
+  import { holder, nearestPiece, reach } from "../../lib/board/hit";
   import { boardIcons as icons } from "../../lib/icons";
   import * as store from "../../lib/board/boards";
   import Court from "./Court.svelte";
@@ -27,13 +28,13 @@
     lineup,
   }: { strings: BoardStrings; home: string; links: { link: string; qr: string }; lineup: Board } = $props();
 
-  type Tool = "move" | "attack" | "defence" | "ball" | "run" | "pass" | "dribble";
+  type Tool = "move" | "arrow" | "attack" | "defence" | "ball" | "cone";
   type XY = [number, number];
   type Drag =
     | { type: "piece"; piece: Selection; start: Board; offset: XY; origin: XY; moved: boolean }
     | { type: "arrow"; index: number; start: Board; origin: XY; moved: boolean }
     | { type: "handle"; index: number; handle: 0 | 1 | 2; start: Board; moved: boolean }
-    | { type: "draw"; kind: "run" | "pass" | "dribble"; from: XY; to: XY; player?: number };
+    | { type: "draw"; kind: "run" | "pass"; from: XY; player?: number; hit: Selection | null; origin: XY; moved: boolean };
 
   /** The last link that reloaded this tab, so it reloads only once (sessionStorage). */
   const RELOADED_KEY = "coachboard.reloaded";
@@ -43,13 +44,25 @@
 
   const tools = $derived<{ id: Tool; label: string }[]>([
     { id: "move", label: strings["board.tool.move"] },
+    { id: "arrow", label: strings["board.tool.arrow"] },
     { id: "attack", label: strings["board.tool.attack"] },
     { id: "defence", label: strings["board.tool.defence"] },
     { id: "ball", label: strings["board.tool.ball"] },
-    { id: "run", label: strings["board.tool.run"] },
-    { id: "pass", label: strings["board.tool.pass"] },
-    { id: "dribble", label: strings["board.tool.dribble"] },
+    { id: "cone", label: strings["board.tool.cone"] },
   ]);
+  const kinds = [
+    ["run", "board.tool.run"],
+    ["pass", "board.tool.pass"],
+    ["bounce", "board.kind.bounce"],
+    ["dribble", "board.tool.dribble"],
+    ["shot", "board.kind.shot"],
+    ["block", "board.kind.block"],
+  ] as const;
+  const teams = [
+    ["a", "board.tool.attack", "attack"],
+    ["d", "board.tool.defence", "defence"],
+    ["p", "board.team.passer", "passer"],
+  ] as const;
 
   // Astro passes props as $state, a proxy that structuredClone() can't copy:
   // take a plain copy once (a board is plain JSON; $state.snapshot() would add
@@ -60,7 +73,7 @@
   let board = $state.raw<Board>(structuredClone(defaultLineup));
   let past = $state.raw<Board[]>([]);
   let draft = $state.raw<Board | null>(null);
-  let tool = $state<Tool>("move");
+  let tool = $state<Tool>("arrow");
   let selected = $state<Selection | null>(null);
   let notice = $state<string | null>(null);
   let menuOpen = $state(false);
@@ -69,6 +82,8 @@
   let qr = $state<string | null>(null);
   let qrDialog: HTMLDialogElement;
   let listDialog: HTMLDialogElement;
+  /** A new board (the first visit, New board): it offers the starting lineups until its first edit. */
+  let isNew = $state(false);
   /** My boards is open: notices show there, above the list. */
   let listOpen = $state(false);
   /** The board whose new folder is being named, or the folder being renamed. */
@@ -102,6 +117,59 @@
     board = next;
     return true;
   }
+
+  /**
+   * The bar over the court for what is selected: the kinds for an arrow, the
+   * teams for a player, else the starting lineups on a new board. Picking a
+   * lineup keeps it as the board as it was opened, so it saves nothing. The
+   * lineups show no heading: it would be the largest text on a first visit,
+   * painted only after this JS (the LCP), and their names say enough.
+   */
+  type Item = { id: string; label: string; on?: boolean; off?: boolean; icon?: string; dash?: boolean; team?: string; run: () => void };
+  const strip = $derived.by((): { title: string; heading?: boolean; items: Item[] } | undefined => {
+    const index = selected?.index ?? 0;
+    const arrow = selected?.kind === "arrow" ? frame.arrows[index] : undefined;
+    const player = selected?.kind === "player" ? frame.players[index] : undefined;
+    if (arrow) {
+      return {
+        title: strings["board.kind"],
+        heading: true,
+        items: kinds.map(([id, key]) => ({
+          id,
+          label: strings[key],
+          on: arrow.kind === id,
+          off: id === "shot" && arrow.from === undefined,
+          icon: icons[id],
+          dash: id === "pass" || id === "bounce",
+          run: () => commit(edit.setKind(board, index, id)),
+        })),
+      };
+    }
+    if (player) {
+      return {
+        title: strings["board.team"],
+        heading: true,
+        items: teams.map(([id, key, team]) => ({
+          id,
+          label: strings[key],
+          on: player.team === id,
+          team,
+          run: () => commit(edit.setTeam(board, index, id)),
+        })),
+      };
+    }
+    if (isNew && past.length === 0 && !selected) {
+      return {
+        title: strings["board.setup"],
+        items: SETUPS.map((id) => ({
+          id,
+          // A non-breaking hyphen: "Tegen" may wrap above "3-2-1", the defence itself not.
+          label: strings[`board.setup.${id}`].replaceAll("-", "\u2011"),
+          run: () => keep((board = setup(id, defaultLineup))),
+        })),
+      };
+    }
+  });
 
   function undo() {
     const previous = past.at(-1);
@@ -199,7 +267,7 @@
         // here, and only if you changed it (an untouched lineup says nothing).
         const moved = list.boards.length ? undefined : movedBoard();
         if (moved && !store.isUntouchedDefault(moved)) board = moved;
-        else open(board, null);
+        else open(board, null, true);
       }
       if (shared === null) show(strings[own ? "board.invalidLink" : "board.invalidLinkDefault"], true);
       loaded = true;
@@ -282,9 +350,10 @@
     });
   }
 
-  /** Puts a board on the court with its own undo history: one of yours (`id`), or one not saved yet. */
-  function open(next: Board, id: string | null) {
+  /** Puts a board on the court with its own undo history: one of yours (`id`), or one not saved yet (`fresh`: a new one). */
+  function open(next: Board, id: string | null, fresh = false) {
     flush();
+    isNew = fresh;
     board = next;
     keep(next);
     current = id;
@@ -355,7 +424,7 @@
   function newBoard() {
     menuOpen = false;
     listDialog.close();
-    open(structuredClone(defaultLineup), null);
+    open(structuredClone(defaultLineup), null, true);
   }
 
   function openSaved(s: store.Saved) {
@@ -468,11 +537,11 @@
   function hitAt(target: EventTarget | null, at: XY): { kind: string; index: number } | null {
     const drawn = pieceAt(target);
     if (drawn?.kind === "handle") return drawn;
-    return nearestPiece(frame, at, HIT_R) ?? (drawn?.kind === "arrow" ? drawn : nearestPiece(frame, at, tapReach()));
+    return (
+      nearestPiece(frame, at, HIT_R, board.cones) ??
+      (drawn?.kind === "arrow" ? drawn : nearestPiece(frame, at, tapReach(), board.cones))
+    );
   }
-
-  const isDrawTool = (t: Tool): t is "run" | "pass" | "dribble" =>
-    t === "run" || t === "pass" || t === "dribble";
 
   function onpointerdown(e: PointerEvent) {
     if (drag || !e.isPrimary || e.button > 0) return;
@@ -484,27 +553,26 @@
 
     if (hit?.kind === "handle" && selected?.kind === "arrow") {
       drag = { type: "handle", index: selected.index, handle: hit.index as 0 | 1 | 2, start: board, moved: false };
-    } else if (isDrawTool(tool)) {
-      // From a player, the arrow is theirs: it starts where they are by then,
-      // at the end of their run if they already have one.
-      const player = hit?.kind === "player" ? hit.index : undefined;
-      const from = player === undefined ? at : edit.endOf(frame, player);
-      drag = { type: "draw", kind: tool, from, to: from, player };
-    } else if (hit?.kind === "player" || hit?.kind === "ball") {
-      const piece: Selection = { kind: hit.kind, index: hit.index };
-      const pos = hit.kind === "player" ? frame.players[hit.index]!.at : frame.balls[hit.index]!;
+    } else if (tool === "arrow") {
+      // A tap picks the piece; a drag draws. From a player, a run of theirs:
+      // it starts where they are by then, at the end of their run if they
+      // already have one. From the ball, a pass of whoever has it.
+      const ball = hit?.kind === "ball" ? frame.balls[hit.index] : undefined;
+      const player = hit?.kind === "player" ? hit.index : ball && holder(frame, ball, tapReach());
+      const from: XY = player !== undefined ? edit.endOf(frame, player) : ball ? [...ball] : at;
+      drag = { type: "draw", kind: ball ? "pass" : "run", from, player, hit: hit as Selection | null, origin: at, moved: false };
+    } else if (hit?.kind === "player" || hit?.kind === "ball" || hit?.kind === "cone") {
+      const piece = hit as Selection;
+      const pos = hit.kind === "player" ? frame.players[hit.index]!.at : hit.kind === "ball" ? frame.balls[hit.index]! : board.cones[hit.index]!;
       drag = { type: "piece", piece, start: board, offset: [pos[0] - at[0], pos[1] - at[1]], origin: at, moved: false };
     } else if (hit?.kind === "arrow") {
       drag = { type: "arrow", index: hit.index, start: board, origin: at, moved: false };
-    } else if (tool === "attack" || tool === "defence") {
-      if (commit(edit.addPlayer(board, tool === "attack" ? "a" : "d", at))) {
-        selected = { kind: "player", index: frame.players.length - 1 };
-      }
-    } else if (tool === "ball") {
-      commit(edit.placeBall(board, at));
-      selected = { kind: "ball", index: 0 };
     } else {
+      // A new piece isn't selected: a bar for it would cover the court where the next one goes.
       selected = null;
+      if (tool === "attack" || tool === "defence") commit(edit.addPlayer(board, tool === "attack" ? "a" : "d", at));
+      else if (tool === "ball") commit(edit.addBall(board, at));
+      else if (tool === "cone") commit(edit.addCone(board, at));
     }
   }
 
@@ -512,18 +580,15 @@
     if (!drag || !e.isPrimary) return;
     const at = toCourt(e);
 
-    if (drag.type === "draw") {
-      drag.to = at;
-      draft = edit.addArrow(board, drag.kind, drag.from, at, drag.player);
-      return;
-    }
     if (drag.type !== "handle" && !drag.moved) {
       drag.moved = Math.hypot(at[0] - drag.origin[0], at[1] - drag.origin[1]) > DRAG_START;
       if (!drag.moved) return;
     }
     drag.moved = true;
 
-    if (drag.type === "piece") {
+    if (drag.type === "draw") {
+      draft = edit.addArrow(board, drag.kind, drag.from, at, drag.player);
+    } else if (drag.type === "piece") {
       board = edit.movePiece(drag.start, drag.piece, [at[0] + drag.offset[0], at[1] + drag.offset[1]]);
     } else if (drag.type === "arrow") {
       board = edit.moveArrow(drag.start, drag.index, [at[0] - drag.origin[0], at[1] - drag.origin[1]]);
@@ -543,10 +608,10 @@
       const at = toCourt(e);
       const hit = nearestPiece({ ...frame, balls: [] }, at, tapReach());
       const to = hit ? ([...frame.players[hit.index]!.at] as XY) : at;
-      if (commit(edit.addArrow(board, done.kind, done.from, to, done.player))) {
+      if (done.moved && commit(edit.addArrow(board, done.kind, done.from, to, done.player))) {
         selected = { kind: "arrow", index: frame.arrows.length - 1 };
       } else {
-        selected = null;
+        selected = done.hit;
       }
       return;
     }
@@ -581,6 +646,8 @@
     } else if (e.key === "Escape") {
       selected = null;
       menuOpen = false;
+    } else if (tools[+e.key - 1] && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      tool = tools[+e.key - 1]!.id;
     }
   }
 
@@ -744,13 +811,32 @@
     {@render noticeBar()}
   {/if}
 
+  {#if strip}
+    <div class="strip" role="toolbar" aria-label={strip.title}>
+      {#if strip.heading}<span class="strip-title" aria-hidden="true">{strip.title}</span>{/if}
+      <div class="strip-row">
+        {#each strip.items as item (item.id)}
+          <button type="button" class="tool" class:setup={item.on === undefined} aria-pressed={item.on} disabled={item.off} onclick={item.run}>
+            {#if item.icon}
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d={item.icon} stroke-dasharray={item.dash ? "3 3" : undefined} /></svg>
+            {:else if item.team}
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" class={item.team} /></svg>
+            {/if}
+            <span>{item.label}</span>
+          </button>
+        {/each}
+      </div>
+    </div>
+  {/if}
+
   <div class="bar tools" role="toolbar" aria-label={strings["board.tools"]}>
-    {#each tools as t (t.id)}
+    {#each tools as t, i (t.id)}
       <button
         type="button"
         class="tool"
         aria-pressed={tool === t.id}
-        title={t.label}
+        title="{t.label} ({i + 1})"
+        aria-keyshortcuts={String(i + 1)}
         onclick={() => (tool = t.id)}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -759,7 +845,7 @@
           {:else if t.id === "ball"}
             <circle cx="12" cy="12" r="6" class="ball" />
           {:else}
-            <path d={icons[t.id]} stroke-dasharray={t.id === "pass" ? "3 3" : undefined} />
+            <path d={icons[t.id === "arrow" ? "run" : t.id]} class={t.id} />
           {/if}
         </svg>
         <span>{t.label}</span>

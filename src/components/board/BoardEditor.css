@@ -242,6 +242,8 @@
 /* ===== The tools ===== */
 .editor .bar {
   grid-area: tools;
+}
+.editor :is(.bar, .strip-row) {
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
@@ -302,6 +304,45 @@
   stroke-width: 1.5;
 }
 
+/* The kind bar, the team bar and the starting lineups: over the bottom of the
+   court's box, just above the tools (wide: at the top of the free column). */
+.editor .strip {
+  grid-area: stage;
+  align-self: end;
+  justify-self: stretch;
+  z-index: 5;
+  display: grid;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  box-shadow: var(--shadow);
+}
+.editor .strip-title {
+  padding-inline: 4px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.editor .strip .tool:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.editor .tool.setup {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.editor .tool .cone {
+  fill: #dc2626;
+  stroke: #7f1d1d;
+  stroke-width: 1.5;
+}
+.editor .tool .passer {
+  fill: #2563eb;
+  stroke: none;
+}
+
 /*
  * Wide (a laptop, a tablet in landscape): room to prepare. The title bar runs
  * across the top, the tools stand in a column beside a larger court, and the
@@ -321,7 +362,7 @@
     margin-inline: -16px;
     padding-inline: 16px;
   }
-  .editor .bar {
+  .editor :is(.bar, .strip-row) {
     grid-auto-flow: row;
     grid-auto-rows: var(--board-bar);
     align-content: start;
@@ -333,6 +374,10 @@
     gap: 10px;
     padding: 0 12px;
     font-size: 0.9375rem;
+  }
+  .editor .strip {
+    grid-area: 2 / 3;
+    align-self: start;
   }
 }
 
@@ -856,5 +901,21 @@
   }
   .boards::backdrop {
     background: rgb(15 23 42 / 0.25);
+  }
+}
+
+/* A lineup's name may wrap ("Tegen" over "3-2-1"). In landscape the strip
+   keeps its labels under the icons, as in portrait. */
+.editor .tool.setup span {
+  white-space: normal;
+  text-align: center;
+}
+@media (orientation: landscape) and (max-height: 559px) {
+  .editor .strip .tool.tool {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 2px;
+    font-size: 0.6875rem;
   }
 }

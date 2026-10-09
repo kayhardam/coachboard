@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultBoard } from "./defaults";
 import type { Frame } from "./format";
 import { HIT_R } from "./geometry";
-import { nearestPiece, reach } from "./hit";
+import { holder, nearestPiece, reach } from "./hit";
 
 describe("reach", () => {
   it("is the drawn touch area when that is at least 44 px", () => {
@@ -55,5 +55,37 @@ describe("nearestPiece", () => {
     for (const radius of [reach(1.75), reach(1.1)]) {
       expect(nearestPiece(lineup, [91, 66], radius)).toEqual({ kind: "player", index: pivot });
     }
+  });
+});
+
+describe("nearestPiece with cones", () => {
+  const frame: Frame = { players: [{ team: "a", at: [100, 100] }], balls: [], arrows: [] };
+
+  it("finds a cone, and gives a tie to the player drawn over it", () => {
+    expect(nearestPiece(frame, [140, 100], 20, [[150, 100]])).toEqual({ kind: "cone", index: 0 });
+    expect(nearestPiece(frame, [100, 100], 20, [[100, 100]])).toEqual({ kind: "player", index: 0 });
+  });
+});
+
+describe("holder", () => {
+  const frame: Frame = {
+    players: [
+      { team: "a", at: [100, 100] },
+      { team: "a", at: [130, 100] },
+    ],
+    balls: [[112, 100]],
+    arrows: [],
+  };
+
+  it("is the player nearest the ball", () => {
+    expect(holder(frame, [112, 100], HIT_R)).toBe(0);
+    expect(holder(frame, [118, 100], HIT_R)).toBe(1);
+  });
+
+  it("reaches twice as far as a tap, so further than a tap ever does", () => {
+    expect(holder(frame, [100, 100 + 2 * HIT_R], HIT_R)).toBe(0);
+    expect(holder(frame, [100, 101 + 2 * HIT_R], HIT_R)).toBeUndefined();
+    // A phone in landscape on the full court: a tap reaches about 27 dm.
+    expect(holder(frame, [100, 150], 27)).toBe(0);
   });
 });

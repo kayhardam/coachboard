@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { defaultBoard, defaultBoardFor } from "./defaults";
+import { defaultBoard, defaultBoardFor, setup, SETUPS } from "./defaults";
 import { isBoard } from "./format";
+import { PLAYER_R } from "./geometry";
 
 const labels = (locale: string) => defaultBoardFor(locale).frames[0]!.players.map((p) => p.label ?? "");
 
@@ -24,5 +25,39 @@ describe("defaultBoardFor", () => {
     board.frames[0]!.players[0]!.label = "X";
     expect(labels("nl")[0]).toBe("LH");
     expect(defaultBoard.frames[0]!.players[0]!.label).toBe("LW");
+  });
+});
+
+describe("setup", () => {
+  const lineup = defaultBoardFor("nl");
+
+  it("makes a valid board for every starting lineup, and leaves the lineup alone", () => {
+    for (const id of SETUPS) expect(isBoard(setup(id, lineup)), id).toBe(true);
+    expect(lineup).toEqual(defaultBoardFor("nl"));
+    expect(setup("6-0", lineup)).toEqual(lineup);
+  });
+
+  it("moves only the defence against a 5-1 or a 3-2-1, with nobody on top of another (the pivot keeps a defender beside them)", () => {
+    for (const id of ["5-1", "3-2-1"] as const) {
+      const players = setup(id, lineup).frames[0]!.players;
+      expect(players.map((p) => p.label)).toEqual(lineup.frames[0]!.players.map((p) => p.label));
+      expect(players.filter((p) => p.team === "a")).toEqual(lineup.frames[0]!.players.filter((p) => p.team === "a"));
+      for (const [i, p] of players.entries()) {
+        for (const q of players.slice(i + 1)) {
+          expect(Math.hypot(p.at[0] - q.at[0], p.at[1] - q.at[1]), `${id}: ${p.at} and ${q.at}`).toBeGreaterThan(PLAYER_R);
+        }
+      }
+    }
+  });
+
+  it("sets out lines of three without labels, a cone in front of each, the keeper and one ball", () => {
+    for (const [id, lines] of [["2-lines", 2], ["3-lines", 3]] as const) {
+      const board = setup(id, lineup);
+      const players = board.frames[0]!.players;
+      expect(players.filter((p) => p.team === "a" && p.label === undefined)).toHaveLength(3 * lines);
+      expect(players.filter((p) => p.team === "d")).toEqual([{ team: "d", label: "K", at: [100, 8] }]);
+      expect(board.cones).toHaveLength(lines);
+      expect(board.frames[0]!.balls).toHaveLength(1);
+    }
   });
 });

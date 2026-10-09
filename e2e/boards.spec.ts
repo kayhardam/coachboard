@@ -7,6 +7,7 @@ import {
   chooseFile,
   downloaded,
   dragPlayer,
+  moveTool,
   expect,
   expectBoard,
   expectedPieces,
@@ -131,6 +132,8 @@ test.describe("reloading", () => {
   /** Edits, then expects exactly `count` boards, the last edit among them. */
   async function editAndCount(page: Page, count: number) {
     const before = await pieces(page);
+    // With Move: the same drag twice with Arrow may draw nothing the second time.
+    await moveTool(page);
     await dragPlayer(page, 5, 15, 15);
     await expect.poll(() => pieces(page)).not.toEqual(before);
     await settled(page);
@@ -202,6 +205,7 @@ test.describe("two tabs", () => {
     // Each tab edits its own board in turn, and saves from the list as it is now.
     for (const tab of [page, other, page, other]) {
       const before = await savedBoards(tab);
+      await moveTool(tab);
       await dragPlayer(tab, 5, 10, -10);
       await expect.poll(() => savedBoards(tab)).not.toEqual(before);
     }

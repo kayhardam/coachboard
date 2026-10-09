@@ -149,6 +149,9 @@
   <!-- Cones: on the floor, under everything else -->
   {#each board.cones as cone, i (i)}
     <g data-kind="cone" data-index={i} transform="translate({cone[0]} {cone[1]})">
+      {#if selected?.kind === "cone" && selected.index === i}
+        <circle r="7" fill="none" stroke={colors.select} stroke-width="1.5" />
+      {/if}
       <path
         d="M 0 -4.5 L 4 3 L -4 3 Z"
         fill={colors.cone}

@@ -120,6 +120,11 @@ export async function expectBoard(page: Page, board: Board | BoardV1) {
     .toEqual(want);
 }
 
+/** Picks Move: a drag then moves a piece. Arrow, the tool on opening, draws. */
+export async function moveTool(page: Page) {
+  await page.getByRole("toolbar", { name: "Tools" }).getByRole("button", { name: "Move" }).click();
+}
+
 /** Drags a player by (dx, dy) screen pixels with the pointer. */
 export async function dragPlayer(page: Page, index: number, dx: number, dy: number) {
   const box = (await page.locator(`.stage [data-kind="player"][data-index="${index}"]`).boundingBox())!;
@@ -172,6 +177,7 @@ export async function linkInAddressBar(page: Page) {
 export async function saveOwnBoard(page: Page) {
   await openBoard(page);
   const before = await saved(page);
+  await moveTool(page);
   await dragPlayer(page, 5, 30, 30);
   await expect.poll(() => saved(page)).not.toBe(before);
   return (await saved(page))!;

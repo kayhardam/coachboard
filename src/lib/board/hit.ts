@@ -7,7 +7,7 @@ import type { Frame, Pt } from "./format";
 import { HIT_R } from "./geometry";
 
 export interface Piece {
-  kind: "player" | "ball";
+  kind: "player" | "ball" | "cone";
   index: number;
 }
 
@@ -20,10 +20,11 @@ export function reach(scale: number): number {
 }
 
 /**
- * The player or ball nearest to `at`, if it is within `radius` dm. On a tie
- * the piece drawn on top wins: a ball before a player, and the later of two.
+ * The player, ball or cone nearest to `at`, if it is within `radius` dm. On a
+ * tie the piece drawn on top wins: a ball before a player before a cone, and
+ * the later of two. Cones belong to the board, so they come in apart.
  */
-export function nearestPiece(frame: Frame, at: Pt, radius: number): Piece | null {
+export function nearestPiece(frame: Frame, at: Pt, radius: number, cones: Pt[] = []): Piece | null {
   let best: Piece | null = null;
   let bestDistance = radius;
   const consider = (piece: Piece, [x, y]: Pt) => {
@@ -33,7 +34,17 @@ export function nearestPiece(frame: Frame, at: Pt, radius: number): Piece | null
       bestDistance = distance;
     }
   };
+  cones.forEach((cone, index) => consider({ kind: "cone", index }, cone));
   frame.players.forEach((player, index) => consider({ kind: "player", index }, player.at));
   frame.balls.forEach((ball, index) => consider({ kind: "ball", index }, ball));
   return best;
+}
+
+/**
+ * Who has the ball at `ball`: the nearest player within twice the reach of a
+ * tap (`tap`, see reach()), so always further than a tap reaches. A pass
+ * drawn from the ball is theirs. Nobody that near: undefined.
+ */
+export function holder(frame: Frame, ball: Pt, tap: number): number | undefined {
+  return nearestPiece({ ...frame, balls: [] }, ball, 2 * tap)?.index;
 }

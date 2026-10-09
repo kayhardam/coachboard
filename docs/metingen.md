@@ -2491,3 +2491,76 @@ Branch `fase-13-sneller-tekenen`, vanaf `main` @ `a83509d`. Eerste PR van Fase 1
 - **Controle** (tijdelijk, niet gecommit): met het budget op 20 en op 22 faalt de test ("Expected: 20, Received: 21" en "Expected: 22, Received: 21").
 - **Groottes:** gelijk; de app verandert niet.
 
+
+## Fase 13-2: de proef met de slimme pijlen (9 oktober 2026)
+
+Branch `fase-13-2-proef`, vanaf `main` @ `eefe275`. Besluiten C1–C8 (productplan, Fase 13) en de keuzes van Kay na de schermafbeeldingen (9 oktober 2026). Kay probeert de proef op de preview en neemt besluit 6 (slimme pijlen) vóór de merge.
+
+### Wat er veranderd is
+
+- **Zes tools:** Schuif, Pijl, Aanval, Dekker, Bal, Pion. Loop, Pass en Dribbel gaan op in Pijl. **Pijl is het gereedschap bij het openen** (C1).
+- **Pijl:** een tik kiest een speler, pijl, bal of pion; een sleep tekent. Vanaf een speler een loop van die speler; vanaf de bal een pass van de speler die het dichtst bij de bal staat, binnen twee keer het bereik van een tik (`holder()` in `hit.ts`: op een half veld op de telefoon 26 dm, liggend op het hele veld ongeveer 54 dm). Staat er niemand zo dichtbij, dan heeft de pass geen speler. Vanaf een lege plek een loop zonder speler.
+- **De balk over het veld**, één blok in de editor voor alle drie: de soortbalk bij een gekozen pijl (Loop, Pass, Stuit, Dribbel, Schot, Sper; Schot alleen voor een pijl van een speler), de teambalk bij een gekozen speler (Aanval, Dekker, Aanspeelpunt), en op een nieuw bord de keuzestrook met de startopstellingen. Staand en liggend onderaan het veld, breed bovenaan in de vrije rechterkolom.
+- **De keuzestrook** alleen op een nieuw bord: bij het eerste bezoek en na Nieuw bord, tot de eerste wijziging. Niet op een ontvangen link, een tactiek of een bord uit Mijn borden. Een opstelling kiezen bewaart niets. **Zonder kop** (besluit Kay, 9 oktober 2026): "Starting lineup" was op `/en/board/` de grootste tekst (1.320 px², "Add title" 1.098 px²) en verscheen pas na de JS, zodat de LCP naar later schoof (`e2e/layout.spec.ts` faalde op Android). De naam blijft het `aria-label`.
+- **5-1:** de middelste dekker staat naast de cirkelloper (`[118, 58]`, zoals bij 3-2-1), niet erop.
+- **`edit.ts`:** `addCone()` en `addBall()` (afronden met `clampPt()`, tot `MAX_CONES` en `MAX_BALLS`), `setKind()` (alleen in `frames[0]`, een schot wordt recht en eindigt in het doel, `settle()`), `setTeam()` (in elke stap, een aanspeelpunt verliest zijn label). Pionnen schuif je met Schuif en verwijder je met Verwijderen. Een nieuwe speler, bal of pion wordt niet gekozen: een balk zou het veld afdekken waar de volgende komt.
+- **Bal** voegt een bal toe (tot vier, C4) in plaats van de eerste te verplaatsen.
+- **Sneltoetsen 1–6** voor de tools, titel "{label} ({toets})" en `aria-keyshortcuts`; niet terwijl je een titel of mapnaam typt.
+- **Tekst:** "Blok" wordt "Sper" (Engels blijft "Screen"); in de code blijft het `block`.
+
+### Groottes
+
+`npm run budget`, vóór (`main` @ `eefe275`) en na, op macOS:
+
+| Meting | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| JS van het bord | 29,6 KB | 30,8 KB | 32,5 KB |
+| Alle JS in `_astro/` | 33,6 KB (33.640 B) | 34,9 KB (34.865 B) | 33,85 → **35,07 KB** |
+| Later geladen JS (QR-code) | 4,0 KB | 4,0 KB | 10,0 KB |
+| CSS bordpagina | 4,78 KB (4.779 B) | 4,92 KB (4.924 B) | 4,98 → **5,12 KB** |
+| HTML `/nl/board/` | 5,90 KB | 6,04 KB | 6,5 KB |
+| HTML `/en/board/` | 5,81 KB | 5,94 KB | 6,5 KB |
+
+- **Budgetten** volgens C7: de meting + 0,2 KB. Bovengrens voor Fase 13: 35,8 KB alle JS, 5,3 KB CSS. Na 13-2 is daarvan 0,93 KB JS en 0,38 KB CSS over.
+- Kay mat het prototype op Linux, zoals CI: +914 B JS, +149 B CSS. Op macOS kost de echte code +1.225 B JS en +145 B CSS.
+- **Per functie,** gemeten door het onderdeel tijdelijk weg te laten uit het geheel:
+
+  | Onderdeel | Alle JS | CSS |
+  |---|--:|--:|
+  | De balk over het veld (het blok, de stijl, staand, liggend, breed) | +315 B | +77 B |
+  | Soortbalk, met `setKind()` en drie iconen | +218 B | 0 |
+  | Teambalk, met `setTeam()` | +122 B | +15 B |
+  | Startopstellingen (`setup()`, alleen op een nieuw bord) | +335 B | +23 B |
+  | Pionnen (tool, `addCone()`, schuiven, verwijderen, ring, icoon) | +97 B | +20 B |
+  | Sneltoetsen 1–6 | +91 B | 0 |
+  | Pass vanaf de bal (`holder()`) | +44 B | 0 |
+  | Meer ballen (`addBall()`) | +11 B | 0 |
+  | Een tik kiest met Pijl | +6 B | 0 |
+  | Samen, vergeleken met `main` | **+1.225 B** | **+145 B** |
+
+  De onderdelen tellen op tot 1.239 B; gzip telt niet precies op. Pijl in plaats van Loop, Pass en Dribbel kost niets. Alles laadt meteen.
+- **HTML +0,14 KB:** de nieuwe teksten gaan als prop mee.
+
+### Meettaken
+
+| Route | Vóór | Na (`/en/` en `/nl/`) |
+|---|--:|--:|
+| T1 | 6 | **4** |
+| T1 met eigen bord | 8 | **6** |
+| T4 met links naar jezelf | 11 | 10 |
+| T4 met export en import, tot de borden in Mijn borden staan | 14 | 13 |
+| T4 met export en import, tot elk bord op het veld stond | 21 | **20** (doel gehaald) |
+| T3 | 21 | **21** |
+| T3 met eigen bord | 23 | **23** |
+
+- **T1:** sleep vanaf LB, sleep vanaf RB, sleep vanaf de bal naar RB (een pass van MO/CB), Delen. De tikken op Loop en Pass vallen weg.
+- **T4:** de tik op Loop valt weg.
+- **T3** met de Pion-tool, zonder startopstelling (die telt pas in 13-3): Meer → Leeg veld (2), Aanval + zes tikken (7), Pion + twee tikken (3), Dekker + de keeper (2), Bal + één tik (2), Pijl (1), twee looppijlen (2), een pass vanaf de bal (1), Delen (1) = 21; 23 met eigen bord. `TAP_BUDGET` blijft 21 en 23 (C6). De test controleert nu 2 pionnen en 1 dekker.
+- **Controle** (tijdelijk, niet gecommit): met elk budget 1 lager en 1 hoger falen alle tien de routes (T1, T3, T4 met export, in beide talen).
+
+### Tests
+
+- Unit: `addBall()`, `addCone()`, schuiven en verwijderen van een pion, `setKind()` (alleen `frames[0]`, het begin van de volgende pijl, schot), `setTeam()`, `nearestPiece()` met pionnen, `holder()`, de startopstellingen (geldig, niemand op een ander).
+- `e2e/tools.spec.ts` (nieuw): Pijl kiest met een tik en tekent met een sleep, de pass vanaf de bal (met en zonder speler), de soortbalk, de teambalk, pionnen, vier ballen, de keuzestrook (alleen op een nieuw bord, bewaart niets), 5-1 in het Nederlands, sneltoetsen niet tijdens typen.
+- `e2e/layout.spec.ts`: de drie balken per taal staand, liggend en breed: in beeld, 44 px hoog, geen afgekapt label, niet over de tools, breed rechts van het veld, en het veld verschuift niet.
+- `saveOwnBoard()` en de opslagtests in `boards.spec.ts` kiezen eerst Schuif (`moveTool()`): ze gaan over opslaan, en met Pijl tekent dezelfde sleep twee keer niet altijd iets nieuws.
