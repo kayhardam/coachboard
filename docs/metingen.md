@@ -2425,3 +2425,22 @@ Twee toestellen in één test (`e2e/tasks.spec.ts`), elk met een eigen, lege ops
   - `e2e/security.spec.ts`: geen CSP-melding bij exporteren (een download van een `blob:`-URL) en importeren, nl en en.
   - **Controle** (tijdelijk, niet gecommit): zonder het bewaren vooraf faalt de test van de 300 ms.
 
+
+### Lighthouse
+
+Vóór: productie (`main` @ `8267b7f`). Na: de preview-URL. Drie runs per URL, Lighthouse 13.5.0, mobiel. SEO is 66 op elke preview-URL, door `X-Robots-Tag: noindex`; op productie 100.
+
+| URL | Performance | Accessibility | Best Practices | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` vóór | 100 | 100 | 100 | 0,80 / 0,80 / 0,85 s | 0 | 0 ms | 61,4 KB |
+| `/nl/board/` na | 100 | 100 | 100 | 0,89 / 0,81 / 0,81 s | 0 | 0 ms | 62,9 KB |
+| `/en/board/` vóór | 100 | 100 | 100 | 0,80 / 0,82 / 0,81 s | 0 | 0 ms | 61,3 KB |
+| `/en/board/` na | 100 | 100 | 100 | 0,84 / 0,80 / 0,86 s | 0 | 0 ms | 62,9 KB |
+
+- De overdracht stijgt 1,5 KB: de JS, de CSS en de teksten in de HTML. LCP blijft gelijk (mediaan 0,81 s vóór en na); de trage eerste run zagen 12b-2 en de besparing ook op hun preview.
+
+### Preview-URL
+
+`https://fase-12b3-verhuizen-coachboard.hardamkay.workers.dev`
+
+De telefoontests 8 tot en met 10 staan onder "Geparkeerd" in de testlijst voor de telefoon.
