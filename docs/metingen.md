@@ -2566,3 +2566,20 @@ Branch `fase-13-2-proef`, vanaf `main` @ `eefe275`. Besluiten C1–C8 (productpl
 - `e2e/layout.spec.ts`: de drie balken per taal staand, liggend en breed: in beeld, 44 px hoog, geen afgekapt label, niet over de tools, breed rechts van het veld, en het veld verschuift niet.
 - **Eerste CI-run:** "Aanspeelpunt" werd breed afgekapt op Linux (op macOS 94 van 100 px). De brede strook krijgt 13 px tekst en 8 px binnenruimte: 108 px voor ongeveer 82 px tekst.
 - `saveOwnBoard()` en de opslagtests in `boards.spec.ts` kiezen eerst Schuif (`moveTool()`): ze gaan over opslaan, en met Pijl tekent dezelfde sleep twee keer niet altijd iets nieuws.
+
+### Lighthouse
+
+Vóór: productie (`main` @ `eefe275`). Na: de preview-URL. Drie runs per URL, Lighthouse 13.5.0, mobiel. SEO staat er niet in: elke preview-URL stuurt `X-Robots-Tag: noindex`.
+
+| URL | Performance | Accessibility | Best Practices | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` vóór | 100 | 100 | 100 | 0,82 / 0,81 / 0,82 s | 0 | 0–9 ms | 62,5 KB |
+| `/nl/board/` na | 100 | 100 | 100 | 0,92 / 0,81 / 0,81 s | 0 | 1–4 ms | 64,5 KB |
+| `/en/board/` vóór | 100 | 100 | 100 | 0,83 / 0,80 / 0,82 s | 0 | 0–1 ms | 62,5 KB |
+| `/en/board/` na | 100 | 100 | 100 | 0,82 / 0,87 / 0,82 s | 0 | 2 ms | 64,5 KB |
+
+- LCP blijft gelijk (mediaan 0,82 s vóór en 0,81 en 0,82 s na). De keuzestrook zonder kop wordt geen LCP. De overdracht stijgt 2,0 KB: JS, CSS en de teksten in de HTML.
+
+### Preview-URL
+
+`https://fase-13-2-proef-coachboard.hardamkay.workers.dev`
