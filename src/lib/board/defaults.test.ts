@@ -41,9 +41,9 @@ describe("setup", () => {
     for (const id of ["5-1", "3-2-1"] as const) {
       const players = setup(id, lineup).frames[0]!.players;
       expect(players.map((p) => p.label)).toEqual(lineup.frames[0]!.players.map((p) => p.label));
-      // The pivot just in front of the middle defender, 20 dm apart, both in the middle.
-      expect(players.find((p) => p.label === "CL")!.at).toEqual([100, 82]);
-      expect(players).toContainEqual({ team: "d", at: [100, 62] });
+      // The pivot beside the middle defender, 20 dm apart, as high as in a 6-0.
+      expect(players.find((p) => p.label === "CL")!.at).toEqual([110, 66]);
+      expect(players).toContainEqual({ team: "d", at: [90, 66] });
       expect(players.filter((p) => p.team === "a" && p.label !== "CL")).toEqual(
         lineup.frames[0]!.players.filter((p) => p.team === "a" && p.label !== "CL"),
       );

@@ -56,15 +56,14 @@ export type SetupId = (typeof SETUPS)[number];
 
 /**
  * Where the six court defenders stand, per defence (the goalkeeper stays put).
- * The middle one stands on the goal-area line, with the pivot just in front
- * of them, both in the middle.
+ * The middle one stands beside the pivot, in the middle, as high as in a 6-0.
  */
 const defences: Record<"5-1" | "3-2-1", [number, number][]> = {
-  "5-1": [[22, 30], [52, 56], [100, 62], [148, 56], [178, 30], [100, 104]],
-  "3-2-1": [[22, 30], [100, 62], [178, 30], [52, 84], [148, 84], [100, 104]],
+  "5-1": [[22, 30], [52, 56], [90, 66], [148, 56], [178, 30], [100, 98]],
+  "3-2-1": [[22, 30], [90, 66], [178, 30], [52, 84], [148, 84], [100, 110]],
 };
-/** Where the pivot stands against a 5-1 or a 3-2-1: 20 dm in front of the middle defender. */
-const PIVOT: [number, number] = [100, 82];
+/** Where the pivot stands against a 5-1 or a 3-2-1: beside the middle defender, 20 dm apart, as in a 6-0. */
+const PIVOT: [number, number] = [110, 66];
 
 /** Lines of three attackers without labels, a cone in front of each line, a ball with the first on the left. */
 function lines(xs: number[], keeper: Board["frames"][0]["players"][0]): Board {
