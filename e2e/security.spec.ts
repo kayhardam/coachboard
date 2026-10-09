@@ -1,6 +1,6 @@
 import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
 import { t } from "../src/i18n/ui";
-import { allPages, expect, fromMenu, openBoard, test, watchViolations } from "./helpers";
+import { allPages, chooseFile, downloaded, dragPlayer, expect, fromMenu, openBoard, savedBoards, test, watchViolations } from "./helpers";
 
 // The headers come from public/_headers, which `wrangler dev` applies. The CSP
 // for scripts and styles is a <meta> that Astro writes (security.csp in
@@ -79,6 +79,15 @@ for (const lang of ["en", "nl"]) {
     await expect(page.getByRole("dialog", { name: t(lang, "board.qr") }).locator("svg")).toBeVisible();
     // The editor's CSS arrives as a <style> that Svelte injects; a blocked one leaves the bars unstyled.
     await expect(page.locator(".editor")).toHaveCSS("display", "grid");
+    await page.keyboard.press("Escape");
+    // Export (a download from a blob: URL) and import (reading the file) in My boards.
+    await dragPlayer(page, 5, 30, 30);
+    await expect.poll(async () => (await savedBoards(page)).length).toBe(1);
+    await fromMenu(page, "board.myBoards", lang);
+    const list = page.getByRole("dialog", { name: t(lang, "board.myBoards") });
+    const file = await downloaded(page, () => list.getByRole("button", { name: t(lang, "board.exportAll") }).click());
+    await chooseFile(page, () => list.locator("label", { hasText: t(lang, "board.import") }).click(), file.text);
+    await expect(list.getByRole("status")).toContainText(t(lang, "board.importKnown"));
     expect(await violations()).toEqual([]);
   });
 }

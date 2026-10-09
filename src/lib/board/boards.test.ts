@@ -1,10 +1,14 @@
+import { deflateRawSync, inflateRawSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import {
   byDate,
   copyOf,
   deleteBoard,
+  exportFile,
   folders,
+  importFile,
   isUntouchedDefault,
+  newOnly,
   OLD_KEY,
   put,
   read,
@@ -18,7 +22,8 @@ import {
   type Saved,
 } from "./boards";
 import { defaultBoard, defaultBoardFor } from "./defaults";
-import { toBoard, type Board } from "./format";
+import { encode, toBoard, type Board } from "./format";
+import exportV1 from "./fixtures/export/export-1.json";
 import v1Default from "./fixtures/v1-default.json";
 import v1FullLineup from "./fixtures/v1-full-lineup.json";
 
@@ -251,3 +256,91 @@ describe("copyOf", () => {
     expect(copyOf(saved("a", 1), " (copy)").board).not.toHaveProperty("title");
   });
 });
+
+describe("export and import", () => {
+  const BASE = "https://handballcoachboard.com/nl/board/#t=";
+  const titled = (title: string): Board => ({ ...edited(), title });
+  const list = (): Saved[] => [
+    { id: "a", board: titled("Kruising MO–LO"), folder: "Training dinsdag", at: Date.parse("2026-10-08T17:12:00Z") },
+    { id: "b", board: edited("nl"), at: Date.parse("2026-10-09T09:30:00Z") },
+  ];
+  const strip = ({ board, folder, at }: Saved) => ({ board, folder, at });
+
+  it("exports each board as a full link, with its folder and date, the most recently changed first", async () => {
+    const file = JSON.parse(await exportFile(list(), BASE));
+    expect(file.coachboard).toBe(1);
+    expect(file.boards).toEqual([
+      { link: BASE + (await encode(edited("nl"))), at: "2026-10-09T09:30:00.000Z" },
+      { link: BASE + (await encode(titled("Kruising MO–LO"))), folder: "Training dinsdag", at: "2026-10-08T17:12:00.000Z" },
+    ]);
+  });
+
+  it("imports what it exported: the same boards, folders and dates, under new ids", async () => {
+    const found = await importFile(await exportFile(list(), BASE));
+    expect(found.map(strip)).toEqual(byDate(list()).map(strip));
+    expect(found.map((s) => s.id)).not.toContain("a");
+    expect(new Set(found.map((s) => s.id)).size).toBe(2);
+  });
+
+  it("reads the export of phase 12b-3, with a version 1 link in it", async () => {
+    const found = await importFile(JSON.stringify(exportV1));
+    expect(found).toHaveLength(3);
+    expect(found.map((s) => s.folder)).toEqual(["Training dinsdag", undefined, "Training dinsdag"]);
+    expect(found.map((s) => new Date(s.at).toISOString())).toEqual(exportV1.boards.map((b) => b.at));
+    expect(found.every((s) => s.board.v === 2)).toBe(true);
+  });
+
+  it("reads a link with or without the URL before it", async () => {
+    const link = await encode(edited());
+    const file = { boards: [{ link }, { link: BASE + link }, { link: BASE + encodeURIComponent(link) }] };
+    expect((await importFile(JSON.stringify(file))).map((s) => s.board)).toEqual([edited(), edited(), edited()]);
+  });
+
+  it("leaves out what doesn't read and keeps the rest", async () => {
+    const good = { link: BASE + (await encode(edited())) };
+    const file = { boards: [{ link: BASE + "2.broken" }, { link: BASE + "3.AAAA" }, { link: "%E0%A4%A" }, { link: 4 }, null, good] };
+    expect(await importFile(JSON.stringify(file))).toHaveLength(1);
+  });
+
+  it("finds no boards in a file that isn't an export", async () => {
+    for (const text of ["", "not json", "null", "[]", '{"boards": "x"}', '{"boards": []}', "{}"]) {
+      expect(await importFile(text)).toEqual([]);
+    }
+  });
+
+  it("cleans a folder name as the editor does, and dates a board without a date when it is imported", async () => {
+    const link = BASE + (await encode(edited()));
+    const file = { boards: [{ link, folder: "  Dinsdag\n" + "x".repeat(60) }, { link, folder: "   " }, { link, at: "gisteren" }] };
+    const [a, b, c] = await importFile(JSON.stringify(file), 1234);
+    expect(a!.folder).toBe(("Dinsdag " + "x".repeat(60)).slice(0, 40));
+    expect(b!.folder).toBeUndefined();
+    expect(c!.at).toBe(1234);
+  });
+
+  it("leaves out the boards that are already there, in any folder, and the second of two in one file", async () => {
+    const mine: Saved[] = [{ id: "x", board: edited(), folder: "Dinsdag", at: 1 }];
+    const found: Saved[] = [
+      { id: "1", board: edited(), at: 2 },
+      { id: "2", board: titled("Nieuw"), folder: "Donderdag", at: 3 },
+      { id: "3", board: titled("Nieuw"), at: 4 },
+    ];
+    expect(newOnly(mine, found).map((s) => s.id)).toEqual(["2"]);
+    expect(newOnly([...mine, ...found], found)).toEqual([]);
+    expect(newOnly([], found).map((s) => s.id)).toEqual(["1", "2"]);
+  });
+
+  it("knows a board again when another browser compressed its link to other bytes", async () => {
+    const link = await encode(titled("Kruising"));
+    const json = JSON.stringify(toV2Json(link));
+    const other = "2." + deflateRawSync(json, { level: 1 }).toString("base64url");
+    expect(other).not.toBe(link);
+    const [found] = await importFile(JSON.stringify({ boards: [{ link: BASE + other }] }));
+    expect(newOnly([{ id: "x", board: titled("Kruising"), at: 1 }], [found!])).toEqual([]);
+  });
+});
+
+/** The JSON inside a version 2 link. */
+function toV2Json(link: string): unknown {
+  const bytes = Buffer.from(link.slice(2), "base64url");
+  return JSON.parse(inflateRawSync(bytes).toString());
+}

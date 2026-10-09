@@ -11,6 +11,7 @@ import {
   MAX_STEPS,
   MAX_TEXT,
   MAX_TITLE,
+  sameBoard,
   settle,
   toBoard,
   type Board,
@@ -250,6 +251,45 @@ describe("decode rejects", () => {
     const link = await linkFromJson(padded);
     expect(link.length).toBeLessThan(4000);
     expect(await decode(link)).toBeNull();
+  });
+});
+
+describe("sameBoard", () => {
+  const board = () => structuredClone(fixtures["./fixtures/v2-play.json"]!.board as Board);
+
+  it("is true for the same board, whatever the order of its keys", () => {
+    const b = board();
+    // Every object with its keys the other way round, as a board read back from storage may have them.
+    const reverse = (x: unknown): unknown =>
+      Array.isArray(x)
+        ? x.map(reverse)
+        : x && typeof x === "object"
+          ? Object.fromEntries(Object.entries(x).reverse().map(([k, v]) => [k, reverse(v)]))
+          : x;
+    const reordered = reverse(b) as Board;
+    expect(JSON.stringify(reordered)).not.toBe(JSON.stringify(b));
+    expect(sameBoard(b, reordered)).toBe(true);
+  });
+
+  it("is true for a version 1 board and the version 2 board it reads as", () => {
+    const v1 = fixtures["./fixtures/v1-full-lineup.json"]!.board;
+    expect(sameBoard(toBoard(v1)!, fullLineup)).toBe(true);
+  });
+
+  it("is false after any change", () => {
+    const changes: ((b: Board) => void)[] = [
+      (b) => (b.title = "Anders"),
+      (b) => (b.frames[0]!.text = "Anders"),
+      (b) => (b.frames[0]!.players[0]!.at = [1, 1]),
+      (b) => b.frames[0]!.arrows.pop(),
+      (b) => b.cones.push([10, 10]),
+      (b) => (b.court = b.court === "half" ? "full" : "half"),
+    ];
+    for (const change of changes) {
+      const b = board();
+      change(b);
+      expect(sameBoard(board(), b)).toBe(false);
+    }
   });
 });
 

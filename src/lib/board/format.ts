@@ -402,6 +402,14 @@ export async function encode(board: Board): Promise<string> {
 }
 
 /**
+ * True when two boards draw the same: compared in the shape a link holds
+ * before compression, which another browser may compress to other bytes.
+ */
+export function sameBoard(a: Board, b: Board): boolean {
+  return JSON.stringify(toV2(a)) === JSON.stringify(toV2(b));
+}
+
+/**
  * True for a link from a newer version of the board than this code, which a
  * tab opened before a deploy can still be running. False for a broken link of
  * a version this code knows.

@@ -1,8 +1,11 @@
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
+import { exportFile, type Saved } from "../src/lib/board/boards";
 import { defaultBoardFor } from "../src/lib/board/defaults";
-import { decode, type Board } from "../src/lib/board/format";
+import { decode, encode, type Board } from "../src/lib/board/format";
 import {
+  chooseFile,
+  downloaded,
   dragPlayer,
   expect,
   expectBoard,
@@ -297,5 +300,115 @@ test.describe("the list", () => {
     await page.keyboard.press("Escape");
     await expect(list(page)).toBeVisible();
     expect((await savedBoards(page))[0]).not.toHaveProperty("folder");
+  });
+});
+
+test.describe("export and import", () => {
+  const BASE = "http://localhost/en/board/#t=";
+  const exportButton = (page: Page) => list(page).getByRole("button", { name: "Export all boards" });
+  const importButton = (page: Page) => list(page).locator("label", { hasText: "Import boards" });
+  const importText = (page: Page, text: string) => chooseFile(page, () => importButton(page).click(), text);
+  const notice = (page: Page) => list(page).getByRole("status");
+  /** A board of the default lineup with a run from player `from`, as a test board. */
+  const withRun = (from: number): Board => {
+    const board = defaultBoardFor("en");
+    const at = board.frames[0]!.players[from]!.at;
+    board.frames[0]!.arrows.push({ kind: "run", from, pts: [at, [at[0], at[1] + 40]] });
+    return board;
+  };
+
+  test("without boards there is nothing to export, and import is there", async ({ page }) => {
+    await openBoard(page);
+    await openList(page);
+    await expect(exportButton(page)).toHaveCount(0);
+    await expect(importButton(page)).toBeVisible();
+  });
+
+  test("export right after a change has that change, and makes no copy", async ({ page }) => {
+    await page.clock.install();
+    await saveOwnBoard(page);
+    const [own] = await savedBoards(page);
+    // Stop the clock: the save that waits 300 ms after a change can't run.
+    await page.clock.pauseAt(Date.now() + 60_000);
+    await dragPlayer(page, 0, 20, 20);
+    const drawn = await pieces(page);
+    expect(await savedBoards(page)).toEqual([own]);
+    await openList(page);
+    const file = await downloaded(page, () => exportButton(page).click());
+    expect(file.name).toMatch(/^coachboard-boards-\d{4}-\d{2}-\d{2}\.json$/);
+    const { coachboard, boards } = JSON.parse(file.text);
+    expect(coachboard).toBe(1);
+    expect(boards).toHaveLength(1);
+    expect(boards[0].link).toMatch(/^http:\/\/[^/]+\/en\/board\/#t=2\./);
+    const exported = (await decode(new URL(boards[0].link).hash.slice(3)))!;
+    await list(page).getByRole("button", { name: "Close" }).click();
+    await expectBoard(page, exported);
+    // The waiting save runs: still one board, with the change.
+    await page.clock.runFor(1000);
+    await page.clock.resume();
+    await settled(page);
+    const kept = await savedBoards(page);
+    expect(kept).toHaveLength(1);
+    expect(kept[0]!.id).toBe(own!.id);
+    await expectBoard(page, kept[0]!.board);
+    expect(await pieces(page)).toEqual(drawn);
+  });
+
+  test("import adds the new boards with their folder and date, and leaves yours and the court alone", async ({ page }) => {
+    await saveOwnBoard(page);
+    const [own] = await savedBoards(page);
+    const drawn = await pieces(page);
+    const at = Date.parse("2026-10-08T17:12:00Z");
+    const file = await exportFile(
+      [
+        { id: "x", board: own!.board, folder: "Somewhere else", at },
+        { id: "y", board: withRun(1), folder: "Training Tuesday", at },
+        { id: "z", board: withRun(2), at: at - 1 },
+      ] as Saved[],
+      BASE,
+    );
+    await openList(page);
+    await importText(page, file);
+    await expect(notice(page)).toContainText("2 boards added.");
+    const boards = await savedBoards(page);
+    expect(boards).toHaveLength(3);
+    // Yours is already there: it stays one board, in its own folder.
+    expect(boards.find((s) => s.id === own!.id)).toEqual(own);
+    expect(boards.filter((s) => s.id !== own!.id).map((s) => [s.folder, s.at])).toEqual([
+      ["Training Tuesday", at],
+      [undefined, at - 1],
+    ]);
+    await expect(list(page).getByRole("button", { name: "Training Tuesday" })).toBeVisible();
+    expect(await pieces(page)).toEqual(drawn);
+
+    // The same file again adds nothing.
+    await importText(page, file);
+    await expect(notice(page)).toContainText("All boards in this file are already here.");
+    expect(await savedBoards(page)).toHaveLength(3);
+
+    // A reload still opens your own board.
+    await page.reload();
+    await expect(page.getByRole("toolbar", { name: "Tools" })).toBeVisible();
+    expect(await pieces(page)).toEqual(drawn);
+  });
+
+  test("one board added, and a file without boards", async ({ page }) => {
+    await openBoard(page);
+    await openList(page);
+    await importText(page, JSON.stringify({ coachboard: 1, boards: [{ link: BASE + (await encode(withRun(3))) }] }));
+    await expect(notice(page)).toContainText("1 board added.");
+    await expect(list(page).getByRole("button", { name: /Untitled/ })).toHaveCount(1);
+    await importText(page, "not a file of boards");
+    await expect(notice(page)).toContainText("This file has no boards.");
+    expect(await savedBoards(page)).toHaveLength(1);
+  });
+
+  test("an imported board opens from the list as it was exported", async ({ page }) => {
+    await openBoard(page);
+    await openList(page);
+    const board = { ...withRun(1), title: "Kruising MO–LO" };
+    await importText(page, await exportFile([{ id: "a", board, at: 1 }], BASE));
+    await list(page).getByRole("button", { name: /Kruising MO–LO/ }).click();
+    await expectBoard(page, board);
   });
 });
