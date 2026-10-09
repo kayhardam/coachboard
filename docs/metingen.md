@@ -1123,7 +1123,7 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
 |---|---|---|---|
 | T1 | Open het bord, zet een aanval tegen een 6-0 neer, teken drie pijlen (loop, pass, loop) en deel de link in de teamapp | telefoon | ja |
 | T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | als vier losse borden; als route zodra het bord stappen heeft |
-| T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, twee pionnen, een bal en de kruising | telefoon | met spelers als pionnen; als route zodra het bord pionnen heeft |
+| T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, een keeper, twee pionnen, een bal en de kruising, en deel hem | telefoon | ~~met spelers als pionnen; als route zodra het bord pionnen heeft~~ route sinds Fase 13-1, met dekkers als pionnen |
 | T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf (route sinds Fase 12b); ~~met Mijn borden zodra die er zijn~~ met export en import (route sinds Fase 12b-3) |
 
 ### Meetmethode
@@ -1234,7 +1234,8 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 | T1 | 6 handelingen | **5** | 6 |
 | T4, met links naar jezelf | 11 handelingen | ~~Kay kiest, na de route met Mijn borden (Fase 12b)~~ geen: ter vergelijking (B6) | 11 |
 | T4, met export en import (Fase 12b-3) | 21 handelingen; 14 tot de borden in Mijn borden op de telefoon staan | **20** (B6) | 21 |
-| T2, T3 | — | zodra hun route bestaat | — |
+| T3 (Fase 13-1) | 21 handelingen; 23 met een eigen bord | **5** (9 oktober 2026) | 21 (23 met een eigen bord) |
+| T2 | — | zodra de route bestaat | — |
 
 - **Het budget blijft 6** tot een fase de route echt korter maakt. Die fase verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
 - **T4 (B6, besluit Kay, 9 oktober 2026):** de route met export en import telt, tot elk bord één keer op het veld van de telefoon stond (21, ook het budget). Het doel is 20: met de slimme pijlen uit Fase 13 valt de tik op "Run" weg, net als bij T1. `TAP_BUDGET` blijft 21 tot die fase. De route met links (11) blijft in `e2e/tasks.spec.ts`, ter vergelijking.
@@ -2446,3 +2447,47 @@ Vóór: productie (`main` @ `8267b7f`). Na: de preview-URL. Drie runs per URL, L
 `https://fase-12b3-verhuizen-coachboard.hardamkay.workers.dev`
 
 De telefoontests 8 tot en met 10 staan onder "Geparkeerd" in de testlijst voor de telefoon.
+
+## Fase 13-1: T3-nulmeting (9 oktober 2026)
+
+Branch `fase-13-sneller-tekenen`, vanaf `main` @ `a83509d`. Eerste PR van Fase 13 (sneller tekenen). De app verandert niet.
+
+### T3, de definitie
+
+"Zet de oefening Kruisen in tweetallen neer: twee rijen, een keeper, twee pionnen, een bal en de kruising, en deel hem." (besluit Kay, 9 oktober 2026: T3 telt de keeper mee.)
+
+- Half veld. Twee rijen van drie aanvallers zonder label, een keeper, twee pionnen, één bal bij de eerste van de linker rij.
+- De kruising: een loop van de eerste links, een loop van de eerste rechts erachterlangs, een pass van links naar rechts.
+- Telt vanaf het bord zoals het opent; met een eigen bord eerst Meer → Nieuw bord. Telt niet: het bord openen, het deelvenster van de telefoon.
+- De test controleert de stukken en de soorten pijlen (en van wie ze zijn), niet de plekken.
+- Op `main` heeft het bord nog geen pionnen en geen keeper als eigen stuk: de pionnen en de keeper zijn dekkers.
+
+### De route
+
+| # | Handeling (nl / en) |
+|--:|---|
+| 1–2 | Meer → Leeg veld (More → Empty court) |
+| 3 | Tik "Aanval" (Attack) |
+| 4–9 | Zes tikken op het veld: twee rijen van drie |
+| 10 | Tik "Dekker" (Defend) |
+| 11–12 | Twee tikken: de pionnen |
+| 13 | Eén tik bij het doel: de keeper |
+| 14 | Tik "Bal" (Ball) |
+| 15 | Eén tik naast de eerste van de linker rij |
+| 16 | Tik "Loop" (Run) |
+| 17 | Sleep een looppijl vanaf de eerste links |
+| 18 | Sleep een looppijl vanaf de eerste rechts, erachterlangs |
+| 19 | Tik "Pass" |
+| 20 | Sleep een pass van de eerste links naar de eerste rechts |
+| 21 | Tik "Delen" (Share) |
+
+| Route | `/en/` | `/nl/` |
+|---|--:|--:|
+| T3 | **21** | **21** |
+| T3 met eigen bord (Meer → Nieuw bord ervoor) | **23** | **23** |
+
+- **21, niet 20:** het plan ging uit van een opstelling zonder keeper (20, en 22 met een eigen bord). De keeper kost één tik: een dekker bij het doel.
+- `TAP_BUDGET` krijgt "T3": 21 en "T3 with your own board": 23. **Doel 5** (besluit Kay, 9 oktober 2026): met de startopstelling "2 rijen" (met pionnen en keeper) verwacht na Fase 13, en 7 met een eigen bord. `TAP_BUDGET` blijft 21 en 23 tot 13-3 de route echt korter maakt.
+- **Controle** (tijdelijk, niet gecommit): met het budget op 20 en op 22 faalt de test ("Expected: 20, Received: 21" en "Expected: 22, Received: 21").
+- **Groottes:** gelijk; de app verandert niet.
+
