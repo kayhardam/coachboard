@@ -2597,7 +2597,7 @@ Kay testte de proef op de preview. **Besluit 6:** de slimme pijlen blijven, met 
 | Meting | Proef | Na besluit 6 | Budget |
 |---|--:|--:|--:|
 | Alle JS in `_astro/` (macOS) | 34.865 B | **35.085 B** | 35,17 → **35,39 KB** |
-| Alle JS, Linux (geschat, + 0,10 KB) | ± 34,97 KB | ± 35,19 KB | |
+| Alle JS, Linux (geschat, + 0,10 KB; CI toont) | ± 34,97 KB (35,0) | ± 35,19 KB (35,2) | |
 | JS van het bord | 30,8 KB | 31,1 KB | 32,5 KB |
 | CSS bordpagina | 4.931 B | 4.931 B | 5,12 KB |
 | HTML `/nl/board/` / `/en/board/` | 6.044 / 5.944 B | 6.042 / 5.942 B | 6,5 KB |
@@ -2613,5 +2613,6 @@ Kay testte de proef op de preview. **Besluit 6:** de slimme pijlen blijven, met 
   | Speler vóór handvat met Pijl | +11 B |
   | Samen, met de cirkelloper in de opstellingen en Verwijderen → keuzestrook | **+220 B** |
 
+- **CI:** `e2e/share.spec.ts` (de QR-code) faalde één keer op iPhone. Op een nieuw bord staat de link al in de adresbalk vóór de sleep, dus de test kon de oude link lezen. Hij wacht nu tot de link na de wijziging verandert (5 keer herhaald: groen).
 - **Meettaken gelijk:** T1 4 (6), T3 21 (23), T4 met export 20, T4 met links 10. De routes vertrekken vanaf de bal of vanaf spelers zonder bal, dus de nieuwe regel verandert ze niet.
 - **Tests:** unit voor `hasBall()` (keten, eind van een loop, pass zonder speler, schot) en `inGoal()`; in `e2e/tools.spec.ts` een kettingpass over MO, RO en RH met pass en ga, een ontvanger die met de soortbalk toch loopt, en een pass naar het doel (schot van MO) naast een pass zonder speler naar het doel (blijft een pass). De unittest van de opstellingen controleert dat niemand op een ander staat en waar de cirkelloper staat.
