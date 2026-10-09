@@ -35,7 +35,8 @@ const TAP_BUDGET = {
   // the phone's court. Goal 20 (docs/metingen.md): smart arrows (phase 13) drop the tap on Run.
   "T4 with export and import": 21,
   // T3: the drill "crossing in pairs": two lines of three, a goalkeeper, two cones, a ball and the
-  // crossing. Baseline before phase 13: the cones are defenders, on an emptied court.
+  // crossing, shared. Baseline before phase 13: the cones are defenders, on an emptied court.
+  // Goal 5 (docs/metingen.md): starting lineups (phase 13-3) set out the lines.
   T3: 21,
   // T3 for a returning coach: their own board is on the court first.
   "T3 with your own board": 23,
