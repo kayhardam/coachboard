@@ -2,7 +2,18 @@ import type { Browser, Locator, Page } from "@playwright/test";
 import { defaultBoardFor } from "../src/lib/board/defaults";
 import { decode } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
-import { expect, expectBoard, moreButton, openBoard, savedBoards, saveOwnBoard, stubBeacon, test } from "./helpers";
+import {
+  chooseFile,
+  downloaded,
+  expect,
+  expectBoard,
+  moreButton,
+  openBoard,
+  savedBoards,
+  saveOwnBoard,
+  stubBeacon,
+  test,
+} from "./helpers";
 
 // The tap budget: the shortest route for each measured task, counted in
 // actions (every tap, drag and key press is one). The count must equal the
@@ -19,7 +30,11 @@ const TAP_BUDGET = {
   "T1 with your own board": 8,
   // T4: three boards prepared on a laptop and opened on the phone, sent as links to yourself.
   "T4 as links to yourself": 11,
+  // T4 again, the boards moved as one exported file, until each has been on the phone's court.
+  "T4 with export and import": 21,
 };
+/** Of those, the actions until the three boards are in My boards on the phone. */
+const T4_UNTIL_IMPORTED = 14;
 
 /** Counts the actions of a route. Every tap is on a button that's already on screen. */
 function route(page: Page) {
@@ -168,6 +183,61 @@ for (const lang of ["en", "nl"]) {
     expect(steps.count).toBe(TAP_BUDGET["T4 as links to yourself"]);
     // All three boards are kept on the laptop.
     await expect.poll(async () => (await savedBoards(desk.page)).length).toBe(runs.length);
+    await desk.context.close();
+  });
+
+  // T4 with My boards: the laptop exports the three boards as one file, which
+  // goes to the phone outside the page (AirDrop, mail, a chat: not counted, nor
+  // is picking the file in the phone's own chooser). The phone imports it and
+  // opens each board from My boards. Same boards as the route with links.
+  test(`T4 (${lang}): three boards from the laptop to the phone, exported and imported`, async ({ browser, baseURL, page }) => {
+    const desk = await laptop(browser, baseURL);
+    await openBoard(desk.page, "", `/${lang}/board/`);
+    await openBoard(page, "", `/${lang}/board/`);
+    const steps = route(desk.page);
+    const runs = [LB, CB, RB];
+    const menuItem = (p: Page, key: Parameters<typeof t>[1]) => p.getByRole("button", { name: t(lang, key), exact: true });
+    const list = (p: Page) => p.getByRole("dialog", { name: t(lang, "board.myBoards") });
+
+    await steps.tap(desk.page.getByRole("toolbar", { name: t(lang, "board.tools") }).getByRole("button", { name: t(lang, "board.tool.run") }));
+    for (const [i, player] of runs.entries()) {
+      if (i > 0) {
+        await steps.tap(moreButton(desk.page, lang));
+        await steps.tap(menuItem(desk.page, "board.newBoard"));
+      }
+      await steps.drag(player, 0, -40);
+    }
+    await steps.tap(moreButton(desk.page, lang));
+    await steps.tap(menuItem(desk.page, "board.myBoards"));
+    const file = await downloaded(desk.page, () => steps.tap(list(desk.page).getByRole("button", { name: t(lang, "board.exportAll") })));
+    const exported = JSON.parse(file.text).boards as { link: string; at: string }[];
+    expect(exported).toHaveLength(runs.length);
+
+    // The next day, on the phone.
+    const phone = route(page);
+    await phone.tap(moreButton(page, lang));
+    await phone.tap(menuItem(page, "board.myBoards"));
+    await chooseFile(page, () => phone.tap(list(page).locator("label", { hasText: t(lang, "board.import") })), file.text, file.name);
+    await expect(list(page).getByRole("status")).toContainText(t(lang, "board.imported").replace("{count}", "3"));
+    expect(steps.count + phone.count).toBe(T4_UNTIL_IMPORTED);
+    const onPhone = await savedBoards(page);
+    expect(onPhone.map((s) => new Date(s.at).toISOString()).sort()).toEqual(exported.map((b) => b.at).sort());
+
+    // Each board once on the phone's court, from My boards: the newest first in the list.
+    const rows = () => list(page).locator("li .open");
+    for (const [i, entry] of exported.entries()) {
+      if (i > 0) {
+        await phone.tap(moreButton(page, lang));
+        await phone.tap(menuItem(page, "board.myBoards"));
+      }
+      await phone.tap(rows().nth(i));
+      const board = (await decode(new URL(entry.link).hash.slice(3)))!;
+      expect(board.frames[0]!.arrows).toMatchObject([{ kind: "run" }]);
+      await expectBoard(page, board);
+    }
+    expect(steps.count + phone.count).toBe(TAP_BUDGET["T4 with export and import"]);
+    // The laptop keeps all three.
+    expect(await savedBoards(desk.page)).toHaveLength(runs.length);
     await desk.context.close();
   });
 }

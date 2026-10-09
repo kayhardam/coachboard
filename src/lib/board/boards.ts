@@ -6,7 +6,7 @@
 // that is), not when it opens: a received link, a tactic or a new board stays
 // out until you change it.
 
-import { MAX_TITLE, toBoard, type Board } from "./format";
+import { decode, encode, MAX_TITLE, sameBoard, toBoard, type Board } from "./format";
 
 /** A board you keep. `at` is when it last changed (ms since 1970). */
 export interface Saved {
@@ -161,4 +161,68 @@ export function isUntouchedDefault(board: Board): boolean {
   const teams = players.map((p) => p.team).join("");
   const places = players.map((p) => p.at).join();
   return balls.join() === "110,122" && teams === "aaaaaaddddddd" && ATTACK.some((a) => places === `${a},${DEFENCE}`);
+}
+
+// ===== Export and import =====
+
+/**
+ * Export all boards: one file with each board as its link, and only its
+ * folder and date around it, so no second format comes along. The file is a
+ * contract like the link: what is exported now must import forever
+ * (fixtures/export/export-1.json).
+ */
+export interface ExportFile {
+  coachboard: 1;
+  boards: { link: string; folder?: string; at: string }[];
+}
+
+/** The export of `boards`, the most recently changed first; `base` is the board's URL up to the link (…/board/#t=). */
+export async function exportFile(boards: Saved[], base: string): Promise<string> {
+  const file: ExportFile = {
+    coachboard: 1,
+    boards: await Promise.all(
+      byDate(boards).map(async (s) => ({
+        link: base + (await encode(s.board)),
+        ...(s.folder ? { folder: s.folder } : {}),
+        at: new Date(s.at).toISOString(),
+      })),
+    ),
+  };
+  return JSON.stringify(file, null, 1);
+}
+
+/**
+ * The boards in an export file, each under a new id, with its folder and its
+ * date (or `now` without one). A link reads with or without the URL before
+ * it; what doesn't read is left out, and a file that isn't one gives none.
+ */
+export async function importFile(text: string, now = Date.now()): Promise<Saved[]> {
+  let list: unknown;
+  try {
+    list = (JSON.parse(text) as Partial<ExportFile> | null)?.boards;
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(list)) return [];
+  const read = await Promise.all(
+    list.map(async (entry: { link?: unknown; folder?: unknown; at?: unknown } | null) => {
+      if (typeof entry?.link !== "string") return [];
+      let board: Board | null = null;
+      try {
+        board = await decode(decodeURIComponent(entry.link.replace(/^[^#]*#t=/, "")));
+      } catch {
+        // Not URI-encoded properly: not a link.
+      }
+      if (!board) return [];
+      const at = typeof entry.at === "string" ? Date.parse(entry.at) : NaN;
+      return [withFolder({ id: newId(), board, at: at > 0 ? at : now }, typeof entry.folder === "string" ? entry.folder : "")];
+    }),
+  );
+  return read.flat();
+}
+
+/** The boards of `found` that draw like no board in `boards` nor an earlier one in `found`, whatever their folder. */
+export function newOnly(boards: Saved[], found: Saved[]): Saved[] {
+  const have = boards.map((s) => s.board);
+  return found.filter((s) => !have.some((b) => sameBoard(b, s.board)) && have.push(s.board));
 }

@@ -298,6 +298,54 @@
     if (id) change((storage) => store.update(storage, (list) => ({ ...list, current: id })));
   }
 
+  /** Saves the board on the court now if its save (300 ms) is still waiting: as that save would, under its own id. */
+  async function saveNow() {
+    const now = board;
+    if (!loaded || now === kept) return;
+    const link = await encode(now);
+    if (board === now && link !== (await keptLink)) save(now, link);
+  }
+
+  /** Export all boards: one file of links, downloaded. The board on the court goes in with its latest change. */
+  async function exportAll() {
+    await saveNow();
+    const editor = new URL("..", location.origin + links.link);
+    const text = await store.exportFile(readList()?.boards ?? boards, `${editor}#t=`);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    // Swedish writes the date as 2026-10-09, in local time.
+    a.download = strings["board.exportFile"].replace("{date}", new Date().toLocaleDateString("sv"));
+    a.click();
+    // Safari on the iPhone asks first whether to download; revoke late, as FileSaver.js does.
+    setTimeout(() => URL.revokeObjectURL(a.href), 40_000);
+  }
+
+  /** Adds the boards in an exported file to My boards, leaving out those already there; nothing is overwritten. */
+  async function importBoards(e: Event) {
+    const input = e.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ""; // so the same file can be chosen again
+    if (!file) return;
+    const found = await store.importFile(await file.text());
+    if (!found.length) return show(strings["board.importNone"]);
+    let added: store.Saved[] = [];
+    try {
+      boards = store.update(localStorage, (list) => {
+        added = store.newOnly(list.boards, found);
+        return { ...list, boards: [...added, ...list.boards] };
+      }).boards;
+    } catch {
+      return show(strings["board.importFailed"]);
+    }
+    show(
+      added.length === 0
+        ? strings["board.importKnown"]
+        : added.length === 1
+          ? strings["board.importedOne"]
+          : strings["board.imported"].replace("{count}", String(added.length)),
+    );
+  }
+
   function openList() {
     menuOpen = false;
     listDialog.showModal();
@@ -824,6 +872,17 @@
       {/each}
     </ul>
   {/each}
+  <!-- After the list: you use it now and then, the list every training. -->
+  <div class="backup">
+    {#if boards.length}
+      <p>{strings["board.exportHint"]}</p>
+      <button type="button" onclick={exportAll}>{strings["board.exportAll"]}</button>
+    {/if}
+    <label>
+      {strings["board.import"]}
+      <input type="file" accept=".json,application/json" onchange={importBoards} />
+    </label>
+  </div>
 </dialog>
 
 <dialog class="qr" bind:this={qrDialog} aria-label={strings["board.qr"]} onclose={() => (qr = null)}>

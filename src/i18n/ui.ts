@@ -139,6 +139,15 @@ const en = {
   "board.newFolder": "New folder",
   "board.folderName": "Folder name",
   "board.renameFolder": "Rename folder",
+  "board.exportAll": "Export all boards",
+  "board.exportHint": "Your boards are only on this device. Export them now and then as a backup.",
+  "board.exportFile": "coachboard-boards-{date}.json",
+  "board.import": "Import boards",
+  "board.importedOne": "1 board added.",
+  "board.imported": "{count} boards added.",
+  "board.importNone": "This file has no boards.",
+  "board.importKnown": "All boards in this file are already here.",
+  "board.importFailed": "Import failed: your browser can't save anything here.",
 } as const;
 
 export type UiKey = keyof typeof en;
@@ -283,6 +292,15 @@ const nl: Record<UiKey, string> = {
   "board.newFolder": "Nieuwe map",
   "board.folderName": "Naam van de map",
   "board.renameFolder": "Map hernoemen",
+  "board.exportAll": "Alle borden exporteren",
+  "board.exportHint": "Je borden staan alleen op dit toestel. Exporteer ze af en toe als back-up.",
+  "board.exportFile": "coachboard-borden-{date}.json",
+  "board.import": "Borden importeren",
+  "board.importedOne": "1 bord toegevoegd.",
+  "board.imported": "{count} borden toegevoegd.",
+  "board.importNone": "Dit bestand bevat geen borden.",
+  "board.importKnown": "Alle borden uit dit bestand staan er al.",
+  "board.importFailed": "Importeren lukt niet: je browser kan hier niets bewaren.",
 };
 
 /** A language may leave keys out; those fall back to English. Dutch has them all. */

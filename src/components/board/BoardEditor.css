@@ -776,6 +776,53 @@
   border-radius: 0 0 6px 6px;
 }
 
+/* Export and import, after the list. */
+.boards .backup {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+.boards .backup p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+.boards .backup :is(button, label) {
+  position: relative; /* holds the input, so focusing it doesn't scroll the list */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.boards .backup :is(button, label):hover {
+  background: var(--color-bg-soft);
+}
+/* The focus ring of base.css, on the label: the input is out of sight. */
+.boards .backup label:has(input:focus-visible) {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+/* Out of sight but still focusable: the label is the button. */
+.boards .backup input {
+  position: absolute;
+  width: 1px;
+  min-height: 0;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+}
+
 /* A phone in landscape: New board beside the heading, so more boards fit in the height. */
 @media (orientation: landscape) and (max-height: 559px) {
   .boards {

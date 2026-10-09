@@ -31,3 +31,15 @@ for (const lang of ["en", "nl"]) {
     expect(serious).toEqual([]);
   });
 }
+
+for (const lang of ["en", "nl"]) {
+  test(`axe finds nothing serious in an empty My boards (${lang}), with import in it`, async ({ page }) => {
+    await openBoard(page, "", `/${lang}/board/`);
+    await fromMenu(page, "board.myBoards", lang);
+    const { violations } = await new AxeBuilder({ page }).analyze();
+    const serious = violations
+      .filter((v) => v.impact === "serious" || v.impact === "critical")
+      .map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
+    expect(serious).toEqual([]);
+  });
+}

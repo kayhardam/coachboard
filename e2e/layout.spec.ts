@@ -300,15 +300,42 @@ for (const lang of ["en", "nl"]) {
         const [bar, button] = await Promise.all([list.locator(".boards-bar").boundingBox(), newBoard.boundingBox()]);
         expect(button!.y + button!.height).toBeLessThanOrEqual(bar!.y + bar!.height);
       }
+      // Export and import, after the list: on a phone a scroll away (the iPhone already with
+      // these three boards), wide in view.
+      const backup = [
+        list.getByRole("button", { name: t(lang, "board.exportAll") }),
+        list.locator("label", { hasText: t(lang, "board.import") }),
+      ];
+      for (const button of backup) {
+        if (orientation !== "wide") await button.scrollIntoViewIfNeeded();
+        await expect(button).toBeInViewport({ ratio: 1 });
+        expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+      }
       await list.locator("summary").first().click();
       for (const button of await list.locator(":is(button, summary):visible").all()) {
         expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
       }
       const cut = await list
-        .locator(":is(h2, h3, .new, .actions-panel button)")
+        .locator(":is(h2, h3, .new, .actions-panel button, .backup button, .backup label)")
         .evaluateAll((els) => els.filter((e) => e.clientWidth > 1 && e.scrollWidth > e.clientWidth).map((e) => e.textContent));
       expect(cut).toEqual([]);
       expect(await list.evaluate((d) => d.scrollWidth - d.clientWidth)).toBe(0);
+    });
+  }
+}
+
+for (const lang of ["en", "nl"]) {
+  for (const orientation of ORIENTATIONS) {
+    test(`${lang}, ${orientation}: an empty My boards has import in view, and no export`, async ({ page }) => {
+      await orient(page, orientation);
+      await openBoard(page, "", `/${lang}/board/`);
+      await fromMenu(page, "board.myBoards", lang);
+      const list = page.getByRole("dialog", { name: t(lang, "board.myBoards") });
+      const importButton = list.locator("label", { hasText: t(lang, "board.import") });
+      await expect(importButton).toBeInViewport({ ratio: 1 });
+      expect((await importButton.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+      expect(await importButton.evaluate((e) => e.scrollWidth - e.clientWidth)).toBe(0);
+      await expect(list.getByRole("button", { name: t(lang, "board.exportAll") })).toHaveCount(0);
     });
   }
 }

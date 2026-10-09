@@ -25,11 +25,11 @@ import { gzipSync } from "node:zlib";
 export const BUDGETS = {
   boardJs: 32_500, // 28.3 KB
   lazyJs: 10_000, // 0 KB
-  allJs: 33_150, // 32.9 KB plus 0.2 KB (docs/metingen.md, JS savings before phase 12b-3)
+  allJs: 33_850, // 33.65 KB plus 0.2 KB (docs/metingen.md, phase 12b-3: export and import)
   css: 2_000, // 1.6 KB per page
   // The board pages also link the editor's stylesheet (BoardEditor.css). Content
   // pages stay at `css`, which is too small to take that stylesheet as well.
-  boardCss: 4_850, // 4.65 KB plus 0.2 KB (docs/metingen.md, phase 12b-2: My boards)
+  boardCss: 4_980, // 4.78 KB plus 0.2 KB (docs/metingen.md, phase 12b-3: export and import)
   html: 6_500, // 5.5 KB on the board, the largest page
   png: 60_000, // 50.5 KB for og-default.png, the largest
 };

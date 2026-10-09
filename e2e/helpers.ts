@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { test as base, expect, type BrowserContext, type Page } from "@playwright/test";
 import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
@@ -155,7 +155,7 @@ export function saved(page: Page) {
 }
 
 /** The boards in My boards, parsed. */
-export async function savedBoards(page: Page): Promise<{ id: string; board: Board; folder?: string }[]> {
+export async function savedBoards(page: Page): Promise<{ id: string; board: Board; folder?: string; at: number }[]> {
   return JSON.parse((await saved(page)) ?? "[]");
 }
 
@@ -175,4 +175,16 @@ export async function saveOwnBoard(page: Page) {
   await dragPlayer(page, 5, 30, 30);
   await expect.poll(() => saved(page)).not.toBe(before);
   return (await saved(page))!;
+}
+
+/** The file the page downloads while `action` runs (Export all boards): its name and its text. */
+export async function downloaded(page: Page, action: () => Promise<unknown>) {
+  const [download] = await Promise.all([page.waitForEvent("download"), action()]);
+  return { name: download.suggestedFilename(), text: readFileSync((await download.path())!, "utf8") };
+}
+
+/** Picks `text` as the file in the chooser that `action` opens (Import boards): the device's own picker, outside the page. */
+export async function chooseFile(page: Page, action: () => Promise<unknown>, text: string, name = "coachboard-boards.json") {
+  const [chooser] = await Promise.all([page.waitForEvent("filechooser"), action()]);
+  await chooser.setFiles({ name, mimeType: "application/json", buffer: Buffer.from(text) });
 }
