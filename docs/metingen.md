@@ -2233,7 +2233,7 @@ Branch `fase-12b-mijn-borden`, vanaf `main` @ `ceb3fe0`. Indeling, teksten en bu
 - Apart gemeten, door het onderdeel tijdelijk weg te laten:
   - mapjes 0,44 KB;
   - de controle op een onaangeroerde standaardopstelling 0,37 KB, met de standaardopstelling uit `defaults.ts`. Met alleen de posities is het 0,18 KB.
-- **Gevolg voor 12b-3:** het plan schat daar +0,9 KB. Dan komt alle JS op ongeveer 35,4 KB, boven de bovengrens van 35,0 KB (B1).
+- ~~**Gevolg voor 12b-3:** het plan schat daar +0,9 KB. Dan komt alle JS op ongeveer 35,4 KB, boven de bovengrens van 35,0 KB (B1).~~ Vervallen: na "JS besparen vóór 12b-3" (hieronder) komt 12b-3 op 33,7 tot 34,3 KB.
 - **CSS +0,8 KB:** het scherm Mijn borden, staand, liggend en breed, en het menu in twee kolommen.
 - **Opslag:** 100 borden zijn 75 KB (standaardopstelling) tot 280 KB (een aanval van vier stappen) in localStorage. Dat is ruim binnen de ongeveer 5 MB die een browser geeft.
 
@@ -2270,3 +2270,57 @@ Vóór: productie (`main` @ `ceb3fe0`). Na: de preview-URL. Drie runs per URL, L
 ### Preview-URL
 
 `https://fase-12b-mijn-borden-coachboard.hardamkay.workers.dev`
+
+## JS besparen vóór 12b-3 (9 oktober 2026)
+
+Branch `fase-12b-js-besparen`, vanaf `main` @ `e6d7d4f`. Na 12b-2 kwam 12b-3 geschat op 35,4 KB alle JS, boven de bovengrens van 35,0 KB (B1). Deze PR bespaart eerst, zonder iets aan het gedrag te veranderen: geen nieuwe teksten, geen andere indeling, dezelfde QR-code.
+
+### Wat er veranderd is
+
+Elke besparing is apart gemeten door alleen die ene weg te laten uit het geheel:
+
+| Besparing | Bestanden | Alle JS |
+|---|---|--:|
+| De JS van het bord in één bestand: de Svelte-runtime, de Svelte-renderer van Astro en de editor waren drie chunks, met import- en exportlijsten ertussen. In één chunk kort de minifier ook de namen ertussen in. | `astro.config.mjs` (`codeSplitting.groups`, alleen de client-build) | −0,87 KB |
+| Alleen de iconen van het bord: de editor importeerde de hele set, met de iconen van de categorieën en de homepage. Een bundel houdt elke sleutel van een object dat hij importeert. Nu `boardIcons`; `icons` neemt die over voor `Icon.astro`. | `src/lib/icons.ts` | −0,36 KB |
+| Van de QR-bibliotheek (`uqr`) alleen `renderSVG`: `import("uqr")` hield ook de tekstrenderers. Nu via `src/lib/board/qr.ts`. | `src/lib/board/qr.ts` | −0,30 KB |
+| Svelte schrijft geen versiemerk meer (`window.__svelte`). | `svelte.config.js` (`discloseVersion: false`) | −0,02 KB |
+
+- De groep in `astro.config.mjs` noemt zelf wat erin mag. Zonder die afbakening ging ook het inline redirectscript van `board.astro` naar een bestand; nu blijft het inline en blijft de QR-code later laden.
+- Er komen twee doorgeefbestanden van 76 B bij (`BoardEditor.*.js` en `client.svelte.*.js`, voor `component-url` en `renderer-url`). Die zitten in de −0,87 KB.
+- **Geprobeerd en niet gedaan:**
+  - Terser als minifier: +0,14 KB, slechter dan de minifier van Vite;
+  - een eigen QR-encoder in plaats van `uqr`: geschat −2 KB later geladen JS, maar nieuwe code voor iets dat werkt;
+  - code in `BoardEditor.svelte` en `Court.svelte` herschrijven: weinig winst per stuk, en wel kans op ander gedrag.
+
+### Groottes
+
+`npm run budget`, vóór (`main` @ `e6d7d4f`) en na:
+
+| Meting | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| JS van het bord | 30,2 KB | 28,9 KB | 32,5 KB |
+| Alle JS in `_astro/` | 34,5 KB (34.492 B) | 32,9 KB (32.931 B) | 34,7 → **33,15 KB** |
+| Later geladen JS (QR-code) | 4,3 KB | 4,0 KB | 10,0 KB |
+
+- **Budget omlaag** (besluit Kay, 9 oktober 2026, volgens B1: de meting + 0,2 KB), zodat de besparing vast staat en 12b-3 laat zien wat het kost.
+
+### Wat 12b-3 kost (prototype)
+
+Gemeten in een kopie van het project, bovenop de besparingen:
+
+| Onderdeel | Alle JS |
+|---|--:|
+| `persist()` in de webapp | +0,06 KB |
+| Link openen in Mijn borden | +0,22 KB |
+| Export en import als links | +0,45 KB |
+| Samen | +0,74 KB → 33,7 KB |
+
+- In 12b-2 kostte de echte code 1,9 keer het prototype. Met die marge komt 12b-3 op 33,7 tot 34,3 KB, onder de 35,0 KB.
+- **Besluit Kay (9 oktober 2026):** Link openen en `persist()` zijn vooral voor de webapp. Ze komen met de beginschermtip mee, na test 6 en 7 van Fase 9, en niet in 12b-3. 12b-3 houdt export en import, en T4 met Mijn borden. Dan komt alle JS na 12b-3 op ongeveer 33,4 tot 33,8 KB (+0,45 KB, of 1,9 keer dat).
+
+### Tests
+
+- `npm run verify` groen: 194 unittests, budget OK.
+- `npm run e2e`: 448 geslaagd, 2 overgeslagen, zoals vóór. Daarin onder meer de QR-code (gelijk aan `renderSVG` van `uqr`, ook offline), het tapbudget, de redirect van workers.dev en de CSP.
+- De gebouwde HTML is gelijk aan die van `main`, op de bestandsnamen van de chunks en de `uid` van `<astro-island>` na.
