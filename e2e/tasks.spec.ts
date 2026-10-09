@@ -34,6 +34,11 @@ const TAP_BUDGET = {
   // T4, the route that counts: the boards moved as one exported file, until each has been on
   // the phone's court. Goal 20 (docs/metingen.md): smart arrows (phase 13) drop the tap on Run.
   "T4 with export and import": 21,
+  // T3: the drill "crossing in pairs": two lines of three, a goalkeeper, two cones, a ball and the
+  // crossing. Baseline before phase 13: the cones are defenders, on an emptied court.
+  T3: 21,
+  // T3 for a returning coach: their own board is on the court first.
+  "T3 with your own board": 23,
 };
 /** Of those, the actions until the three boards are in My boards on the phone. */
 const T4_UNTIL_IMPORTED = 14;
@@ -60,6 +65,15 @@ function route(page: Page) {
       // Not click() alone: it scrolls first, and a route can't ask that of a thumb.
       await expect(target).toBeInViewport();
       await target.click();
+      count++;
+    },
+    /** Taps an empty spot on the court, in court coordinates (decimetres). */
+    async tapAt(x: number, y: number) {
+      const at = await page.locator(".stage svg").evaluate((svg: SVGSVGElement, [x, y]) => {
+        const p = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM()!);
+        return { x: p.x, y: p.y };
+      }, [x, y]);
+      await page.mouse.click(at.x, at.y);
       count++;
     },
     /** Drags from a player's centre by (dx, dy) screen pixels. */
@@ -241,5 +255,82 @@ for (const lang of ["en", "nl"]) {
     // The laptop keeps all three.
     expect(await savedBoards(desk.page)).toHaveLength(runs.length);
     await desk.context.close();
+  });
+}
+
+// T3: the drill "crossing in pairs" on a half court. Two lines of three attackers without labels,
+// a goalkeeper, two cones and a ball with the first of the left line. The crossing: the first on the
+// left runs, the first on the right runs behind them, and the left one passes to the right one.
+// Until the board has cones (phase 13), the cones and the goalkeeper are defenders.
+const LINES = { left: 60, right: 140, rows: [120, 145, 170] };
+
+async function drawCrossing(page: Page, lang: string, steps: ReturnType<typeof route>) {
+  const tool = (key: Parameters<typeof t>[1]) =>
+    page.getByRole("toolbar", { name: t(lang, "board.tools") }).getByRole("button", { name: t(lang, key) });
+  await steps.tap(moreButton(page, lang));
+  await steps.tap(page.getByRole("button", { name: t(lang, "board.emptyCourt"), exact: true }));
+  // Attackers 0–2 on the left, 3–5 on the right, the first of each line nearest the goal.
+  await steps.tap(tool("board.tool.attack"));
+  for (const x of [LINES.left, LINES.right]) for (const y of LINES.rows) await steps.tapAt(x, y);
+  // Two cones in front of the lines, then the goalkeeper.
+  await steps.tap(tool("board.tool.defence"));
+  await steps.tapAt(LINES.left, 90);
+  await steps.tapAt(LINES.right, 90);
+  await steps.tapAt(100, 8);
+  await steps.tap(tool("board.tool.ball"));
+  await steps.tapAt(LINES.left + 14, 120);
+  await steps.tap(tool("board.tool.run"));
+  await steps.drag(0, 40, -40);
+  await steps.drag(3, -40, -30);
+  await steps.tap(tool("board.tool.pass"));
+  await steps.dragTo(0, 3);
+  await steps.tap(page.getByRole("button", { name: t(lang, "board.share") }));
+}
+
+/** Checks the pieces and the kinds of arrows, not where they are. */
+async function expectSharedT3(shared: () => Promise<string[]>, lang: string) {
+  await expect.poll(shared).toHaveLength(1);
+  const url = new URL((await shared())[0]!);
+  expect(url.pathname).toBe(`/${lang}/board/link/`);
+  const board = (await decode(url.hash.replace(/^#t=/, "")))!;
+  expect(board.court).toBe("half");
+  const frame = board.frames[0]!;
+  expect(frame.players.filter((p) => p.team === "a" && !p.label)).toHaveLength(6);
+  expect(frame.players.filter((p) => p.team === "d")).toHaveLength(3);
+  expect(frame.players).toHaveLength(9);
+  expect(frame.balls).toHaveLength(1);
+  expect(frame.arrows).toMatchObject([
+    { kind: "run", from: 0 },
+    { kind: "run", from: 3 },
+    { kind: "pass", from: 0 },
+  ]);
+}
+
+for (const lang of ["en", "nl"]) {
+  test(`T3 (${lang}): the shortest route takes exactly its tap budget`, async ({ page }) => {
+    const shared = await stubShareSheet(page);
+    await openBoard(page, "", `/${lang}/board/`);
+    const steps = route(page);
+
+    await drawCrossing(page, lang, steps);
+
+    await expectSharedT3(shared, lang);
+    expect(steps.count).toBe(TAP_BUDGET.T3);
+  });
+
+  test(`T3 (${lang}) with your own board: a new board first, which keeps yours`, async ({ page }) => {
+    const shared = await stubShareSheet(page);
+    const own = await saveOwnBoard(page);
+    await openBoard(page, "", `/${lang}/board/`);
+    const steps = route(page);
+
+    await steps.tap(moreButton(page, lang));
+    await steps.tap(page.getByRole("button", { name: t(lang, "board.newBoard"), exact: true }));
+    await drawCrossing(page, lang, steps);
+
+    await expectSharedT3(shared, lang);
+    await expect.poll(async () => (await savedBoards(page)).length).toBe(2);
+    expect(await savedBoards(page)).toContainEqual(JSON.parse(own)[0]);
+    expect(steps.count).toBe(TAP_BUDGET["T3 with your own board"]);
   });
 }
