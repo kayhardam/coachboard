@@ -1231,9 +1231,9 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 
 | Taak | Nulmeting (route) | Doel | `TAP_BUDGET` |
 |---|--:|--:|--:|
-| T1 | 6 handelingen | **5** | 6 |
-| T4, met links naar jezelf | 11 handelingen | ~~Kay kiest, na de route met Mijn borden (Fase 12b)~~ geen: ter vergelijking (B6) | 11 |
-| T4, met export en import (Fase 12b-3) | 21 handelingen; 14 tot de borden in Mijn borden op de telefoon staan | **20** (B6) | 21 |
+| T1 | 6 handelingen | **5** | ~~6~~ 4 (Fase 13-2; 6 met een eigen bord) |
+| T4, met links naar jezelf | 11 handelingen | ~~Kay kiest, na de route met Mijn borden (Fase 12b)~~ geen: ter vergelijking (B6) | ~~11~~ 10 (Fase 13-2) |
+| T4, met export en import (Fase 12b-3) | 21 handelingen; 14 tot de borden in Mijn borden op de telefoon staan | **20** (B6), gehaald in Fase 13-2 | ~~21~~ 20 (Fase 13-2; 13 tot Mijn borden) |
 | T3 (Fase 13-1) | 21 handelingen; 23 met een eigen bord | **5** (9 oktober 2026) | 21 (23 met een eigen bord) |
 | T2 | — | zodra de route bestaat | — |
 
