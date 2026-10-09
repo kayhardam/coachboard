@@ -29,6 +29,31 @@ export default defineConfig({
   },
   // No code blocks in the content; Shiki's inline styles would trip the CSP warning.
   markdown: { syntaxHighlight: false },
+  vite: {
+    environments: {
+      client: {
+        build: {
+          rolldownOptions: {
+            output: {
+              // The board's JS in one file: the Svelte runtime, Astro's Svelte
+              // renderer and the editor. Without this they are three chunks,
+              // with import and export lists between them (0.9 KB more).
+              // The QR code (uqr, src/lib/board/qr.ts) stays out, so it keeps
+              // loading later, and so does the inline script in board.astro.
+              codeSplitting: {
+                groups: [
+                  {
+                    name: "board",
+                    test: /node_modules\/(svelte|clsx|esm-env|@astrojs\/svelte)\/|src\/components\/board\/|src\/lib\/(icons|board\/(?!qr))/,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  },
   integrations: [
     // The pages for shared boards (/<lang>/board/link/ and /qr/) are noindex.
     sitemap({ i18n: { defaultLocale, locales }, filter: (page) => !/\/board\/(link|qr)\/$/.test(page) }),
