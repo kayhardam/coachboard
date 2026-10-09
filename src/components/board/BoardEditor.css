@@ -379,6 +379,11 @@
     grid-area: 2 / 3;
     align-self: start;
   }
+  /* The free column is narrower than the court's: "Aanspeelpunt" fits with room for wider fonts (Linux). */
+  .editor .strip .tool {
+    padding: 0 8px;
+    font-size: 0.8125rem;
+  }
 }
 
 /*

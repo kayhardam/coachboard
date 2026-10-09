@@ -2510,19 +2510,20 @@ Branch `fase-13-2-proef`, vanaf `main` @ `eefe275`. Besluiten C1–C8 (productpl
 
 ### Groottes
 
-`npm run budget`, vóór (`main` @ `eefe275`) en na, op macOS:
+`npm run budget`, vóór (`main` @ `eefe275`) en na, op macOS; CI meet op Linux:
 
 | Meting | Vóór | Na | Budget |
 |---|--:|--:|--:|
 | JS van het bord | 29,6 KB | 30,8 KB | 32,5 KB |
-| Alle JS in `_astro/` | 33,6 KB (33.640 B) | 34,9 KB (34.865 B) | 33,85 → **35,07 KB** |
+| Alle JS in `_astro/` | 33,6 KB (33.640 B) | 34,9 KB (34.865 B); CI 35,0 KB | 33,85 → **35,17 KB** |
 | Later geladen JS (QR-code) | 4,0 KB | 4,0 KB | 10,0 KB |
-| CSS bordpagina | 4,78 KB (4.779 B) | 4,92 KB (4.924 B) | 4,98 → **5,12 KB** |
+| CSS bordpagina | 4,78 KB (4.779 B) | 4,93 KB (4.931 B) | 4,98 → **5,12 KB** |
 | HTML `/nl/board/` | 5,90 KB | 6,04 KB | 6,5 KB |
 | HTML `/en/board/` | 5,81 KB | 5,94 KB | 6,5 KB |
 
-- **Budgetten** volgens C7: de meting + 0,2 KB. Bovengrens voor Fase 13: 35,8 KB alle JS, 5,3 KB CSS. Na 13-2 is daarvan 0,93 KB JS en 0,38 KB CSS over.
-- Kay mat het prototype op Linux, zoals CI: +914 B JS, +149 B CSS. Op macOS kost de echte code +1.225 B JS en +145 B CSS.
+- **Budgetten** volgens C7: de meting + 0,2 KB. Bovengrens voor Fase 13: 35,8 KB alle JS, 5,3 KB CSS.
+- **Linux en macOS:** CI (Linux) bouwt alle JS ongeveer 0,1 KB groter. Kay mat het prototype op Linux (+914 B JS, +149 B CSS; tot de bovengrens toen nog 1.144 B), dus `main` is daar ongeveer 33.742 B, 102 B meer dan op macOS. CI toont na 13-2 "35,0 KB"; met hetzelfde verschil is dat ongeveer 34,97 KB. `allJs` wordt 35,17 KB: die schatting + 0,2 KB. Tot de bovengrens is dan ongeveer 0,83 KB JS en 0,37 KB CSS over.
+- Op macOS kost de echte code +1.225 B JS en +152 B CSS.
 - **Per functie,** gemeten door het onderdeel tijdelijk weg te laten uit het geheel:
 
   | Onderdeel | Alle JS | CSS |
@@ -2536,9 +2537,9 @@ Branch `fase-13-2-proef`, vanaf `main` @ `eefe275`. Besluiten C1–C8 (productpl
   | Pass vanaf de bal (`holder()`) | +44 B | 0 |
   | Meer ballen (`addBall()`) | +11 B | 0 |
   | Een tik kiest met Pijl | +6 B | 0 |
-  | Samen, vergeleken met `main` | **+1.225 B** | **+145 B** |
+  | Samen, vergeleken met `main` | **+1.225 B** | **+152 B** |
 
-  De onderdelen tellen op tot 1.239 B; gzip telt niet precies op. Pijl in plaats van Loop, Pass en Dribbel kost niets. Alles laadt meteen.
+  De onderdelen tellen op tot 1.239 B; gzip telt niet precies op. Pijl in plaats van Loop, Pass en Dribbel kost niets. Alles laadt meteen. De CSS-onderdelen zijn gemeten vóór de regel voor de brede strook (+7 B, zie Tests).
 - **HTML +0,14 KB:** de nieuwe teksten gaan als prop mee.
 
 ### Meettaken
@@ -2563,4 +2564,5 @@ Branch `fase-13-2-proef`, vanaf `main` @ `eefe275`. Besluiten C1–C8 (productpl
 - Unit: `addBall()`, `addCone()`, schuiven en verwijderen van een pion, `setKind()` (alleen `frames[0]`, het begin van de volgende pijl, schot), `setTeam()`, `nearestPiece()` met pionnen, `holder()`, de startopstellingen (geldig, niemand op een ander).
 - `e2e/tools.spec.ts` (nieuw): Pijl kiest met een tik en tekent met een sleep, de pass vanaf de bal (met en zonder speler), de soortbalk, de teambalk, pionnen, vier ballen, de keuzestrook (alleen op een nieuw bord, bewaart niets), 5-1 in het Nederlands, sneltoetsen niet tijdens typen.
 - `e2e/layout.spec.ts`: de drie balken per taal staand, liggend en breed: in beeld, 44 px hoog, geen afgekapt label, niet over de tools, breed rechts van het veld, en het veld verschuift niet.
+- **Eerste CI-run:** "Aanspeelpunt" werd breed afgekapt op Linux (op macOS 94 van 100 px). De brede strook krijgt 13 px tekst en 8 px binnenruimte: 108 px voor ongeveer 82 px tekst.
 - `saveOwnBoard()` en de opslagtests in `boards.spec.ts` kiezen eerst Schuif (`moveTool()`): ze gaan over opslaan, en met Pijl tekent dezelfde sleep twee keer niet altijd iets nieuws.
