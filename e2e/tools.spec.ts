@@ -61,6 +61,12 @@ async function dragPiece(page: Page, kind: string, index: number, to: { x: numbe
 
 const player = (page: Page, index: number) => page.locator(`.stage [data-kind="player"][data-index="${index}"]`);
 
+/** Drags from the centre of a piece to the centre of player `to`. */
+async function dragTo(page: Page, kind: string, index: number, to: number) {
+  const b = (await player(page, to).boundingBox())!;
+  await dragPiece(page, kind, index, { x: b.x + b.width / 2, y: b.y + b.height / 2 });
+}
+
 test.describe("Arrow", () => {
   test("is the tool on opening: a tap picks a player or an arrow, a drag draws", async ({ page }) => {
     await openBoard(page);
@@ -101,6 +107,47 @@ test.describe("Arrow", () => {
     expect(arrows[1]).toMatchObject({ kind: "pass" });
     expect(arrows[1]!.from).toBeUndefined();
     await expect(kinds(page).getByRole("button", { name: "Shot" })).toBeDisabled();
+  });
+
+  // Decision 6 (Kay, 9 October 2026): who receives a pass or bounce has the ball, and a drag from them is
+  // their pass; after it, a drag is a run again (pass and go). A pass of a player into the goal is a shot.
+  test("a chain of passes over three players, then pass and go", async ({ page }) => {
+    await openBoard(page);
+    const [CB, RB, RW] = [2, 3, 4];
+    await dragTo(page, "ball", 0, RB);
+    await dragTo(page, "player", RB, RW);
+    await dragPlayer(page, RB, -20, -60);
+    expect((await inLink(page)).frames[0]!.arrows.map((a) => [a.kind, a.from])).toEqual([
+      ["pass", CB],
+      ["pass", RB],
+      ["run", RB],
+    ]);
+  });
+
+  test("a receiver still runs if the kind bar says so", async ({ page }) => {
+    await openBoard(page);
+    await dragTo(page, "ball", 0, 3);
+    await dragPlayer(page, 3, -10, -60);
+    await expect(kinds(page).getByRole("button", { name: "Pass" })).toHaveAttribute("aria-pressed", "true");
+    await kinds(page).getByRole("button", { name: "Run" }).click();
+    await expect.poll(async () => (await inLink(page)).frames[0]!.arrows.map((a) => [a.kind, a.from])).toEqual([
+      ["pass", 2],
+      ["run", 3],
+    ]);
+  });
+
+  test("a pass of a player into the goal is a shot; a pass without a player stays a pass", async ({ page }) => {
+    await openBoard(page);
+    await dragPiece(page, "ball", 0, await onCourt(page, 100, 0));
+    expect((await inLink(page)).frames[0]!.arrows).toMatchObject([{ kind: "shot", from: 2, pts: [[100, 130], [100, 0]] }]);
+
+    await moveTool(page);
+    await dragPiece(page, "ball", 0, await onCourt(page, 196, 196));
+    await tool(page, "Arrow").click();
+    await dragPiece(page, "ball", 0, await onCourt(page, 100, 0));
+    const arrows = (await inLink(page)).frames[0]!.arrows;
+    expect(arrows[1]).toMatchObject({ kind: "pass" });
+    expect(arrows[1]!.from).toBeUndefined();
   });
 
   test("the kind bar changes the kind of the arrow: a shot ends in the goal", async ({ page }) => {

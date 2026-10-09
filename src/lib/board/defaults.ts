@@ -54,11 +54,17 @@ export function defaultBoardFor(locale: string): Board {
 export const SETUPS = ["6-0", "5-1", "3-2-1", "2-lines", "3-lines"] as const;
 export type SetupId = (typeof SETUPS)[number];
 
-/** Where the six court defenders stand, per defence (the goalkeeper stays put). The middle one stands beside the pivot, not on them. */
+/**
+ * Where the six court defenders stand, per defence (the goalkeeper stays put).
+ * The middle one stands on the goal-area line, with the pivot just in front
+ * of them, both in the middle.
+ */
 const defences: Record<"5-1" | "3-2-1", [number, number][]> = {
-  "5-1": [[16, 32], [50, 60], [118, 58], [150, 60], [184, 32], [100, 98]],
-  "3-2-1": [[22, 30], [118, 58], [178, 30], [52, 84], [148, 84], [100, 104]],
+  "5-1": [[22, 30], [52, 56], [100, 62], [148, 56], [178, 30], [100, 104]],
+  "3-2-1": [[22, 30], [100, 62], [178, 30], [52, 84], [148, 84], [100, 104]],
 };
+/** Where the pivot stands against a 5-1 or a 3-2-1: 20 dm in front of the middle defender. */
+const PIVOT: [number, number] = [100, 82];
 
 /** Lines of three attackers without labels, a cone in front of each line, a ball with the first on the left. */
 function lines(xs: number[], keeper: Board["frames"][0]["players"][0]): Board {
@@ -71,7 +77,7 @@ function lines(xs: number[], keeper: Board["frames"][0]["players"][0]): Board {
   };
 }
 
-/** A starting lineup, made from the default lineup in the page's language (its labels stay). */
+/** A starting lineup, made from the default lineup in the page's language (its labels stay). Against a 5-1 or a 3-2-1 the defence and the pivot move. */
 export function setup(id: SetupId, lineup: Board): Board {
   const board = structuredClone(lineup);
   const players = board.frames[0]!.players;
@@ -79,6 +85,8 @@ export function setup(id: SetupId, lineup: Board): Board {
     const spots = defences[id];
     let i = 0;
     for (const p of players) if (p.team === "d" && p.label === undefined) p.at = [...spots[i++]!];
+    // The sixth attacker, in defaultBoard's order (LW, LB, CB, RB, RW, P).
+    players.filter((p) => p.team === "a")[5]!.at = [...PIVOT];
     return board;
   }
   const keeper = players.find((p) => p.team === "d" && p.label !== undefined)!;

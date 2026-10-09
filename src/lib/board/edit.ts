@@ -51,6 +51,26 @@ export function endOf(frame: Frame, player: number): Pt {
   return [...at];
 }
 
+/**
+ * Whether `player` has the ball by the end of `frame`'s arrows: in drawing
+ * order, they received a pass or bounce (it ends where they stand, or where
+ * their run, dribble or screen ends by then) and haven't passed, bounced or
+ * shot since. Who has the ball at the start doesn't count: a drag from them
+ * stays a run, and the pass comes from the ball.
+ */
+export function hasBall(frame: Frame, player: number): boolean {
+  const at = frame.players.map((p) => p.at);
+  let has = false;
+  for (const a of frame.arrows) {
+    const end = a.pts.at(-1)!;
+    const on = (p: Pt) => p[0] === end[0] && p[1] === end[1];
+    if (a.from === player && !MOVES.includes(a.kind)) has = false;
+    else if ((a.kind === "pass" || a.kind === "bounce") && (on(frame.players[player]!.at) || on(at[player]!))) has = true;
+    if (a.from !== undefined && MOVES.includes(a.kind)) at[a.from] = end;
+  }
+  return has;
+}
+
 /** Adds a player in every step (one lineup), at the same spot. */
 export function addPlayer(board: Board, team: Player["team"], at: [number, number]): Board {
   if (board.frames[0]!.players.length >= MAX_PLAYERS) return board;

@@ -37,11 +37,16 @@ describe("setup", () => {
     expect(setup("6-0", lineup)).toEqual(lineup);
   });
 
-  it("moves only the defence against a 5-1 or a 3-2-1, with nobody on top of another (the pivot keeps a defender beside them)", () => {
+  it("moves the defence and the pivot against a 5-1 or a 3-2-1, with nobody on top of another", () => {
     for (const id of ["5-1", "3-2-1"] as const) {
       const players = setup(id, lineup).frames[0]!.players;
       expect(players.map((p) => p.label)).toEqual(lineup.frames[0]!.players.map((p) => p.label));
-      expect(players.filter((p) => p.team === "a")).toEqual(lineup.frames[0]!.players.filter((p) => p.team === "a"));
+      // The pivot just in front of the middle defender, 20 dm apart, both in the middle.
+      expect(players.find((p) => p.label === "CL")!.at).toEqual([100, 82]);
+      expect(players).toContainEqual({ team: "d", at: [100, 62] });
+      expect(players.filter((p) => p.team === "a" && p.label !== "CL")).toEqual(
+        lineup.frames[0]!.players.filter((p) => p.team === "a" && p.label !== "CL"),
+      );
       for (const [i, p] of players.entries()) {
         for (const q of players.slice(i + 1)) {
           expect(Math.hypot(p.at[0] - q.at[0], p.at[1] - q.at[1]), `${id}: ${p.at} and ${q.at}`).toBeGreaterThan(PLAYER_R);

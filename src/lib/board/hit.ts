@@ -3,8 +3,8 @@
 // on the full court or a smaller phone. The editor then reaches further, to
 // half a 44 px tap target, and where touch areas overlap the nearest piece wins.
 
-import type { Frame, Pt } from "./format";
-import { HIT_R } from "./geometry";
+import type { Board, Frame, Pt } from "./format";
+import { HIT_R, POST_LEFT, POST_RIGHT } from "./geometry";
 
 export interface Piece {
   kind: "player" | "ball" | "cone";
@@ -47,4 +47,13 @@ export function nearestPiece(frame: Frame, at: Pt, radius: number, cones: Pt[] =
  */
 export function holder(frame: Frame, ball: Pt, tap: number): number | undefined {
   return nearestPiece({ ...frame, balls: [] }, ball, 2 * tap)?.index;
+}
+
+/**
+ * Whether `at` is in a goal: between the posts, and within `radius` dm (a
+ * tap's reach) of the goal line, or beyond it. A pass of a player that ends
+ * there is a shot.
+ */
+export function inGoal(board: Board, [x, y]: Pt, radius: number): boolean {
+  return x >= POST_LEFT && x <= POST_RIGHT && (y <= radius || (board.court === "full" && y >= 400 - radius));
 }

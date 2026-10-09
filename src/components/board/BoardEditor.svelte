@@ -11,7 +11,7 @@
   import { decode, encode, isNewerLink, MAX_TITLE, toBoard, type Board } from "../../lib/board/format";
   import { SETUPS, setup } from "../../lib/board/defaults";
   import { HIT_R } from "../../lib/board/geometry";
-  import { holder, nearestPiece, reach } from "../../lib/board/hit";
+  import { holder, inGoal, nearestPiece, reach } from "../../lib/board/hit";
   import { boardIcons as icons } from "../../lib/icons";
   import * as store from "../../lib/board/boards";
   import Court from "./Court.svelte";
@@ -82,7 +82,7 @@
   let qr = $state<string | null>(null);
   let qrDialog: HTMLDialogElement;
   let listDialog: HTMLDialogElement;
-  /** A new board (the first visit, New board): it offers the starting lineups until its first edit. */
+  /** A new board (the first visit, New board, the open board deleted): it offers the starting lineups until its first edit. */
   let isNew = $state(false);
   /** My boards is open: notices show there, above the list. */
   let listOpen = $state(false);
@@ -450,7 +450,7 @@
     change((storage) => store.deleteBoard(storage, s.id));
     if (wasOpen) {
       kept = board; // deleted: not to be saved again on the way out
-      open(structuredClone(defaultLineup), null);
+      open(structuredClone(defaultLineup), null, true);
     }
     show(strings["board.deleted"], false, {
       label: strings["board.undo"],
@@ -548,7 +548,10 @@
     // A tap on the court only closes an open menu.
     if (menuOpen) return void (menuOpen = false);
     const at = toCourt(e);
-    const hit = hitAt(e.target, at);
+    let hit = hitAt(e.target, at);
+    // With Arrow, a press on a player is for them, also under a handle: a pass
+    // ends on its receiver, whose drag is the next pass. Move keeps the handle.
+    if (tool === "arrow" && hit?.kind === "handle") hit = nearestPiece(frame, at, HIT_R) ?? hit;
     stage.setPointerCapture(e.pointerId);
 
     if (hit?.kind === "handle" && selected?.kind === "arrow") {
@@ -556,11 +559,13 @@
     } else if (tool === "arrow") {
       // A tap picks the piece; a drag draws. From a player, a run of theirs:
       // it starts where they are by then, at the end of their run if they
-      // already have one. From the ball, a pass of whoever has it.
+      // already have one; a pass if they received one. From the ball, a pass
+      // of whoever has it.
       const ball = hit?.kind === "ball" ? frame.balls[hit.index] : undefined;
       const player = hit?.kind === "player" ? hit.index : ball && holder(frame, ball, tapReach());
       const from: XY = player !== undefined ? edit.endOf(frame, player) : ball ? [...ball] : at;
-      drag = { type: "draw", kind: ball ? "pass" : "run", from, player, hit: hit as Selection | null, origin: at, moved: false };
+      const pass = ball || (hit?.kind === "player" && edit.hasBall(frame, hit.index));
+      drag = { type: "draw", kind: pass ? "pass" : "run", from, player, hit: hit as Selection | null, origin: at, moved: false };
     } else if (hit?.kind === "player" || hit?.kind === "ball" || hit?.kind === "cone") {
       const piece = hit as Selection;
       const pos = hit.kind === "player" ? frame.players[hit.index]!.at : hit.kind === "ball" ? frame.balls[hit.index]! : board.cones[hit.index]!;
@@ -587,7 +592,7 @@
     drag.moved = true;
 
     if (drag.type === "draw") {
-      draft = edit.addArrow(board, drag.kind, drag.from, at, drag.player);
+      draft = edit.addArrow(...arrowTo(drag, at));
     } else if (drag.type === "piece") {
       board = edit.movePiece(drag.start, drag.piece, [at[0] + drag.offset[0], at[1] + drag.offset[1]]);
     } else if (drag.type === "arrow") {
@@ -597,6 +602,18 @@
     }
   }
 
+  /**
+   * The arrow a draw released at `at` makes. A pass of a player into a goal
+   * is a shot. Else, released on (or near) a player, where they stand or
+   * where their run ends, the arrow ends there.
+   */
+  function arrowTo(d: Extract<Drag, { type: "draw" }>, at: XY): Parameters<typeof edit.addArrow> {
+    const shot = d.kind === "pass" && d.player !== undefined && inGoal(board, at, tapReach());
+    const spots = [...frame.players, ...frame.players.map((p, i) => ({ ...p, at: edit.endOf(frame, i) }))];
+    const hit = shot ? null : nearestPiece({ ...frame, balls: [], players: spots }, at, tapReach());
+    return [board, shot ? "shot" : d.kind, d.from, hit ? [...spots[hit.index]!.at] : at, d.player];
+  }
+
   function onpointerup(e: PointerEvent) {
     if (!drag || !e.isPrimary) return;
     const done = drag;
@@ -604,11 +621,7 @@
     draft = null;
 
     if (done.type === "draw") {
-      // Released on (or near) a player: the arrow ends at that player.
-      const at = toCourt(e);
-      const hit = nearestPiece({ ...frame, balls: [] }, at, tapReach());
-      const to = hit ? ([...frame.players[hit.index]!.at] as XY) : at;
-      if (done.moved && commit(edit.addArrow(board, done.kind, done.from, to, done.player))) {
+      if (done.moved && commit(edit.addArrow(...arrowTo(done, toCourt(e))))) {
         selected = { kind: "arrow", index: frame.arrows.length - 1 };
       } else {
         selected = done.hit;

@@ -13,6 +13,7 @@ import {
   movePiece,
   addBall,
   addCone,
+  hasBall,
   removeSelected,
   resetLineup,
   setCourt,
@@ -354,5 +355,44 @@ describe("setTeam", () => {
   it("returns the same board for the same team", () => {
     const board = owned();
     expect(setTeam(board, 0, "a")).toBe(board);
+  });
+});
+
+describe("hasBall", () => {
+  /** Three players in a row: 0 at the start has the ball, 1 and 2 wait. */
+  const three = (): Board => {
+    let board = empty;
+    for (const x of [20, 100, 180]) board = addPlayer(board, "a", [x, 100]);
+    return board;
+  };
+  const has = (b: Board) => [0, 1, 2].map((i) => hasBall(frame(b), i));
+
+  it("follows a chain of passes in drawing order; who has the ball at the start has none", () => {
+    let board = three();
+    expect(has(board)).toEqual([false, false, false]);
+    board = addArrow(board, "pass", [0, 0], [100, 100], 0);
+    expect(has(board)).toEqual([false, true, false]);
+    board = addArrow(board, "bounce", [0, 0], [180, 100], 1);
+    expect(has(board)).toEqual([false, false, true]);
+  });
+
+  it("gives the ball to a player where their run ends by then, and takes it with a pass", () => {
+    let board = addArrow(three(), "run", [0, 0], [100, 40], 1);
+    board = addArrow(board, "pass", [0, 0], [100, 40], 0);
+    expect(has(board)).toEqual([false, true, false]);
+    // Pass and go: after their pass, a player has no ball.
+    board = addArrow(board, "pass", [0, 0], [180, 100], 1);
+    expect(has(board)).toEqual([false, false, true]);
+  });
+
+  it("counts a pass without a player, and not a pass that ends elsewhere", () => {
+    expect(has(addArrow(three(), "pass", [100, 180], [180, 100]))).toEqual([false, false, true]);
+    expect(has(addArrow(three(), "pass", [0, 0], [140, 60], 0))).toEqual([false, false, false]);
+  });
+
+  it("takes the ball with a shot", () => {
+    let board = addArrow(three(), "pass", [0, 0], [100, 100], 0);
+    board = addArrow(board, "shot", [0, 0], [100, 0], 1);
+    expect(has(board)).toEqual([false, false, false]);
   });
 });

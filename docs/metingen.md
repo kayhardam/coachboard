@@ -2583,3 +2583,35 @@ Vóór: productie (`main` @ `eefe275`). Na: de preview-URL. Drie runs per URL, L
 ### Preview-URL
 
 `https://fase-13-2-proef-coachboard.hardamkay.workers.dev`
+
+### Na de proef: besluit 6 en de opstellingen (9 oktober 2026)
+
+Kay testte de proef op de preview. **Besluit 6:** de slimme pijlen blijven, met twee aanpassingen (productplan, tabel Besluiten).
+
+- **Wie een pass of stuit krijgt, heeft de bal:** een sleep vanaf hem is een pass. "Krijgt": de pass eindigt waar hij staat of waar zijn loop eindigt, in tekenvolgorde (`hasBall()` in `edit.ts`). Wie de bal bij het begin heeft, loopt nog; wie een pass gaf, loopt weer (pass en ga). Laat je een sleep los bij het eind van iemands loop, dan eindigt hij daar, zoals bij zijn plek.
+- **Een pass van een speler in het doel is een schot:** tussen de palen, binnen `tapReach()` van de doellijn of erachter (`inGoal()` in `hit.ts`). Ook vanaf de bal. Een pass zonder speler blijft een pass.
+- **Gevonden bij het testen:** na een pass naar RO ligt het eindhandvat van die gekozen pass op RO. Een sleep vanaf RO pakte het handvat, zodat de tweede pass toch een tik kostte (om eerst niets te kiezen). Met Pijl gaat een druk op een speler nu vóór een handvat op hem; met Schuif blijft het handvat voorgaan.
+- **5-1 en 3-2-1** (besluit Kay): de middelste dekker op de 6 meter (100, 62), de cirkelloper vlak voor hem (100, 82), 20 dm ertussen, de voorste dekker (100, 104). Bij 5-1 de buitenste dekkers op (22, 30) en (178, 30), zoals bij 6-0 en 3-2-1. De cirkelloper verhuist dus ook.
+- **Akkoord Kay:** nieuwe stukken worden niet gekozen, de keuzestrook zonder kop, en na Verwijderen van het open bord toont het nieuwe bord de keuzestrook.
+
+| Meting | Proef | Na besluit 6 | Budget |
+|---|--:|--:|--:|
+| Alle JS in `_astro/` (macOS) | 34.865 B | **35.085 B** | 35,17 → **35,39 KB** |
+| Alle JS, Linux (geschat, + 0,10 KB) | ± 34,97 KB | ± 35,19 KB | |
+| JS van het bord | 30,8 KB | 31,1 KB | 32,5 KB |
+| CSS bordpagina | 4.931 B | 4.931 B | 5,12 KB |
+| HTML `/nl/board/` / `/en/board/` | 6.044 / 5.944 B | 6.042 / 5.942 B | 6,5 KB |
+
+- **Budget** volgens C7: de Linux-schatting + 0,2 KB. Tot de bovengrens van Fase 13 (35,8 KB) is dan ongeveer 0,6 KB JS over.
+- **Per functie** (weggelaten uit het geheel):
+
+  | Onderdeel | Alle JS |
+  |---|--:|
+  | Ontvanger passt (`hasBall()`) | +101 B |
+  | Pass in het doel is een schot (`inGoal()`) | +54 B |
+  | Loslaten bij het eind van een loop | +16 B |
+  | Speler vóór handvat met Pijl | +11 B |
+  | Samen, met de cirkelloper in de opstellingen en Verwijderen → keuzestrook | **+220 B** |
+
+- **Meettaken gelijk:** T1 4 (6), T3 21 (23), T4 met export 20, T4 met links 10. De routes vertrekken vanaf de bal of vanaf spelers zonder bal, dus de nieuwe regel verandert ze niet.
+- **Tests:** unit voor `hasBall()` (keten, eind van een loop, pass zonder speler, schot) en `inGoal()`; in `e2e/tools.spec.ts` een kettingpass over MO, RO en RH met pass en ga, een ontvanger die met de soortbalk toch loopt, en een pass naar het doel (schot van MO) naast een pass zonder speler naar het doel (blijft een pass). De unittest van de opstellingen controleert dat niemand op een ander staat en waar de cirkelloper staat.

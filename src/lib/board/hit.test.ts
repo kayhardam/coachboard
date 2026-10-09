@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { defaultBoard } from "./defaults";
-import type { Frame } from "./format";
+import type { Board, Frame } from "./format";
 import { HIT_R } from "./geometry";
-import { holder, nearestPiece, reach } from "./hit";
+import { holder, inGoal, nearestPiece, reach } from "./hit";
 
 describe("reach", () => {
   it("is the drawn touch area when that is at least 44 px", () => {
@@ -87,5 +87,23 @@ describe("holder", () => {
     expect(holder(frame, [100, 101 + 2 * HIT_R], HIT_R)).toBeUndefined();
     // A phone in landscape on the full court: a tap reaches about 27 dm.
     expect(holder(frame, [100, 150], 27)).toBe(0);
+  });
+});
+
+describe("inGoal", () => {
+  const half = { court: "half" } as Board;
+  const full = { court: "full" } as Board;
+
+  it("is between the posts, within the reach of the goal line or beyond it", () => {
+    expect(inGoal(half, [100, 0], HIT_R)).toBe(true);
+    expect(inGoal(half, [85, HIT_R], HIT_R)).toBe(true);
+    expect(inGoal(half, [115, -6], HIT_R)).toBe(true);
+    expect(inGoal(half, [84, 5], HIT_R)).toBe(false);
+    expect(inGoal(half, [100, HIT_R + 1], HIT_R)).toBe(false);
+  });
+
+  it("has a second goal on the full court only", () => {
+    expect(inGoal(full, [100, 395], HIT_R)).toBe(true);
+    expect(inGoal(half, [100, 195], HIT_R)).toBe(false);
   });
 });

@@ -25,7 +25,7 @@ import { gzipSync } from "node:zlib";
 export const BUDGETS = {
   boardJs: 32_500, // 28.3 KB
   lazyJs: 10_000, // 0 KB
-  allJs: 35_170, // about 34.97 KB on Linux (CI shows 35.0) plus 0.2 KB (docs/metingen.md, phase 13-2: smart arrows); phase 13 ends at 35.8 KB (C7)
+  allJs: 35_390, // about 35.19 KB on Linux plus 0.2 KB (docs/metingen.md, phase 13-2: smart arrows, decision 6); phase 13 ends at 35.8 KB (C7)
   css: 2_000, // 1.6 KB per page
   // The board pages also link the editor's stylesheet (BoardEditor.css). Content
   // pages stay at `css`, which is too small to take that stylesheet as well.
