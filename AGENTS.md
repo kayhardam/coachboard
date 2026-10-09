@@ -91,6 +91,7 @@ New or changed site text is agreed with Kay first. Take it over literally. If a 
   - An icon next to visible text is decorative (`aria-hidden`, which `Icon.astro` sets). An icon-only button needs `aria-label` and `title`.
   - Icons take their colour from the text: `--color-accent-dark` when they carry meaning. In cards they sit on a 44×44 tile with `--color-accent-soft` behind them.
   - Size an icon with `font-size` on its wrapper; it is 1.25em.
+  - `BoardEditor` imports only `boardIcons`, so the board's JS carries only those (a bundle keeps every key of an object it imports). A new icon for the board goes in `boardIcons`; `icons` spreads it for `Icon.astro`.
 
 ## The board
 
@@ -115,6 +116,8 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
   - these are the only pages that ship JS. `isBoard` in `scripts/check-budget.mjs` and `e2e/security.spec.ts` lists them.
 - **`BoardEditor.svelte`:**
   - it runs `client:only` on the board pages only;
+  - its JS is one chunk with the Svelte runtime and Astro's Svelte renderer: the `board` group in `codeSplitting` in `astro.config.mjs` (client build only). The group names what goes in, so a new dependency of the board must fall in it, or it becomes a chunk of its own and costs more. What must load later stays out of it;
+  - the QR code loads later: `src/lib/board/qr.ts` re-exports only `renderSVG` from `uqr`, so the lazy chunk drops the rest of `uqr`. Import it through that module, never `import("uqr")` directly; the editor fetches it once the board is up, so it still works offline;
   - its CSS is a stylesheet, `BoardEditor.css`, imported by `BoardPage.astro` only, so Astro links it on the board pages only and it stays out of the board's JS. Svelte doesn't scope it: every rule starts at `.editor`, or at `.qr` or `.boards` for the dialogs next to it (the QR code, My boards). Keep its styles out of the `.svelte` file: a `<style>` there would go into the bundle of every page, or into the JS with `css="injected"`;
   - a title bar takes the site header's place: Home, the title (tap to edit, `setTitle()` in `edit.ts`), Undo, Share and More. More (a `<details>`) holds My boards and New board first, then the QR code, the court size and the three ways to clear, flat, so the T1 route with your own board stays two taps to a new board (in landscape in two columns: seven items don't fit in 320 px of height). Delete shows only with a selection, over the top right of the court's box (in landscape: below the right panel), so it never moves or covers the court;
   - the court fits the space the bars leave (letterboxed), in three layouts: portrait (title bar, court, tools); a phone in landscape (tools panel left, title panel right, both with labels); wide (title bar across, tools column left, a free column right for the steps). `e2e/layout.spec.ts` checks that every button stays on screen and is at least 44 px high;
