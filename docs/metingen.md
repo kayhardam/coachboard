@@ -1122,7 +1122,7 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
 | Taak | Wat | Toestel | Nu te meten |
 |---|---|---|---|
 | T1 | Open het bord, zet een aanval tegen een 6-0 neer, teken drie pijlen (loop, pass, loop) en deel de link in de teamapp | telefoon | ja |
-| T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | ~~als vier losse borden; als route zodra het bord stappen heeft~~ route als vier losse borden sinds Fase 14-1; met stappen vanaf Fase 14-2 |
+| T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | ~~als vier losse borden; als route zodra het bord stappen heeft~~ route als vier losse borden sinds Fase 14-1; met stappen sinds Fase 14-2 |
 | T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, een keeper, twee pionnen, een bal en de kruising, en deel hem | telefoon | ~~met spelers als pionnen; als route zodra het bord pionnen heeft~~ route sinds Fase 13-1, met dekkers als pionnen; met pionnen sinds Fase 13-2, met de startopstelling "2 rijen" sinds Fase 13-3 |
 | T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf (route sinds Fase 12b); ~~met Mijn borden zodra die er zijn~~ met export en import (route sinds Fase 12b-3) |
 
@@ -1237,7 +1237,8 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 | T4, met export en import (Fase 12b-3) | 21 handelingen; 14 tot de borden in Mijn borden op de telefoon staan | **20** (B6), gehaald in Fase 13-2 | ~~21~~ 20 (Fase 13-2; 13 tot Mijn borden) |
 | T3 (Fase 13-1) | 21 handelingen; 23 met een eigen bord | **5** (9 oktober 2026), gehaald in Fase 13-3 | ~~21~~ 5 (Fase 13-3; ~~23~~ 7 met een eigen bord) |
 | T3 zonder startopstelling | 21 handelingen | geen: ter vergelijking | 21 |
-| T2 als vier losse borden (Fase 14-1) | 32 handelingen | Kay kiest na de route met stappen (Fase 14-2) | 32 |
+| T2 als vier losse borden (Fase 14-1) | 32 handelingen | geen: ter vergelijking | 32 |
+| T2 met stappen (Fase 14-2) | 16 handelingen; 18 met een eigen bord | Kay kiest na deze telling | 16 (18 met een eigen bord) |
 
 - **Stand na Fase 13 (13-3, 10 oktober 2026):** T1, T3 en T4 halen hun doel. T1 4 (doel 5), T3 5 (doel 5), T4 met export en import 20 (doel 20).
 - ~~**Het budget blijft 6** tot een fase de route echt korter maakt.~~ Een fase die een route echt korter maakt, verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
@@ -2736,3 +2737,144 @@ Vier borden, elk met de zin als titel en als eigen link gedeeld. Elk volgend bor
 - **Verwacht met stappen** (prototype in het plan van Fase 14): 16 handelingen in de gekozen indeling P-C.
 - **Controle** (tijdelijk, niet gecommit): met het budget op 31 en op 33 falen alle vier de routes (nl en en, iPhone en Android): "Expected: 31, Received: 32" en "Expected: 33, Received: 32".
 - **Groottes:** gelijk; de app verandert niet.
+
+## Fase 14-2: stappen maken (10 oktober 2026)
+
+Branch `fase-14-2-stappen-maken`, vanaf `main` @ `f7cf920`. Besluiten D1–D15 van Kay (productplan, Fase 14).
+
+### Wat er veranderd is
+
+- **De editor bewerkt de stap op het veld,** niet meer alleen `frames[0]`. Spelers toevoegen, verwijderen, van team wisselen, pionnen en half/heel veld gelden voor alle stappen.
+- **Stappenbalk:** een knop per stap en Nieuwe stap (toets N; ← → naar de vorige en volgende stap, niet tijdens typen).
+  - Nieuwe stap voegt een stap in na de huidige. Iedereen staat op het eind van zijn loop, dribbel of sper.
+  - De bal gaat mee met wie hem heeft (binnen 26 dm), of naar wie een pass of stuit krijgt (naast hem). Na een schot ligt hij in het doel.
+  - De nieuwe stap heeft geen pijlen en geen zin. Na 8 stappen is de knop uit.
+- **Een zin per stap.** Tik om te wijzigen; Enter bewaart, Escape niet. Nieuwe stap, een andere stap, Delen, Ongedaan maken of een tik op het veld bewaren eerst een zin die je typt.
+- **Doorwerken (D5):** een wijziging in een stap werkt door in de latere stappen. Een speler die je daar met de hand verschoof, blijft staan.
+- **Stap verwijderen** in Meer, alleen bij meer dan één stap. Ongedaan maken gaat terug naar de stap van de wijziging.
+- **Herladen** opent de stap waar je was (`history.state.step`). Een link, QR-code of bord uit Mijn borden opent op stap 1.
+- **Indeling (D1–D3):**
+  - staand P-C: stappenbalk en zin boven het veld;
+  - liggend L-B: de stappenbalk onder het veld, de zin onderaan het rechterpaneel;
+  - breed W-B: rechts een lijst met alle stappen en hun zin.
+  - Breed staat Verwijderen onder het gereedschap: de stappenkolom is breder (tot 300 px), en rechtsboven dekte de knop het veld.
+  - Breed en laag (860×560) scrolt de lijst als de soort- of teambalk eronder komt; het veld blijft staan.
+- **Op 320 px** (en vanaf zes stappen) toont Nieuwe stap alleen het plusteken, met een `aria-label` en een `title`.
+- **De fallback** toont ook de lege zin ("Zin toevoegen"). Die is groter dan "Titel toevoegen", en zonder fallback werd hij op Android de LCP, na de JS (`e2e/layout.spec.ts` faalde).
+- **Links tot 10.000 tekens (D8).** Met 8 stappen kan een link binnen de limieten tot ongeveer 8.000 tekens lang worden: alle limieten op het maximum, met ruis die slecht comprimeert. De oude grens van 4.000 brak zo'n link. Een test bewijst dat het ergste geval opent; met 4.000 faalt hij.
+- **QR-code (D9):** boven versie 30 (een link van meer dan 1.732 tekens) staat er een opmerking onder de code. Boven versie 40 komt er een melding in plaats van een code; eerst gebeurde er dan niets.
+- Stippellijnen en afspelen volgen in 14-3.
+
+### Liggend: een zin van 100 tekens (vraag Kay)
+
+- **iPhone 15 liggend (734×343):** het rechterpaneel toont vier regels, ongeveer 70 tekens, en dan "…".
+- **iPhone SE liggend (568×320):** twee regels, ongeveer 35 tekens. Vier regels duwden daar de titel over Ongedaan maken heen. Een container query op `.editor` kiest twee regels onder 335 px hoogte.
+- **Wijzigen:** een tik opent het invoerveld met de hele zin (één regel, scrollt), en die kun je wijzigen. `e2e/layout.spec.ts` controleert dat in elke stand, met 8 stappen van 100 tekens.
+
+### Groottes
+
+`npm run budget`, vóór (`main` @ `f7cf920`) en na, op macOS:
+
+| Meting | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| JS van het bord | 31.064 B | 32.446 B | 32,5 → **32,75 KB** |
+| Alle JS in `_astro/` | 35.087 B | 36.469 B | 35,39 → **36,77 KB** |
+| Later geladen JS (QR-code) | 4,0 KB | 4,0 KB | 10,0 KB |
+| CSS bordpagina | 4.931 B | 5.535 B | 5,12 → **5,74 KB** |
+| HTML `/nl/board/` | 6.042 B | 6.229 B | 6,5 KB |
+| HTML `/en/board/` | 5.942 B | 6.123 B | 6,5 KB |
+
+- **Budget** volgens D11: de meting + 0,2 KB, met ongeveer 0,1 KB extra voor JS op Linux (CI), zoals in Fase 13.
+- **Bovengrens Fase 14:** alle JS 37,8 KB, JS van het bord 33,8 KB, CSS 5,8 KB, gemeten op CI. Er blijft ongeveer 1,1 KB JS over voor 14-3. Voor de CSS is er nog maar ongeveer 0,26 KB over.
+- **Per functie,** gemeten door het onderdeel weg te laten uit het geheel (macOS, gzip). Alles laadt meteen.
+
+  | Functie | JS van het bord |
+  |---|--:|
+  | Basis: bewerken per stap, stapknoppen, Nieuwe stap, Ongedaan per stap | ±331 B |
+  | De bal gaat mee naar de volgende stap | 290 B |
+  | Zin per stap (ook bewaren tijdens typen) | 296 B |
+  | Doorwerken naar latere stappen | 117 B |
+  | Stap verwijderen | 105 B |
+  | Lijst met zinnen, breed (W-B) | 83 B |
+  | QR-melding | 63 B |
+  | Herladen op dezelfde stap | 55 B |
+  | Sneltoetsen N en ← → | 42 B |
+  | **Samen** | **+1.382 B** |
+
+  De basis is het verschil met de som van de rest; gzip telt niet precies op. Het prototype uit het plan schatte dezelfde functies op ongeveer +1.280 B.
+- **CSS +604 B:** de stappenbalk, de zinregel, de drie indelingen en de container queries.
+- **HTML +187 B:** de nieuwe teksten gaan als prop mee, en de fallback toont de lege zin.
+
+### Meettaken
+
+| Route | Vóór | Na (`/en/` en `/nl/`) |
+|---|--:|--:|
+| T2 met stappen | — | **16** |
+| T2 met stappen, met eigen bord (Meer → Nieuw bord) | — | **18** |
+| T2 als vier losse borden (ter vergelijking) | 32 | 32 |
+| T1 / T1 met eigen bord | 4 / 6 | 4 / 6 |
+| T3 / met eigen bord / zonder startopstelling | 5 / 7 / 21 | 5 / 7 / 21 |
+| T4 met export en import / met links | 20 / 10 | 20 / 10 |
+
+- **De route van T2:**
+
+  | # | Handeling |
+  |--:|---|
+  | 1 | Sleep een loop van MO |
+  | 2–3 | Tik "Zin toevoegen", typ de zin |
+  | 4 | Tik Nieuwe stap (bewaart de zin) |
+  | 5–8 | Hetzelfde met een loop van LO |
+  | 9–12 | Sleep vanaf de bal naar LO (pass van MO), zin, Nieuwe stap |
+  | 13 | Sleep vanaf de bal naar het doel (schot van LO) |
+  | 14–15 | Tik "Zin toevoegen", typ de zin |
+  | 16 | Tik Delen (bewaart de zin) |
+
+- Nieuwe stap staat boven de zin, dus boven het toetsenbord van een telefoon: geen tik op Gereed.
+- De test controleert de vier zinnen, per stap de pijl (soort en speler), dat MO en LO op het eind van hun loop staan, en de bal naast MO en daarna naast LO.
+- `TAP_BUDGET` krijgt "T2": 16 en "T2 with your own board": 18. **Doel: kiest Kay** na deze telling.
+- **Controle** (tijdelijk, niet gecommit): met het budget op 15 en op 17 falen alle vier de routes ("Expected: 15, Received: 16" en "Expected: 17, Received: 16").
+
+### Tests
+
+- **Unit:**
+  - `addStep()`: plekken, zonder pijlen en zin, invoegen na de stap, tot `MAX_STEPS`;
+  - `ballsAfter()`: meegaan, pass, schot, losse bal, binnen het veld;
+  - bewerken per stap;
+  - doorwerken, en een speler en bal die met de hand verschoven zijn;
+  - `removeStep()` en `setText()`;
+  - het ergste geval van de link.
+- **`e2e/steps.spec.ts` (nieuw):**
+  - Nieuwe stap en Ongedaan maken;
+  - de zin: Enter, Escape, bewaren bij Nieuwe stap en bij Delen;
+  - N en ← →, niet tijdens typen;
+  - Stap verwijderen;
+  - de fixture `v2-play` (4 stappen) opent op stap 1;
+  - herladen, Mijn borden en een link;
+  - QR boven versie 30 en 40.
+- **`e2e/layout.spec.ts`:**
+  - 8 stappen met zinnen van 100 tekens in elke stand: 320 px, 360 px, liggend (ook 320 px hoog), breed en breed 860×560;
+  - het plusteken op 320 px;
+  - de teambalk onder 8 stappen breed en laag.
+- **`npm run e2e`:** 586 geslaagd, 2 overgeslagen.
+
+### CI (Linux)
+
+`npm run budget` in CI: JS van het bord 32,6 KB, alle JS 36,6 KB, CSS bordpagina 5,5 KB. Dat is binnen de budgetten en onder de bovengrens van Fase 14 (37,8 / 33,8 / 5,8 KB).
+
+### Lighthouse
+
+Vóór: productie (`main` @ `f7cf920`). Na: de preview-URL. Drie runs per URL, Lighthouse 13.5.0, mobiel. SEO staat er niet in: elke preview-URL stuurt `X-Robots-Tag: noindex`.
+
+| URL | Performance | Accessibility | Best Practices | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` vóór | 100 | 100 | 100 | 0,82 / 0,80 / 0,81 s | 0 | 2–3 ms | 64,5 KB |
+| `/nl/board/` na | 100 | 100 | 100 | 0,96 / 0,81 / 0,81 s | 0 | 3–6 ms | 67,4 KB |
+| `/en/board/` vóór | 100 | 100 | 100 | 0,81 / 0,80 / 0,80 s | 0 | 2–3 ms | 64,3 KB |
+| `/en/board/` na | 100 | 100 | 100 | 0,81 / 0,81 / 0,81 s | 0 | 4 ms | 67,2 KB |
+
+- **De LCP verschuift niet:** de mediaan is 0,81 s vóór en na, op `/nl/` en `/en/`. Het LCP-element komt uit de HTML: de lege titel van de fallback, en op `/en/` de lege zin ("Add a sentence" is daar breder dan "Add title"). De eerste run op `/nl/` (0,96 s) is een uitschieter.
+- **De overdracht stijgt 2,9 KB:** JS, CSS en de teksten in de HTML.
+
+### Preview-URL
+
+`https://fase-14-2-stappen-maken-coachboard.hardamkay.workers.dev`
