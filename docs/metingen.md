@@ -2885,3 +2885,11 @@ Vóór: productie (`main` @ `f7cf920`). Na: de preview-URL. Drie runs per URL, L
 - **Gevolg:** lag de bal daartussen, dan was de pass wel van die speler, maar bleef de bal bij Nieuwe stap liggen. Een bal op (100, 160), 30 dm van MO, met een pass van MO naar RO, bleef op (100, 160).
 - **Oplossing:** heeft een speler met een pass, stuit of schot geen bal binnen `HOLD`, dan neemt hij de dichtstbijzijnde bal die niemand heeft. Ook het schot, want dat is een pass in het doel.
 - **Unittest:** dit geval, en een tweede bal die een ander heeft en blijft liggen.
+
+## De wankele QR-test (10 oktober 2026)
+
+Branch `qr-offline-test`, vanaf `main` @ `f35a2bd`. Alleen de test verandert, de app niet.
+
+- **De fout (gevonden door Kay):** "the QR code still opens after going offline" (`e2e/share.spec.ts`) wachtte op elk JS-bestand dat niet `client` of `BoardEditor` heette. Sinds de chunk `board.*.js` (PR #34) is dat bestand er zodra het bord er is. Kwam `qr.*.js` later, dan ging de test offline vóór de QR-code geladen was, en faalde hij. In 14-2 gebeurde dat één keer in een volle lokale run.
+- **De oplossing:** de test wacht op de QR-chunk zelf, `/_astro/qr.*.js`.
+- **Bewijs** (tijdelijk, niet gecommit): met `qr.*.js` 3 s vertraagd via `page.route` faalt de oude check (de QR-dialoog blijft leeg) en slaagt de nieuwe.
