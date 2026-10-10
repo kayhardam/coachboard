@@ -1123,7 +1123,7 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
 |---|---|---|---|
 | T1 | Open het bord, zet een aanval tegen een 6-0 neer, teken drie pijlen (loop, pass, loop) en deel de link in de teamapp | telefoon | ja |
 | T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | als vier losse borden; als route zodra het bord stappen heeft |
-| T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, een keeper, twee pionnen, een bal en de kruising, en deel hem | telefoon | ~~met spelers als pionnen; als route zodra het bord pionnen heeft~~ route sinds Fase 13-1, met dekkers als pionnen |
+| T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, een keeper, twee pionnen, een bal en de kruising, en deel hem | telefoon | ~~met spelers als pionnen; als route zodra het bord pionnen heeft~~ route sinds Fase 13-1, met dekkers als pionnen; met pionnen sinds Fase 13-2, met de startopstelling "2 rijen" sinds Fase 13-3 |
 | T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf (route sinds Fase 12b); ~~met Mijn borden zodra die er zijn~~ met export en import (route sinds Fase 12b-3) |
 
 ### Meetmethode
@@ -1234,11 +1234,13 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 | T1 | 6 handelingen | **5** | ~~6~~ 4 (Fase 13-2; 6 met een eigen bord) |
 | T4, met links naar jezelf | 11 handelingen | ~~Kay kiest, na de route met Mijn borden (Fase 12b)~~ geen: ter vergelijking (B6) | ~~11~~ 10 (Fase 13-2) |
 | T4, met export en import (Fase 12b-3) | 21 handelingen; 14 tot de borden in Mijn borden op de telefoon staan | **20** (B6), gehaald in Fase 13-2 | ~~21~~ 20 (Fase 13-2; 13 tot Mijn borden) |
-| T3 (Fase 13-1) | 21 handelingen; 23 met een eigen bord | **5** (9 oktober 2026) | 21 (23 met een eigen bord) |
+| T3 (Fase 13-1) | 21 handelingen; 23 met een eigen bord | **5** (9 oktober 2026), gehaald in Fase 13-3 | ~~21~~ 5 (Fase 13-3; ~~23~~ 7 met een eigen bord) |
+| T3 zonder startopstelling | 21 handelingen | geen: ter vergelijking | 21 |
 | T2 | — | zodra de route bestaat | — |
 
-- **Het budget blijft 6** tot een fase de route echt korter maakt. Die fase verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
-- **T4 (B6, besluit Kay, 9 oktober 2026):** de route met export en import telt, tot elk bord één keer op het veld van de telefoon stond (21, ook het budget). Het doel is 20: met de slimme pijlen uit Fase 13 valt de tik op "Run" weg, net als bij T1. `TAP_BUDGET` blijft 21 tot die fase. De route met links (11) blijft in `e2e/tasks.spec.ts`, ter vergelijking.
+- **Stand na Fase 13 (13-3, 10 oktober 2026):** T1, T3 en T4 halen hun doel. T1 4 (doel 5), T3 5 (doel 5), T4 met export en import 20 (doel 20).
+- ~~**Het budget blijft 6** tot een fase de route echt korter maakt.~~ Een fase die een route echt korter maakt, verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
+- **T4 (B6, besluit Kay, 9 oktober 2026):** de route met export en import telt, tot elk bord één keer op het veld van de telefoon stond (21, ook het budget). Het doel is 20: met de slimme pijlen uit Fase 13 valt de tik op "Run" weg, net als bij T1. ~~`TAP_BUDGET` blijft 21 tot die fase.~~ Gehaald in Fase 13-2: 20. De route met links (11, nu 10) blijft in `e2e/tasks.spec.ts`, ter vergelijking.
 - ~~**Doelen in seconden** volgen na de stopwatch (geparkeerd).~~ Vervallen (besluit Kay, 8 oktober 2026): alleen doelen in handelingen.
 
 ### Per taak en toestel
@@ -1334,8 +1336,8 @@ Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die 
 
   | # | Test | iPhone | Android |
   |--:|---|:-:|:-:|
-  | 1 | T1 met de hand vanaf de standaardopstelling ("Run", twee looppijlen, "Pass", een pass, "Share"): 6 handelingen, zonder scrollen? | | |
-  | 2 | T1 met een eigen bord ("Clear" → "Default lineup" eerst): 8 handelingen? | | |
+  | 1 | ~~T1 met de hand vanaf de standaardopstelling ("Run", twee looppijlen, "Pass", een pass, "Share"): 6 handelingen, zonder scrollen?~~ Vervangen door de testlijst van Fase 13-3 | | |
+  | 2 | ~~T1 met een eigen bord ("Clear" → "Default lineup" eerst): 8 handelingen?~~ Vervangen door de testlijst van Fase 13-3 | | |
   | 3 | ~~T1 met de stopwatch, drie keer: de mediaan in seconden, tot "gedeeld" in de teamapp~~ Vervallen (besluit Kay, 8 oktober 2026) | | |
   | 4 | De gedeelde link openen op een tweede telefoon: opent `/en/board/link/` met de drie pijlen? | | |
   | 5 | De scantest hierboven, op beide afstanden | | |
@@ -2616,3 +2618,51 @@ Kay testte de proef op de preview. **Besluit 6:** de slimme pijlen blijven, met 
 - **CI:** `e2e/share.spec.ts` (de QR-code) faalde één keer op iPhone. Op een nieuw bord staat de link al in de adresbalk vóór de sleep, dus de test kon de oude link lezen. Hij wacht nu tot de link na de wijziging verandert (5 keer herhaald: groen).
 - **Meettaken gelijk:** T1 4 (6), T3 21 (23), T4 met export 20, T4 met links 10. De routes vertrekken vanaf de bal of vanaf spelers zonder bal, dus de nieuwe regel verandert ze niet.
 - **Tests:** unit voor `hasBall()` (keten, eind van een loop, pass zonder speler, schot) en `inGoal()`; in `e2e/tools.spec.ts` een kettingpass over MO, RO en RH met pass en ga, een ontvanger die met de soortbalk toch loopt, en een pass naar het doel (schot van MO) naast een pass zonder speler naar het doel (blijft een pass). De unittest van de opstellingen controleert dat niemand op een ander staat en waar de cirkelloper staat.
+
+## Fase 13-3: afronden (10 oktober 2026)
+
+Branch `fase-13-3-afronden`, vanaf `main` @ `06850a0`. Laatste PR van Fase 13 (sneller tekenen). De app verandert niet: alleen `e2e/tasks.spec.ts` en deze meting.
+
+### T3 via de startopstelling
+
+| # | Handeling (nl / en) |
+|--:|---|
+| 1 | Tik "2 rijen" (2 lines) in de keuzestrook |
+| 2 | Sleep een loop vanaf de eerste links |
+| 3 | Sleep een loop vanaf de eerste rechts, erachterlangs |
+| 4 | Sleep een pass vanaf de bal naar de eerste rechts (een pass van de eerste links: hij heeft de bal) |
+| 5 | Tik "Delen" (Share) |
+
+| Route | Vóór | Na (`/en/` en `/nl/`) |
+|---|--:|--:|
+| T3 | 21 | **5** (doel gehaald) |
+| T3 met eigen bord (Meer → Nieuw bord ervoor) | 23 | **7** |
+| T3 zonder startopstelling (ter vergelijking) | 21 | 21 |
+| T1 / T1 met eigen bord | 4 / 6 | 4 / 6 |
+| T4 met export en import / met links | 20 / 10 | 20 / 10 |
+
+- "2 rijen" zet de hele oefening neer: half veld, twee rijen van drie zonder label, de keeper, twee pionnen en de bal bij de eerste links. Alleen de kruising wordt nog getekend. De check van de test (`expectSharedT3()`) is gelijk gebleven.
+- **T3 zonder startopstelling:** de route met de hand van 13-2 (Meer → Leeg veld, de rijen, pionnen, keeper en bal tikken, Pijl, de kruising, Delen) blijft in `e2e/tasks.spec.ts`, ter vergelijking, zoals de route met links bij T4. De variant met de hand én een eigen bord (23) vervalt (besluit Kay, 10 oktober 2026).
+- `TAP_BUDGET`: "T3" 21 → **5**, "T3 with your own board" 23 → **7**, nieuw "T3 without a starting lineup" **21**.
+- **Controle** (tijdelijk, niet gecommit): met elk T3-budget 1 lager en 1 hoger falen alle twaalf de T3-routes (drie routes, twee talen, iPhone en Android).
+- **Groottes:** gelijk; de app verandert niet.
+
+### Testlijst voor de telefoon
+
+Op productie na de merge (`https://handballcoachboard.com/nl/board/`), per toestel (model, iOS/Android-versie, browser). Test 6 tot en met 10 van de testlijst van Fase 9 (Fase 12b) staan nog open en staan hier opnieuw, als 9 tot en met 13.
+
+| # | Test | iPhone | Android |
+|--:|---|:-:|:-:|
+| 1 | T1: sleep vanaf LO, sleep vanaf RO, sleep vanaf de bal naar RO, Delen. 4 handelingen, zonder scrollen? | | |
+| 2 | T1 met een eigen bord (Meer → Nieuw bord eerst): 6 handelingen? | | |
+| 3 | T3: tik "2 rijen", sleep een loop vanaf de eerste links, sleep een loop vanaf de eerste rechts, sleep een pass vanaf de bal naar de eerste rechts, Delen. 5 handelingen? Opent de gedeelde link op een tweede telefoon met de twee rijen, de keeper, de pionnen en de kruising? | | |
+| 4 | T3 met een eigen bord (Meer → Nieuw bord eerst): 7 handelingen? | | |
+| 5 | Kettingpass vanaf "Tegen 6-0": sleep vanaf de bal naar RO (pass van MO), dan vanaf RO naar RH. Is de tweede sleep een pass, zonder extra tik? | | |
+| 6 | Pass en ga: na de pass van MO naar RO een sleep vanaf MO. Is dat een loop? | | |
+| 7 | Een pass van een speler die in het doel eindigt: wordt het een schot? Een sleep vanaf het lege veld naar het doel blijft een pass? | | |
+| 8 | Liggend: staan de keuzestrook, de soortbalk (een pijl gekozen) en de teambalk (een speler gekozen) onderaan het veld, helemaal in beeld en te raken? | | |
+| 9 | iPhone: Coachboard op het beginscherm zetten en dan een link uit WhatsApp openen. Opent hij in Safari of in de app? (Fase 12b) | | — |
+| 10 | Android: na "Toevoegen aan startscherm" een bord tekenen in Chrome. Staat het ook in de geïnstalleerde app? (Fase 12b) | — | |
+| 11 | Mijn borden → Alle borden exporteren: waar komt het bestand terecht (iPhone: Bestanden › Downloads?), en heet het `coachboard-borden-<datum>.json`? (Fase 12b-3) | | |
+| 12 | Borden importeren: is het bestand te kiezen, uit Bestanden, na AirDrop en uit een mail of chat? Komen de borden erbij met hun map? (Fase 12b-3) | | |
+| 13 | Hetzelfde bestand nog eens importeren: "Alle borden uit dit bestand staan er al."? (Fase 12b-3) | | |
