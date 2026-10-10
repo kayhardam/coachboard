@@ -1238,7 +1238,7 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 | T3 (Fase 13-1) | 21 handelingen; 23 met een eigen bord | **5** (9 oktober 2026), gehaald in Fase 13-3 | ~~21~~ 5 (Fase 13-3; ~~23~~ 7 met een eigen bord) |
 | T3 zonder startopstelling | 21 handelingen | geen: ter vergelijking | 21 |
 | T2 als vier losse borden (Fase 14-1) | 32 handelingen | geen: ter vergelijking | 32 |
-| T2 met stappen (Fase 14-2) | 16 handelingen; 18 met een eigen bord | Kay kiest na deze telling | 16 (18 met een eigen bord) |
+| T2 met stappen (Fase 14-2) | 16 handelingen; 18 met een eigen bord | **16**, en 18 met een eigen bord (besluit Kay, 10 oktober 2026); gehaald in Fase 14-2 | 16 (18 met een eigen bord) |
 
 - **Stand na Fase 13 (13-3, 10 oktober 2026):** T1, T3 en T4 halen hun doel. T1 4 (doel 5), T3 5 (doel 5), T4 met export en import 20 (doel 20).
 - ~~**Het budget blijft 6** tot een fase de route echt korter maakt.~~ Een fase die een route echt korter maakt, verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
@@ -2786,7 +2786,7 @@ Branch `fase-14-2-stappen-maken`, vanaf `main` @ `f7cf920`. Besluiten D1–D15 v
 
 - **Budget** volgens D11: de meting + 0,2 KB, met ongeveer 0,1 KB extra voor JS op Linux (CI), zoals in Fase 13.
 - **Bovengrens Fase 14:** alle JS 37,8 KB, JS van het bord 33,8 KB, CSS 5,8 KB, gemeten op CI. Er blijft ongeveer 1,1 KB JS over voor 14-3. Voor de CSS is er nog maar ongeveer 0,26 KB over.
-- **Per functie,** gemeten door het onderdeel weg te laten uit het geheel (macOS, gzip). Alles laadt meteen.
+- **Per functie,** gemeten door het onderdeel weg te laten uit het geheel (macOS, gzip). Alles laadt meteen. Gemeten vóór de correctie van de bal hieronder.
 
   | Functie | JS van het bord |
   |---|--:|
@@ -2831,7 +2831,7 @@ Branch `fase-14-2-stappen-maken`, vanaf `main` @ `f7cf920`. Besluiten D1–D15 v
 
 - Nieuwe stap staat boven de zin, dus boven het toetsenbord van een telefoon: geen tik op Gereed.
 - De test controleert de vier zinnen, per stap de pijl (soort en speler), dat MO en LO op het eind van hun loop staan, en de bal naast MO en daarna naast LO.
-- `TAP_BUDGET` krijgt "T2": 16 en "T2 with your own board": 18. **Doel: kiest Kay** na deze telling.
+- `TAP_BUDGET` krijgt "T2": 16 en "T2 with your own board": 18. ~~**Doel: kiest Kay** na deze telling.~~ **Doel 16, en 18 met een eigen bord** (besluit Kay, 10 oktober 2026): gehaald.
 - **Controle** (tijdelijk, niet gecommit): met het budget op 15 en op 17 falen alle vier de routes ("Expected: 15, Received: 16" en "Expected: 17, Received: 16").
 
 ### Tests
@@ -2878,3 +2878,10 @@ Vóór: productie (`main` @ `f7cf920`). Na: de preview-URL. Drie runs per URL, L
 ### Preview-URL
 
 `https://fase-14-2-stappen-maken-coachboard.hardamkay.workers.dev`
+
+### Correctie: de bal volgt elke pass (gevonden door Kay, 10 oktober 2026)
+
+- **Het probleem:** de editor geeft een pass vanaf de bal aan de speler binnen twee keer het bereik van een tik (`holder()`). Op een heel veld op een telefoon is dat tot ongeveer 54 dm. `ballsAfter()` telde alleen een speler binnen 26 dm (`HOLD`).
+- **Gevolg:** lag de bal daartussen, dan was de pass wel van die speler, maar bleef de bal bij Nieuwe stap liggen. Een bal op (100, 160), 30 dm van MO, met een pass van MO naar RO, bleef op (100, 160).
+- **Oplossing:** heeft een speler met een pass, stuit of schot geen bal binnen `HOLD`, dan neemt hij de dichtstbijzijnde bal die niemand heeft. Ook het schot, want dat is een pass in het doel.
+- **Unittest:** dit geval, en een tweede bal die een ander heeft en blijft liggen.
