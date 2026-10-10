@@ -6,8 +6,10 @@ import {
   encode,
   isBoard,
   isNewerLink,
+  MAX_ARROWS,
   MAX_BALLS,
   MAX_CONES,
+  MAX_PLAYERS,
   MAX_STEPS,
   MAX_TEXT,
   MAX_TITLE,
@@ -402,5 +404,46 @@ describe("the largest board within the limits", () => {
     const url = `https://handballcoachboard.com/nl/board/qr/#t=${await encode(board)}`;
     // The QR dialog's settings (BoardEditor.svelte): error correction L.
     expect(qrCode(url, { ecc: "L" }).version).toBeLessThanOrEqual(QR_VERSION);
+  });
+});
+
+/**
+ * The most the format allows: every limit at its maximum, with coordinates,
+ * labels and sentences of noise, which compress worst. Its link must open
+ * too, whatever a coach draws (decision D8, phase 14: up to phase 14 a link
+ * was cut off at 4000 characters, which eight steps can pass).
+ */
+function mostBoard(wide: boolean): Board {
+  let seed = 11;
+  const random = (n: number) => Math.floor(((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648) * n);
+  const pt = (): Pt => [random(201), random(401)];
+  // Wide characters take three bytes each and repeat nowhere.
+  const noise = (n: number, wideText = wide) =>
+    Array.from({ length: n }, () => String.fromCharCode(wideText ? 0x4e00 + random(20000) : 0x21 + random(94))).join("");
+  const lineup = Array.from({ length: MAX_PLAYERS }, (_, i) => ({ team: (["a", "d"] as const)[i % 2], label: noise(3, false) }));
+  return settle({
+    v: 2,
+    court: "full",
+    title: noise(MAX_TITLE),
+    cones: Array.from({ length: MAX_CONES }, pt),
+    frames: Array.from({ length: MAX_STEPS }, () => ({
+      players: lineup.map((p) => ({ ...p, at: pt() })),
+      balls: Array.from({ length: MAX_BALLS }, pt),
+      arrows: Array.from({ length: MAX_ARROWS }, () => ({
+        kind: (["run", "pass", "dribble", "block", "bounce"] as const)[random(5)]!,
+        pts: [pt(), pt(), pt()],
+      })),
+      text: noise(MAX_TEXT),
+    })),
+  });
+}
+
+describe("the most the format allows", () => {
+  it.each([false, true])("still opens as a link (wide characters: %s)", async (wide) => {
+    const board = mostBoard(wide);
+    expect(isBoard(board)).toBe(true);
+    const link = await encode(board);
+    expect(link.length).toBeGreaterThan(4000);
+    expect(await decode(link)).toEqual(board);
   });
 });

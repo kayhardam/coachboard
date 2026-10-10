@@ -8,7 +8,7 @@
   import type { BoardStrings } from "../../i18n/ui";
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
-  import { decode, encode, isNewerLink, MAX_TITLE, toBoard, type Board } from "../../lib/board/format";
+  import { decode, encode, isNewerLink, MAX_STEPS, MAX_TEXT, MAX_TITLE, toBoard, type Board } from "../../lib/board/format";
   import { SETUPS, setup } from "../../lib/board/defaults";
   import { HIT_R } from "../../lib/board/geometry";
   import { holder, inGoal, nearestPiece, reach } from "../../lib/board/hit";
@@ -71,7 +71,13 @@
   const defaultLineup: Board = JSON.parse(JSON.stringify(lineup));
 
   let board = $state.raw<Board>(structuredClone(defaultLineup));
-  let past = $state.raw<Board[]>([]);
+  /** Earlier boards for Undo, each with the step that was on the court. */
+  let past = $state.raw<{ board: Board; step: number }[]>([]);
+  /** The step on the court: every edit goes to it. */
+  let step = $state(0);
+  /** The sentence of the step on the court is being typed; `typed` is what it says so far. */
+  let editingText = $state(false);
+  let typed = $state("");
   let draft = $state.raw<Board | null>(null);
   let tool = $state<Tool>("arrow");
   let selected = $state<Selection | null>(null);
@@ -80,6 +86,13 @@
   let editingTitle = $state(false);
   let manualLink = $state<string | null>(null);
   let qr = $state<string | null>(null);
+  /**
+   * The longest link in a QR code of version 30 (error correction L): the
+   * largest the scan test read from phone to phone (docs/metingen.md, phase 11).
+   * A larger code still shows, with a note.
+   */
+  const QR_SCANNED = 1732;
+  let qrLarge = $state(false);
   let qrDialog: HTMLDialogElement;
   let listDialog: HTMLDialogElement;
   /** A new board (the first visit, New board, the open board deleted): it offers the starting lineups until its first edit. */
@@ -109,11 +122,11 @@
   /** A button in the notice, e.g. Undo after deleting a board. */
   let noticeAction = $state<{ label: string; run: () => void } | null>(null);
 
-  const frame = $derived(board.frames[0]!);
+  const frame = $derived(board.frames[step] ?? board.frames[0]!);
 
   function commit(next: Board) {
     if (next === board) return false;
-    past = [...past.slice(1 - HISTORY), board];
+    past = [...past.slice(1 - HISTORY), { board, step }];
     board = next;
     return true;
   }
@@ -141,7 +154,7 @@
           off: id === "shot" && arrow.from === undefined,
           icon: icons[id],
           dash: id === "pass" || id === "bounce",
-          run: () => commit(edit.setKind(board, index, id)),
+          run: () => commit(edit.setKind(board, step, index, id)),
         })),
       };
     }
@@ -171,12 +184,53 @@
     }
   });
 
+  /** Undo goes back to the step where the change was, so you see it. */
   function undo() {
+    keepText();
     const previous = past.at(-1);
     if (!previous) return;
     past = past.slice(0, -1);
-    board = previous;
+    ({ board, step } = previous);
     selected = null;
+  }
+
+  // ===== Steps =====
+
+  /** Puts step `i` on the court. A sentence being typed is kept first. */
+  function goTo(i: number) {
+    keepText();
+    step = i;
+    selected = null;
+  }
+
+  /** New step: adds the next step after the one on the court and goes there (edit.addStep()). */
+  function newStep() {
+    keepText();
+    if (commit(edit.addStep(board, step))) goTo(step + 1);
+  }
+
+  function removeStep() {
+    keepText();
+    menuOpen = false;
+    if (commit(edit.removeStep(board, step))) goTo(Math.max(0, step - 1));
+  }
+
+  function editText() {
+    typed = frame.text ?? "";
+    editingText = true;
+  }
+
+  /** Keeps the sentence being typed, as leaving the field does: before New step, another step, Share or Undo. */
+  function keepText() {
+    if (!editingText) return;
+    editingText = false;
+    commit(edit.setText(board, step, typed));
+  }
+
+  /** Enter keeps the sentence; Escape drops what was typed, and the blur after it keeps nothing. */
+  function textKey(e: KeyboardEvent) {
+    if (e.key === "Enter") keepText();
+    else if (e.key === "Escape") editingText = false;
   }
 
   /** Shows a notice for six seconds, or with `lasting` until it is dismissed or the board is edited. */
@@ -258,10 +312,13 @@
       // history, next to the link and not in it. Without that (a browser that
       // lost the tab's history), the link must draw the board you had open.
       let own = find(history.state?.board);
+      // A reload opens the step you were on; a link, a QR code or a board from My boards opens step 1.
+      const was = Number(history.state?.step) || 0;
       const last = find(list.current);
       if (!own && last && (!shared || (await encode(last.board)) === (await encode(shared)))) own = last;
       if (own) open(own.board, own.id);
       else if (shared) open(shared, null);
+      if (own || shared) step = Math.min(was, board.frames.length - 1);
       else {
         // The board you had on workers.dev, only on a device without boards
         // here, and only if you changed it (an untouched lineup says nothing).
@@ -277,10 +334,12 @@
     // Back to one of your boards brings its id along; anything else is a received board.
     const onHash = async () => {
       const own = readList()?.boards.find((s) => s.id === history.state?.board);
+      const was = Number(history.state?.step) || 0;
       const shared = own ? undefined : await fromHash();
       if (own) open(own.board, own.id);
       else if (shared) open(shared, null);
       else if (shared === null && !reloadForNewer()) show(strings["board.invalidLink"], true);
+      if (own || shared) step = Math.min(was, board.frames.length - 1);
     };
     addEventListener("hashchange", onHash);
     return () => removeEventListener("hashchange", onHash);
@@ -298,12 +357,23 @@
         save(now, link);
       }
       try {
-        history.replaceState({ ...history.state, board: current }, "", `#t=${link}`);
+        history.replaceState({ ...history.state, board: current, step }, "", `#t=${link}`);
       } catch {
         // Safari throttles replaceState (100 calls per 30 s); the next change retries.
       }
     }, 300);
     return () => clearTimeout(timer);
+  });
+
+  // The step on the court, next to the board's id: a reload opens it again.
+  $effect(() => {
+    const now = step;
+    if (!loaded) return;
+    try {
+      history.replaceState({ ...history.state, step: now }, "");
+    } catch {
+      // Throttled: the next save writes it.
+    }
   });
 
   // ===== My boards =====
@@ -354,13 +424,15 @@
   function open(next: Board, id: string | null, fresh = false) {
     flush();
     isNew = fresh;
+    editingText = false;
     board = next;
+    step = 0;
     keep(next);
     current = id;
     past = [];
     selected = null;
     try {
-      history.replaceState({ ...history.state, board: id }, "");
+      history.replaceState({ ...history.state, board: id, step: 0 }, "");
     } catch {
       // Throttled: the next save writes it.
     }
@@ -547,6 +619,7 @@
     if (drag || !e.isPrimary || e.button > 0) return;
     // A tap on the court only closes an open menu.
     if (menuOpen) return void (menuOpen = false);
+    keepText();
     const at = toCourt(e);
     let hit = hitAt(e.target, at);
     // With Arrow, a press on a player is for them, also under a handle: a pass
@@ -576,7 +649,7 @@
       // A new piece isn't selected: a bar for it would cover the court where the next one goes.
       selected = null;
       if (tool === "attack" || tool === "defence") commit(edit.addPlayer(board, tool === "attack" ? "a" : "d", at));
-      else if (tool === "ball") commit(edit.addBall(board, at));
+      else if (tool === "ball") commit(edit.addBall(board, step, at));
       else if (tool === "cone") commit(edit.addCone(board, at));
     }
   }
@@ -594,11 +667,11 @@
     if (drag.type === "draw") {
       draft = edit.addArrow(...arrowTo(drag, at));
     } else if (drag.type === "piece") {
-      board = edit.movePiece(drag.start, drag.piece, [at[0] + drag.offset[0], at[1] + drag.offset[1]]);
+      board = edit.movePiece(drag.start, step, drag.piece, [at[0] + drag.offset[0], at[1] + drag.offset[1]]);
     } else if (drag.type === "arrow") {
-      board = edit.moveArrow(drag.start, drag.index, [at[0] - drag.origin[0], at[1] - drag.origin[1]]);
+      board = edit.moveArrow(drag.start, step, drag.index, [at[0] - drag.origin[0], at[1] - drag.origin[1]]);
     } else {
-      board = edit.moveHandle(drag.start, drag.index, drag.handle, at);
+      board = edit.moveHandle(drag.start, step, drag.index, drag.handle, at);
     }
   }
 
@@ -611,7 +684,7 @@
     const shot = d.kind === "pass" && d.player !== undefined && inGoal(board, at, tapReach());
     const spots = [...frame.players, ...frame.players.map((p, i) => ({ ...p, at: edit.endOf(frame, i) }))];
     const hit = shot ? null : nearestPiece({ ...frame, balls: [], players: spots }, at, tapReach());
-    return [board, shot ? "shot" : d.kind, d.from, hit ? [...spots[hit.index]!.at] : at, d.player];
+    return [board, step, shot ? "shot" : d.kind, d.from, hit ? [...spots[hit.index]!.at] : at, d.player];
   }
 
   function onpointerup(e: PointerEvent) {
@@ -631,12 +704,12 @@
 
     if (done.moved) {
       // The drag already showed the moves; one undo step takes it all back.
-      past = [...past.slice(1 - HISTORY), done.start];
+      past = [...past.slice(1 - HISTORY), { board: done.start, step }];
     }
     if (done.type === "handle" && done.handle === 0 && done.moved) {
       // A start let go on a player gives the arrow to that player.
       const hit = nearestPiece({ ...frame, balls: [] }, toCourt(e), tapReach());
-      if (hit) board = edit.attachArrow(board, done.index, hit.index);
+      if (hit) board = edit.attachArrow(board, step, done.index, hit.index);
     }
     if (done.type === "piece") selected = done.piece;
     if (done.type === "arrow") selected = { kind: "arrow", index: done.index };
@@ -659,8 +732,15 @@
     } else if (e.key === "Escape") {
       selected = null;
       menuOpen = false;
-    } else if (tools[+e.key - 1] && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    } else if (e.metaKey || e.ctrlKey || e.altKey) {
+      return;
+    } else if (tools[+e.key - 1]) {
       tool = tools[+e.key - 1]!.id;
+    } else if (e.key === "n" || e.key === "N") {
+      newStep();
+    } else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      const i = step + (e.key === "ArrowRight" ? 1 : -1);
+      if (board.frames[i]) goTo(i);
     }
   }
 
@@ -668,7 +748,7 @@
 
   function remove() {
     if (!selected) return;
-    commit(edit.removeSelected(board, selected));
+    commit(edit.removeSelected(board, step, selected));
     selected = null;
   }
 
@@ -708,6 +788,7 @@
   }
 
   async function share() {
+    keepText();
     const url = await shareUrl("link");
     if (navigator.share) {
       try {
@@ -736,7 +817,14 @@
       return;
     }
     menuOpen = false;
-    qr = renderSVG(await shareUrl("qr"), { ecc: "L", border: 2 });
+    const url = await shareUrl("qr");
+    try {
+      qr = renderSVG(url, { ecc: "L", border: 2 });
+    } catch {
+      // Over version 40: no QR code holds it.
+      return show(strings["board.qrTooLarge"]);
+    }
+    qrLarge = url.length > QR_SCANNED;
     qrDialog.showModal();
   }
 
@@ -788,8 +876,11 @@
         <button type="button" onclick={openList}>{strings["board.myBoards"]}</button>
         <button type="button" class="last" onclick={newBoard}>{strings["board.newBoard"]}</button>
         <button type="button" onclick={showQr}>{strings["board.qr"]}</button>
+        {#if board.frames.length > 1}
+          <button type="button" onclick={removeStep}>{strings["board.removeStep"]}</button>
+        {/if}
         <button type="button" onclick={toggleCourt}>{board.court === "half" ? strings["board.fullCourt"] : strings["board.halfCourt"]}</button>
-        <button type="button" onclick={() => clearWith(edit.clearArrows(board))}>{strings["board.clearArrows"]}</button>
+        <button type="button" onclick={() => clearWith(edit.clearArrows(board, step))}>{strings["board.clearArrows"]}</button>
         <button type="button" onclick={() => clearWith(edit.resetLineup(defaultLineup))}>{strings["board.resetLineup"]}</button>
         <button type="button" onclick={() => clearWith(edit.emptyCourt(board))}>{strings["board.emptyCourt"]}</button>
         {#if import.meta.env.DEV}
@@ -798,6 +889,35 @@
       </div>
     </details>
   </div>
+
+  <!-- The steps: one button per step, New step. Wide, each button has its sentence beside it. -->
+  <div class="steps" role="toolbar" aria-label={strings["board.steps"]}>
+    {#each board.frames as f, i (i)}
+      <div class="step" class:on={i === step}>
+        <button type="button" class="chip" aria-pressed={i === step} title={strings["board.step"].replace("{n}", String(i + 1))} onclick={() => goTo(i)}>{i + 1}</button>
+        {#if i === step}
+          {@render sentence()}
+        {:else}
+          <button type="button" class="said" tabindex="-1" aria-hidden="true" onclick={() => goTo(i)}><span>{f.text ?? ""}</span></button>
+        {/if}
+      </div>
+    {/each}
+    <button
+      type="button"
+      class="new"
+      onclick={newStep}
+      disabled={board.frames.length >= MAX_STEPS}
+      aria-label={strings["board.newStep"]}
+      title="{strings['board.newStep']} (N)"
+      aria-keyshortcuts="N"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.plus} /></svg>
+      <span>{strings["board.newStep"]}</span>
+    </button>
+  </div>
+
+  <!-- The sentence of the step on the court, below the steps (wide: in the list). -->
+  <div class="text">{@render sentence()}</div>
 
   <div
     class="stage"
@@ -809,7 +929,7 @@
     {onpointerup}
     {onpointercancel}
   >
-    <Court board={draft ?? board} {selected} label={strings["board.court"]} />
+    <Court board={draft ?? board} frame={step} {selected} label={strings["board.court"]} />
   </div>
 
   <!-- Over the court's box (in landscape: under the title bar), so the court doesn't move when it comes and goes. -->
@@ -866,6 +986,27 @@
     {/each}
   </div>
 </div>
+
+{#snippet sentence()}
+  {#if editingText}
+    <input
+      class="line"
+      value={typed}
+      maxlength={MAX_TEXT}
+      enterkeyhint="done"
+      aria-label={strings["board.editText"]}
+      use:focusTitle
+      oninput={(e) => (typed = e.currentTarget.value)}
+      onkeydown={textKey}
+      onblur={keepText}
+    />
+  {:else}
+    <button type="button" class="line" class:empty={!frame.text} title={strings["board.editText"]} onclick={editText}>
+      <span>{frame.text ?? strings["board.addText"]}</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.draw} /></svg>
+    </button>
+  {/if}
+{/snippet}
 
 {#snippet noticeBar()}
   {#if manualLink}
@@ -988,6 +1129,6 @@
   <button type="button" class="dismiss close" onclick={() => qrDialog.close()} aria-label={strings["board.close"]}>×</button>
   {#if qr}
     <div class="code">{@html qr}</div>
-    <p>{strings["board.qrHint"]}</p>
+    <p>{strings[qrLarge ? "board.qrLarge" : "board.qrHint"]}</p>
   {/if}
 </dialog>

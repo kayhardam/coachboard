@@ -162,6 +162,14 @@ const en = {
   "board.importNone": "This file has no boards.",
   "board.importKnown": "All boards in this file are already here.",
   "board.importFailed": "Import failed: your browser can't save anything here.",
+  "board.steps": "Steps",
+  "board.step": "Step {n}",
+  "board.newStep": "New step",
+  "board.addText": "Add a sentence",
+  "board.editText": "Edit sentence",
+  "board.removeStep": "Delete step",
+  "board.qrLarge": "This code is large. If it doesn't scan, share the link.",
+  "board.qrTooLarge": "This board is too big for a QR code. Share the link.",
 } as const;
 
 export type UiKey = keyof typeof en;
@@ -329,6 +337,14 @@ const nl: Record<UiKey, string> = {
   "board.importNone": "Dit bestand bevat geen borden.",
   "board.importKnown": "Alle borden uit dit bestand staan er al.",
   "board.importFailed": "Importeren lukt niet: je browser kan hier niets bewaren.",
+  "board.steps": "Stappen",
+  "board.step": "Stap {n}",
+  "board.newStep": "Nieuwe stap",
+  "board.addText": "Zin toevoegen",
+  "board.editText": "Zin wijzigen",
+  "board.removeStep": "Stap verwijderen",
+  "board.qrLarge": "Deze code is groot. Scant hij niet, deel dan de link.",
+  "board.qrTooLarge": "Dit bord is te groot voor een QR-code. Deel de link.",
 };
 
 /** A language may leave keys out; those fall back to English. Dutch has them all. */

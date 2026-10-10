@@ -51,6 +51,8 @@ const links = {
         </a>
         <span class="title" aria-hidden="true">{t(lang, "board.addTitle")}</span>
       </div>
+      <!-- The sentence's placeholder, as the editor shows it: larger than the title's, so it too must paint with the HTML (LCP). -->
+      <span class="sentence" aria-hidden="true">{t(lang, "board.addText")}</span>
       <div class="court"><Court board={lineup} label={t(lang, "board.court")} /></div>
       <noscript><p>{t(lang, "board.noscript")}</p></noscript>
     </div>
@@ -65,7 +67,10 @@ const links = {
      docs/metingen.md; e2e/layout.spec.ts checks it). */
   .fallback {
     display: grid;
-    grid-template-rows: minmax(var(--board-title), auto) minmax(0, 1fr) minmax(var(--board-bar), auto);
+    /* Title bar, steps, sentence, court, tools. */
+    grid-template-rows:
+      minmax(var(--board-title), auto) var(--board-steps) var(--board-text) minmax(0, 1fr)
+      minmax(var(--board-bar), auto);
     gap: var(--board-gap);
     width: 100%;
     min-height: 0;
@@ -113,8 +118,24 @@ const links = {
     stroke-linejoin: round;
   }
 
+  /* As the editor's empty sentence (.line in BoardEditor.css), so it paints the same size. */
+  .sentence {
+    grid-row: 3;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding: 2px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-soft);
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    line-height: 1.25;
+  }
+
   /* Like the editor's stage: the court fits the space instead of sizing it. */
   .court {
+    grid-row: 4;
     position: relative;
     min-height: 0;
   }
@@ -126,7 +147,7 @@ const links = {
   /* Wide: the title bar across, a column on each side of the court (see BoardEditor.css). */
   @media (min-width: 860px) and (min-height: 560px) {
     .fallback {
-      grid-template: minmax(var(--board-title), auto) minmax(0, 1fr) / var(--board-wide-side) minmax(0, 1fr) var(--board-wide-side);
+      grid-template: minmax(var(--board-title), auto) minmax(0, 1fr) / var(--board-wide-side) minmax(0, 1fr) var(--board-wide-steps);
       max-width: none;
       padding: 0 16px 16px;
       gap: 12px;
@@ -137,7 +158,14 @@ const links = {
       padding-inline: 16px;
     }
     .court {
-      grid-column: 2;
+      grid-area: 2 / 2;
+    }
+    /* In the list of steps on the right, beside the button of step 1. */
+    .sentence {
+      grid-area: 2 / 3;
+      align-self: start;
+      min-height: var(--tap);
+      margin-left: calc(var(--tap) + 6px);
     }
     .fallback > :global(noscript) {
       grid-column: 1 / -1;
@@ -147,7 +175,8 @@ const links = {
   /* The bars are panels at the sides, as on the board (see BoardEditor.css). */
   @media (orientation: landscape) and (max-height: 559px) {
     .fallback {
-      grid-template: minmax(0, 1fr) / var(--board-tools) minmax(0, 1fr) var(--board-panel);
+      /* The step bar's row below the court, as on the board. */
+      grid-template: minmax(0, 1fr) var(--tap) / var(--board-tools) minmax(0, 1fr) var(--board-panel);
       max-width: none;
       padding: 4px 4px max(4px, env(safe-area-inset-bottom));
     }
@@ -161,6 +190,14 @@ const links = {
     }
     .court {
       grid-area: 1 / 2;
+    }
+    /* At the bottom of the panel on the right, as on the board. */
+    .sentence {
+      grid-area: 1 / 3;
+      align-self: end;
+      min-height: var(--tap);
+      padding: 4px 6px;
+      font-size: 0.8125rem;
     }
     /* Only there without JavaScript, when no editor comes: below the court. */
     .fallback > :global(noscript) {
