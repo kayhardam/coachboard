@@ -2676,7 +2676,7 @@ Op productie na de merge (`https://handballcoachboard.com/nl/board/`), per toest
 | 4 | T3 met een eigen bord (Meer → Nieuw bord eerst): 7 handelingen? | | |
 | 5 | Kettingpass vanaf "Tegen 6-0": sleep vanaf de bal naar RO (pass van MO), dan vanaf RO naar RH. Is de tweede sleep een pass, zonder extra tik? | | |
 | 6 | Pass en ga: na de pass van MO naar RO een sleep vanaf MO. Is dat een loop? | | |
-| 7 | Een pass van een speler die in het doel eindigt: wordt het een schot? Een sleep vanaf het lege veld naar het doel blijft een pass? | | |
+| 7 | Een pass van een speler die in het doel eindigt: wordt het een schot? Zet een losse bal ver van iedereen neer en sleep hem naar het doel: blijft het een pass zonder speler? | | |
 | 8 | Liggend: staan de keuzestrook, de soortbalk (een pijl gekozen) en de teambalk (een speler gekozen) onderaan het veld, helemaal in beeld en te raken? | | |
 | 9 | iPhone: Coachboard op het beginscherm zetten en dan een link uit WhatsApp openen. Opent hij in Safari of in de app? (Fase 12b) | | — |
 | 10 | Android: na "Toevoegen aan startscherm" een bord tekenen in Chrome. Staat het ook in de geïnstalleerde app? (Fase 12b) | — | |
