@@ -440,6 +440,18 @@ describe("steps", () => {
     expect(ballsAfter(passed, passed.frames[0]!)).toEqual([[150, 100]]);
   });
 
+  it("gives a pass the nearest ball nobody has, when the passer has none within reach", () => {
+    // 30 dm from CB (100, 130): further than HOLD, but within twice a tap's reach on a phone (holder()).
+    const board = structuredClone(defaultBoard);
+    board.frames[0]!.balls = [[100, 160]];
+    const passed = addArrow(board, 0, "pass", [0, 0], [170, 118], CB);
+    expect(ballsAfter(passed, passed.frames[0]!)).toEqual([[180, 110]]);
+    // A ball someone else has stays with them.
+    board.frames[0]!.balls = [[100, 160], [40, 120]];
+    const two = addArrow(board, 0, "pass", [0, 0], [170, 118], CB);
+    expect(ballsAfter(two, two.frames[0]!)).toEqual([[180, 110], [40, 120]]);
+  });
+
   it("keeps a ball beside its player on the court", () => {
     const board: Board = { ...empty, frames: [{ players: [{ team: "a", at: [185, 10] }], balls: [[199, 2]], arrows: [] }] };
     const moved = addArrow(board, 0, "run", [0, 0], [195, 5], 0);

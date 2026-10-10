@@ -328,8 +328,12 @@ const BESIDE: Pt = [10, -8];
  * Where each ball of `frame` (a step of `board`) is at its end. It goes along
  * with whoever has it (the nearest player within HOLD), and with a pass,
  * bounce or shot of theirs to its end, where whoever stands there by then has
- * it. A ball nobody has goes with a pass without a player that starts on it.
- * A ball someone has ends beside them; one nobody has, where it went.
+ * it. A player who passes, bounces or shoots without a ball within HOLD
+ * takes the nearest ball nobody has: on a full court on a phone, the editor
+ * gives a pass from the ball to a player up to twice a tap's reach away
+ * (holder() in hit.ts), further than HOLD. A ball nobody has also goes with a
+ * pass without a player that starts on it. A ball someone has ends beside
+ * them; one nobody has, where it went.
  */
 export function ballsAfter(board: Board, frame: Frame): Pt[] {
   const at = frame.players.map((p) => p.at);
@@ -353,7 +357,13 @@ export function ballsAfter(board: Board, frame: Frame): Pt[] {
       if (a.from !== undefined) at[a.from] = end;
       continue;
     }
-    const ball = balls.find((b) => (a.from === undefined ? b.has === undefined && same(b.at, a.pts[0]!) : b.has === a.from));
+    const from = a.from;
+    const free = balls.filter((b) => b.has === undefined);
+    const ball =
+      from === undefined
+        ? free.find((b) => same(b.at, a.pts[0]!))
+        : (balls.find((b) => b.has === from) ??
+          free.sort((p, q) => Math.hypot(p.at[0] - at[from]![0], p.at[1] - at[from]![1]) - Math.hypot(q.at[0] - at[from]![0], q.at[1] - at[from]![1]))[0]);
     if (!ball) continue;
     ball.at = end;
     ball.has = near(end, 0);

@@ -115,9 +115,12 @@ test("N adds a step and ← → go between steps, but not while typing", async (
 test("Delete step is in More only with more than one step", async ({ page }) => {
   await openBoard(page);
   await moreButton(page).click();
+  await expect(page.getByRole("button", { name: "Empty court" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Delete step" })).toHaveCount(0);
-  await page.keyboard.press("Escape");
+  await moreButton(page).click();
+  await expect(page.getByRole("button", { name: "Empty court" })).toBeHidden();
   await newStep(page).click();
+  await expect(steps(page).locator(".chip")).toHaveCount(2);
   await fromMenu(page, "board.removeStep");
   await expect(steps(page).locator(".chip")).toHaveCount(1);
   expect(await current(page)).toBe(1);
