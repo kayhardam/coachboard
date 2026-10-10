@@ -19,6 +19,8 @@ export const boardIcons = {
   delete: "M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3",
   court: "M5 3h14v18H5zM9 3v3h6V3",
   share: "M12 3v12m0-12-4 4m4-4 4 4M5 13v7h14v-7",
+  play: "M7 5v14l12-7z",
+  stop: "M7 7h10v10H7z",
   more: "M5 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 1 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 1 0 0-2z",
   // My boards
   plus: "M12 5v14M5 12h14",

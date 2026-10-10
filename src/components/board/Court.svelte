@@ -48,6 +48,7 @@
     coneEdge: "#7f1d1d",
     ballEdge: "#78350f",
     select: "#16a34a",
+    trail: "#94a3b8",
   };
 
   /** Stop an arrow short when it ends on a player, so its head stays visible. */
@@ -73,6 +74,20 @@
   );
 
   const teamColor = { a: colors.attack, d: colors.defence, p: colors.passer };
+
+  /**
+   * Where players stood in the step before, for each who moved: [then, now].
+   * Drawn grey, thin and dotted, without a head, so they don't look like a
+   * pass or a bounce (dashed, in the arrows' ink).
+   */
+  const trails = $derived.by((): [number[], number[]][] => {
+    const before = board.frames[frame - 1];
+    if (!before) return [];
+    return current.players.flatMap((p, i) => {
+      const was = before.players[i]?.at;
+      return was && (was[0] !== p.at[0] || was[1] !== p.at[1]) ? [[was, p.at]] : [];
+    });
+  });
 
   /**
    * Handles of the selected arrow as [x, y, handle]: start, bend, end. An
@@ -161,6 +176,16 @@
       />
     </g>
   {/each}
+
+  <!-- Where players stood in the step before: under the arrows and players, and not to be tapped. -->
+  {#if trails.length}
+    <g class="trails" fill="none" stroke={colors.trail} stroke-width="0.8" stroke-dasharray="1 2" stroke-linecap="round" pointer-events="none">
+      {#each trails as [then, now], i (i)}
+        <line x1={then[0]} y1={then[1]} x2={now[0]} y2={now[1]} />
+        <circle cx={then[0]} cy={then[1]} r={PLAYER_R - 0.5} />
+      {/each}
+    </g>
+  {/if}
 
   <!-- Arrows. A shot is a double line: a white line on a wide one. A block ends in a bar. -->
   {#each arrows as arrow, i (i)}

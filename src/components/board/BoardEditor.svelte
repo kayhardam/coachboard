@@ -10,6 +10,7 @@
   import type { Selection } from "../../lib/board/edit";
   import { decode, encode, isNewerLink, MAX_STEPS, MAX_TEXT, MAX_TITLE, toBoard, type Board } from "../../lib/board/format";
   import { SETUPS, setup } from "../../lib/board/defaults";
+  import { moment } from "../../lib/board/play";
   import { HIT_R } from "../../lib/board/geometry";
   import { holder, inGoal, nearestPiece, reach } from "../../lib/board/hit";
   import { boardIcons as icons } from "../../lib/icons";
@@ -186,6 +187,7 @@
 
   /** Undo goes back to the step where the change was, so you see it. */
   function undo() {
+    stopPlaying();
     keepText();
     const previous = past.at(-1);
     if (!previous) return;
@@ -198,6 +200,7 @@
 
   /** Puts step `i` on the court. A sentence being typed is kept first. */
   function goTo(i: number) {
+    stopPlaying();
     keepText();
     step = i;
     selected = null;
@@ -205,17 +208,70 @@
 
   /** New step: adds the next step after the one on the court and goes there (edit.addStep()). */
   function newStep() {
+    stopPlaying();
     keepText();
     if (commit(edit.addStep(board, step))) goTo(step + 1);
   }
 
   function removeStep() {
+    stopPlaying();
     keepText();
     menuOpen = false;
     if (commit(edit.removeStep(board, step))) goTo(Math.max(0, step - 1));
   }
 
+  // ===== Play (decision D4) =====
+
+  /** How long a step shows still, and how long its players then move to the next step (ms). */
+  const STILL = 1200;
+  const MOVE = 1000;
+  let playing = $state(false);
+  /**
+   * The moment on the court while playing (play.ts). Only to watch: like
+   * `draft`, it stays out of `board`, so nothing reaches the link, My boards or
+   * Undo, and its places needn't be whole decimetres.
+   */
+  let shown = $state.raw<Board | null>(null);
+  let frameRequest = 0;
+
+  /**
+   * Plays the steps in turn from the first: each shows still, then its
+   * players move along their arrows to where the next step starts; the last
+   * one ends where its arrows take them, and stays a moment. With reduced
+   * motion the board goes from step to step without moving.
+   */
+  function play() {
+    if (playing) return stopPlaying();
+    goTo(0);
+    playing = true;
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let start = performance.now();
+    const tick = (now: number) => {
+      const t = (now - start - STILL) / MOVE;
+      const last = step >= board.frames.length - 1;
+      if (t >= (last ? 1 + STILL / MOVE : 1)) {
+        shown = null;
+        if (last) return stopPlaying();
+        step++;
+        start = now;
+      } else if (t > 0 && !still) {
+        const at = moment(board, step, Math.min(t, 1));
+        shown = { ...board, frames: board.frames.map((f, j) => (j === step ? at : f)) };
+      }
+      frameRequest = requestAnimationFrame(tick);
+    };
+    frameRequest = requestAnimationFrame(tick);
+  }
+
+  function stopPlaying() {
+    cancelAnimationFrame(frameRequest);
+    playing = false;
+    shown = null;
+  }
+
+  /** A tap on the sentence stops playing first, so the sentence stays with its step. */
   function editText() {
+    stopPlaying();
     typed = frame.text ?? "";
     editingText = true;
   }
@@ -422,6 +478,7 @@
 
   /** Puts a board on the court with its own undo history: one of yours (`id`), or one not saved yet (`fresh`: a new one). */
   function open(next: Board, id: string | null, fresh = false) {
+    stopPlaying();
     flush();
     isNew = fresh;
     editingText = false;
@@ -619,6 +676,8 @@
     if (drag || !e.isPrimary || e.button > 0) return;
     // A tap on the court only closes an open menu.
     if (menuOpen) return void (menuOpen = false);
+    // A tap on the court while playing only stops it.
+    if (playing) return stopPlaying();
     keepText();
     const at = toCourt(e);
     let hit = hitAt(e.target, at);
@@ -752,8 +811,16 @@
     selected = null;
   }
 
+  /**
+   * Clearing, the court size, the default lineup or an empty court. Stops
+   * playing first, and keeps the step on the court within the board: the
+   * default lineup and an empty court have one step.
+   */
   function clearWith(next: Board) {
+    stopPlaying();
+    keepText();
     commit(next);
+    step = Math.min(step, board.frames.length - 1);
     selected = null;
     menuOpen = false;
   }
@@ -914,6 +981,16 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.plus} /></svg>
       <span>{strings["board.newStep"]}</span>
     </button>
+    <button
+      type="button"
+      class="play"
+      onclick={play}
+      disabled={board.frames.length < 2}
+      aria-label={strings[playing ? "board.stop" : "board.play"]}
+      title={strings[playing ? "board.stop" : "board.play"]}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d={playing ? icons.stop : icons.play} /></svg>
+    </button>
   </div>
 
   <!-- The sentence of the step on the court, below the steps (wide: in the list). -->
@@ -929,7 +1006,7 @@
     {onpointerup}
     {onpointercancel}
   >
-    <Court board={draft ?? board} frame={step} {selected} label={strings["board.court"]} />
+    <Court board={shown ?? draft ?? board} frame={step} {selected} label={strings["board.court"]} />
   </div>
 
   <!-- Over the court's box (in landscape: under the title bar), so the court doesn't move when it comes and goes. -->
