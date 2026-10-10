@@ -11,13 +11,17 @@ import {
   moveArrow,
   moveHandle,
   movePiece,
-  placeBall,
+  addBall,
+  addCone,
+  hasBall,
   removeSelected,
   resetLineup,
   setCourt,
+  setKind,
+  setTeam,
   setTitle,
 } from "./edit";
-import { isBoard, MAX_PLAYERS, MAX_TITLE, type Board } from "./format";
+import { isBoard, MAX_BALLS, MAX_CONES, MAX_PLAYERS, MAX_TITLE, type Board } from "./format";
 
 const empty: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], balls: [], arrows: [] }] };
 const frame = (b: Board) => b.frames[0]!;
@@ -59,17 +63,34 @@ describe("pieces", () => {
     expect(frame(board).players).toHaveLength(MAX_PLAYERS);
   });
 
-  it("places and moves the ball", () => {
-    const placed = placeBall(empty, [10, 10]);
+  it("adds and moves a ball", () => {
+    const placed = addBall(empty, [10.4, 9.6]);
     expect(frame(placed).balls).toEqual([[10, 10]]);
     expect(frame(movePiece(placed, { kind: "ball", index: 0 }, [20, 30])).balls).toEqual([[20, 30]]);
   });
 
-  it("puts the first ball elsewhere and leaves a second ball alone", () => {
+  it("adds a ball next to the others, up to the limit, and moves or removes one alone", () => {
     const two: Board = { ...empty, frames: [{ players: [], balls: [[10, 10], [50, 50]], arrows: [] }] };
-    expect(frame(placeBall(two, [30, 30])).balls).toEqual([[30, 30], [50, 50]]);
+    expect(frame(addBall(two, [30, 30])).balls).toEqual([[10, 10], [50, 50], [30, 30]]);
     expect(frame(movePiece(two, { kind: "ball", index: 1 }, [60, 70])).balls).toEqual([[10, 10], [60, 70]]);
     expect(frame(removeSelected(two, { kind: "ball", index: 0 })).balls).toEqual([[50, 50]]);
+    let board = empty;
+    for (let i = 0; i < MAX_BALLS + 2; i++) board = addBall(board, [i * 10, 10]);
+    expect(frame(board).balls).toHaveLength(MAX_BALLS);
+    expect(isBoard(board)).toBe(true);
+  });
+
+  it("adds, moves and removes cones on the court, up to the limit", () => {
+    const one = addCone(empty, [-5, 250.4]);
+    expect(one.cones).toEqual([[0, 200]]);
+    expect(empty.cones).toEqual([]);
+    const two = addCone(one, [50, 50]);
+    expect(movePiece(two, { kind: "cone", index: 1 }, [60.6, 70]).cones).toEqual([[0, 200], [61, 70]]);
+    expect(removeSelected(two, { kind: "cone", index: 0 }).cones).toEqual([[50, 50]]);
+    let board = empty;
+    for (let i = 0; i < MAX_CONES + 2; i++) board = addCone(board, [i * 10, 10]);
+    expect(board.cones).toHaveLength(MAX_CONES);
+    expect(isBoard(board)).toBe(true);
   });
 
   it("adds and removes a player in every step, so the lineup stays one", () => {
@@ -273,5 +294,105 @@ describe("title", () => {
   it("doesn't cut an emoji in half at the limit", () => {
     const title = setTitle(defaultBoard, "x".repeat(MAX_TITLE - 1) + "🤾").title!;
     expect(title).toBe("x".repeat(MAX_TITLE - 1));
+  });
+});
+
+describe("setKind", () => {
+  it("changes the kind of an arrow in the first step only", () => {
+    const board = twoSteps(owned());
+    board.frames[1]!.arrows = [{ kind: "pass", from: 0, pts: [[20, 100], [80, 100]] }];
+    const next = setKind(board, 1, "bounce");
+    expect(next.frames[0]!.arrows.map((a) => a.kind)).toEqual(["run", "bounce"]);
+    expect(next.frames[1]!.arrows.map((a) => a.kind)).toEqual(["pass"]);
+    expect(isBoard(next)).toBe(true);
+  });
+
+  it("moves the start of the player's next arrow when their arrow moves them, or no longer does", () => {
+    const passed = setKind(owned(), 0, "pass");
+    expect(frame(passed).arrows[1]!.pts[0]).toEqual([20, 100]);
+    expect(isBoard(passed)).toBe(true);
+    const screened = setKind(passed, 0, "block");
+    expect(frame(screened).arrows[1]!.pts[0]).toEqual([20, 60]);
+    expect(isBoard(screened)).toBe(true);
+  });
+
+  it("makes a straight shot into the goal, only for an arrow of a player", () => {
+    let board = addArrow(owned(), "run", [0, 0], [100, 40], 1);
+    board = moveHandle(board, 2, 1, [130, 70]);
+    expect(frame(board).arrows[2]!.pts).toHaveLength(3);
+    const shot = setKind(board, 2, "shot");
+    expect(frame(shot).arrows[2]).toEqual({ kind: "shot", from: 1, pts: [[80, 100], [100, 0]] });
+    expect(isBoard(shot)).toBe(true);
+    const loose = withArrow([[10, 10], [60, 60]]);
+    expect(setKind(loose, 0, "shot")).toBe(loose);
+  });
+
+  it("returns the same board for the same kind or a missing arrow", () => {
+    const board = owned();
+    expect(setKind(board, 0, "run")).toBe(board);
+    expect(setKind(board, 5, "pass")).toBe(board);
+  });
+});
+
+describe("setTeam", () => {
+  it("puts a player in another team in every step; a passer loses their label", () => {
+    const board = twoSteps({ ...owned(), frames: [{ ...frame(owned()), players: [{ team: "a", label: "LB", at: [20, 100] }, { team: "a", at: [80, 100] }] }] });
+    expect(isBoard(board)).toBe(true);
+    const defender = setTeam(board, 0, "d");
+    expect(defender.frames.map((f) => f.players[0])).toEqual([
+      { team: "d", label: "LB", at: [20, 100] },
+      { team: "d", label: "LB", at: [20, 100] },
+    ]);
+    const passer = setTeam(board, 0, "p");
+    expect(passer.frames.map((f) => f.players[0])).toEqual([
+      { team: "p", at: [20, 100] },
+      { team: "p", at: [20, 100] },
+    ]);
+    expect(frame(passer).arrows).toEqual(frame(board).arrows);
+    expect(isBoard(defender) && isBoard(passer)).toBe(true);
+  });
+
+  it("returns the same board for the same team", () => {
+    const board = owned();
+    expect(setTeam(board, 0, "a")).toBe(board);
+  });
+});
+
+describe("hasBall", () => {
+  /** Three players in a row: 0 at the start has the ball, 1 and 2 wait. */
+  const three = (): Board => {
+    let board = empty;
+    for (const x of [20, 100, 180]) board = addPlayer(board, "a", [x, 100]);
+    return board;
+  };
+  const has = (b: Board) => [0, 1, 2].map((i) => hasBall(frame(b), i));
+
+  it("follows a chain of passes in drawing order; who has the ball at the start has none", () => {
+    let board = three();
+    expect(has(board)).toEqual([false, false, false]);
+    board = addArrow(board, "pass", [0, 0], [100, 100], 0);
+    expect(has(board)).toEqual([false, true, false]);
+    board = addArrow(board, "bounce", [0, 0], [180, 100], 1);
+    expect(has(board)).toEqual([false, false, true]);
+  });
+
+  it("gives the ball to a player where their run ends by then, and takes it with a pass", () => {
+    let board = addArrow(three(), "run", [0, 0], [100, 40], 1);
+    board = addArrow(board, "pass", [0, 0], [100, 40], 0);
+    expect(has(board)).toEqual([false, true, false]);
+    // Pass and go: after their pass, a player has no ball.
+    board = addArrow(board, "pass", [0, 0], [180, 100], 1);
+    expect(has(board)).toEqual([false, false, true]);
+  });
+
+  it("counts a pass without a player, and not a pass that ends elsewhere", () => {
+    expect(has(addArrow(three(), "pass", [100, 180], [180, 100]))).toEqual([false, false, true]);
+    expect(has(addArrow(three(), "pass", [0, 0], [140, 60], 0))).toEqual([false, false, false]);
+  });
+
+  it("takes the ball with a shot", () => {
+    let board = addArrow(three(), "pass", [0, 0], [100, 100], 0);
+    board = addArrow(board, "shot", [0, 0], [100, 0], 1);
+    expect(has(board)).toEqual([false, false, false]);
   });
 });

@@ -1231,9 +1231,9 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 
 | Taak | Nulmeting (route) | Doel | `TAP_BUDGET` |
 |---|--:|--:|--:|
-| T1 | 6 handelingen | **5** | 6 |
-| T4, met links naar jezelf | 11 handelingen | ~~Kay kiest, na de route met Mijn borden (Fase 12b)~~ geen: ter vergelijking (B6) | 11 |
-| T4, met export en import (Fase 12b-3) | 21 handelingen; 14 tot de borden in Mijn borden op de telefoon staan | **20** (B6) | 21 |
+| T1 | 6 handelingen | **5** | ~~6~~ 4 (Fase 13-2; 6 met een eigen bord) |
+| T4, met links naar jezelf | 11 handelingen | ~~Kay kiest, na de route met Mijn borden (Fase 12b)~~ geen: ter vergelijking (B6) | ~~11~~ 10 (Fase 13-2) |
+| T4, met export en import (Fase 12b-3) | 21 handelingen; 14 tot de borden in Mijn borden op de telefoon staan | **20** (B6), gehaald in Fase 13-2 | ~~21~~ 20 (Fase 13-2; 13 tot Mijn borden) |
 | T3 (Fase 13-1) | 21 handelingen; 23 met een eigen bord | **5** (9 oktober 2026) | 21 (23 met een eigen bord) |
 | T2 | — | zodra de route bestaat | — |
 
@@ -2491,3 +2491,128 @@ Branch `fase-13-sneller-tekenen`, vanaf `main` @ `a83509d`. Eerste PR van Fase 1
 - **Controle** (tijdelijk, niet gecommit): met het budget op 20 en op 22 faalt de test ("Expected: 20, Received: 21" en "Expected: 22, Received: 21").
 - **Groottes:** gelijk; de app verandert niet.
 
+
+## Fase 13-2: de proef met de slimme pijlen (9 oktober 2026)
+
+Branch `fase-13-2-proef`, vanaf `main` @ `eefe275`. Besluiten C1–C8 (productplan, Fase 13) en de keuzes van Kay na de schermafbeeldingen (9 oktober 2026). Kay probeert de proef op de preview en neemt besluit 6 (slimme pijlen) vóór de merge.
+
+### Wat er veranderd is
+
+- **Zes tools:** Schuif, Pijl, Aanval, Dekker, Bal, Pion. Loop, Pass en Dribbel gaan op in Pijl. **Pijl is het gereedschap bij het openen** (C1).
+- **Pijl:** een tik kiest een speler, pijl, bal of pion; een sleep tekent. Vanaf een speler een loop van die speler; vanaf de bal een pass van de speler die het dichtst bij de bal staat, binnen twee keer het bereik van een tik (`holder()` in `hit.ts`: op een half veld op de telefoon 26 dm, liggend op het hele veld ongeveer 54 dm). Staat er niemand zo dichtbij, dan heeft de pass geen speler. Vanaf een lege plek een loop zonder speler.
+- **De balk over het veld**, één blok in de editor voor alle drie: de soortbalk bij een gekozen pijl (Loop, Pass, Stuit, Dribbel, Schot, Sper; Schot alleen voor een pijl van een speler), de teambalk bij een gekozen speler (Aanval, Dekker, Aanspeelpunt), en op een nieuw bord de keuzestrook met de startopstellingen. Staand en liggend onderaan het veld, breed bovenaan in de vrije rechterkolom.
+- **De keuzestrook** alleen op een nieuw bord: bij het eerste bezoek en na Nieuw bord, tot de eerste wijziging. Niet op een ontvangen link, een tactiek of een bord uit Mijn borden. Een opstelling kiezen bewaart niets. **Zonder kop** (besluit Kay, 9 oktober 2026): "Starting lineup" was op `/en/board/` de grootste tekst (1.320 px², "Add title" 1.098 px²) en verscheen pas na de JS, zodat de LCP naar later schoof (`e2e/layout.spec.ts` faalde op Android). De naam blijft het `aria-label`.
+- **5-1:** de middelste dekker staat naast de cirkelloper (`[118, 58]`, zoals bij 3-2-1), niet erop.
+- **`edit.ts`:** `addCone()` en `addBall()` (afronden met `clampPt()`, tot `MAX_CONES` en `MAX_BALLS`), `setKind()` (alleen in `frames[0]`, een schot wordt recht en eindigt in het doel, `settle()`), `setTeam()` (in elke stap, een aanspeelpunt verliest zijn label). Pionnen schuif je met Schuif en verwijder je met Verwijderen. Een nieuwe speler, bal of pion wordt niet gekozen: een balk zou het veld afdekken waar de volgende komt.
+- **Bal** voegt een bal toe (tot vier, C4) in plaats van de eerste te verplaatsen.
+- **Sneltoetsen 1–6** voor de tools, titel "{label} ({toets})" en `aria-keyshortcuts`; niet terwijl je een titel of mapnaam typt.
+- **Tekst:** "Blok" wordt "Sper" (Engels blijft "Screen"); in de code blijft het `block`.
+
+### Groottes
+
+`npm run budget`, vóór (`main` @ `eefe275`) en na, op macOS; CI meet op Linux:
+
+| Meting | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| JS van het bord | 29,6 KB | 30,8 KB | 32,5 KB |
+| Alle JS in `_astro/` | 33,6 KB (33.640 B) | 34,9 KB (34.865 B); CI 35,0 KB | 33,85 → **35,17 KB** |
+| Later geladen JS (QR-code) | 4,0 KB | 4,0 KB | 10,0 KB |
+| CSS bordpagina | 4,78 KB (4.779 B) | 4,93 KB (4.931 B) | 4,98 → **5,12 KB** |
+| HTML `/nl/board/` | 5,90 KB | 6,04 KB | 6,5 KB |
+| HTML `/en/board/` | 5,81 KB | 5,94 KB | 6,5 KB |
+
+- **Budgetten** volgens C7: de meting + 0,2 KB. Bovengrens voor Fase 13: 35,8 KB alle JS, 5,3 KB CSS.
+- **Linux en macOS:** CI (Linux) bouwt alle JS ongeveer 0,1 KB groter. Kay mat het prototype op Linux (+914 B JS, +149 B CSS; tot de bovengrens toen nog 1.144 B), dus `main` is daar ongeveer 33.742 B, 102 B meer dan op macOS. CI toont na 13-2 "35,0 KB"; met hetzelfde verschil is dat ongeveer 34,97 KB. `allJs` wordt 35,17 KB: die schatting + 0,2 KB. Tot de bovengrens is dan ongeveer 0,83 KB JS en 0,37 KB CSS over.
+- Op macOS kost de echte code +1.225 B JS en +152 B CSS.
+- **Per functie,** gemeten door het onderdeel tijdelijk weg te laten uit het geheel:
+
+  | Onderdeel | Alle JS | CSS |
+  |---|--:|--:|
+  | De balk over het veld (het blok, de stijl, staand, liggend, breed) | +315 B | +77 B |
+  | Soortbalk, met `setKind()` en drie iconen | +218 B | 0 |
+  | Teambalk, met `setTeam()` | +122 B | +15 B |
+  | Startopstellingen (`setup()`, alleen op een nieuw bord) | +335 B | +23 B |
+  | Pionnen (tool, `addCone()`, schuiven, verwijderen, ring, icoon) | +97 B | +20 B |
+  | Sneltoetsen 1–6 | +91 B | 0 |
+  | Pass vanaf de bal (`holder()`) | +44 B | 0 |
+  | Meer ballen (`addBall()`) | +11 B | 0 |
+  | Een tik kiest met Pijl | +6 B | 0 |
+  | Samen, vergeleken met `main` | **+1.225 B** | **+152 B** |
+
+  De onderdelen tellen op tot 1.239 B; gzip telt niet precies op. Pijl in plaats van Loop, Pass en Dribbel kost niets. Alles laadt meteen. De CSS-onderdelen zijn gemeten vóór de regel voor de brede strook (+7 B, zie Tests).
+- **HTML +0,14 KB:** de nieuwe teksten gaan als prop mee.
+
+### Meettaken
+
+| Route | Vóór | Na (`/en/` en `/nl/`) |
+|---|--:|--:|
+| T1 | 6 | **4** |
+| T1 met eigen bord | 8 | **6** |
+| T4 met links naar jezelf | 11 | 10 |
+| T4 met export en import, tot de borden in Mijn borden staan | 14 | 13 |
+| T4 met export en import, tot elk bord op het veld stond | 21 | **20** (doel gehaald) |
+| T3 | 21 | **21** |
+| T3 met eigen bord | 23 | **23** |
+
+- **T1:** sleep vanaf LB, sleep vanaf RB, sleep vanaf de bal naar RB (een pass van MO/CB), Delen. De tikken op Loop en Pass vallen weg.
+- **T4:** de tik op Loop valt weg.
+- **T3** met de Pion-tool, zonder startopstelling (die telt pas in 13-3): Meer → Leeg veld (2), Aanval + zes tikken (7), Pion + twee tikken (3), Dekker + de keeper (2), Bal + één tik (2), Pijl (1), twee looppijlen (2), een pass vanaf de bal (1), Delen (1) = 21; 23 met eigen bord. `TAP_BUDGET` blijft 21 en 23 (C6). De test controleert nu 2 pionnen en 1 dekker.
+- **Controle** (tijdelijk, niet gecommit): met elk budget 1 lager en 1 hoger falen alle tien de routes (T1, T3, T4 met export, in beide talen).
+
+### Tests
+
+- Unit: `addBall()`, `addCone()`, schuiven en verwijderen van een pion, `setKind()` (alleen `frames[0]`, het begin van de volgende pijl, schot), `setTeam()`, `nearestPiece()` met pionnen, `holder()`, de startopstellingen (geldig, niemand op een ander).
+- `e2e/tools.spec.ts` (nieuw): Pijl kiest met een tik en tekent met een sleep, de pass vanaf de bal (met en zonder speler), de soortbalk, de teambalk, pionnen, vier ballen, de keuzestrook (alleen op een nieuw bord, bewaart niets), 5-1 in het Nederlands, sneltoetsen niet tijdens typen.
+- `e2e/layout.spec.ts`: de drie balken per taal staand, liggend en breed: in beeld, 44 px hoog, geen afgekapt label, niet over de tools, breed rechts van het veld, en het veld verschuift niet.
+- **Eerste CI-run:** "Aanspeelpunt" werd breed afgekapt op Linux (op macOS 94 van 100 px). De brede strook krijgt 13 px tekst en 8 px binnenruimte: 108 px voor ongeveer 82 px tekst.
+- `saveOwnBoard()` en de opslagtests in `boards.spec.ts` kiezen eerst Schuif (`moveTool()`): ze gaan over opslaan, en met Pijl tekent dezelfde sleep twee keer niet altijd iets nieuws.
+
+### Lighthouse
+
+Vóór: productie (`main` @ `eefe275`). Na: de preview-URL. Drie runs per URL, Lighthouse 13.5.0, mobiel. SEO staat er niet in: elke preview-URL stuurt `X-Robots-Tag: noindex`.
+
+| URL | Performance | Accessibility | Best Practices | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` vóór | 100 | 100 | 100 | 0,82 / 0,81 / 0,82 s | 0 | 0–9 ms | 62,5 KB |
+| `/nl/board/` na | 100 | 100 | 100 | 0,92 / 0,81 / 0,81 s | 0 | 1–4 ms | 64,5 KB |
+| `/en/board/` vóór | 100 | 100 | 100 | 0,83 / 0,80 / 0,82 s | 0 | 0–1 ms | 62,5 KB |
+| `/en/board/` na | 100 | 100 | 100 | 0,82 / 0,87 / 0,82 s | 0 | 2 ms | 64,5 KB |
+
+- LCP blijft gelijk (mediaan 0,82 s vóór en 0,81 en 0,82 s na). De keuzestrook zonder kop wordt geen LCP. De overdracht stijgt 2,0 KB: JS, CSS en de teksten in de HTML.
+
+### Preview-URL
+
+`https://fase-13-2-proef-coachboard.hardamkay.workers.dev`
+
+### Na de proef: besluit 6 en de opstellingen (9 oktober 2026)
+
+Kay testte de proef op de preview. **Besluit 6:** de slimme pijlen blijven, met twee aanpassingen (productplan, tabel Besluiten).
+
+- **Wie een pass of stuit krijgt, heeft de bal:** een sleep vanaf hem is een pass. "Krijgt": de pass eindigt waar hij staat of waar zijn loop eindigt, in tekenvolgorde (`hasBall()` in `edit.ts`). Wie de bal bij het begin heeft, loopt nog; wie een pass gaf, loopt weer (pass en ga). Laat je een sleep los bij het eind van iemands loop, dan eindigt hij daar, zoals bij zijn plek.
+- **Een pass van een speler in het doel is een schot:** tussen de palen, binnen `tapReach()` van de doellijn of erachter (`inGoal()` in `hit.ts`). Ook vanaf de bal. Een pass zonder speler blijft een pass.
+- **Gevonden bij het testen:** na een pass naar RO ligt het eindhandvat van die gekozen pass op RO. Een sleep vanaf RO pakte het handvat, zodat de tweede pass toch een tik kostte (om eerst niets te kiezen). Met Pijl gaat een druk op een speler nu vóór een handvat op hem; met Schuif blijft het handvat voorgaan.
+- **5-1 en 3-2-1** (besluit Kay): de middelste dekker (90, 66) en de cirkelloper (110, 66) naast elkaar in het midden, op de hoogte van 6-0, met 20 dm ertussen zoals in 6-0. Voorste dekker: bij 5-1 (100, 98), zoals op de eerste schermen; bij 3-2-1 (100, 110), 20 dm van MO. Bij 5-1 de buitenste dekkers op (22, 30) en (178, 30), zoals bij 6-0 en 3-2-1. De cirkelloper verhuist dus ook. (Een eerste versie zette de dekker op (100, 62) en de cirkelloper ervoor op (100, 82); Kay koos na de schermafbeelding voor naast elkaar.)
+- **Akkoord Kay:** nieuwe stukken worden niet gekozen, de keuzestrook zonder kop, en na Verwijderen van het open bord toont het nieuwe bord de keuzestrook.
+
+| Meting | Proef | Na besluit 6 | Budget |
+|---|--:|--:|--:|
+| Alle JS in `_astro/` (macOS) | 34.865 B | **35.085 B** | 35,17 → **35,39 KB** |
+| Alle JS, Linux (geschat, + 0,10 KB; CI toont) | ± 34,97 KB (35,0) | ± 35,19 KB (35,2) | |
+| JS van het bord | 30,8 KB | 31,1 KB | 32,5 KB |
+| CSS bordpagina | 4.931 B | 4.931 B | 5,12 KB |
+| HTML `/nl/board/` / `/en/board/` | 6.044 / 5.944 B | 6.042 / 5.942 B | 6,5 KB |
+
+- **Budget** volgens C7: de Linux-schatting + 0,2 KB. Tot de bovengrens van Fase 13 (35,8 KB) is dan ongeveer 0,6 KB JS over.
+- **Per functie** (weggelaten uit het geheel):
+
+  | Onderdeel | Alle JS |
+  |---|--:|
+  | Ontvanger passt (`hasBall()`) | +101 B |
+  | Pass in het doel is een schot (`inGoal()`) | +54 B |
+  | Loslaten bij het eind van een loop | +16 B |
+  | Speler vóór handvat met Pijl | +11 B |
+  | Samen, met de cirkelloper in de opstellingen en Verwijderen → keuzestrook | **+220 B** |
+
+- **CI:** `e2e/share.spec.ts` (de QR-code) faalde één keer op iPhone. Op een nieuw bord staat de link al in de adresbalk vóór de sleep, dus de test kon de oude link lezen. Hij wacht nu tot de link na de wijziging verandert (5 keer herhaald: groen).
+- **Meettaken gelijk:** T1 4 (6), T3 21 (23), T4 met export 20, T4 met links 10. De routes vertrekken vanaf de bal of vanaf spelers zonder bal, dus de nieuwe regel verandert ze niet.
+- **Tests:** unit voor `hasBall()` (keten, eind van een loop, pass zonder speler, schot) en `inGoal()`; in `e2e/tools.spec.ts` een kettingpass over MO, RO en RH met pass en ga, een ontvanger die met de soortbalk toch loopt, en een pass naar het doel (schot van MO) naast een pass zonder speler naar het doel (blijft een pass). De unittest van de opstellingen controleert dat niemand op een ander staat en waar de cirkelloper staat.

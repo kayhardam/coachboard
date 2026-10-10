@@ -24,31 +24,32 @@ import {
 // Opening the board doesn't count, nor does the phone's own share sheet.
 // The budget holds in every language: the routes run on /en/ and /nl/.
 const TAP_BUDGET = {
-  // T1: an attack against a 6-0, three arrows (run, run, pass), shared.
-  T1: 6,
+  // T1: an attack against a 6-0, three arrows (run, run, pass), shared. Phase 13-2: Arrow is the
+  // tool on opening, and a drag from the ball is a pass, so the taps on Run and Pass are gone.
+  T1: 4,
   // T1 for a returning coach: their own board is on the court first.
-  "T1 with your own board": 8,
+  "T1 with your own board": 6,
   // T4: three boards prepared on a laptop and opened on the phone, sent as links to yourself.
   // Kept for comparison; T4's goal is set on the route below.
-  "T4 as links to yourself": 11,
+  "T4 as links to yourself": 10,
   // T4, the route that counts: the boards moved as one exported file, until each has been on
-  // the phone's court. Goal 20 (docs/metingen.md): smart arrows (phase 13) drop the tap on Run.
-  "T4 with export and import": 21,
+  // the phone's court. Goal 20 (docs/metingen.md), reached in phase 13-2: no tap on Run.
+  "T4 with export and import": 20,
   // T3: the drill "crossing in pairs": two lines of three, a goalkeeper, two cones, a ball and the
-  // crossing, shared. Baseline before phase 13: the cones are defenders, on an emptied court.
+  // crossing, shared, on an emptied court. Phase 13-2 has cones; the keeper is a defender.
   // Goal 5 (docs/metingen.md): starting lineups (phase 13-3) set out the lines.
   T3: 21,
   // T3 for a returning coach: their own board is on the court first.
   "T3 with your own board": 23,
 };
 /** Of those, the actions until the three boards are in My boards on the phone. */
-const T4_UNTIL_IMPORTED = 14;
+const T4_UNTIL_IMPORTED = 13;
 
 /** Counts the actions of a route. Every tap is on a button that's already on screen. */
 function route(page: Page) {
   let count = 0;
-  const centre = async (index: number) => {
-    const box = (await page.locator(`.stage [data-kind="player"][data-index="${index}"]`).boundingBox())!;
+  const centre = async (index: number, kind = "player") => {
+    const box = (await page.locator(`.stage [data-kind="${kind}"][data-index="${index}"]`).boundingBox())!;
     return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   };
   const drag = async (from: { x: number; y: number }, to: { x: number; y: number }) => {
@@ -86,6 +87,10 @@ function route(page: Page) {
     async dragTo(from: number, to: number) {
       await drag(await centre(from), await centre(to));
     },
+    /** Drags from a ball's centre to a player's: with Arrow, a pass of whoever has the ball. */
+    async passTo(ball: number, to: number) {
+      await drag(await centre(ball, "ball"), await centre(to));
+    },
   };
 }
 
@@ -113,15 +118,11 @@ async function laptop(browser: Browser, baseURL: string | undefined) {
 // Players in the default lineup: 0 LW, 1 LB, 2 CB, 3 RB, 4 RW, 5 P (in Dutch LH, LO, MO, RO, RH, CL).
 const [LB, CB, RB] = [1, 2, 3];
 
-/** T1 from the default lineup: two runs and a pass, then Share. */
+/** T1 from the default lineup: two runs and a pass (from the ball, which CB has), then Share. */
 async function drawAndShare(page: Page, lang: string, steps: ReturnType<typeof route>) {
-  const tool = (name: string) =>
-    page.getByRole("toolbar", { name: t(lang, "board.tools") }).getByRole("button", { name });
-  await steps.tap(tool(t(lang, "board.tool.run")));
   await steps.drag(LB, 10, -40);
   await steps.drag(RB, -10, -40);
-  await steps.tap(tool(t(lang, "board.tool.pass")));
-  await steps.dragTo(CB, RB);
+  await steps.passTo(0, RB);
   await steps.tap(page.getByRole("button", { name: t(lang, "board.share") }));
 }
 
@@ -132,7 +133,11 @@ async function expectSharedT1(shared: () => Promise<string[]>, lang: string) {
   const frame = (await decode(url.hash.replace(/^#t=/, "")))?.frames[0];
   // The attack against a 6-0 is the default lineup, untouched, labelled in the page's language.
   expect(frame?.players).toEqual(defaultBoardFor(lang).frames[0]!.players);
-  expect(frame?.arrows.map((a) => a.kind).sort()).toEqual(["pass", "run", "run"]);
+  expect(frame?.arrows).toMatchObject([
+    { kind: "run", from: LB },
+    { kind: "run", from: RB },
+    { kind: "pass", from: CB },
+  ]);
 }
 
 for (const lang of ["en", "nl"]) {
@@ -175,7 +180,6 @@ for (const lang of ["en", "nl"]) {
     const steps = route(desk.page);
     const runs = [LB, CB, RB];
 
-    await steps.tap(desk.page.getByRole("toolbar", { name: t(lang, "board.tools") }).getByRole("button", { name: t(lang, "board.tool.run") }));
     for (const [i, player] of runs.entries()) {
       if (i > 0) {
         // The next board is a new one: the one before stays in My boards.
@@ -216,7 +220,6 @@ for (const lang of ["en", "nl"]) {
     const menuItem = (p: Page, key: Parameters<typeof t>[1]) => p.getByRole("button", { name: t(lang, key), exact: true });
     const list = (p: Page) => p.getByRole("dialog", { name: t(lang, "board.myBoards") });
 
-    await steps.tap(desk.page.getByRole("toolbar", { name: t(lang, "board.tools") }).getByRole("button", { name: t(lang, "board.tool.run") }));
     for (const [i, player] of runs.entries()) {
       if (i > 0) {
         await steps.tap(moreButton(desk.page, lang));
@@ -262,7 +265,7 @@ for (const lang of ["en", "nl"]) {
 // T3: the drill "crossing in pairs" on a half court. Two lines of three attackers without labels,
 // a goalkeeper, two cones and a ball with the first of the left line. The crossing: the first on the
 // left runs, the first on the right runs behind them, and the left one passes to the right one.
-// Until the board has cones (phase 13), the cones and the goalkeeper are defenders.
+// The goalkeeper is a defender.
 const LINES = { left: 60, right: 140, rows: [120, 145, 170] };
 
 async function drawCrossing(page: Page, lang: string, steps: ReturnType<typeof route>) {
@@ -274,17 +277,18 @@ async function drawCrossing(page: Page, lang: string, steps: ReturnType<typeof r
   await steps.tap(tool("board.tool.attack"));
   for (const x of [LINES.left, LINES.right]) for (const y of LINES.rows) await steps.tapAt(x, y);
   // Two cones in front of the lines, then the goalkeeper.
-  await steps.tap(tool("board.tool.defence"));
+  await steps.tap(tool("board.tool.cone"));
   await steps.tapAt(LINES.left, 90);
   await steps.tapAt(LINES.right, 90);
+  await steps.tap(tool("board.tool.defence"));
   await steps.tapAt(100, 8);
   await steps.tap(tool("board.tool.ball"));
   await steps.tapAt(LINES.left + 14, 120);
-  await steps.tap(tool("board.tool.run"));
+  // The crossing: two runs, and a pass from the ball, which the first on the left has.
+  await steps.tap(tool("board.tool.arrow"));
   await steps.drag(0, 40, -40);
   await steps.drag(3, -40, -30);
-  await steps.tap(tool("board.tool.pass"));
-  await steps.dragTo(0, 3);
+  await steps.passTo(0, 3);
   await steps.tap(page.getByRole("button", { name: t(lang, "board.share") }));
 }
 
@@ -297,8 +301,9 @@ async function expectSharedT3(shared: () => Promise<string[]>, lang: string) {
   expect(board.court).toBe("half");
   const frame = board.frames[0]!;
   expect(frame.players.filter((p) => p.team === "a" && !p.label)).toHaveLength(6);
-  expect(frame.players.filter((p) => p.team === "d")).toHaveLength(3);
-  expect(frame.players).toHaveLength(9);
+  expect(frame.players.filter((p) => p.team === "d")).toHaveLength(1);
+  expect(frame.players).toHaveLength(7);
+  expect(board.cones).toHaveLength(2);
   expect(frame.balls).toHaveLength(1);
   expect(frame.arrows).toMatchObject([
     { kind: "run", from: 0 },

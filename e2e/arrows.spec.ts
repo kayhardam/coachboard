@@ -41,7 +41,7 @@ const player = (page: Page, index: number) => page.locator(`.stage [data-kind="p
 
 test("an arrow from a player follows them, and their next arrow starts where the first ends", async ({ page }) => {
   await openBoard(page);
-  await tool(page, "Run");
+  // Arrow is the tool on opening: a drag from a player is their run.
   await dragPlayer(page, LB, 10, -60);
   let board = await drawn(page);
   expect(board.arrows).toHaveLength(1);
@@ -54,8 +54,9 @@ test("an arrow from a player follows them, and their next arrow starts where the
   expect(moved.at(LB)).not.toBe(board.at(LB));
   expect(moved.arrows[0]).toEqual({ start: moved.at(LB), end: board.arrows[0]!.end });
 
-  await tool(page, "Pass");
+  await tool(page, "Arrow");
   await dragPlayer(page, LB, 80, 0);
+  await page.getByRole("toolbar", { name: "Arrow type" }).getByRole("button", { name: "Pass" }).click();
   board = await drawn(page);
   expect(board.arrows[1]!.start).toBe(board.arrows[0]!.end);
 
@@ -71,13 +72,11 @@ test("an arrow from a player follows them, and their next arrow starts where the
 
 test("dragging an arrow lets go of its player; its start let go on a player gives it to them", async ({ page }) => {
   await openBoard(page);
-  await tool(page, "Run");
   await dragPlayer(page, LB, 0, -80);
 
-  // Nothing selected, so no handle covers the arrow; then drag the arrow by its middle.
+  // Nothing selected (Escape), so no handle covers the arrow; then drag the arrow by its middle.
   await tool(page, "Move");
-  const court = (await page.locator(".stage svg").boundingBox())!;
-  await page.mouse.click(court.x + court.width / 2, court.y + court.height - 4);
+  await page.keyboard.press("Escape");
   await drag(page, page.locator('.stage [data-kind="arrow"][data-index="0"] path').nth(1), [40, 0]);
   const loose = await drawn(page);
   expect(loose.arrows[0]!.start).not.toBe(loose.at(LB));

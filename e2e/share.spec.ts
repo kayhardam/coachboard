@@ -36,8 +36,11 @@ test("without navigator.share, Share copies the link", async ({ page }) => {
 
 test("the QR code holds the board's link on /board/qr/", async ({ page }) => {
   await openBoard(page);
+  // A new board is in the address bar too: wait for the link after the change.
+  const before = await linkInAddressBar(page);
   await dragPlayer(page, 5, 30, 30);
-  const { hash, origin } = new URL(await linkInAddressBar(page));
+  await expect.poll(() => page.url()).not.toBe(before);
+  const { hash, origin } = new URL(page.url());
   await fromMenu(page, "board.qr");
   const modules = await page.getByRole("dialog", { name: "QR code" }).locator(".code path").getAttribute("d");
   // The same browser encodes the address bar and the QR code, so the bytes match.

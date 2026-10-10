@@ -9,9 +9,11 @@ import { expect, fromMenu, openBoard, test } from "./helpers";
 const BESIDE = 21;
 test.use({ viewport: { width: 393, height: 659 } });
 
+/** The full court, with Move: the tool on opening (Arrow) would draw. */
 async function fullCourt(page: Page) {
   await openBoard(page);
   await fromMenu(page, "board.fullCourt");
+  await page.getByRole("button", { name: "Move" }).click();
 }
 
 /** Screen centre of a player. */
@@ -53,7 +55,7 @@ test("between two players, the nearer one moves", async ({ page }) => {
 test("an arrow next to a player can still be picked", async ({ page }) => {
   await fullCourt(page);
   const lb = await centre(page, 1);
-  await page.getByRole("button", { name: "Run" }).click();
+  await page.getByRole("button", { name: "Arrow", exact: true }).click();
   await drag(page, lb, 0, 80);
   await page.getByRole("button", { name: "Move" }).click();
   // Tap elsewhere, so the new arrow is no longer selected.

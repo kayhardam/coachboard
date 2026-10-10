@@ -49,3 +49,47 @@ export function defaultBoardFor(locale: string): Board {
   }
   return board;
 }
+
+/** The starting lineups a new board offers. */
+export const SETUPS = ["6-0", "5-1", "3-2-1", "2-lines", "3-lines"] as const;
+export type SetupId = (typeof SETUPS)[number];
+
+/**
+ * Where the six court defenders stand, per defence (the goalkeeper stays put).
+ * The middle one stands beside the pivot, in the middle, as high as in a 6-0.
+ */
+const defences: Record<"5-1" | "3-2-1", [number, number][]> = {
+  "5-1": [[22, 30], [52, 56], [90, 66], [148, 56], [178, 30], [100, 98]],
+  "3-2-1": [[22, 30], [90, 66], [178, 30], [52, 84], [148, 84], [100, 110]],
+};
+/** Where the pivot stands against a 5-1 or a 3-2-1: beside the middle defender, 20 dm apart, as in a 6-0. */
+const PIVOT: [number, number] = [110, 66];
+
+/** Lines of three attackers without labels, a cone in front of each line, a ball with the first on the left. */
+function lines(xs: number[], keeper: Board["frames"][0]["players"][0]): Board {
+  const players = xs.flatMap((x) => [120, 145, 170].map((y) => ({ team: "a" as const, at: [x, y] as [number, number] })));
+  return {
+    v: 2,
+    court: "half",
+    cones: xs.map((x) => [x, 95] as [number, number]),
+    frames: [{ players: [...players, keeper], balls: [[xs[0]! + 10, 120]], arrows: [] }],
+  };
+}
+
+/** A starting lineup, made from the default lineup in the page's language (its labels stay). Against a 5-1 or a 3-2-1 the defence and the pivot move. */
+export function setup(id: SetupId, lineup: Board): Board {
+  const board = structuredClone(lineup);
+  const players = board.frames[0]!.players;
+  if (id === "5-1" || id === "3-2-1") {
+    const spots = defences[id];
+    let i = 0;
+    for (const p of players) if (p.team === "d" && p.label === undefined) p.at = [...spots[i++]!];
+    // The sixth attacker, in defaultBoard's order (LW, LB, CB, RB, RW, P).
+    players.filter((p) => p.team === "a")[5]!.at = [...PIVOT];
+    return board;
+  }
+  const keeper = players.find((p) => p.team === "d" && p.label !== undefined)!;
+  if (id === "2-lines") return lines([60, 140], keeper);
+  if (id === "3-lines") return lines([40, 100, 160], keeper);
+  return board;
+}
