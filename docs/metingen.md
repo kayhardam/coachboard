@@ -2986,6 +2986,40 @@ Vóór: productie (`main` @ `f35a2bd`). Na: de preview-URL. Lighthouse 13.5.0, m
 
 `https://fase-14-3-afspelen-coachboard.hardamkay.workers.dev`
 
+### Na de review van Kay: drie fouten (10 oktober 2026)
+
+Gevonden door Kay op de build van #44 en opgelost in dezelfde PR.
+
+- **Leeg veld of Standaardopstelling op stap 3** (al op productie sinds #42).
+  - Het bord had daarna één stap, maar de editor bleef op stap 3: geen stapknop was actief.
+  - Een bal of pijl gaf daarna "Cannot read properties of undefined (reading 'balls')". Tijdens afspelen liep het afspelen erop vast ("reading 'players'"), en de knop bleef op Stoppen.
+  - **Oplossing:** `clearWith()` (de drie manieren om te wissen, en half/heel veld) stopt eerst het afspelen, bewaart een zin die je typt, en zet de stap terug binnen het bord.
+  - **E2e:** op stap 3 Leeg veld en Standaardopstelling, daarna een bal neerzetten (zonder fouten op de pagina); en Leeg veld tijdens afspelen.
+- **Een zin wijzigen tijdens afspelen overschreef een andere stap.**
+  - Een tik op de zin terwijl stap 1 speelde: het afspelen ging door naar stap 2, en Enter zette de zin van stap 1 dan ook in stap 2.
+  - **Oplossing:** een tik op de zin (`editText()`) stopt eerst het afspelen.
+  - **E2e:** dit geval; alle zinnen blijven gelijk, op de gewijzigde na.
+- **De bal volgde een reeks passes niet.**
+  - `moment()` gaf de pijlen van elke speler hun eigen tijd, en een pass wachtte niet op de bal.
+  - CB passt naar RB en RB naar P in één stap: de passes liepen tegelijk, en de bal ging schuin naar P zonder bij RB te komen.
+  - CB passt naar RB en RB dribbelt weg: RB dribbelde al vanaf het begin, en de bal kwam aan op een lege plek.
+  - **Oplossing:** de pijlen gebeuren in beurten (`turns()` in `play.ts`):
+    - de pijlen van een speler gaan na elkaar, in tekenvolgorde;
+    - een pass wacht op zijn bal, en wie een pass krijgt, wacht op de bal vóór zijn volgende pijl;
+    - wie niet hoeft te wachten, begint meteen;
+    - de beurten delen de seconde van de beweging.
+  - **Unit:** deze twee gevallen. Ook dribbel en dan pass, en een loop met een pass naar het eind ervan (die gaan tegelijk). Pass en ga bleef gelijk.
+  - **Controle** (tijdelijk, niet gecommit): met de oude `moment()` falen precies de twee nieuwe gevallen. De drie e2e-tests falen met de oude editor.
+
+| Meting | Vóór de fixes | Na | Budget | Grens (D11) |
+|---|--:|--:|--:|--:|
+| Alle JS, macOS | 37.520 B | 37.628 B (+108) | 37,8 KB | 37,8 KB |
+| JS van het bord, macOS | 33.497 B | 33.605 B | 33,8 KB | 33,8 KB |
+| CSS bordpagina | 5.573 B | 5.573 B | 5,78 KB | 5,8 KB |
+
+- De proefversie van Kay kostte 73 B (alle JS 37.732 B op Linux).
+- De meting op CI staat hieronder.
+
 ### Testlijst voor de telefoon (Fase 14-2 en 14-3)
 
 Op de preview (`/nl/board/`), per toestel (model, iOS/Android-versie, browser).
@@ -3002,3 +3036,6 @@ Op de preview (`/nl/board/`), per toestel (model, iOS/Android-versie, browser).
 | 8 | Liggend: staan Afspelen en Nieuwe stap onder het veld, in beeld? | | |
 | 9 | Herlaad op stap 3: weer stap 3? Een gedeelde link opent op stap 1? | | |
 | 10 | T1 (sleep vanaf LO, RO, de bal naar RO, Delen): nog steeds 4 handelingen? | | |
+| 11 | Ga naar stap 3 en kies Meer → Leeg veld (en daarna Standaardopstelling): staat stap 1 aan, en kun je een bal neerzetten? Ook tijdens afspelen? | | |
+| 12 | Tik tijdens afspelen op de zin en wijzig hem: blijft de zin van de andere stappen gelijk? | | |
+| 13 | Een stap met CB → RB → P (twee passes): komt de bal eerst bij RB en gaat hij dan door naar P? | | |
