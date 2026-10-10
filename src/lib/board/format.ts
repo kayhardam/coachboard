@@ -46,7 +46,7 @@ export interface Frame {
   text?: string;
 }
 
-/** The editor still edits frames[0] only. */
+/** A board: one or more steps (`frames`), with one lineup for all of them. The editor edits one step at a time. */
 export interface Board {
   v: 2;
   court: "half" | "full";
@@ -82,7 +82,10 @@ export const MAX_TITLE = 40;
 export const MAX_BALLS = 4;
 export const MAX_CONES = 16;
 const MAX_LABEL = 3;
-const MAX_PAYLOAD = 4000; // characters of base64url
+// Characters of base64url. Up to phase 14 it was 4000, enough for one step;
+// the largest board within the limits above, eight steps of noise, is about
+// 8000 (format.test.ts). Reading more never breaks an older link.
+const MAX_PAYLOAD = 10_000;
 const MAX_JSON = 64 * 1024; // bytes after inflating
 
 /** Arrows that take their player along: the next arrow of that player starts at their end. */

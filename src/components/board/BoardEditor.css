@@ -10,6 +10,8 @@
   display: grid;
   grid-template:
     "title" minmax(var(--board-title), auto)
+    "steps" var(--board-steps)
+    "text" var(--board-text)
     "stage" minmax(0, 1fr)
     "tools" minmax(var(--board-bar), auto) / minmax(0, 1fr);
   width: 100%;
@@ -353,7 +355,9 @@
   .editor {
     grid-template:
       "title title title" minmax(var(--board-title), auto)
-      "tools stage ." minmax(0, 1fr) / var(--board-wide-side) minmax(0, 1fr) var(--board-wide-side);
+      "tools stage steps" minmax(0, max-content)
+      "tools stage strip" auto
+      "tools stage ." minmax(0, 1fr) / var(--board-wide-side) minmax(0, 1fr) var(--board-wide-steps);
     max-width: none;
     padding: 0 16px 16px;
     gap: 12px;
@@ -375,8 +379,11 @@
     padding: 0 12px;
     font-size: 0.9375rem;
   }
+  .editor :is(.tools, .stage) {
+    grid-row: 2 / 5;
+  }
   .editor .strip {
-    grid-area: 2 / 3;
+    grid-area: strip;
     align-self: start;
   }
   /* The free column is narrower than the court's: "Aanspeelpunt" fits with room for wider fonts (Linux). */
@@ -397,7 +404,8 @@
   .editor {
     grid-template:
       "tools stage title" minmax(0, 1fr)
-      "tools stage delete" var(--tap) / var(--board-tools) minmax(0, 1fr) var(--board-panel);
+      "tools stage text" auto
+      "tools steps delete" var(--tap) / var(--board-tools) minmax(0, 1fr) var(--board-panel);
     max-width: none;
     padding: 4px 4px max(4px, env(safe-area-inset-bottom));
   }
@@ -922,5 +930,228 @@
     gap: 2px;
     padding: 2px;
     font-size: 0.6875rem;
+  }
+}
+
+/* ===== Steps: a button per step and New step; the sentence of the step on the court ===== */
+.editor .steps {
+  grid-area: steps;
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  container-type: inline-size;
+}
+/* On a phone the steps are buttons in a row; the sentences show only wide. */
+.editor .step {
+  display: contents;
+}
+.editor .step > :not(.chip) {
+  display: none;
+}
+.editor .chip {
+  flex: 0 1 40px;
+  min-width: 28px;
+  min-height: var(--tap);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.editor .chip[aria-pressed="true"] {
+  border-color: var(--color-accent-dark);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-darker);
+}
+.editor .new {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  margin-left: auto;
+  padding: 0 10px;
+  border: 1px solid var(--color-accent-dark);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-accent-darker);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.editor .new svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.editor .new:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+/* Too little room beside the step buttons (a phone, not the list when wide): New step keeps only its plus; its aria-label and title name it. */
+@media not ((min-width: 860px) and (min-height: 560px)) {
+  @container (max-width: 340px) {
+    .editor .steps:has(.step:nth-of-type(4)) .new {
+      padding: 0;
+    }
+    .editor .steps:has(.step:nth-of-type(4)) .new span {
+      display: none;
+    }
+  }
+  @container (max-width: 420px) {
+    .editor .steps:has(.step:nth-of-type(6)) .new {
+      padding: 0;
+    }
+    .editor .steps:has(.step:nth-of-type(6)) .new span {
+      display: none;
+    }
+  }
+}
+
+.editor .text {
+  grid-area: text;
+  display: flex;
+  min-width: 0;
+}
+.editor .line {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-soft);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+.editor .line span {
+  display: -webkit-box;
+  flex: 1;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.editor .line.empty {
+  color: var(--color-text-muted);
+}
+.editor .line svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--color-text-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* 16px or more, or iOS zooms in on it. */
+.editor input.line {
+  background: var(--color-bg);
+  font-size: 1rem;
+  cursor: text;
+}
+
+/* Wide: the steps as a list in the column on the right, each with its sentence. */
+@media (min-width: 860px) and (min-height: 560px) {
+  /* With the kind or team bar under it on a low screen, the list scrolls; the court stays. */
+  .editor .steps {
+    display: grid;
+    grid-template-columns: var(--tap) minmax(0, 1fr);
+    align-content: start;
+    gap: 4px 6px;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .editor .step {
+    display: contents;
+  }
+  .editor .step > :not(.chip) {
+    display: flex;
+  }
+  .editor .chip {
+    min-width: 0;
+  }
+  .editor .said {
+    align-items: center;
+    min-width: 0;
+    min-height: var(--tap);
+    padding: 2px 8px;
+    border: 0;
+    background: none;
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.875rem;
+    line-height: 1.25;
+    text-align: left;
+    cursor: pointer;
+  }
+  .editor .line span {
+    -webkit-line-clamp: 4;
+  }
+  /* The other steps' sentences on two lines, so eight steps fit beside the court. */
+  .editor .said span {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .editor .new {
+    grid-column: 1 / -1;
+    margin: 4px 0 0;
+  }
+  .editor .text {
+    display: none;
+  }
+  /* Below the tools, where it never covers the court: the steps column is too narrow to keep it clear. */
+  .editor .delete {
+    grid-area: 4 / 1;
+    align-self: end;
+    justify-self: stretch;
+    margin: 0;
+    border-radius: var(--radius-sm);
+    box-shadow: none;
+  }
+}
+
+/*
+ * A phone in landscape: the step bar below the court, the sentence in the
+ * panel on the right, on four lines. On a low screen (an iPhone SE: 320 px)
+ * four lines would push the title under Undo: two there. The whole sentence
+ * shows in the field when you tap it.
+ */
+@media (orientation: landscape) and (max-height: 559px) {
+  .editor {
+    container: editor / size;
+  }
+  .editor .line {
+    align-items: flex-start;
+    padding: 4px 6px;
+    font-size: 0.8125rem;
+  }
+  .editor .line span {
+    -webkit-line-clamp: 4;
+  }
+}
+@container editor (max-height: 334px) {
+  .editor .line span {
+    -webkit-line-clamp: 2;
   }
 }

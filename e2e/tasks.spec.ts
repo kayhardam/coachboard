@@ -47,6 +47,12 @@ const TAP_BUDGET = {
   // has no steps yet, so it is four separate boards, each with its sentence as the title and
   // shared as its own link. The baseline for phase 14; typing a sentence is one action.
   "T2 as four separate boards": 32,
+  // T2 with steps (phase 14-2): per step its arrow, a tap on the sentence, the sentence, New step;
+  // Share at the end. The step bar sits above the sentence, so New step stays above a phone's
+  // keyboard: no tap on Done. Kay sets the goal after this count.
+  T2: 16,
+  // T2 for a returning coach: their own board is on the court first.
+  "T2 with your own board": 18,
 };
 /** Of those, the actions until the three boards are in My boards on the phone. */
 const T4_UNTIL_IMPORTED = 13;
@@ -476,5 +482,80 @@ for (const lang of ["en", "nl"]) {
 
     await expectSharedT2AsFourBoards(shared, lang);
     expect(steps.count).toBe(TAP_BUDGET["T2 as four separate boards"]);
+  });
+}
+
+/** T2 with steps: per step its arrow and its sentence, New step between them, then Share. */
+async function crossingInSteps(page: Page, lang: string, steps: ReturnType<typeof route>) {
+  const said = async (i: number) => {
+    await steps.tap(page.locator(".text").getByRole("button", { name: t(lang, "board.addText") }));
+    await steps.type(T2_SENTENCES[lang]![i]!);
+  };
+  const next = () => steps.tap(page.getByRole("button", { name: t(lang, "board.newStep"), exact: true }));
+  const { cb, lb } = CROSSING;
+
+  await steps.dragToSpot(CB, cb[0], cb[1]);
+  await said(0);
+  // Straight from typing to New step: the sentence is kept first.
+  await next();
+  await steps.dragToSpot(LB, lb[0], lb[1]);
+  await said(1);
+  await next();
+  await steps.passTo(0, LB);
+  await said(2);
+  await next();
+  await steps.dragToSpot(0, 100, 2, "ball");
+  await said(3);
+  await steps.tap(page.getByRole("button", { name: t(lang, "board.share") }));
+}
+
+/** The shared board: four steps, each with its sentence and arrow, the runners and the ball where the steps before left them. */
+async function expectSharedT2(shared: () => Promise<string[]>, lang: string) {
+  await expect.poll(shared).toHaveLength(1);
+  const url = new URL((await shared())[0]!);
+  expect(url.pathname).toBe(`/${lang}/board/link/`);
+  const board = (await decode(url.hash.replace(/^#t=/, "")))!;
+  expect(board.frames.map((f) => f.text)).toEqual(T2_SENTENCES[lang]);
+  expect(board.frames.map((f) => f.arrows)).toMatchObject([
+    [{ kind: "run", from: CB }],
+    [{ kind: "run", from: LB }],
+    [{ kind: "pass", from: CB }],
+    [{ kind: "shot", from: LB }],
+  ]);
+  const [one, two, three, four] = board.frames;
+  expect(two!.players[CB]!.at).toEqual(one!.arrows[0]!.pts.at(-1));
+  expect(three!.players[LB]!.at).toEqual(two!.arrows[0]!.pts.at(-1));
+  // The ball went along with CB, then to LB with the pass.
+  const beside = (p: readonly number[]) => [p[0]! + 10, p[1]! - 8];
+  expect(two!.balls).toEqual([beside(two!.players[CB]!.at)]);
+  expect(four!.balls).toEqual([beside(four!.players[LB]!.at)]);
+}
+
+for (const lang of ["en", "nl"]) {
+  test(`T2 (${lang}): the shortest route takes exactly its tap budget`, async ({ page }) => {
+    const shared = await stubShareSheet(page);
+    await openBoard(page, "", `/${lang}/board/`);
+    const steps = route(page);
+
+    await crossingInSteps(page, lang, steps);
+
+    await expectSharedT2(shared, lang);
+    expect(steps.count).toBe(TAP_BUDGET.T2);
+  });
+
+  test(`T2 (${lang}) with your own board: a new board first, which keeps yours`, async ({ page }) => {
+    const shared = await stubShareSheet(page);
+    const own = await saveOwnBoard(page);
+    await openBoard(page, "", `/${lang}/board/`);
+    const steps = route(page);
+
+    await steps.tap(moreButton(page, lang));
+    await steps.tap(page.getByRole("button", { name: t(lang, "board.newBoard"), exact: true }));
+    await crossingInSteps(page, lang, steps);
+
+    await expectSharedT2(shared, lang);
+    await expect.poll(async () => (await savedBoards(page)).length).toBe(2);
+    expect(await savedBoards(page)).toContainEqual(JSON.parse(own)[0]);
+    expect(steps.count).toBe(TAP_BUDGET["T2 with your own board"]);
   });
 }

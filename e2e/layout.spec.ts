@@ -1,6 +1,6 @@
 import { devices, type Page } from "@playwright/test";
 import { defaultBoard, defaultBoardFor } from "../src/lib/board/defaults";
-import { MAX_TITLE } from "../src/lib/board/format";
+import { encode, MAX_STEPS, MAX_TEXT, MAX_TITLE } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
 import { dragPlayer, expect, fromMenu, moreButton, OLD_KEY, openBoard, STORE_KEY, test } from "./helpers";
 
@@ -388,4 +388,70 @@ test("wide, My boards is a panel on the right, and the tools stay in view beside
   expect(panel.x + panel.width).toBeCloseTo(WIDE.width, 0);
   const tools = (await page.getByRole("toolbar", { name: "Tools" }).boundingBox())!;
   expect(tools.x + tools.width).toBeLessThanOrEqual(panel.x);
+});
+
+// Phase 14-2: steps. The step bar and the sentence, with the most a board can
+// have (eight steps, sentences of 100 characters), on the smallest phone too.
+// On 320 px New step shows only its plus, and keeps its name for screen readers.
+async function eightSteps(lang: string) {
+  const board = defaultBoardFor(lang);
+  const sentence = (lang === "nl" ? "MO speelt de bal strak naar LO, die achter hem langs komt en in de opening tussen twee en drie springt." : "CB passes hard to LB, who comes around behind him and goes into the gap between the second and third.").slice(0, MAX_TEXT);
+  board.frames = Array.from({ length: MAX_STEPS }, () => ({ ...structuredClone(board.frames[0]!), text: sentence }));
+  return `#t=${await encode(board)}`;
+}
+
+for (const lang of ["en", "nl"]) {
+  for (const [name, size] of [
+    ["320 px", { width: 320, height: 568 }],
+    ["portrait", { width: 360, height: 740 }],
+    ["landscape", null],
+    ["landscape, 320 px high", { width: 568, height: 320 }],
+    ["wide", WIDE],
+    ["wide, 860×560", { width: 860, height: 560 }],
+  ] as const) {
+    test(`${lang}, ${name}: eight steps and long sentences fit, and New step keeps its name`, async ({ page }) => {
+      await page.setViewportSize(size ?? landscape());
+      await openBoard(page, await eightSteps(lang), `/${lang}/board/`);
+      const bar = page.getByRole("toolbar", { name: t(lang, "board.steps") });
+      await expect(bar.locator(".chip")).toHaveCount(MAX_STEPS);
+      await expectEverythingOnScreen(page);
+      const button = bar.getByRole("button", { name: t(lang, "board.newStep"), exact: true });
+      await expect(button).toBeInViewport({ ratio: 1 });
+      await expect(button).toHaveAttribute("title", `${t(lang, "board.newStep")} (N)`);
+      const label = button.locator("span");
+      if (await label.isVisible()) {
+        expect(await label.evaluate((s) => s.scrollWidth > s.clientWidth)).toBe(false);
+      }
+      // The sentence keeps to its box: clamped, with the whole of it in the field.
+      const line = page.locator(".editor .line:visible").first();
+      await expect(line).toBeInViewport({ ratio: 1 });
+      await line.click();
+      await expect(page.locator(".editor input.line:visible")).toHaveValue(/.{100}/);
+      await expectEverythingOnScreen(page);
+    });
+  }
+}
+
+test("eight steps on 320 px: New step shows only its plus", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await openBoard(page, await eightSteps("nl"), "/nl/board/");
+  const button = page.getByRole("button", { name: "Nieuwe stap", exact: true });
+  await expect(button.locator("span")).toBeHidden();
+  await expect(button).toHaveAttribute("aria-label", "Nieuwe stap");
+});
+
+test("wide and low, with eight steps: the team bar fits under the list, which scrolls, and the court stays", async ({ page }) => {
+  await page.setViewportSize({ width: 860, height: 560 });
+  await openBoard(page, await eightSteps("nl"), "/nl/board/");
+  const court = await surface(page);
+  await page.locator('.stage [data-kind="player"][data-index="5"]').click();
+  await expect(page.getByRole("toolbar", { name: "Team" })).toBeInViewport({ ratio: 1 });
+  for (const bar of ["Team", "Gereedschap", "Acties"]) {
+    for (const button of await page.getByRole("toolbar", { name: bar }).locator(":is(button, summary, a):visible").all()) {
+      await expect(button).toBeInViewport({ ratio: 1 });
+    }
+  }
+  const list = page.getByRole("toolbar", { name: "Stappen" });
+  expect(await list.evaluate((l) => l.scrollHeight > l.clientHeight)).toBe(true);
+  expect(await surface(page)).toEqual(court);
 });

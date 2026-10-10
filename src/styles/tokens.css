@@ -39,7 +39,11 @@
   --board-gap: 6px;
   --board-tools: 118px; /* width of the tools panel, phone in landscape */
   --board-panel: 146px; /* width of the title panel, phone in landscape */
-  --board-wide-side: 168px; /* width of the columns beside the court, wide screens */
+  --board-wide-side: 168px; /* width of the tools column beside the court, wide screens */
+  /* The steps column on wide screens: wider where there is room, without shrinking the court. */
+  --board-wide-steps: clamp(var(--board-wide-side), 100vw - 980px, 300px);
+  --board-steps: 44px; /* the step bar, portrait */
+  --board-text: 44px; /* the sentence of a step, portrait: two lines */
 }
 
 @media (min-width: 560px) {
