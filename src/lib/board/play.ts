@@ -14,14 +14,38 @@ const shift = (a: Pt, d: Pt, k = 1): Pt => [a[0] + d[0] * k, a[1] + d[1] * k];
 const lerp = (a: Pt, b: Pt, t: number) => shift(a, [b[0] - a[0], b[1] - a[1]], t);
 
 /**
+ * When each arrow of `frame` happens, in turns of equal length: [start, end].
+ * A player's arrows go one after another, in drawing order; a pass, bounce or
+ * shot waits for its ball, and whoever receives a pass waits for it before
+ * their next arrow. Who needn't wait starts at once.
+ */
+function turns(frame: Frame): [number, number][] {
+  const free = frame.players.map(() => 0);
+  const trips = ballTrips(frame);
+  const ready = trips.map(() => 0);
+  return frame.arrows.map((a, j) => {
+    // The ball a pass, bounce or shot takes, if any.
+    const b = trips.findIndex(({ passes }) => passes.some((p) => p.arrow === j));
+    const end = Math.max(free[a.from!] ?? 0, ready[b] ?? 0) + 1;
+    if (a.from !== undefined) free[a.from] = end;
+    if (b >= 0) {
+      ready[b] = end;
+      const to = trips[b]!.passes.find((p) => p.arrow === j)!.to;
+      if (to !== undefined) free[to] = Math.max(free[to]!, end);
+    }
+    return [end - 1, end];
+  });
+}
+
+/**
  * Step `step` at `t` (0 to 1) of the way to the next step: at 0 exactly the
  * step, at 1 exactly where the next one starts (after the last step: where
- * its arrows take everyone). Each player's arrows share the time in drawing
- * order: along a run, dribble or screen they move; during a pass, bounce or
- * shot they stand, and the ball goes along it from where it lay. A ball goes
- * with whoever has it, and lies beside its receiver after a pass. A player or
- * ball that the next step has somewhere else (moved there by hand) goes in a
- * straight line.
+ * its arrows take everyone). The arrows happen in turns (turns()), which share
+ * the time: along a run, dribble or screen a player moves; during a pass,
+ * bounce or shot they stand, and the ball goes along it from where it lay. A
+ * ball goes with whoever has it, and lies beside its receiver after a pass. A
+ * player or ball that the next step has somewhere else (moved there by hand)
+ * goes in a straight line.
  */
 export function moment(board: Board, step: number, t: number): Frame {
   const frame = board.frames[step]!;
@@ -30,13 +54,10 @@ export function moment(board: Board, step: number, t: number): Frame {
   const ends = frame.players.map((_, i) => next?.players[i]!.at ?? endOf(frame, i));
   const balls = next?.balls ?? after;
   if (t >= 1) return { ...frame, players: frame.players.map((p, i) => ({ ...p, at: ends[i]! })), balls };
-  /** How far along arrow `j` is: it has its share of its player's time; one without a player takes the whole step. */
-  const along = (j: number) => {
-    const a = frame.arrows[j]!;
-    const own = frame.arrows.filter((b) => b.from === a.from);
-    const n = a.from === undefined ? 1 : own.length;
-    return Math.min(1, Math.max(0, t * n - (a.from === undefined ? 0 : own.indexOf(a))));
-  };
+  const when = turns(frame);
+  const now = t * Math.max(1, ...when.map(([, e]) => e));
+  /** How far along arrow `j` is, from 0 to 1. */
+  const along = (j: number) => Math.min(1, Math.max(0, now - when[j]![0]));
   const place = (i: number): Pt => {
     let at = frame.players[i]!.at;
     if (!same(endOf(frame, i), ends[i]!)) return lerp(at, ends[i]!, t);

@@ -148,3 +148,70 @@ test("playing a board of yours changes nothing in My boards", async ({ page }) =
   expect(await page.evaluate((key) => localStorage.getItem(key), STORE_KEY)).toBe(saved);
   await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
 });
+
+/** JavaScript errors on the page, collected from now on. */
+function errors(page: Page) {
+  const seen: string[] = [];
+  page.on("pageerror", (e) => seen.push(e.message));
+  return seen;
+}
+
+test("Empty court and the default lineup on step 3 leave a board of one step that still works", async ({ page }) => {
+  const seen = errors(page);
+  const steps = page.getByRole("toolbar", { name: "Steps" });
+  for (const item of ["Empty court", "Default lineup"]) {
+    // A fresh load: the same page with another link would only change the hash.
+    await page.goto("about:blank");
+    await openBoard(page, `#t=${play.link}`);
+    await steps.getByRole("button", { name: "3", exact: true }).click();
+    await page.getByTitle("More", { exact: true }).click();
+    await page.getByRole("button", { name: item, exact: true }).click();
+    await expect(steps.locator(".chip")).toHaveCount(1);
+    expect(await current(page)).toBe(1);
+    // A ball on the court: it is there, in the board.
+    const balls = await page.locator('.stage [data-kind="ball"]').count();
+    await page.getByRole("toolbar", { name: "Tools" }).getByRole("button", { name: "Ball" }).click();
+    // An empty spot, in decimetres: in the backcourt, away from every player.
+    const spot = await page.locator(".stage svg").evaluate((svg: SVGSVGElement) => {
+      const p = new DOMPoint(140, 180).matrixTransform(svg.getScreenCTM()!);
+      return { x: p.x, y: p.y };
+    });
+    await page.mouse.click(spot.x, spot.y);
+    await expect(page.locator('.stage [data-kind="ball"]')).toHaveCount(balls + 1);
+    await page.getByRole("toolbar", { name: "Tools" }).getByRole("button", { name: "Arrow" }).click();
+  }
+  expect(seen).toEqual([]);
+});
+
+test("Empty court while playing stops it first", async ({ page }) => {
+  const seen = errors(page);
+  await openPaused(page);
+  await playButton(page).click();
+  await page.clock.runFor(STILL + MOVE + STILL + MOVE / 2);
+  expect(await current(page)).toBe(2);
+  await page.getByTitle("More", { exact: true }).click();
+  await page.getByRole("button", { name: "Empty court", exact: true }).click();
+  await expect(playButton(page)).toHaveAttribute("aria-label", "Play");
+  await page.clock.runFor(STILL + MOVE);
+  expect(await current(page)).toBe(1);
+  await expect(page.getByRole("toolbar", { name: "Steps" }).locator(".chip")).toHaveCount(1);
+  expect(seen).toEqual([]);
+});
+
+test("a tap on the sentence while playing stops it, so the sentence stays with its step", async ({ page }) => {
+  await openPaused(page);
+  await playButton(page).click();
+  await page.clock.runFor(STILL / 2);
+  await page.locator(".text .line").click();
+  await expect(playButton(page)).toHaveAttribute("aria-label", "Play");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.type(" Snel!");
+  await page.clock.runFor(STILL + MOVE);
+  await page.keyboard.press("Enter");
+  expect(await current(page)).toBe(1);
+  await page.clock.runFor(1000);
+  await expect.poll(async () => (await inLink(page))!.frames.map((f) => f.text)).toEqual([
+    `${play.board.frames[0]!.text} Snel!`,
+    ...play.board.frames.slice(1).map((f) => f.text),
+  ]);
+});

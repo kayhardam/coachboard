@@ -114,4 +114,45 @@ describe("playing a step", () => {
     expect(half.arrows).toEqual(board.frames[0]!.arrows);
     expect(JSON.stringify(board)).toBe(before);
   });
+
+  it("passes in a row: the second waits for the ball, which reaches the first receiver", () => {
+    let board = addArrow(lineup(), 0, "pass", [0, 0], [170, 118], CB);
+    board = addStep(addArrow(board, 0, "pass", [0, 0], [100, 66], RB), 0);
+    expectEnds(board, 0);
+    // Two turns: first CB to RB, then RB to P.
+    expect(moment(board, 0, 0.25).balls[0]).toEqual(halfway(board, 0));
+    expect(moment(board, 0, 0.5).balls).toEqual([beside([170, 118])]);
+    const second = board.frames[0]!.arrows[1]!;
+    const [x, y] = pointAt(second, 0.5);
+    expect(moment(board, 0, 0.75).balls).toEqual([[x + BESIDE[0] / 2, y + BESIDE[1] / 2]]);
+  });
+
+  it("a receiver who dribbles away waits for the ball first", () => {
+    let board = addArrow(lineup(), 0, "pass", [0, 0], [170, 118], CB);
+    board = addStep(addArrow(board, 0, "dribble", [0, 0], [170, 80], RB), 0);
+    expectEnds(board, 0);
+    expect(moment(board, 0, 0.25).players[RB]!.at).toEqual([170, 118]);
+    expect(moment(board, 0, 0.5).balls).toEqual([beside([170, 118])]);
+    const late = moment(board, 0, 0.75);
+    expect(late.players[RB]!.at).toEqual([170, 99]);
+    expect(late.balls).toEqual([beside([170, 99])]);
+  });
+
+  it("dribble, then pass: the ball goes with the dribbler, then along the pass", () => {
+    let board = addArrow(lineup(), 0, "dribble", [0, 0], [100, 100], CB);
+    board = addStep(addArrow(board, 0, "pass", [0, 0], [170, 118], CB), 0);
+    expectEnds(board, 0);
+    expect(moment(board, 0, 0.25).players[CB]!.at).toEqual([100, 115]);
+    expect(moment(board, 0, 0.25).balls).toEqual([[110, 107]]);
+    expect(moment(board, 0, 0.5).balls).toEqual([[110, 92]]);
+  });
+
+  it("a run and a pass to its end happen at the same time", () => {
+    let board = addArrow(lineup(), 0, "run", [0, 0], [170, 90], RB);
+    board = addStep(addArrow(board, 0, "pass", [0, 0], [170, 90], CB), 0);
+    expectEnds(board, 0);
+    const half = moment(board, 0, 0.5);
+    expect(half.players[RB]!.at).toEqual([170, 104]);
+    expect(half.balls[0]).toEqual(halfway(board, 1));
+  });
 });

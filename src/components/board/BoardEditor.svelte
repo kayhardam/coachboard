@@ -269,7 +269,9 @@
     shown = null;
   }
 
+  /** A tap on the sentence stops playing first, so the sentence stays with its step. */
   function editText() {
+    stopPlaying();
     typed = frame.text ?? "";
     editingText = true;
   }
@@ -809,8 +811,16 @@
     selected = null;
   }
 
+  /**
+   * Clearing, the court size, the default lineup or an empty court. Stops
+   * playing first, and keeps the step on the court within the board: the
+   * default lineup and an empty court have one step.
+   */
   function clearWith(next: Board) {
+    stopPlaying();
+    keepText();
     commit(next);
+    step = Math.min(step, board.frames.length - 1);
     selected = null;
     menuOpen = false;
   }
