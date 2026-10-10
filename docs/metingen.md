@@ -2893,3 +2893,112 @@ Branch `qr-offline-test`, vanaf `main` @ `f35a2bd`. Alleen de test verandert, de
 - **De fout (gevonden door Kay):** "the QR code still opens after going offline" (`e2e/share.spec.ts`) wachtte op elk JS-bestand dat niet `client` of `BoardEditor` heette. Sinds de chunk `board.*.js` (PR #34) is dat bestand er zodra het bord er is. Kwam `qr.*.js` later, dan ging de test offline vóór de QR-code geladen was, en faalde hij. In 14-2 gebeurde dat één keer in een volle lokale run.
 - **De oplossing:** de test wacht op de QR-chunk zelf, `/_astro/qr.*.js`.
 - **Bewijs** (tijdelijk, niet gecommit): met `qr.*.js` 3 s vertraagd via `page.route` faalt de oude check (de QR-dialoog blijft leeg) en slaagt de nieuwe.
+
+## Fase 14-3: stippellijnen en afspelen (10 oktober 2026)
+
+Branch `fase-14-3-afspelen`, vanaf `main` @ `f35a2bd`, met de commit van "De wankele QR-test" (PR #43) erbij, zodat de twee PR's elkaar niet in de weg zitten. Besluit D4 (afspelen met beweging langs de pijlen) en de aanvullingen van Kay.
+
+### Wat er veranderd is
+
+- **Stippellijnen:** vanaf stap 2 een dunne grijze stippellijn en een stippelrondje naar waar een speler in de stap ervoor stond.
+  - Grijs (`#94a3b8`), 0,8 breed, stippels van 1 en 2, zonder pijlpunt, dus niet te verwarren met een pass of stuit: die zijn gestreept, in de kleur van de pijlen.
+  - Ze liggen onder de pijlen en spelers, zonder `data-kind`, met `pointer-events="none"`: niet aan te tikken.
+- **Afspelen** naast Nieuwe stap (alleen het icoon; Afspelen/Stoppen als `aria-label` en `title`).
+  - Vanaf stap 1 staat elke stap 1,2 s stil, daarna bewegen de spelers 1 s langs hun pijlen naar waar de volgende stap begint. De laatste stap eindigt waar zijn pijlen iedereen brengen, blijft daar even staan, en het afspelen stopt op die stap.
+  - De pijlen van een speler delen de tijd, in tekenvolgorde: langs een loop, dribbel of sper beweegt hij; tijdens een pass, stuit of schot staat hij stil en gaat de bal langs de pijl, vanaf waar hij lag. Een bal gaat mee met wie hem heeft (`ballTrips()`, dezelfde regels als Nieuwe stap).
+  - Elke beweging eindigt precies op de plek in de volgende stap. Een speler of bal die je daar met de hand verschoof, gaat in een rechte lijn.
+  - **Alleen kijken:** de tussenstand blijft buiten het bord, zoals een pijl in wording (`shown`). Er komt niets in de adresbalk, in Mijn borden of in Ongedaan maken. Een tussenstand heeft geen hele decimeters, en zou in het bord het bord uit Mijn borden laten vallen.
+  - Een tik op het veld (die verder niets doet), een andere stap, Nieuwe stap, Ongedaan maken, een ander bord openen of Stoppen stopt het afspelen eerst.
+  - Met `prefers-reduced-motion` geen beweging: het bord springt van stap naar stap.
+- **Indeling:**
+  - de stapknoppen mogen smaller worden (tot 20 px, 44 px hoog), zodat Nieuwe stap en Afspelen ook op 320 px met 8 stappen in beeld blijven;
+  - breed staan Afspelen en Nieuwe stap naast elkaar onder de lijst; anders paste de lijst met 8 stappen op 860×560 niet meer.
+- Nieuwe teksten: alleen Afspelen/Stoppen en Play/Stop.
+
+### Groottes
+
+`npm run budget`, vóór (`main` @ `f35a2bd`) en na:
+
+| Meting | Vóór | Na, macOS | Na, CI (Linux) | Budget | Grens (D11) |
+|---|--:|--:|--:|--:|--:|
+| JS van het bord | 32.446 B | 33.497 B | 33,6 KB | 32,75 → **33,8 KB** | 33,8 KB |
+| Alle JS in `_astro/` | 36.469 B | 37.520 B | 37,7 KB | 36,77 → **37,8 KB** | 37,8 KB |
+| CSS bordpagina | 5.535 B | 5.573 B | 5,6 KB | 5,74 → **5,78 KB** | 5,8 KB |
+| HTML `/nl/board/` | 6.229 B | 6.252 B | | 6,5 KB | |
+
+- **Binnen de grens van Fase 14,** maar met weinig ruimte. De meting + 0,2 KB zou voor alle JS boven de grens van 37,8 KB komen. Daarom is het budget voor alle JS de grens zelf, net als voor de JS van het bord.
+- **Per functie,** gemeten door het onderdeel weg te laten uit het geheel (macOS, gzip):
+
+  | Functie | JS van het bord |
+  |---|--:|
+  | Beweging langs de pijlen (`moment()` in `play.ts`) | 405 B |
+  | Afspelen: de knop, de tijd, stoppen, reduced motion | 280 B |
+  | Stippellijnen (`Court.svelte`) | 217 B |
+  | De weg van de bal per stap (`ballTrips()`, gedeeld met Nieuwe stap) | ±145 B |
+  | **Samen** | **+1.051 B** |
+
+  Het prototype uit het plan schatte stippellijnen 185 B en afspelen met beweging 249 B. De echte beweging is groter: de bal volgt hier de passes en wie hem heeft, en elke beweging eindigt precies op de volgende stap.
+- **CSS +38 B:** de afspeelknop.
+
+### Meettaken
+
+| Route | Vóór | Na (`/en/` en `/nl/`) |
+|---|--:|--:|
+| T1 / T1 met eigen bord | 4 / 6 | 4 / 6 |
+| T2 / T2 met eigen bord | 16 / 18 | 16 / 18 |
+| T2 als vier losse borden | 32 | 32 |
+| T3 / met eigen bord / zonder startopstelling | 5 / 7 / 21 | 5 / 7 / 21 |
+| T4 met export en import / met links | 20 / 10 | 20 / 10 |
+
+Afspelen kost geen handeling in een meettaak; alle routes zijn gelijk.
+
+### Tests
+
+- **Unit (`play.test.ts`, nieuw):** begin en eind van elke beweging: loop (met de bal), pass en ga, stuit, schot (laatste stap, bal in het doel), dribbel, sper, een met de hand verschoven verdediger, een losse bal (en een pass zonder speler). Ook dat een tussenstand de pijlen en zin van de stap houdt en het bord niet verandert.
+- **`Court.test.ts`:** stippellijnen alleen vanaf stap 2, voor wie bewoog, grijs, zonder `data-kind` en zonder pijlpunt, met `pointer-events="none"`, onder de spelers.
+- **`e2e/play.spec.ts` (nieuw)**, met de klok van Playwright stilgezet:
+  - afspelen halverwege en op het eind van elke stap;
+  - de link en Mijn borden blijven gelijk, ook voor een bord uit Mijn borden, en Ongedaan maken blijft uit;
+  - stoppen met een tik op het veld, een andere stap, Nieuwe stap en Stoppen;
+  - reduced motion: geen beweging;
+  - Afspelen pas vanaf twee stappen.
+- **`e2e/layout.spec.ts`:** de tests met 8 stappen (320 px, liggend 320 px hoog, breed 860×560) dekken nu ook Afspelen: alles in beeld, 44 px hoog.
+- **`npm run e2e`:** 596 geslaagd, 2 overgeslagen.
+
+### Lighthouse
+
+Vóór: productie (`main` @ `f35a2bd`). Na: de preview-URL. Lighthouse 13.5.0, mobiel. SEO staat er niet in: elke preview-URL stuurt `X-Robots-Tag: noindex`.
+
+| URL | Performance | Accessibility | Best Practices | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` vóór | 100 | 100 | 100 | 0,90 / 0,81 / 0,81 s | 0 | 2–6 ms | 66,9 KB |
+| `/nl/board/` na | 100 | 100 | 100 | 0,98 / 0,92 / 0,81 s | 0 | 4–12 ms | 68,5 KB |
+| `/nl/board/` vóór, tweede reeks | | | | 0,81 / 0,81 / 0,81 s | | | |
+| `/nl/board/` na, tweede reeks | | | | 0,82 / 0,83 / 0,81 s | | | |
+| `/en/board/` vóór | 100 | 100 | 100 | 0,81 / 0,82 / 0,81 s | 0 | 3–4 ms | 66,9 KB |
+| `/en/board/` na | 100 | 100 | 100 | 0,84 / 0,82 / 0,82 s | 0 | 3–4 ms | 68,3 KB |
+
+- **De LCP verschuift niet:** het LCP-element is vóór en na een tekst uit de HTML (de lege titel; op `/en/` de lege zin), en valt samen met de eerste paint (FCP).
+- **De eerste reeks op `/nl/` na** had twee trage runs (0,98 en 0,92 s). Een tweede reeks, om en om met productie gedraaid, gaf 0,82 / 0,83 / 0,81 s tegen 0,81 s. Dat is spreiding van de preview, geen verschuiving.
+- **De overdracht stijgt 1,5 KB:** de JS.
+
+### Preview-URL
+
+`https://fase-14-3-afspelen-coachboard.hardamkay.workers.dev`
+
+### Testlijst voor de telefoon (Fase 14-2 en 14-3)
+
+Op de preview (`/nl/board/`), per toestel (model, iOS/Android-versie, browser).
+
+| # | Test | iPhone | Android |
+|--:|---|:-:|:-:|
+| 1 | T2 in de zaal: de kruising MO–LO in vier stappen, elk met een zin, en delen. Binnen 16 handelingen? | | |
+| 2 | Tik Nieuwe stap terwijl het toetsenbord nog open is: is de zin bewaard, en bleef Nieuwe stap boven het toetsenbord? | | |
+| 3 | Stap 2 en verder: zie je grijze stippellijnen naar waar spelers stonden, en zijn ze niet te verwarren met een pass of stuit? Gebeurt er niets als je erop tikt? | | |
+| 4 | Afspelen: lopen de spelers langs hun pijlen, gaat de bal met de pass mee, en eindigt elke beweging op de plek van de volgende stap? | | |
+| 5 | Tik tijdens het afspelen op het veld, op een stap, op Nieuwe stap en op Stoppen: stopt het meteen? Staat er daarna niets nieuws in Ongedaan maken? | | |
+| 6 | Na afspelen: is de link in de adresbalk en het bord in Mijn borden nog hetzelfde (open het bord opnieuw uit Mijn borden)? | | |
+| 7 | Zet "Beperk beweging" aan (iPhone: Toegankelijkheid › Beweging; Android: Toegankelijkheid › Animaties verwijderen): springt het bord dan van stap naar stap? | | |
+| 8 | Liggend: staan Afspelen en Nieuwe stap onder het veld, in beeld? | | |
+| 9 | Herlaad op stap 3: weer stap 3? Een gedeelde link opent op stap 1? | | |
+| 10 | T1 (sleep vanaf LO, RO, de bal naar RO, Delen): nog steeds 4 handelingen? | | |
