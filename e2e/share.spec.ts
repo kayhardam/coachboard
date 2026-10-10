@@ -68,11 +68,11 @@ test("the QR code still opens after going offline", async ({ page, context }) =>
   // iPhone in airplane mode is test 14 in Kay's test round (docs/metingen.md).
   test.skip(test.info().project.name === "iphone", "WebKit's offline emulation blocks Blob reads");
   await openBoard(page);
-  // Wait until the QR chunk (the one JS file that isn't the editor or Svelte's client) has loaded.
+  // Wait until the QR chunk itself (_astro/qr.*.js, from src/lib/board/qr.ts) has loaded. Not just
+  // any other JS file: the board's own chunk (board.*.js) is there as soon as the board is, so
+  // the test went offline before the QR chunk came, now and then (docs/metingen.md, "De wankele QR-test").
   const qrChunkLoaded = () =>
-    page.evaluate(() =>
-      performance.getEntriesByType("resource").some((r) => /\/_astro\/(?!client|BoardEditor)[^/]+\.js$/.test(r.name)),
-    );
+    page.evaluate(() => performance.getEntriesByType("resource").some((r) => /\/_astro\/qr\.[^/]+\.js$/.test(r.name)));
   await expect.poll(qrChunkLoaded).toBe(true);
   await context.setOffline(true);
   await fromMenu(page, "board.qr");
