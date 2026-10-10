@@ -43,6 +43,10 @@ const TAP_BUDGET = {
   "T3 with your own board": 7,
   // T3 by hand on an emptied court, without a starting lineup. Kept for comparison.
   "T3 without a starting lineup": 21,
+  // T2: the attack "crossing CB–LB" in four steps, a sentence each, shared. Phase 14-1: the board
+  // has no steps yet, so it is four separate boards, each with its sentence as the title and
+  // shared as its own link. The baseline for phase 14; typing a sentence is one action.
+  "T2 as four separate boards": 32,
 };
 /** Of those, the actions until the three boards are in My boards on the phone. */
 const T4_UNTIL_IMPORTED = 13;
@@ -50,6 +54,12 @@ const T4_UNTIL_IMPORTED = 13;
 /** Counts the actions of a route. Every tap is on a button that's already on screen. */
 function route(page: Page) {
   let count = 0;
+  /** A point on the court (decimetres) on the screen. */
+  const onScreen = (x: number, y: number) =>
+    page.locator(".stage svg").evaluate((svg: SVGSVGElement, [x, y]) => {
+      const p = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM()!);
+      return { x: p.x, y: p.y };
+    }, [x, y]);
   const centre = async (index: number, kind = "player") => {
     const box = (await page.locator(`.stage [data-kind="${kind}"][data-index="${index}"]`).boundingBox())!;
     return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -73,11 +83,17 @@ function route(page: Page) {
     },
     /** Taps an empty spot on the court, in court coordinates (decimetres). */
     async tapAt(x: number, y: number) {
-      const at = await page.locator(".stage svg").evaluate((svg: SVGSVGElement, [x, y]) => {
-        const p = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM()!);
-        return { x: p.x, y: p.y };
-      }, [x, y]);
+      const at = await onScreen(x, y);
       await page.mouse.click(at.x, at.y);
+      count++;
+    },
+    /** Drags a player (or a ball) from its centre to a spot on the court, in decimetres. */
+    async dragToSpot(from: number, x: number, y: number, kind = "player") {
+      await drag(await centre(from, kind), await onScreen(x, y));
+    },
+    /** Types a whole sentence: one action, however long (docs/metingen.md, "Meetmethode"). */
+    async type(text: string) {
+      await page.keyboard.type(text);
       count++;
     },
     /** Drags from a player's centre by (dx, dy) screen pixels. */
@@ -362,5 +378,103 @@ for (const lang of ["en", "nl"]) {
 
     await expectSharedT3(shared, lang);
     expect(steps.count).toBe(TAP_BUDGET["T3 without a starting lineup"]);
+  });
+}
+
+// T2: the attack "crossing CB–LB" (Kruising MO–LO) in four steps, a sentence each, shared, from the
+// board as it opens (the attack against a 6-0; CB has the ball). The defenders don't move.
+//   1. CB goes diagonally left with the ball (a run of CB).
+//   2. LB crosses behind CB (a run of LB).
+//   3. CB passes to LB (a pass from the ball).
+//   4. LB shoots at goal (a shot from the ball, which LB has).
+// Where CB and LB end their runs, in decimetres, and where the ball lies beside them.
+const CROSSING = { cb: [75, 95], lb: [115, 105], ballCb: [85, 87], ballLb: [125, 97] } as const;
+const T2_SENTENCES: Record<string, string[]> = {
+  nl: ["MO gaat met de bal schuin naar links.", "LO kruist achter MO langs.", "MO speelt de bal naar LO.", "LO schiet op doel."],
+  en: ["CB goes diagonally left with the ball.", "LB crosses behind CB.", "CB passes to LB.", "LB shoots at goal."],
+};
+
+/**
+ * T2 before phase 14, for comparison: four boards, each with its sentence as the title and shared
+ * as its own link. Each next board is the one before, changed: its arrow deleted, the runner (and
+ * the ball) moved with Move to where the run ended, then the next arrow drawn with Arrow.
+ */
+async function crossingAsFourBoards(page: Page, lang: string, steps: ReturnType<typeof route>, shared: () => Promise<string[]>) {
+  const tool = (key: Parameters<typeof t>[1]) =>
+    page.getByRole("toolbar", { name: t(lang, "board.tools") }).getByRole("button", { name: t(lang, key) });
+  const titled = async (i: number) => {
+    await steps.tap(page.locator(".titlebar button.title"));
+    await steps.type(T2_SENTENCES[lang]![i]!);
+    // Share leaves the title field, which keeps what was typed.
+    await steps.tap(page.getByRole("button", { name: t(lang, "board.share") }));
+    await expect.poll(shared).toHaveLength(i + 1);
+  };
+  /** Taps the board's one arrow halfway, and deletes it. */
+  const deleteArrow = async (from: readonly number[], to: readonly number[]) => {
+    await steps.tapAt((from[0]! + to[0]!) / 2, (from[1]! + to[1]!) / 2);
+    await steps.tap(page.getByRole("button", { name: t(lang, "board.delete") }));
+  };
+  const { cb, lb, ballCb, ballLb } = CROSSING;
+  const start = defaultBoardFor(lang).frames[0]!.players;
+
+  await steps.dragToSpot(CB, cb[0], cb[1]);
+  await titled(0);
+
+  await deleteArrow(start[CB]!.at, cb);
+  await steps.tap(tool("board.tool.move"));
+  await steps.dragToSpot(CB, cb[0], cb[1]);
+  await steps.dragToSpot(0, ballCb[0], ballCb[1], "ball");
+  await steps.tap(tool("board.tool.arrow"));
+  await steps.dragToSpot(LB, lb[0], lb[1]);
+  await titled(1);
+
+  await deleteArrow(start[LB]!.at, lb);
+  await steps.tap(tool("board.tool.move"));
+  await steps.dragToSpot(LB, lb[0], lb[1]);
+  await steps.tap(tool("board.tool.arrow"));
+  await steps.passTo(0, LB);
+  await titled(2);
+
+  await deleteArrow(cb, lb);
+  await steps.tap(tool("board.tool.move"));
+  await steps.dragToSpot(0, ballLb[0], ballLb[1], "ball");
+  await steps.tap(tool("board.tool.arrow"));
+  await steps.dragToSpot(0, 100, 2, "ball");
+  await titled(3);
+}
+
+/** The four shared boards: each sentence as its title, the arrows of its step, the runners where they ran. */
+async function expectSharedT2AsFourBoards(shared: () => Promise<string[]>, lang: string) {
+  const boards = await Promise.all(
+    (await shared()).map(async (link) => {
+      const url = new URL(link);
+      expect(url.pathname).toBe(`/${lang}/board/link/`);
+      return (await decode(url.hash.replace(/^#t=/, "")))!;
+    }),
+  );
+  expect(boards.map((b) => b.title)).toEqual(T2_SENTENCES[lang]);
+  expect(boards.map((b) => b.frames[0]!.arrows)).toMatchObject([
+    [{ kind: "run", from: CB }],
+    [{ kind: "run", from: LB }],
+    [{ kind: "pass", from: CB }],
+    [{ kind: "shot", from: LB }],
+  ]);
+  // Each next board starts where the runs of the one before ended (to within a decimetre or two).
+  const near = (a: readonly number[], b: readonly number[]) => Math.hypot(a[0]! - b[0]!, a[1]! - b[1]!) <= 2;
+  expect(near(boards[1]!.frames[0]!.players[CB]!.at, boards[0]!.frames[0]!.arrows[0]!.pts.at(-1)!)).toBe(true);
+  expect(near(boards[2]!.frames[0]!.players[LB]!.at, boards[1]!.frames[0]!.arrows[0]!.pts.at(-1)!)).toBe(true);
+  expect(boards.every((b) => b.frames.length === 1 && b.frames[0]!.balls.length === 1)).toBe(true);
+}
+
+for (const lang of ["en", "nl"]) {
+  test(`T2 (${lang}) as four separate boards: the baseline before steps`, async ({ page }) => {
+    const shared = await stubShareSheet(page);
+    await openBoard(page, "", `/${lang}/board/`);
+    const steps = route(page);
+
+    await crossingAsFourBoards(page, lang, steps, shared);
+
+    await expectSharedT2AsFourBoards(shared, lang);
+    expect(steps.count).toBe(TAP_BUDGET["T2 as four separate boards"]);
   });
 }

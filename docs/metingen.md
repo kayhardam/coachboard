@@ -1122,7 +1122,7 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
 | Taak | Wat | Toestel | Nu te meten |
 |---|---|---|---|
 | T1 | Open het bord, zet een aanval tegen een 6-0 neer, teken drie pijlen (loop, pass, loop) en deel de link in de teamapp | telefoon | ja |
-| T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | als vier losse borden; als route zodra het bord stappen heeft |
+| T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | ~~als vier losse borden; als route zodra het bord stappen heeft~~ route als vier losse borden sinds Fase 14-1; met stappen vanaf Fase 14-2 |
 | T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, een keeper, twee pionnen, een bal en de kruising, en deel hem | telefoon | ~~met spelers als pionnen; als route zodra het bord pionnen heeft~~ route sinds Fase 13-1, met dekkers als pionnen; met pionnen sinds Fase 13-2, met de startopstelling "2 rijen" sinds Fase 13-3 |
 | T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf (route sinds Fase 12b); ~~met Mijn borden zodra die er zijn~~ met export en import (route sinds Fase 12b-3) |
 
@@ -1138,7 +1138,8 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
   - Vraagt de route een handeling meer, dan faalt de test. Vraagt hij er een minder, dan faalt hij ook. Zo blijft elke winst vastgelegd.
   - Het budget gaat alleen bewust omhoog of omlaag, met de reden in de PR en de nieuwe meting hieronder.
 - **Geen seconden** (besluit Kay, 8 oktober 2026): de stopwatch vervalt, ook bij de sessies met trainers.
-- **Wie** (geparkeerd, vóór Fase 14): drie tot vijf trainers, liefst jeugdtrainers, doen elke taak één keer zonder hulp. Kay kijkt alleen waar ze vastlopen.
+- **Een zin typen** telt als één handeling, hoe lang hij ook is (besluit Kay, 10 oktober 2026). Gereed (Enter) telt wel, waar het toetsenbord van een echte telefoon de volgende knop bedekt; de e2e-test heeft geen toetsenbord en drukt daar op Enter.
+- **Wie** (geparkeerd, ~~vóór Fase 14~~ ook tijdens Fase 14, besluit Kay 10 oktober 2026): drie tot vijf trainers, liefst jeugdtrainers, doen elke taak één keer zonder hulp. Kay kijkt alleen waar ze vastlopen.
 - **Per fase.** Elke fase meet de taken die ze raakt opnieuw, vóór en na, en noteert dat hier.
 
 ### Nulmeting in tikken: T1
@@ -1236,7 +1237,7 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 | T4, met export en import (Fase 12b-3) | 21 handelingen; 14 tot de borden in Mijn borden op de telefoon staan | **20** (B6), gehaald in Fase 13-2 | ~~21~~ 20 (Fase 13-2; 13 tot Mijn borden) |
 | T3 (Fase 13-1) | 21 handelingen; 23 met een eigen bord | **5** (9 oktober 2026), gehaald in Fase 13-3 | ~~21~~ 5 (Fase 13-3; ~~23~~ 7 met een eigen bord) |
 | T3 zonder startopstelling | 21 handelingen | geen: ter vergelijking | 21 |
-| T2 | — | zodra de route bestaat | — |
+| T2 als vier losse borden (Fase 14-1) | 32 handelingen | Kay kiest na de route met stappen (Fase 14-2) | 32 |
 
 - **Stand na Fase 13 (13-3, 10 oktober 2026):** T1, T3 en T4 halen hun doel. T1 4 (doel 5), T3 5 (doel 5), T4 met export en import 20 (doel 20).
 - ~~**Het budget blijft 6** tot een fase de route echt korter maakt.~~ Een fase die een route echt korter maakt, verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
@@ -1245,7 +1246,7 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 
 ### Per taak en toestel
 
-De routes in handelingen staan hierboven, per taak. De sessies met trainers (vóór Fase 14) noteren hier per taak waar ze vastlopen. De tabellen voor seconden zijn weg: seconden vervallen (besluit Kay, 8 oktober 2026).
+De routes in handelingen staan hierboven, per taak. De sessies met trainers (geparkeerd, ook tijdens Fase 14) noteren hier per taak waar ze vastlopen. De tabellen voor seconden zijn weg: seconden vervallen (besluit Kay, 8 oktober 2026).
 
 **T1 in seconden, vóór Fase 12a** (Kay, 7 oktober 2026):
 
@@ -1321,7 +1322,7 @@ Nagerekend met een eenmalig script (niet in de repo), met dezelfde compressie al
 Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die ze nodig heeft:
 
 - **De testronde van Fase 5,** op productie. Test 15 (stopwatch) vervalt (besluit Kay, 8 oktober 2026); de rest staat open.
-- ~~**De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a. T1 door Kay is gedaan (7 oktober 2026, zie "Per taak en toestel").~~ Vervallen (besluit Kay, 8 oktober 2026): geen seconden. **De sessies met trainers** blijven, vóór Fase 14, zonder stopwatch: drie tot vijf trainers doen elke meettaak één keer zonder hulp, en Kay kijkt alleen waar ze vastlopen.
+- ~~**De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a. T1 door Kay is gedaan (7 oktober 2026, zie "Per taak en toestel").~~ Vervallen (besluit Kay, 8 oktober 2026): geen seconden. **De sessies met trainers** blijven, ~~vóór Fase 14~~ geparkeerd, ook tijdens Fase 14 (besluit Kay, 10 oktober 2026), zonder stopwatch: drie tot vijf trainers doen elke meettaak één keer zonder hulp, en Kay kijkt alleen waar ze vastlopen.
 - **Lezen of kijken,** in dezelfde sessies met trainers. Een trainer opent een tactiek en legt die daarna uit aan een speler. Noteer per trainer of hij de tekst las of alleen naar de tekening keek. Dit toetst of trainers vooral doeners zijn (Kay, 3 oktober 2026). Met de uitkomst kiest Kay hoeveel tekst een tactiekpagina naast de tekening nodig heeft.
 - **Delen en vertrouwen:** vraag elke trainer of hij zijn eigen tactieken zou delen, en wanneer hij een tactiek van een ander vertrouwt. Dit toetst het idee van één kennisbank waar trainers zelf bijdragen, mits de kwaliteit gewaarborgd blijft (Kay, 3 oktober 2026). De uitkomst weegt mee bij besluit 9.
 - **De tekentest:** de laatste drie trainingen en twee aanvalsvormen tekenen, en noteren waar het vastloopt.
@@ -2683,3 +2684,55 @@ Op productie na de merge (`https://handballcoachboard.com/nl/board/`), per toest
 | 11 | Mijn borden → Alle borden exporteren: waar komt het bestand terecht (iPhone: Bestanden › Downloads?), en heet het `coachboard-borden-<datum>.json`? (Fase 12b-3) | | |
 | 12 | Borden importeren: is het bestand te kiezen, uit Bestanden, na AirDrop en uit een mail of chat? Komen de borden erbij met hun map? (Fase 12b-3) | | |
 | 13 | Hetzelfde bestand nog eens importeren: "Alle borden uit dit bestand staan er al."? (Fase 12b-3) | | |
+
+## Fase 14-1: T2-nulmeting (10 oktober 2026)
+
+Branch `fase-14-stappen`, vanaf `main` @ `197287b`. Eerste PR van Fase 14 (stappen). De app verandert niet: alleen `e2e/tasks.spec.ts` en deze meting.
+
+### T2, de definitie (besluit Kay, 10 oktober 2026)
+
+"Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem."
+
+- Vanaf het bord zoals het opent: de aanval tegen 6-0, MO heeft de bal. De dekkers bewegen niet.
+- De stappen en hun zinnen:
+
+  | Stap | Zin (nl) | Zin (en) | Pijl |
+  |--:|---|---|---|
+  | 1 | MO gaat met de bal schuin naar links. | CB goes diagonally left with the ball. | loop van MO naar (75, 95) |
+  | 2 | LO kruist achter MO langs. | LB crosses behind CB. | loop van LO naar (115, 105) |
+  | 3 | MO speelt de bal naar LO. | CB passes to LB. | pass van MO, vanaf de bal |
+  | 4 | LO schiet op doel. | LB shoots at goal. | schot van LO, vanaf de bal |
+
+- Een zin typen telt als één handeling (zie "Meetmethode"). Telt niet: het bord openen, het deelvenster van de telefoon.
+- Met stappen (vanaf 14-2) komt er ook een variant met een eigen bord: eerst Meer → Nieuw bord.
+
+### De route zonder stappen: vier losse borden
+
+Vier borden, elk met de zin als titel en als eigen link gedeeld. Elk volgend bord is het vorige, aangepast: de pijl weg, de loper (en de bal) met Schuif naar het eind van zijn loop, dan de nieuwe pijl met Pijl.
+
+| # | Handeling |
+|--:|---|
+| 1 | Sleep een loop van MO |
+| 2–4 | Tik de titel, typ de zin, tik Delen |
+| 5–6 | Tik de pijl, Verwijderen |
+| 7–9 | Schuif, sleep MO naar het eind van zijn loop, sleep de bal naast hem |
+| 10–11 | Pijl, sleep een loop van LO |
+| 12–14 | Titel, zin, Delen |
+| 15–16 | Tik de pijl, Verwijderen |
+| 17–18 | Schuif, sleep LO naar het eind van zijn loop |
+| 19–20 | Pijl, sleep vanaf de bal naar LO (pass van MO) |
+| 21–23 | Titel, zin, Delen |
+| 24–25 | Tik de pijl, Verwijderen |
+| 26–27 | Schuif, sleep de bal naast LO |
+| 28–29 | Pijl, sleep vanaf de bal naar het doel (schot van LO) |
+| 30–32 | Titel, zin, Delen |
+
+| Route | `/en/` | `/nl/` |
+|---|--:|--:|
+| T2 als vier losse borden | **32** | **32** |
+
+- `TAP_BUDGET` krijgt "T2 as four separate boards": 32. Hij blijft ter vergelijking, zoals T3 zonder startopstelling.
+- De test controleert per bord de titel, de pijl (soort en speler) en dat de loper staat waar zijn loop op het bord ervoor eindigde.
+- **Verwacht met stappen** (prototype in het plan van Fase 14): 16 handelingen in de gekozen indeling P-C.
+- **Controle** (tijdelijk, niet gecommit): met het budget op 31 en op 33 falen alle vier de routes (nl en en, iPhone en Android): "Expected: 31, Received: 32" en "Expected: 33, Received: 32".
+- **Groottes:** gelijk; de app verandert niet.
