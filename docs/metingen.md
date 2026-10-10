@@ -3018,7 +3018,8 @@ Gevonden door Kay op de build van #44 en opgelost in dezelfde PR.
 | CSS bordpagina | 5.573 B | 5.573 B | 5,78 KB | 5,8 KB |
 
 - De proefversie van Kay kostte 73 B (alle JS 37.732 B op Linux).
-- De meting op CI staat hieronder.
+- **CI (Linux):** alle JS 37,8 KB, JS van het bord 33,7 KB, CSS 5,6 KB. De budgetcheck slaagt, dus alle JS is hoogstens 37.800 B: precies tegen de grens van D11. Geschat met het verschil tussen macOS en Linux uit de proef van Kay (+139 B) is het ongeveer 37.770 B.
+- **Gevolg:** voor nieuwe code in de editor is er binnen de grens van Fase 14 niets meer over.
 
 ### Testlijst voor de telefoon (Fase 14-2 en 14-3)
 
