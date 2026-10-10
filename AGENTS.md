@@ -19,6 +19,8 @@ Static Astro 7 site for handball coaches. The product is the tactics board at `/
 
 Commit only when `npm run verify` exits with code 0. Check the exit code itself, not the output: a pipe through `tail` or `head` hides a failure.
 
+CI runs on a fixed `ubuntu-24.04`; moving to a newer runner happens on purpose, in its own PR.
+
 When starting the dev server as an agent, use background mode: `npx astro dev --background`, and manage it with `astro dev stop`, `astro dev status` and `astro dev logs`.
 
 ## Code and tests
