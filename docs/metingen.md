@@ -2647,6 +2647,23 @@ Branch `fase-13-3-afronden`, vanaf `main` @ `06850a0`. Laatste PR van Fase 13 (s
 - **Controle** (tijdelijk, niet gecommit): met elk T3-budget 1 lager en 1 hoger falen alle twaalf de T3-routes (drie routes, twee talen, iPhone en Android).
 - **Groottes:** gelijk; de app verandert niet.
 
+### Lighthouse
+
+Vóór: productie (`main` @ `06850a0`). Na: de preview-URL. Drie runs per URL, Lighthouse 13.5.0, mobiel. SEO staat er niet in: elke preview-URL stuurt `X-Robots-Tag: noindex`.
+
+| URL | Performance | Accessibility | Best Practices | LCP (runs) | CLS | TBT | Overdracht |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` vóór | 100 | 100 | 100 | 0,83 / 0,80 / 0,80 s | 0 | 2 ms | 64,5 KB |
+| `/nl/board/` na | 100 | 100 | 100 | 0,81 / 0,80 / 0,80 s | 0 | 1–2 ms | 64,8 KB |
+| `/en/board/` vóór | 100 | 100 | 100 | 0,80 / 0,80 / 0,80 s | 0 | 2–3 ms | 64,4 KB |
+| `/en/board/` na | 100 | 100 | 100 | 0,81 / 0,81 / 0,80 s | 0 | 2 ms | 64,7 KB |
+
+- Gelijk, zoals verwacht: de app verandert niet (LCP-mediaan 0,80 s vóór en 0,80–0,81 s na). De overdracht is op de preview 0,3 KB hoger bij dezelfde bestanden; vermoedelijk de antwoordkoppen van de preview-URL (niet nagemeten).
+
+### Preview-URL
+
+`https://fase-13-3-afronden-coachboard.hardamkay.workers.dev`
+
 ### Testlijst voor de telefoon
 
 Op productie na de merge (`https://handballcoachboard.com/nl/board/`), per toestel (model, iOS/Android-versie, browser). Test 6 tot en met 10 van de testlijst van Fase 9 (Fase 12b) staan nog open en staan hier opnieuw, als 9 tot en met 13.
