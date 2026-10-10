@@ -950,7 +950,7 @@
 }
 .editor .chip {
   flex: 0 1 40px;
-  min-width: 28px;
+  min-width: 20px; /* eight steps, New step and Play on a 320 px phone */
   min-height: var(--tap);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -966,7 +966,7 @@
   background: var(--color-accent-soft);
   color: var(--color-accent-darker);
 }
-.editor .new {
+.editor :is(.new, .play) {
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -986,7 +986,7 @@
   white-space: nowrap;
   cursor: pointer;
 }
-.editor .new svg {
+.editor :is(.new, .play) svg {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
@@ -995,7 +995,16 @@
   stroke-width: 2;
   stroke-linecap: round;
 }
-.editor .new:disabled {
+/* Play, after New step: only its icon (its aria-label and title name it). */
+.editor .play {
+  margin-left: 0;
+  padding: 0;
+}
+.editor .play svg {
+  fill: currentColor;
+  stroke-linejoin: round;
+}
+.editor :is(.new, .play):disabled {
   opacity: 0.4;
   cursor: default;
 }
@@ -1074,6 +1083,7 @@
   /* With the kind or team bar under it on a low screen, the list scrolls; the court stays. */
   .editor .steps {
     display: grid;
+    grid-auto-flow: row dense;
     grid-template-columns: var(--tap) minmax(0, 1fr);
     align-content: start;
     gap: 4px 6px;
@@ -1113,8 +1123,13 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
+  /* Play beside New step, in one row under the list: Play in the column of the step buttons. */
   .editor .new {
-    grid-column: 1 / -1;
+    grid-column: 2;
+    margin: 4px 0 0;
+  }
+  .editor .play {
+    grid-column: 1;
     margin: 4px 0 0;
   }
   .editor .text {

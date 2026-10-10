@@ -58,6 +58,11 @@ function head(q: [XY, XY, XY], t: number): [XY, XY, XY] {
   return [q[0], lerp(q[0], q[1], t), at(q, t)];
 }
 
+/** The point at `t` (0 to 1) along an arrow's curve: where a player or ball is that far along it. */
+export function pointAt(arrow: Arrow, t: number): XY {
+  return at(curve(arrow), t);
+}
+
 /** Where the middle handle sits: the bend point, or halfway along a straight arrow. */
 export function arrowMid(arrow: Arrow): XY {
   return arrow.pts.length === 3 ? [...arrow.pts[1]!] : lerp(arrow.pts[0]!, arrow.pts[1]!, 0.5);

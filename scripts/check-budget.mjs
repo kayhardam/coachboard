@@ -23,13 +23,13 @@ import { gzipSync } from "node:zlib";
 // Raise a budget only on purpose, and give the reason in the pull request.
 // Baseline (docs/metingen.md, phase 3 and 4a) plus about 15%.
 export const BUDGETS = {
-  boardJs: 32_750, // about 32.55 KB on Linux plus 0.2 KB (docs/metingen.md, phase 14-2: steps); phase 14 ends at 33.8 KB (D11)
+  boardJs: 33_800, // about 33.6 KB on Linux plus 0.2 KB, which is phase 14's cap (D11; docs/metingen.md, phase 14-3: play)
   lazyJs: 10_000, // 0 KB
-  allJs: 36_770, // about 36.57 KB on Linux plus 0.2 KB (docs/metingen.md, phase 14-2: steps); phase 14 ends at 37.8 KB (D11)
+  allJs: 37_800, // about 37.62 KB on Linux; plus 0.2 KB would pass phase 14's cap of 37.8 KB, so the cap (D11; docs/metingen.md, phase 14-3: play)
   css: 2_000, // 1.6 KB per page
   // The board pages also link the editor's stylesheet (BoardEditor.css). Content
   // pages stay at `css`, which is too small to take that stylesheet as well.
-  boardCss: 5_740, // 5.54 KB plus 0.2 KB (docs/metingen.md, phase 14-2: steps); phase 14 ends at 5.8 KB (D11)
+  boardCss: 5_780, // 5.57 KB plus 0.2 KB (docs/metingen.md, phase 14-3: play); phase 14 ends at 5.8 KB (D11)
   html: 6_500, // 5.5 KB on the board, the largest page
   png: 60_000, // 50.5 KB for og-default.png, the largest
 };

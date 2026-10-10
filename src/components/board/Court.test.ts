@@ -73,4 +73,21 @@ describe("Court", () => {
       render(Court, { props: { board: full }, idPrefix }).body.match(/id="([^"]+)-head"/)![1];
     expect(id("s0")).not.toBe(id("s1"));
   });
+
+  it("draws where the players who moved stood in the step before, grey and not to be tapped", async () => {
+    const { addArrow, addStep } = await import("../../lib/board/edit");
+    const board = addStep(addArrow(structuredClone(defaultBoard), 0, "run", [0, 0], [75, 95], 2), 0);
+    expect(render(Court, { props: { board, frame: 0 } }).body).not.toContain('class="trails"');
+    const body = render(Court, { props: { board, frame: 1 } }).body;
+    const trails = body.match(/<g class="trails"[^>]*>(.*?)<\/g>/s)!;
+    expect(trails[0]).toContain('pointer-events="none"');
+    expect(trails[0]).toContain('stroke="#94a3b8"');
+    expect(trails[0]).not.toContain("data-kind");
+    expect(trails[0]).not.toContain("marker-end");
+    // One player moved: one line from where he stood, one ring there.
+    expect(count(trails[1]!, "<line")).toBe(1);
+    expect(trails[1]).toContain('x1="100" y1="130" x2="75" y2="95"');
+    // Under the arrows and the players.
+    expect(body.indexOf('class="trails"')).toBeLessThan(body.indexOf('data-kind="player"'));
+  });
 });
