@@ -36,11 +36,13 @@ const TAP_BUDGET = {
   // the phone's court. Goal 20 (docs/metingen.md), reached in phase 13-2: no tap on Run.
   "T4 with export and import": 20,
   // T3: the drill "crossing in pairs": two lines of three, a goalkeeper, two cones, a ball and the
-  // crossing, shared, on an emptied court. Phase 13-2 has cones; the keeper is a defender.
-  // Goal 5 (docs/metingen.md): starting lineups (phase 13-3) set out the lines.
-  T3: 21,
+  // crossing, shared. Phase 13-3: the starting lineup "2 lines" sets out the drill, so only the
+  // crossing is drawn. Goal 5 (docs/metingen.md), reached.
+  T3: 5,
   // T3 for a returning coach: their own board is on the court first.
-  "T3 with your own board": 23,
+  "T3 with your own board": 7,
+  // T3 by hand on an emptied court, without a starting lineup. Kept for comparison.
+  "T3 without a starting lineup": 21,
 };
 /** Of those, the actions until the three boards are in My boards on the phone. */
 const T4_UNTIL_IMPORTED = 13;
@@ -265,15 +267,30 @@ for (const lang of ["en", "nl"]) {
 // T3: the drill "crossing in pairs" on a half court. Two lines of three attackers without labels,
 // a goalkeeper, two cones and a ball with the first of the left line. The crossing: the first on the
 // left runs, the first on the right runs behind them, and the left one passes to the right one.
-// The goalkeeper is a defender.
+// The goalkeeper is a defender. Attackers 0–2 are the left line, 3–5 the right, the first of each
+// line nearest the goal.
 const LINES = { left: 60, right: 140, rows: [120, 145, 170] };
 
+/** The crossing: two runs, and a pass from the ball, which the first on the left has. Then Share. */
+async function crossAndShare(page: Page, lang: string, steps: ReturnType<typeof route>) {
+  await steps.drag(0, 40, -40);
+  await steps.drag(3, -40, -30);
+  await steps.passTo(0, 3);
+  await steps.tap(page.getByRole("button", { name: t(lang, "board.share") }));
+}
+
+/** T3 from a new board: the starting lineup "2 lines" sets out the drill. */
 async function drawCrossing(page: Page, lang: string, steps: ReturnType<typeof route>) {
+  await steps.tap(page.getByRole("button", { name: t(lang, "board.setup.2-lines"), exact: true }));
+  await crossAndShare(page, lang, steps);
+}
+
+/** T3 by hand, for comparison: the lines, cones, keeper and ball tapped onto an emptied court. */
+async function drawCrossingByHand(page: Page, lang: string, steps: ReturnType<typeof route>) {
   const tool = (key: Parameters<typeof t>[1]) =>
     page.getByRole("toolbar", { name: t(lang, "board.tools") }).getByRole("button", { name: t(lang, key) });
   await steps.tap(moreButton(page, lang));
   await steps.tap(page.getByRole("button", { name: t(lang, "board.emptyCourt"), exact: true }));
-  // Attackers 0–2 on the left, 3–5 on the right, the first of each line nearest the goal.
   await steps.tap(tool("board.tool.attack"));
   for (const x of [LINES.left, LINES.right]) for (const y of LINES.rows) await steps.tapAt(x, y);
   // Two cones in front of the lines, then the goalkeeper.
@@ -284,12 +301,8 @@ async function drawCrossing(page: Page, lang: string, steps: ReturnType<typeof r
   await steps.tapAt(100, 8);
   await steps.tap(tool("board.tool.ball"));
   await steps.tapAt(LINES.left + 14, 120);
-  // The crossing: two runs, and a pass from the ball, which the first on the left has.
   await steps.tap(tool("board.tool.arrow"));
-  await steps.drag(0, 40, -40);
-  await steps.drag(3, -40, -30);
-  await steps.passTo(0, 3);
-  await steps.tap(page.getByRole("button", { name: t(lang, "board.share") }));
+  await crossAndShare(page, lang, steps);
 }
 
 /** Checks the pieces and the kinds of arrows, not where they are. */
@@ -338,5 +351,16 @@ for (const lang of ["en", "nl"]) {
     await expect.poll(async () => (await savedBoards(page)).length).toBe(2);
     expect(await savedBoards(page)).toContainEqual(JSON.parse(own)[0]);
     expect(steps.count).toBe(TAP_BUDGET["T3 with your own board"]);
+  });
+
+  test(`T3 (${lang}) without a starting lineup: by hand, for comparison`, async ({ page }) => {
+    const shared = await stubShareSheet(page);
+    await openBoard(page, "", `/${lang}/board/`);
+    const steps = route(page);
+
+    await drawCrossingByHand(page, lang, steps);
+
+    await expectSharedT3(shared, lang);
+    expect(steps.count).toBe(TAP_BUDGET["T3 without a starting lineup"]);
   });
 }
