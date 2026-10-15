@@ -3102,3 +3102,30 @@ Lokaal (`wrangler dev`), met de vertraging van Lighthouse (`--throttling-method=
   - **Controle** (tijdelijk): met de preloads uit `dist/` gehaald en `wrangler dev` met de hand gestart, falen alle zes.
 - **`e2e/tasks.spec.ts`:** T5 en T5 stap voor stap, in `en` en `nl`.
 - **`npm run e2e`:** 622 geslaagd, 2 overgeslagen: 20 erbij (12 preload, 8 T5).
+
+### CI (Linux)
+
+`npm run budget` in CI: JS van het bord 33,7 KB, alle JS 37,8 KB (binnen het budget, dus hoogstens 37.800 B), HTML `/nl/board/` 6,3 KB. Gelijk aan vóór, op afronding na.
+
+### Lighthouse
+
+Vóór: productie (`main` @ `bbaed36`). Na: de preview-URL. Drie runs per URL, Lighthouse 13.5.0, mobiel, het commando uit de nulmeting; `/nl/board/link/` met de kruising (`v2-play`) in `#t=`. SEO staat er niet in: elke preview-URL stuurt `X-Robots-Tag: noindex`.
+
+| URL | Performance | Accessibility | Best Practices | FCP (runs) | LCP (runs) | TBT |
+|---|--:|--:|--:|--:|--:|--:|
+| `/nl/board/` vóór | 100 | 100 | 100 | 0,83 / 0,80 / 0,81 s | 0,83 / 0,80 / 0,81 s | 0 ms |
+| `/nl/board/` na | 100 | 100 | 100 | 0,84 / 0,99 / 0,98 s | 0,84 / 1,13 / 1,62 s | 0 ms |
+| `/nl/board/link/` vóór | 100 | 100 | 100 | 0,81 / 0,81 / 0,88 s | 0,81 / 1,91 / 0,95 s | 0 ms |
+| `/nl/board/link/` na | 100 | 100 | 100 | 0,97 / 1,00 / 1,06 s | 1,12 / 1,63 / 1,21 s | 0 ms |
+
+**Met echte vertraging** (`--throttling-method=devtools`), op dezelfde manier:
+
+| URL | Vóór: FCP = LCP (runs) | Na: FCP = LCP (runs) |
+|---|--:|--:|
+| `/nl/board/` | 1,29 / 1,30 / 1,27 s | 1,31 / 1,32 / 1,32 s |
+| `/nl/board/link/` | 1,28 / 1,28 / 1,27 s | 1,34 / 1,32 / 1,32 s |
+
+- **Met echte vertraging blijft de LCP de lege titel uit de HTML,** 0,04 s later: de preloads delen de lijn met de CSS. De editor is daar 1,1 s eerder klaar (zie "Klaar om te gebruiken").
+- **De gesimuleerde meting (het standaardcommando) wordt slechter.** Lighthouse laadt de pagina eerst zonder vertraging en rekent daarna. Met de preloads is de JS er dan vaak al vóór de eerste paint, en wordt een tekst van de editor (`<span>`) het LCP-element; de rekensom telt de JS daar dan bij op. Dat gebeurde ook één keer op productie (`/nl/board/link/` vóór, 1,91 s). Ook de FCP stijgt in de simulatie: die rekent de preloads mee als werk vóór de eerste paint.
+- **Gevolg:** vergelijk vanaf nu met beide methodes. Voor de kijker (15-2) is de LCP sowieso de zin na de JS (zie het plan van Fase 15).
+
