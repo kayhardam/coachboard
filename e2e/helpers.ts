@@ -66,6 +66,17 @@ export async function openBoard(page: Page, hash = "", path = "/en/board/") {
   await expect(page.getByRole("toolbar", { name: t(lang, "board.tools") })).toBeVisible();
 }
 
+/**
+ * Opens a shared board in the viewer (/board/link/ or /board/qr/) and waits
+ * until it has replaced the static fallback: Play works once a board is there.
+ */
+export async function openViewer(page: Page, hash: string, path = "/en/board/link/") {
+  await page.goto(`${path}${hash}`);
+  // The fallback has no Edit a copy; the viewer shows it once a board is there.
+  // (Not Play: on a board where nothing moves it stays off.)
+  await expect(page.locator(".viewer .edit")).toBeVisible();
+}
+
 /** The title bar's More button, which opens the menu with the QR code, the court size and clearing. */
 export function moreButton(page: Page, lang = "en") {
   return page.getByTitle(t(lang, "board.more"), { exact: true });

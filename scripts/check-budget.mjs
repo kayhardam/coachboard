@@ -8,7 +8,9 @@
 //   statistics beacon, at most once. It isn't in dist/, so it has no size here;
 //   docs/metingen.md records it.
 // - The board's JS: the files its page loads plus everything they import
-//   statically. Dynamic imports count as its lazy JS.
+//   statically. Dynamic imports count as its lazy JS. The editor's page
+//   (<lang>/board/) and the viewer's (the pages for shared boards) each have
+//   their own budget, for JS and for CSS.
 // - All JS: every .js file in _astro/, so code moved into a lazy chunk still counts.
 // - CSS and HTML per page, and every PNG. The board pages have their own CSS
 //   budget: they also link the editor's stylesheet.
@@ -23,13 +25,16 @@ import { gzipSync } from "node:zlib";
 // Raise a budget only on purpose, and give the reason in the pull request.
 // Baseline (docs/metingen.md, phase 3 and 4a) plus about 15%.
 export const BUDGETS = {
-  boardJs: 33_800, // about 33.6 KB on Linux plus 0.2 KB, which is phase 14's cap (D11; docs/metingen.md, phase 14-3: play)
+  boardJs: 35_200, // the editor's page: about 35.0 KB on Linux; plus 0.2 KB would pass phase 15's cap of 35.2 KB, so the cap, which leaves room for Dependabot's +142 B (K2; docs/metingen.md, phase 15-2)
+  // The viewer's pages (the pages for shared boards): about 25.17 KB on Linux plus 0.2 KB, under phase 15's cap of 25.5 KB (K2).
+  viewerJs: 25_370,
   lazyJs: 10_000, // 0 KB
-  allJs: 37_800, // about 37.62 KB on Linux; plus 0.2 KB would pass phase 14's cap of 37.8 KB, so the cap (D11; docs/metingen.md, phase 14-3: play)
+  allJs: 42_000, // about 41.82 KB on Linux; plus 0.2 KB would pass phase 15's cap of 42.0 KB, so the cap, which leaves room for Dependabot's +142 B (K2; docs/metingen.md, phase 15-2)
   css: 2_000, // 1.6 KB per page
   // The board pages also link the editor's stylesheet (BoardEditor.css). Content
   // pages stay at `css`, which is too small to take that stylesheet as well.
   boardCss: 5_780, // 5.57 KB plus 0.2 KB (docs/metingen.md, phase 14-3: play); phase 14 ends at 5.8 KB (D11)
+  viewerCss: 3_570, // the viewer's pages: 3.37 KB plus 0.2 KB, under phase 15's cap of 3.6 KB (K2)
   html: 6_500, // 5.5 KB on the board, the largest page
   png: 60_000, // 50.5 KB for og-default.png, the largest
 };
@@ -63,6 +68,7 @@ function attrs(source) {
 const gzipped = (path) => gzipSync(readFileSync(path)).length;
 
 const isBoard = (page) => /^[^/]+\/board\/(?:(?:link|qr)\/)?index\.html$/.test(page);
+const isViewer = (page) => /^[^/]+\/board\/(?:link|qr)\/index\.html$/.test(page);
 const isExternal = (url) => /^(?:[a-z]+:)?\/\//i.test(url);
 
 /**
@@ -161,7 +167,7 @@ export function checkBudget(dist, budgets = BUDGETS) {
     } else {
       const entries = scripts.map((src) => resolve(src, url)).filter(Boolean);
       const { eager, lazy } = importGraph(new Set(entries), url);
-      measure("JS (gzip)", url, sum(eager), budgets.boardJs);
+      measure("JS (gzip)", url, sum(eager), isViewer(page) ? budgets.viewerJs : budgets.boardJs);
       measure("Lazy JS (gzip)", url, sum(lazy), budgets.lazyJs);
       for (const src of external) {
         if (!EXTERNAL_SCRIPTS.includes(src)) errors.push(`${url}: script from another origin: ${src}`);
@@ -170,7 +176,7 @@ export function checkBudget(dist, budgets = BUDGETS) {
     }
 
     const css = stylesheets.map((href) => resolve(href, url)).filter(Boolean);
-    measure("CSS (gzip)", url, sum(new Set(css)), board ? budgets.boardCss : budgets.css);
+    measure("CSS (gzip)", url, sum(new Set(css)), isViewer(page) ? budgets.viewerCss : board ? budgets.boardCss : budgets.css);
     measure("HTML (gzip)", url, gzipped(file), budgets.html);
   }
 

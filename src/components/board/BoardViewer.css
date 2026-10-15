@@ -1,0 +1,426 @@
+/*
+ * The viewer's styles (BoardViewer.svelte), and its fallback's: ViewerPage.astro
+ * links this file on the pages for shared boards only, and the fallback uses
+ * the same classes, so its box is the viewer's and the court doesn't move.
+ * Svelte doesn't scope it: every rule starts at .viewer.
+ */
+.viewer {
+  /* The rows over and under the court, portrait. */
+  --viewer-text: 62px; /* the sentence: three lines */
+  /* The legend: two lines (2 × 19.2 px + 2 px), also when it needs one, so
+     the court doesn't move when the viewer fills it in (the fallback can't
+     know the board). Every item on a 320 px phone takes two. */
+  --viewer-legend: 41px;
+  --viewer-controls: 52px; /* Previous, Play, Next */
+  --viewer-wide-side: clamp(240px, 100vw - 620px, 340px); /* the column beside the court, wide */
+
+  display: grid;
+  grid-template:
+    "title" minmax(var(--board-title), auto)
+    "text" var(--viewer-text)
+    "stage" minmax(0, 1fr)
+    "legend" minmax(var(--viewer-legend), auto)
+    "controls" var(--viewer-controls) / minmax(0, 1fr);
+  width: 100%;
+  min-height: 0;
+  max-width: 720px;
+  margin-inline: auto;
+  padding: 0 8px max(8px, env(safe-area-inset-bottom));
+  gap: var(--board-gap);
+}
+
+.viewer :is(.titlebar, .controls, .legend) svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ===== Title bar: Home, the title, Edit a copy ===== */
+.viewer .titlebar {
+  grid-area: title;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-inline: -8px;
+  padding-inline: 8px;
+  border-bottom: 1px solid var(--color-border);
+  container-type: inline-size;
+}
+
+/* The brand mark, as in the editor's title bar. */
+.viewer .home {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+}
+.viewer .home svg {
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* Two lines: a title of 40 characters fits beside Home and Edit a copy. */
+.viewer .title {
+  display: -webkit-box;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 1rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.viewer .edit {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  margin-left: auto;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.viewer .edit svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+/* Below this the label leaves the title too little room: only the pencil
+   shows, and its aria-label and title name it (decision K10). */
+@container (max-width: 343px) {
+  .viewer .edit {
+    justify-content: center;
+    width: var(--tap);
+    padding: 0;
+  }
+  .viewer .edit span {
+    display: none;
+  }
+  .viewer .edit svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* ===== The sentence of the step, with where you are: 2/4 ===== */
+.viewer .text {
+  grid-area: text;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.viewer .count {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent-darker);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.viewer .text p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font-size: 0.9375rem;
+  line-height: 1.3;
+}
+/* The list of steps shows on wide screens only. */
+.viewer .all {
+  display: none;
+}
+
+/* ===== The court: it fits the space the bars leave ===== */
+.viewer .stage {
+  grid-area: stage;
+  position: relative;
+  min-height: 0;
+}
+.viewer .stage > svg {
+  position: absolute;
+  inset: 0;
+}
+
+/* ===== Legend: what is on this board ===== */
+.viewer .legend {
+  grid-area: legend;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+.viewer .legend li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.viewer .legend svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text);
+  stroke-width: 1.6;
+}
+
+/* ===== Previous, Play, Next: under the thumb ===== */
+.viewer .controls {
+  grid-area: controls;
+  display: grid;
+  /* Play, with its icon and the longest label, a little wider. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 6px;
+  container-type: inline-size;
+}
+.viewer .controls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.viewer .controls button:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+  opacity: 0.5;
+}
+.viewer .controls .play {
+  border: 0;
+  background: var(--color-accent-dark);
+  color: #fff;
+}
+.viewer .controls .play:disabled {
+  color: #fff;
+}
+.viewer .controls svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.viewer .controls .play svg {
+  fill: currentColor;
+}
+.viewer .controls span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Below about 420 px the arrows of Previous and Next give way to their labels,
+   which say it already: with a wide font (the e2e tests' on Linux) they didn't fit. */
+@container (max-width: 419px) {
+  .viewer :is(.prev, .next) svg {
+    display: none;
+  }
+}
+/* Up to a 360 px phone: the labels need the room the icons and padding take. */
+@container (max-width: 344px) {
+  .viewer .controls button {
+    gap: 2px;
+    padding: 0 4px;
+    font-size: 0.875rem;
+  }
+  .viewer .controls svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.viewer noscript p {
+  padding: 8px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/*
+ * A phone in landscape (L1): the court in the middle over the full height.
+ * Left: Home, Edit a copy, the legend, and Previous under the left thumb.
+ * Right: the title, the sentence, and Play and Next under the right thumb.
+ */
+@media (orientation: landscape) and (max-height: 559px) {
+  .viewer {
+    grid-template:
+      "home   stage title" auto
+      "edit   stage text" auto
+      "legend stage text" minmax(0, 1fr)
+      "legend stage play" auto
+      "prev   stage next" auto
+      / var(--board-tools) minmax(0, 1fr) var(--board-panel);
+    max-width: none;
+    padding: 4px 4px max(4px, env(safe-area-inset-bottom));
+  }
+  .viewer :is(.titlebar, .controls) {
+    display: contents;
+  }
+  .viewer .home {
+    grid-area: home;
+  }
+  .viewer .title {
+    grid-area: title;
+    align-self: start;
+    padding-top: 4px;
+  }
+  .viewer .edit {
+    grid-area: edit;
+    justify-content: center;
+    margin: 0;
+    padding: 0 6px;
+    font-size: 0.8125rem;
+    line-height: 1.1;
+    white-space: normal;
+  }
+  .viewer .text {
+    flex-direction: column;
+    align-items: start;
+  }
+  .viewer .text p {
+    -webkit-line-clamp: 6;
+    font-size: 0.8125rem;
+  }
+  .viewer .legend {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: start;
+  }
+  .viewer .controls button {
+    min-height: 48px;
+  }
+  /* The side panels are narrow: the labels go first, as in portrait. */
+  .viewer :is(.prev, .next) svg {
+    display: none;
+  }
+  .viewer .prev {
+    grid-area: prev;
+  }
+  .viewer .play {
+    grid-area: play;
+  }
+  .viewer .next {
+    grid-area: next;
+  }
+}
+
+/*
+ * Wide (W2): the title bar across, the court, and beside it every step with
+ * its sentence (the one on the court marked), the legend, and at the bottom
+ * Play across with Previous and Next under it.
+ */
+@media (min-width: 860px) and (min-height: 560px) {
+  .viewer {
+    grid-template:
+      "title title" minmax(var(--board-title), auto)
+      "stage text" minmax(0, 1fr)
+      "stage legend" auto
+      "stage controls" auto
+      / minmax(0, 1fr) var(--viewer-wide-side);
+    max-width: none;
+    padding: 0 16px 16px;
+    gap: 12px;
+  }
+  .viewer .titlebar {
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+  .viewer .text {
+    flex-direction: column;
+    align-items: start;
+    overflow-y: auto;
+  }
+  .viewer .text p {
+    -webkit-line-clamp: unset;
+    font-size: 1rem;
+  }
+  /* With the list, 2/4 gives way, and the single sentence too, but only to
+     the eye: a screen reader still hears it change (aria-live). */
+  .viewer .text:has(.all) > .count {
+    display: none;
+  }
+  .viewer .text:has(.all) > p {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .viewer .all {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .viewer .all button {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    min-height: var(--tap);
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    color: var(--color-text-muted);
+    font: inherit;
+    font-size: 0.9375rem;
+    line-height: 1.3;
+    text-align: left;
+    cursor: pointer;
+  }
+  .viewer .all b {
+    flex-shrink: 0;
+    width: 1.5em;
+    color: var(--color-text);
+  }
+  .viewer .all [aria-current] {
+    border-color: var(--color-accent-dark);
+    background: var(--color-accent-soft);
+    color: var(--color-text);
+  }
+  .viewer .legend {
+    justify-content: start;
+    gap: 6px 14px;
+    font-size: 0.875rem;
+  }
+  .viewer .controls {
+    grid-template: auto auto / 1fr 1fr;
+  }
+  .viewer .controls .play {
+    grid-area: 1 / 1 / 2 / 3;
+  }
+  .viewer .controls button {
+    min-height: 48px;
+  }
+}

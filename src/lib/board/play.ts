@@ -37,6 +37,9 @@ function turns(frame: Frame): [number, number][] {
   });
 }
 
+/** How many turns the arrows of `frame` take (turns()): at least one, also without arrows. */
+export const turnsIn = (frame: Frame) => Math.max(1, ...turns(frame).map(([, end]) => end));
+
 /**
  * Step `step` at `t` (0 to 1) of the way to the next step: at 0 exactly the
  * step, at 1 exactly where the next one starts (after the last step: where

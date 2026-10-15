@@ -158,6 +158,28 @@ describe("checkBudget", () => {
     expect(build(files, budgets).errors.map((e) => e.split(":")[0])).toEqual(["CSS (gzip) /en/"]);
   });
 
+  it("gives the viewer, on the pages for shared boards, its own JS and CSS budgets", () => {
+    const sheet = `<link rel="stylesheet" href="/_astro/a.css">`;
+    const files = {
+      "en/board/index.html": `${island}${sheet}`,
+      "en/board/link/index.html": `${island}${sheet}`,
+      "en/board/qr/index.html": `${island}${sheet}`,
+      "_astro/Editor.js": editor,
+      "_astro/renderer.js": renderer,
+      "_astro/client.js": client,
+      "_astro/a.css": "body{margin:0}",
+    };
+    const js = gz(editor) + gz(renderer) + gz(client);
+    const css = gz("body{margin:0}");
+    const budgets = { ...BUDGETS, boardJs: js, boardCss: css, viewerJs: js - 1, viewerCss: css - 1 };
+    expect(build(files, budgets).errors.map((e) => e.split(":")[0])).toEqual([
+      "JS (gzip) /en/board/link/",
+      "CSS (gzip) /en/board/link/",
+      "JS (gzip) /en/board/qr/",
+      "CSS (gzip) /en/board/qr/",
+    ]);
+  });
+
   it("fails a budget just over its limit and passes at the limit", () => {
     const files = {
       "en/board/index.html": island,
@@ -168,11 +190,11 @@ describe("checkBudget", () => {
     };
     const js = gz(editor) + gz(renderer) + gz(client);
     const html = gz(island);
-    const at = { boardJs: js, lazyJs: 0, allJs: js, css: 0, boardCss: 0, html, png: 100 };
+    const at = { boardJs: js, viewerJs: 0, lazyJs: 0, allJs: js, css: 0, boardCss: 0, viewerCss: 0, html, png: 100 };
     expect(build(files, at).errors).toEqual([]);
     rmSync(dist, { recursive: true, force: true });
 
-    const over = { boardJs: js - 1, lazyJs: 0, allJs: js - 1, css: 0, boardCss: 0, html: html - 1, png: 99 };
+    const over = { boardJs: js - 1, viewerJs: 0, lazyJs: 0, allJs: js - 1, css: 0, boardCss: 0, viewerCss: 0, html: html - 1, png: 99 };
     const { errors } = build(files, over);
     expect(errors.map((e) => e.split(":")[0])).toEqual([
       "JS (gzip) /en/board/",

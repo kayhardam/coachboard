@@ -1,10 +1,16 @@
 import AxeBuilder from "@axe-core/playwright";
 import { t } from "../src/i18n/ui";
-import { allPages, expect, fromMenu, openBoard, test } from "./helpers";
+import { readFileSync } from "node:fs";
+import { allPages, expect, fromMenu, openBoard, openViewer, test } from "./helpers";
+
+/** The viewer's pages need a board in #t=; without one they send you to the editor. */
+const shared = (JSON.parse(readFileSync(new URL("../src/lib/board/fixtures/v2-play.json", import.meta.url), "utf8")) as { link: string }).link;
+const isViewer = (path: string) => /\/board\/(?:link|qr)\/$/.test(path);
 
 for (const path of allPages()) {
   test(`axe finds nothing serious on ${path}`, async ({ page }) => {
-    await page.goto(path);
+    if (isViewer(path)) await openViewer(page, `#t=${shared}`, path);
+    else await page.goto(path);
     if (path.endsWith("/board/")) {
       await expect(page.getByRole("toolbar", { name: t(path.split("/")[1]!, "board.tools") })).toBeVisible();
     }

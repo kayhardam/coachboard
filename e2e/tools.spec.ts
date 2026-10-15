@@ -239,7 +239,7 @@ test.describe("starting lineups", () => {
   });
 
   test("not on a received board, nor on one of yours", async ({ page }) => {
-    await openBoard(page, `#t=${play.link}`, "/en/board/link/");
+    await openBoard(page, `#t=${play.link}`);
     await expect(page.locator(".stage [data-kind=player]").first()).toBeVisible();
     await expect(setups(page)).toHaveCount(0);
 

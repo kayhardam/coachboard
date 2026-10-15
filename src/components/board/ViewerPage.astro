@@ -1,0 +1,61 @@
+---
+// The page a shared board opens on: /<lang>/board/link/ (Share) and
+// /<lang>/board/qr/ (the QR code). The viewer, its static fallback and the
+// statistics beacon. /<lang>/board/ is the editor (BoardPage.astro).
+import { getRelativeLocaleUrl } from "astro:i18n";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { t, viewerStrings } from "../../i18n/ui";
+import { beaconEndpoint, beaconSrc } from "../../data/analytics";
+import { boardPath } from "../../data/nav";
+import type { Board } from "../../lib/board/format";
+import { viewerIcons as icons } from "../../lib/viewerIcons";
+import Beacon from "../Beacon.astro";
+import BoardViewer from "./BoardViewer.svelte";
+// The viewer's styles, linked on these pages only; the fallback uses them too.
+import "./BoardViewer.css";
+import Court from "./Court.svelte";
+
+// As BoardPage.astro: these pages may load the statistics beacon.
+Astro.csp?.insertScriptResource("'self'");
+Astro.csp?.insertScriptResource(beaconSrc);
+Astro.csp?.insertDirective(`connect-src 'self' ${beaconEndpoint}`);
+const lang = Astro.currentLocale!;
+const home = getRelativeLocaleUrl(lang);
+const editor = getRelativeLocaleUrl(lang, boardPath);
+const strings = viewerStrings(lang);
+// No default lineup before the shared board appears (test 16 in docs/metingen.md): an empty court.
+const empty: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], balls: [], arrows: [] }] };
+---
+
+<BaseLayout title={t(lang, "board.title")} description={t(lang, "board.description")} noindex fullscreen>
+  <h1 class="visually-hidden">{t(lang, "board.heading")}</h1>
+  <BoardViewer client:only="svelte" {strings} {home} {editor}>
+    <!-- The viewer's own box and bars, with its classes, so the court doesn't move when it replaces this. -->
+    <div slot="fallback" class="viewer">
+      <div class="titlebar">
+        <a class="home" href={home} aria-label={strings["board.home"]} title={strings["board.home"]}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.court} /></svg>
+        </a>
+      </div>
+      <div class="text"></div>
+      <div class="stage"><Court board={empty} label={strings["board.court"]} /></div>
+      <ul class="legend"></ul>
+      <div class="controls">
+        <button type="button" class="prev" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.prev} /></svg>
+          <span>{strings["viewer.prev"]}</span>
+        </button>
+        <button type="button" class="play" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.play} /></svg>
+          <span>{strings["board.play"]}</span>
+        </button>
+        <button type="button" class="next" disabled>
+          <span>{strings["viewer.next"]}</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.next} /></svg>
+        </button>
+      </div>
+      <noscript><p>{strings["viewer.noscript"]}</p></noscript>
+    </div>
+  </BoardViewer>
+  <Beacon />
+</BaseLayout>
