@@ -4,7 +4,7 @@
 // decimetres, so the editor keeps it out of the board, like a drawing arrow,
 // and it never reaches a link, My boards or Undo.
 
-import { ballsAfter, ballTrips, BESIDE, endOf } from "./edit";
+import { ballsAfter, ballTrips, BESIDE, endOf } from "./moves";
 import { MOVES, type Board, type Frame, type Pt } from "./format";
 import { pointAt } from "./geometry";
 
