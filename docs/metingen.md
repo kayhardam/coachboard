@@ -65,6 +65,14 @@ CHROME_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
   --output-path=<bestand>.json --chrome-flags="--headless=new" --quiet
 ```
 
+**Vanaf Fase 15-2 altijd twee keer** (besluit Kay, na Fase 15-1): het commando hierboven (gesimuleerde vertraging, ter vergelijking met eerdere fases) én met echte vertraging. **De echte vertraging beslist**, samen met "klaar om te gebruiken" (de editor) en "aanval in beeld" (een gedeeld bord), gemeten met dezelfde vertraging. Tegen een lokale build (`wrangler dev`) komt er bij elke run `--blocked-url-patterns="*cloudflareinsights.com*"` bij.
+
+```sh
+CHROME_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  npx -y lighthouse@13.5.0 <url> --form-factor=mobile --throttling-method=devtools \
+  --output=json --output-path=<bestand>.json --chrome-flags="--headless=new" --quiet
+```
+
 | URL | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
 |---|--:|--:|--:|--:|--:|--:|--:|
 | `/en/` | 100 | 100 | 100 | 100 | 0,83 s | 0 | 0 ms |
@@ -475,7 +483,7 @@ Legenda als in de nulmeting. Vul per toestel in (model, iOS/Android-versie, brow
 | 13 | Snel twee keer op een knop tikken: zoomt de pagina in? (bevinding 8) | | |
 | 14 | Na het laden vliegtuigmodus aan: slepen, tekenen, QR-code openen? | | |
 | 15 | ~~Stopwatch: openen → tekenen → gedeeld in de teamapp, in seconden~~ Vervallen (besluit Kay, 8 oktober 2026) | deels: 10–15 s zonder het laden | deels: 10–15 s zonder het laden |
-| 16 | Een gedeelde link openen in een privévenster: zie je eerst de standaardopstelling voordat de tactiek verschijnt, en stoort dat? | | |
+| 16 | Een gedeelde link openen in een privévenster: zie je eerst de standaardopstelling voordat de tactiek verschijnt, en stoort dat? **Opgelost in Fase 15-2:** de kijker toont een leeg veld tot het bord er is (`e2e/layout.spec.ts`). | | |
 | 17 | Het bord openen, staand en liggend: blijft het veld staan terwijl de knoppenbalken verschijnen? (bevinding 14) | | |
 
 De nummers 8 tot en met 15 zijn die van de nulmeting. 16 en 17 kwamen erbij met de fix van bevinding 14.
@@ -1125,7 +1133,7 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
 | T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | ~~als vier losse borden; als route zodra het bord stappen heeft~~ route als vier losse borden sinds Fase 14-1; met stappen sinds Fase 14-2 |
 | T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, een keeper, twee pionnen, een bal en de kruising, en deel hem | telefoon | ~~met spelers als pionnen; als route zodra het bord pionnen heeft~~ route sinds Fase 13-1, met dekkers als pionnen; met pionnen sinds Fase 13-2, met de startopstelling "2 rijen" sinds Fase 13-3 |
 | T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf (route sinds Fase 12b); ~~met Mijn borden zodra die er zijn~~ met export en import (route sinds Fase 12b-3) |
-| T5 | Een speler opent op zijn telefoon de link van de kruising MO–LO (het bord van T2) en ziet elke stap met zijn zin, en hoe de spelers van stap naar stap bewegen | telefoon | route sinds Fase 15-1 (nulmeting met de editor); met de kijker vanaf Fase 15-2 |
+| T5 | Een speler opent op zijn telefoon de link van de kruising MO–LO (het bord van T2) en ziet elke stap met zijn zin, en hoe de spelers van stap naar stap bewegen | telefoon | route sinds Fase 15-1 (nulmeting met de editor); met de kijker sinds Fase 15-2 |
 
 ### Meetmethode
 
@@ -1240,7 +1248,7 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 | T3 zonder startopstelling | 21 handelingen | geen: ter vergelijking | 21 |
 | T2 als vier losse borden (Fase 14-1) | 32 handelingen | geen: ter vergelijking | 32 |
 | T2 met stappen (Fase 14-2) | 16 handelingen; 18 met een eigen bord | **16**, en 18 met een eigen bord (besluit Kay, 10 oktober 2026); gehaald in Fase 14-2 | 16 (18 met een eigen bord) |
-| T5 (Fase 15-1) | 1 handeling (Afspelen); 3 stap voor stap | Kay kiest na de telling met de kijker (Fase 15-2) | 1 (3 stap voor stap) |
+| T5 (Fase 15-1) | 1 handeling (Afspelen); 3 stap voor stap, in de editor zonder beweging | Kay kiest na de telling met de kijker (Fase 15-2) | ~~1 (3 stap voor stap)~~ 1 (4 stap voor stap, met beweging; Fase 15-2) |
 
 - **Stand na Fase 13 (13-3, 10 oktober 2026):** T1, T3 en T4 halen hun doel. T1 4 (doel 5), T3 5 (doel 5), T4 met export en import 20 (doel 20).
 - ~~**Het budget blijft 6** tot een fase de route echt korter maakt.~~ Een fase die een route echt korter maakt, verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
@@ -3129,3 +3137,107 @@ Vóór: productie (`main` @ `bbaed36`). Na: de preview-URL. Drie runs per URL, L
 - **De gesimuleerde meting (het standaardcommando) wordt slechter.** Lighthouse laadt de pagina eerst zonder vertraging en rekent daarna. Met de preloads is de JS er dan vaak al vóór de eerste paint, en wordt een tekst van de editor (`<span>`) het LCP-element; de rekensom telt de JS daar dan bij op. Dat gebeurde ook één keer op productie (`/nl/board/link/` vóór, 1,91 s). Ook de FCP stijgt in de simulatie: die rekent de preloads mee als werk vóór de eerste paint.
 - **Gevolg:** vergelijk vanaf nu met beide methodes. Voor de kijker (15-2) is de LCP sowieso de zin na de JS (zie het plan van Fase 15).
 
+## Fase 15-2: de kijker (15 oktober 2026)
+
+Branch `fase-15-2-kijker`, vanaf `main` @ `88a58a4` (merge van #46). Besluiten K1–K13 van Kay met de zes aanvullingen (productplan, Fase 15).
+
+### Wat er veranderd is
+
+- **`/board/link/` en `/board/qr/` openen de kijker,** niet meer de editor (`ViewerPage.astro`, `BoardViewer.svelte`, `BoardViewer.css`). `/board/` blijft de editor, ook voor oude links naar `/board/#t=…` en "Open in het bord" (besluit 12).
+- **Wat je ziet:** de titel (geen titel bij een bord zonder titel), de zin van de stap met "2/4", het veld, een legenda en Vorige, Afspelen en Volgende onder de duim. "Bewerk een kopie" rechtsboven.
+- **Bladeren (K8):** Volgende beweegt de spelers langs hun pijlen naar de volgende stap. Op de laatste stap speelt Volgende de laatste beweging af (het schot); daarna blijft het bord daar staan en is Volgende uit. Vorige gaat dan terug naar het begin van de laatste stap. Afspelen gaat vanaf stap 1 tot het eind, ook bij één stap. Een tik op het veld of Stoppen stopt. ← → bladeren. Met reduced motion beweegt niets.
+- **Snelheid (K7):** elke stap staat stil tot de zin te lezen is (60 ms per teken, minstens 1,2 s), en de beweging krijgt 0,7 s per beurt (minstens 1 s). De kruising met sper (4 stappen) duurt zo ongeveer 15 s met Afspelen; de editor speelt hem in 10 s.
+- **Legenda (K9):** wat op het bord staat, in een vaste volgorde: Aanspeelpunt en Pion als ze er zijn, dan Loop, Pass, Stuit, Dribbel, Schot, Sper.
+- **Laden (K6, test 16):** de fallback toont een leeg half veld, geen standaardopstelling; het veld verspringt niet als de kijker hem vervangt. Een kapotte link: de melding "Deze link werkt niet. Vraag om een nieuwe." op een leeg veld. Een link van een nieuwere versie herlaadt één keer, zoals in de editor (`newer.ts`, gedeeld). Zonder `#t=` naar de editor.
+- **Bewerk een kopie (K4):** een link naar de editor met dezelfde `#t=`; de kijker zet die link in `sessionStorage` (`coachboard.copy`). De editor wist de sleutel meteen, en bewaart het bord alleen als de sleutel gelijk is aan de `#t=` in de adresbalk: meteen in Mijn borden, met de titel zoals hij was, of hij opent hetzelfde bord als dat er al staat. Zonder opslag opent het bord als ontvangen bord.
+- **Indeling (K10):** staand zoals de schermafbeeldingen, liggend L1, breed W2. "Bewerk een kopie" toont zijn label **vanaf 360 px breed**; daaronder (320 px) alleen het potlood, met `aria-label` en `title`. Op 360 px houdt de titel dan ruim 120 px, twee regels. Tot 360 px worden Vorige, Afspelen en Volgende iets compacter, zodat "Volgende" heel blijft.
+- **Chunks (K1):** één gedeelde chunk (de Svelte-runtime, de renderer van Astro, `Court.svelte`, `format`, `geometry`, `moves`, `play`, `newer` en de iconen van de kijker). De editor en de kijker houden elk hun eigen code; de kijker laadt de editor nooit. De iconen van de kijker staan in een eigen module (`viewerIcons.ts`).
+- **Teksten (K11):** letterlijk uit het plan. Nieuw in `ui.ts`: `viewer.edit`, `viewer.prev`, `viewer.next`, `viewer.step`, `viewer.legend`, `viewer.broken`, `viewer.noscript`.
+
+### Groottes
+
+`npm run budget` en gzip per bestand, vóór (`main` @ `88a58a4`) en na, op macOS. Elke bordpagina laadt 3 bestanden, vóór en na.
+
+| Meting | Vóór | Na | Budget (bovengrens K2) |
+|---|--:|--:|--:|
+| JS `/board/link/` en `/board/qr/` | 33.610 B (de editor) | **24.953 B** (de kijker) | nieuw: `viewerJs` 25,25 KB (25,5) |
+| JS `/board/` (de editor) | 33.610 B | 34.856 B | 33,8 → 35,16 KB (35,2) |
+| Alle JS in `_astro/` | 37.633 B | 41.561 B | 37,8 → 41,9 KB (42,0) |
+| CSS `/board/link/` | 5.573 B | 3.326 B | nieuw: `viewerCss` 3,53 KB (3,6) |
+| CSS `/board/` | 5.573 B | 5.573 B | 5,78 KB |
+| HTML `/nl/board/link/` | 6.064 B | 4.330 B | 6,5 KB |
+| HTML `/nl/board/` | 6.279 B | 6.278 B | 6,5 KB |
+
+- **De bestanden:** gedeelde chunk 22.195 B, editor 12.585 B, kijker 2.682 B, de renderer 76 B; de QR-code blijft later laden (4.023 B).
+- **Ruimte voor Dependabot (#45, +142 B in alle JS en de editor):** op CI blijft er onder de budgetten genoeg over (zie CI hieronder).
+- **Per functie,** gemeten door het onderdeel weg te laten (macOS, gzip):
+
+  | Functie | Waar | Kost |
+  |---|---|--:|
+  | De kijker zelf, zonder de gedeelde chunk | kijker | 2.682 B |
+  | Lijst van alle stappen, breed (W2) | kijker | 182 B |
+  | Aanspeelpunt en Pion in de legenda | kijker | 160 B |
+  | Bewerk een kopie: de sleutel lezen, wissen en bewaren | editor | 83 B |
+  | De gedeelde chunk (import- en exportlijsten, `newer.ts`, de iconen van de kijker) | editor | +1.163 B |
+
+  Uit het prototype (plan Fase 15), ter vergelijking: runtime en renderer ~11,2 KB, het veld ~6,5 KB, link lezen ~1,4 KB en beweging ~1,0 KB zitten in de gedeelde chunk.
+
+### Klaar om te gebruiken en aanval in beeld
+
+Met de vertraging van Lighthouse (`--throttling-method=devtools`: 562,5 ms rondgang, 1,47 Mbit/s, 4× CPU), Moto G4, vijf keer per pagina, mediaan. Vóór: productie (`main` @ `88a58a4`, met de preloads van 15-1). Na: de preview. Het bord is de kruising met sper (4 stappen).
+
+| Pagina | Vóór | Na | Tot dan zie je |
+|---|--:|--:|---|
+| `/nl/board/link/`: aanval in beeld | 1,52 s | **1,43 s** | vóór: de standaardopstelling; na: een leeg veld |
+| `/nl/board/qr/`: aanval in beeld | 1,51 s | **1,42 s** | idem |
+| `/nl/board/`: editor klaar | 1,49 s | 1,50 s | de fallback |
+
+### Lighthouse
+
+Drie runs per URL, Lighthouse 13.5.0, mobiel. Vóór: productie. Na: de preview. SEO staat er niet in: elke preview-URL stuurt `X-Robots-Tag: noindex`.
+
+**Met echte vertraging** (beslist):
+
+| URL | Vóór: FCP / LCP (runs) | Na: FCP / LCP (runs) | LCP-element vóór → na |
+|---|--:|--:|---|
+| `/nl/board/link/` | 1,34 / 1,32 / 1,34 s = LCP | FCP 1,31 / 1,29 / 1,34 s; LCP **1,44 / 1,44 / 1,49 s** | lege titel uit de HTML → de zin na de JS |
+| `/nl/board/qr/` | 1,34 / 1,33 / 1,33 s = LCP | FCP 1,27 / 1,30 / 1,28 s; LCP **1,42 / 1,44 / 1,43 s** | idem |
+| `/nl/board/` | 1,34 / 1,34 / 1,33 s = LCP | 1,35 / 1,35 / 1,35 s = LCP | lege titel uit de HTML, gelijk |
+
+**Gesimuleerd** (het standaardcommando, ter vergelijking):
+
+| URL | Vóór: LCP (runs) | Na: LCP (runs) | Performance / Accessibility / Best Practices |
+|---|--:|--:|--:|
+| `/nl/board/link/` | 1,10 / 1,13 / 1,14 s | 1,03 / 1,01 / 1,72 s | 100 / 100 / 100, vóór en na |
+| `/nl/board/qr/` | 1,11 / 1,18 / 1,11 s | 1,79 / 1,02 / 1,78 s | 100 / 100 / 100 |
+| `/nl/board/` | 1,12 / 1,13 / 1,11 s | 1,01 / 1,02 / 1,12 s | 100 / 100 / 100 |
+
+- **Het LCP-element verandert** op `/board/link/` en `/board/qr/`: vóór de lege titel uit de HTML van de editor, nu de zin van stap 1, die pas na de JS verschijnt. Het bord staat in het fragment (`#t=`), dat de HTML niet kent. Met echte vertraging komt de LCP daardoor 0,1 s later dan vóór, maar het gedeelde bord staat 0,1 s eerder in beeld, zonder eerst de standaardopstelling.
+- **De overdracht** op `/board/link/` daalt van 66,9 naar 48,6 KB (de kijker in plaats van de editor; de beacon telt mee).
+- CLS 0 en TBT 0 ms op elke run.
+
+### Meettaken
+
+| Route | Vóór (15-1) | Na (`/en/` en `/nl/`) |
+|---|--:|--:|
+| T5: Afspelen | 1 | **1** |
+| T5 stap voor stap | 3 (stapknoppen, zonder beweging) | **4** (Volgende 3× naar stap 4, en 1× voor het schot) |
+| T1 / T2 / T3 / T4 met export / T4 met links | 4 / 16 / 5 / 20 / 10 | gelijk; T4 met links opent de borden nu in de kijker |
+
+- **T5 stap voor stap telt er één bij,** omdat Volgende op de laatste stap nu ook het schot afspeelt (K8). In de editor ging stap voor stap zonder beweging. Kay kiest het doel van T5 na deze telling.
+- De test controleert ook dat de speler de chunk van de editor nooit laadt, en dat de link en Mijn borden gelijk blijven.
+- **Gevolg voor trainers:** een ontvangen bord aanpassen kost één tik meer (Bewerk een kopie). Geen meettaak doet dat.
+
+### Tests
+
+- **Unit:** `viewer.test.ts` (nieuw): `stillFor()`, `moveFor()`, `legendOf()`; de nieuwe budgetten in `check-budget.test.mjs`.
+- **`e2e/viewer.spec.ts` (nieuw):** elke fixture opent in de kijker; titel, zin en "1/4"; geen titel en geen teller bij een bord zonder titel en met één stap; Volgende beweegt (halverwege ergens tussen de twee stappen); Volgende tijdens de beweging; de laatste beweging en Vorige daarna (K8); Afspelen met de leestijd; Stoppen en een tik op het veld; reduced motion; ← →; de legenda; kijken bewaart niets en laadt de editor niet; kapotte link; nieuwere link herlaadt één keer; zonder `#t=` naar de editor; een geplakte link; Bewerk een kopie: meteen in Mijn borden, niet dubbel, een oude sleutel bewaart niets en is daarna weg, zonder opslag een ontvangen bord.
+  - **Controle** (tijdelijk, niet gecommit): met een editor die de sleutel niet met de `#t=` vergelijkt, faalt "an old key keeps no other board".
+- **`e2e/layout.spec.ts`:** de kijker op 320, 360 en 390 px staand, 568 × 320 en 844 × 390 liggend, 860 × 560 en 1280 × 720 breed, met 8 stappen van 100 tekens, een titel van 40 tekens en een volle legenda: alles in beeld, minstens 44 px hoog, geen label afgekapt; het label van Bewerk een kopie vanaf 360 px; W2; het veld verspringt niet en toont geen standaardopstelling (test 16).
+- **Aangepast, omdat `/board/link/` niet meer de editor is:**
+  - `boards.spec.ts` ("editing a received link makes a new board", "a shared link: reload, edit makes one new board") en `tools.spec.ts` ("not on a received board"): openen de ontvangen link nu in de editor op `/board/#t=…`, waar een ontvangen bord nog steeds kan landen (oude links, "Open in het bord", Bewerk een kopie zonder opslag);
+  - `analytics.spec.ts`: de editor op `/board/` en de kijker op `/board/link/` en `/board/qr/` wachten niet op de beacon; de echte beacon test nu de kijker, die niets bewaart;
+  - `share.spec.ts`, `a11y.spec.ts` en `security.spec.ts` openen de pagina's van de kijker met een bord in `#t=` (zonder bord sturen ze door naar de editor); `tasks.spec.ts`: T4 met links en T5 in de kijker.
+  - `board.spec.ts`, "a link from a newer version reloads the page once": telt geen `load`-events meer maar kijkt naar het type navigatie (`reload`). Met de preloads van 15-1 kan de pagina herladen vóór het eerste `load`; de test faalde zo één keer.
+
+- **`npm run e2e`:** 704 geslaagd, 2 overgeslagen (was 622).
