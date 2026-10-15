@@ -25,7 +25,7 @@ import { gzipSync } from "node:zlib";
 // Raise a budget only on purpose, and give the reason in the pull request.
 // Baseline (docs/metingen.md, phase 3 and 4a) plus about 15%.
 export const BUDGETS = {
-  boardJs: 35_160, // the editor's page: about 34.96 KB on Linux plus 0.2 KB, under phase 15's cap of 35.2 KB (K2; docs/metingen.md, phase 15-2)
+  boardJs: 35_200, // the editor's page: about 35.0 KB on Linux; plus 0.2 KB would pass phase 15's cap of 35.2 KB, so the cap, which leaves room for Dependabot's +142 B (K2; docs/metingen.md, phase 15-2)
   // The viewer's pages (the pages for shared boards): about 25.05 KB on Linux plus 0.2 KB, under phase 15's cap of 25.5 KB (K2).
   viewerJs: 25_250,
   lazyJs: 10_000, // 0 KB

@@ -3161,7 +3161,7 @@ Branch `fase-15-2-kijker`, vanaf `main` @ `88a58a4` (merge van #46). Besluiten K
 | Meting | Vóór | Na | Budget (bovengrens K2) |
 |---|--:|--:|--:|
 | JS `/board/link/` en `/board/qr/` | 33.610 B (de editor) | **24.953 B** (de kijker) | nieuw: `viewerJs` 25,25 KB (25,5) |
-| JS `/board/` (de editor) | 33.610 B | 34.856 B | 33,8 → 35,16 KB (35,2) |
+| JS `/board/` (de editor) | 33.610 B | 34.856 B | 33,8 → 35,2 KB (35,2) |
 | Alle JS in `_astro/` | 37.633 B | 41.561 B | 37,8 → 41,9 KB (42,0) |
 | CSS `/board/link/` | 5.573 B | 3.347 B | nieuw: `viewerCss` 3,53 KB (3,6) |
 | CSS `/board/` | 5.573 B | 5.573 B | 5,78 KB |
@@ -3169,7 +3169,7 @@ Branch `fase-15-2-kijker`, vanaf `main` @ `88a58a4` (merge van #46). Besluiten K
 | HTML `/nl/board/` | 6.279 B | 6.278 B | 6,5 KB |
 
 - **De bestanden:** gedeelde chunk 22.195 B, editor 12.585 B, kijker 2.682 B, de renderer 76 B; de QR-code blijft later laden (4.023 B).
-- **Ruimte voor Dependabot (#45, +142 B in alle JS en de editor):** op CI blijft er onder de budgetten genoeg over (zie CI hieronder).
+- **Ruimte voor Dependabot (#45, +142 B in alle JS en de editor):** zie CI hieronder.
 - **Per functie,** gemeten door het onderdeel weg te laten (macOS, gzip):
 
   | Functie | Waar | Kost |
@@ -3242,3 +3242,10 @@ Drie runs per URL, Lighthouse 13.5.0, mobiel. Vóór: productie. Na: de preview.
 
 - **`npm run e2e`:** 704 geslaagd, 2 overgeslagen (was 622).
 - **Eerste CI-run:** 12 layouttests van de kijker faalden op Linux: met het bredere lettertype werden "Previous", "Afspelen" en "Volgende" afgekapt, en kreeg de titel op 360 px 100 px in plaats van de geëiste 120. Opgelost met de pijltjes en kolommen hierboven; de test eist nu 96 px.
+
+### CI (Linux)
+
+`npm run budget` in CI: JS van de editor 35,0 KB, JS van de kijker 25,0 KB, alle JS 41,7 KB, CSS van de kijker 3,3 KB.
+
+- **Ruimte voor #45:** met +142 B komt alle JS rond 41,85 KB (budget 41,9). De editor komt rond 35,1 tot 35,15 KB; de meting + 0,2 KB zou boven de bovengrens van 35,2 KB komen, dus is het budget de grens zelf, zoals in 14-3.
+
