@@ -7,7 +7,10 @@
 .viewer {
   /* The rows over and under the court, portrait. */
   --viewer-text: 62px; /* the sentence: three lines */
-  --viewer-legend: 26px; /* the legend: one line, more if it needs them */
+  /* The legend: two lines (2 × 19.2 px + 2 px), also when it needs one, so
+     the court doesn't move when the viewer fills it in (the fallback can't
+     know the board). Every item on a 320 px phone takes two. */
+  --viewer-legend: 41px;
   --viewer-controls: 52px; /* Previous, Play, Next */
   --viewer-wide-side: clamp(240px, 100vw - 620px, 340px); /* the column beside the court, wide */
 
@@ -359,9 +362,18 @@
     -webkit-line-clamp: unset;
     font-size: 1rem;
   }
-  /* With the list, the single sentence and 2/4 give way. */
-  .viewer .text:has(.all) > :is(.count, p) {
+  /* With the list, 2/4 gives way, and the single sentence too, but only to
+     the eye: a screen reader still hears it change (aria-live). */
+  .viewer .text:has(.all) > .count {
     display: none;
+  }
+  .viewer .text:has(.all) > p {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .viewer .all {
     display: grid;

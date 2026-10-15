@@ -104,14 +104,14 @@ test("a version 1 link with other players in a later step says it doesn't work",
 
 const brokenLink = "#t=1.this-is-not-a-board";
 
-/**
- * Counts the documents the page loads: a reload is one more. By load event,
- * not by request: WebKit reports the first request for a page twice.
- */
 /** How the page in `page` was opened: "navigate", or "reload" after location.reload(). */
 const navigationType = (page: Page) =>
   page.evaluate(() => (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming).type);
 
+/**
+ * Counts the documents the page loads: a reload is one more. By load event,
+ * not by request: WebKit reports the first request for a page twice.
+ */
 function countLoads(page: Page) {
   const loads = { count: 0 };
   page.on("load", () => loads.count++);

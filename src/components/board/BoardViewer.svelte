@@ -10,7 +10,7 @@
   import { decode, type Board } from "../../lib/board/format";
   import { reloadForNewer } from "../../lib/board/newer";
   import { moment } from "../../lib/board/play";
-  import { legendOf, moveFor, stillFor, type LegendItem } from "../../lib/board/viewer";
+  import { legendOf, moveFor, moves, stillFor, type LegendItem } from "../../lib/board/viewer";
   import { viewerIcons as icons } from "../../lib/viewerIcons";
   import Court from "./Court.svelte";
 
@@ -53,6 +53,10 @@
   const last = $derived((board?.frames.length ?? 1) - 1);
   const frame = $derived(board?.frames[step]);
   const legend = $derived(board ? legendOf(board) : []);
+  /** Per step, whether anything moves from it: if not, nothing waits for it. */
+  const moving = $derived(board ? board.frames.map((_, i) => moves(board!, i)) : []);
+  /** Next has nothing left to play: past the last move, or on a last step that doesn't move. */
+  const done = $derived(!board || ended || (step === last && !moving[last]));
 
   /** Step `i` at `t` (0 to 1) of its move: the moment of play.ts in place of the step. */
   function at(i: number, t: number): Board {
@@ -78,17 +82,20 @@
   /**
    * Moves the step on the court along its arrows to the next one; with `all`,
    * every step from here on, each first still long enough to read (viewer.ts).
-   * The last one ends where its arrows take everyone, and stays there. With
-   * reduced motion nothing moves: the board goes from step to step.
+   * The last one ends where its arrows take everyone, and stays there. A step
+   * where nothing moves gets no time to move. With reduced motion nothing
+   * moves: the board goes from step to step.
    */
   function run(all: boolean) {
     const still = reduce();
     let start = performance.now();
     const tick = (now: number) => {
       const f = board!.frames[step]!;
-      const t = (now - start - (all ? stillFor(f) : 0)) / moveFor(f);
+      const move = moving[step] ? moveFor(f) : 0;
+      const since = now - start - (all ? stillFor(f) : 0);
+      const t = move ? since / move : since >= 0 ? 1 : 0;
       if (t >= 1) {
-        if (step >= last) return show(step, true);
+        if (step >= last) return show(step, moving[step]);
         step++;
         shown = null;
         if (!all) return halt();
@@ -112,12 +119,12 @@
 
   /**
    * Next: the move to the next step; on the last step its own move (the shot),
-   * after which the board stays there. Tapped while something moves, or with
-   * reduced motion, it goes there at once.
+   * after which the board stays there. Tapped while something moves, with
+   * reduced motion, or on a step where nothing moves, it goes there at once.
    */
   function next() {
-    if (!board || ended) return;
-    if (playing || reduce()) return step >= last ? show(step, true) : show(step + 1);
+    if (done) return;
+    if (playing || reduce() || !moving[step]) return step >= last ? show(step, true) : show(step + 1);
     playing = "next";
     run(false);
   }
@@ -226,11 +233,11 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.prev} /></svg>
       <span>{strings["viewer.prev"]}</span>
     </button>
-    <button type="button" class="play" onclick={play} disabled={!board}>
+    <button type="button" class="play" onclick={play} disabled={!board || (last === 0 && !moving[0])}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={playing === "all" ? icons.stop : icons.play} /></svg>
       <span>{strings[playing === "all" ? "board.stop" : "board.play"]}</span>
     </button>
-    <button type="button" class="next" onclick={next} disabled={!board || ended}>
+    <button type="button" class="next" onclick={next} disabled={done}>
       <span>{strings["viewer.next"]}</span>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.next} /></svg>
     </button>

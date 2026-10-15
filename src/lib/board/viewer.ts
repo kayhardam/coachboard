@@ -3,7 +3,7 @@
 // tested without a browser.
 
 import type { ArrowKind, Board, Frame } from "./format";
-import { turnsIn } from "./play";
+import { moment, turnsIn } from "./play";
 
 /** A step shows still at least this long (ms), as in the editor. */
 export const STILL = 1200;
@@ -19,6 +19,18 @@ export const stillFor = (frame: Frame) => Math.max(STILL, (frame.text?.length ??
 
 /** How long the move of `frame` to the next step takes: a share per turn of its arrows. */
 export const moveFor = (frame: Frame) => Math.max(MOVE, turnsIn(frame) * TURN);
+
+/** Where the players and balls of `frame` are. */
+const places = (frame: Frame) => JSON.stringify([frame.players.map((p) => p.at), frame.balls]);
+
+/**
+ * Whether anything moves from step `step` on: a player or ball that ends the
+ * move somewhere else than where it starts. When nothing moves, the viewer
+ * doesn't wait for it (Kay, 15 October 2026): Next goes on at once, Play gives
+ * the step only its time to read, and after a last step that doesn't move
+ * there is nothing left to play.
+ */
+export const moves = (board: Board, step: number) => places(moment(board, step, 1)) !== places(board.frames[step]!);
 
 /** The legend's order: the kinds of arrow as the editor's kind bar lists them. */
 const KINDS: readonly ArrowKind[] = ["run", "pass", "bounce", "dribble", "shot", "block"];

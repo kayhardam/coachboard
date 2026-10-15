@@ -561,26 +561,40 @@ test("viewer, wide: every step with its sentence, the one on the court marked", 
   await steps.nth(2).click();
   await expect(steps.nth(2)).toHaveAttribute("aria-current", "step");
   await expect(page.locator(".viewer .count [aria-hidden]")).toHaveText(`3/${MAX_STEPS}`);
+  // The single sentence is hidden only to the eye: a screen reader hears the step change (aria-live).
+  const spoken = page.locator(".viewer .text").getByRole("paragraph");
+  await expect(spoken).toHaveText(new RegExp(`^3 `));
+  await expect(spoken).toHaveAttribute("aria-live", "polite");
+  await page.keyboard.press("ArrowLeft");
+  await expect(spoken).toHaveText(new RegExp(`^2 `));
 });
 
-// As for the editor (finding 14): the viewer replaces its fallback without moving the court.
-for (const orientation of ORIENTATIONS) {
-  test(`viewer, ${orientation}: the court stays put when the viewer loads`, async ({ page }) => {
+// As for the editor (finding 14): the viewer replaces its fallback without moving the court,
+// also where the legend takes two lines (the drill in English at 360 px, the crossing in Dutch at 320 px).
+const drillLink = (JSON.parse(readFileSync(new URL("../src/lib/board/fixtures/v2-drill.json", import.meta.url), "utf8")) as { link: string }).link;
+const STAY_PUT = [
+  ...ORIENTATIONS.map((orientation) => ({ name: orientation, orientation, size: undefined, path: `/en/board/link/#t=${crossingLink}` })),
+  { name: "portrait 360, the drill in English", orientation: "portrait" as const, size: { width: 360, height: 740 }, path: `/en/board/link/#t=${drillLink}` },
+  { name: "portrait 320, the crossing in Dutch", orientation: "portrait" as const, size: { width: 320, height: 568 }, path: `/nl/board/link/#t=${crossingLink}` },
+];
+for (const { name, orientation, size, path } of STAY_PUT) {
+  test(`viewer, ${name}: the court stays put when the viewer loads`, async ({ page }) => {
     await orient(page, orientation);
+    if (size) await page.setViewportSize(size);
     let release!: () => void;
     const gate = new Promise<void>((resolve) => (release = resolve));
     await page.route(/\/_astro\/.*\.js$/, async (route) => {
       await gate;
       await route.continue();
     });
-    await page.goto(`/en/board/link/#t=${crossingLink}`, { waitUntil: "commit" });
+    await page.goto(path, { waitUntil: "commit" });
     const court = page.locator(".viewer .stage svg > rect:first-of-type");
     await expect(court).toBeInViewport({ ratio: 1 });
     // Test 16: no default lineup before the shared board.
     await expect(page.locator(".viewer .stage [data-kind=player]")).toHaveCount(0);
     const before = (await court.boundingBox())!;
     release();
-    await expect(page.locator(".viewer .play:enabled")).toBeVisible();
+    await expect(page.locator(".viewer .edit")).toBeVisible();
     const after = (await court.boundingBox())!;
     for (const key of ["x", "y", "width", "height"] as const) {
       expect(Math.abs(after[key] - before[key]), `${key}: ${JSON.stringify(before)} → ${JSON.stringify(after)}`).toBeLessThanOrEqual(1);

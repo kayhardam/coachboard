@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { analyticsToken, beaconSrc } from "../src/data/analytics";
-import type { BoardV1 } from "../src/lib/board/format";
+import type { Board, BoardV1 } from "../src/lib/board/format";
 import { dragPlayer, expect, expectBoard, linkInAddressBar, openViewer, test, watchViolations } from "./helpers";
 
 // The statistics beacon (Cloudflare Web Analytics) on the board pages; see
@@ -9,6 +9,11 @@ import { dragPlayer, expect, expectBoard, linkInAddressBar, openViewer, test, wa
 const fixture = JSON.parse(
   readFileSync(new URL("../src/lib/board/fixtures/v1-full-lineup.json", import.meta.url), "utf8"),
 ) as { link: string; board: BoardV1 };
+// For the viewer: the crossing, whose players move in every step.
+const play = JSON.parse(readFileSync(new URL("../src/lib/board/fixtures/v2-play.json", import.meta.url), "utf8")) as {
+  link: string;
+  board: Board;
+};
 
 test("the editor on /en/board/ doesn't wait for the beacon", async ({ page }) => {
   // The beacon never arrives: the editor must load and work all the same.
@@ -24,11 +29,10 @@ test("the editor on /en/board/ doesn't wait for the beacon", async ({ page }) =>
 for (const path of ["/en/board/link/", "/en/board/qr/"]) {
   test(`the viewer on ${path} doesn't wait for the beacon`, async ({ page }) => {
     await page.route(beaconSrc, () => {});
-    await page.goto(`${path}#t=${fixture.link}`, { waitUntil: "commit" });
-    await expectBoard(page, fixture.board);
-    // One step: Next plays its move, and then there is nothing further.
+    await page.goto(`${path}#t=${play.link}`, { waitUntil: "commit" });
+    await expectBoard(page, play.board);
     await page.getByRole("button", { name: "Next" }).click();
-    await expect(page.getByRole("button", { name: "Next" })).toBeDisabled();
+    await expect(page.locator(".viewer .count [aria-hidden]")).toHaveText("2/4");
   });
 }
 
@@ -37,10 +41,10 @@ test("the real beacon sends no board and stores nothing", async ({ page, context
   await page.route(beaconSrc, async (route) => route.fulfill({ response: await route.fetch() }));
   const violations = await watchViolations(page);
 
-  await openViewer(page, `?via=test#t=${fixture.link}`);
-  await expectBoard(page, fixture.board);
+  await openViewer(page, `?via=test#t=${play.link}`);
+  await expectBoard(page, play.board);
   await page.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByRole("button", { name: "Next" })).toBeDisabled();
+  await expect(page.locator(".viewer .count [aria-hidden]")).toHaveText("2/4");
   // The viewer keeps nothing: watching changes no storage.
   const storage = () => page.evaluate(() => ({ local: Object.keys(localStorage), session: sessionStorage.length }));
   expect(await storage()).toEqual({ local: [], session: 0 });
@@ -54,7 +58,7 @@ test("the real beacon sends no board and stores nothing", async ({ page, context
   const origin = new URL(page.url()).origin;
   for (const body of bodies()) {
     expect(body).not.toContain("#t=");
-    expect(body).not.toContain(fixture.link.slice(2, 40));
+    expect(body).not.toContain(play.link.slice(2, 40));
     expect(body).not.toContain("via=test");
     expect(JSON.parse(body)).toMatchObject({ location: `${origin}/en/board/link/`, siteToken: analyticsToken });
   }

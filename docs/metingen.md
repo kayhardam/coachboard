@@ -1248,7 +1248,7 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 | T3 zonder startopstelling | 21 handelingen | geen: ter vergelijking | 21 |
 | T2 als vier losse borden (Fase 14-1) | 32 handelingen | geen: ter vergelijking | 32 |
 | T2 met stappen (Fase 14-2) | 16 handelingen; 18 met een eigen bord | **16**, en 18 met een eigen bord (besluit Kay, 10 oktober 2026); gehaald in Fase 14-2 | 16 (18 met een eigen bord) |
-| T5 (Fase 15-1) | 1 handeling (Afspelen); 3 stap voor stap, in de editor zonder beweging | Kay kiest na de telling met de kijker (Fase 15-2) | ~~1 (3 stap voor stap)~~ 1 (4 stap voor stap, met beweging; Fase 15-2) |
+| T5 (Fase 15-1) | 1 handeling (Afspelen); 3 stap voor stap, in de editor zonder beweging | ~~Kay kiest na de telling met de kijker (Fase 15-2)~~ **1**, en 4 stap voor stap (besluit Kay, 15 oktober 2026); gehaald in Fase 15-2 | ~~1 (3 stap voor stap)~~ 1 (4 stap voor stap, met beweging; Fase 15-2) |
 
 - **Stand na Fase 13 (13-3, 10 oktober 2026):** T1, T3 en T4 halen hun doel. T1 4 (doel 5), T3 5 (doel 5), T4 met export en import 20 (doel 20).
 - ~~**Het budget blijft 6** tot een fase de route echt korter maakt.~~ Een fase die een route echt korter maakt, verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
@@ -3224,7 +3224,7 @@ Drie runs per URL, Lighthouse 13.5.0, mobiel. Vóór: productie. Na: de preview.
 | T5 stap voor stap | 3 (stapknoppen, zonder beweging) | **4** (Volgende 3× naar stap 4, en 1× voor het schot) |
 | T1 / T2 / T3 / T4 met export / T4 met links | 4 / 16 / 5 / 20 / 10 | gelijk; T4 met links opent de borden nu in de kijker |
 
-- **T5 stap voor stap telt er één bij,** omdat Volgende op de laatste stap nu ook het schot afspeelt (K8). In de editor ging stap voor stap zonder beweging. Kay kiest het doel van T5 na deze telling.
+- **T5 stap voor stap telt er één bij,** omdat Volgende op de laatste stap nu ook het schot afspeelt (K8). In de editor ging stap voor stap zonder beweging. ~~Kay kiest het doel van T5 na deze telling.~~ Doel (besluit Kay, 15 oktober 2026): 1, en 4 stap voor stap; `TAP_BUDGET` blijft zo.
 - De test controleert ook dat de speler de chunk van de editor nooit laadt, en dat de link en Mijn borden gelijk blijven.
 - **Gevolg voor trainers:** een ontvangen bord aanpassen kost één tik meer (Bewerk een kopie). Geen meettaak doet dat.
 
@@ -3249,3 +3249,26 @@ Drie runs per URL, Lighthouse 13.5.0, mobiel. Vóór: productie. Na: de preview.
 
 - **Ruimte voor #45:** met +142 B komt alle JS rond 41,85 KB (budget 41,9). De editor komt rond 35,1 tot 35,15 KB; de meting + 0,2 KB zou boven de bovengrens van 35,2 KB komen, dus is het budget de grens zelf, zoals in 14-3.
 
+### Na de review (15 oktober 2026)
+
+Review van PR #47 door Kay, opgelost in dezelfde PR.
+
+- **Het veld verspringt niet meer als de legenda twee regels nodig heeft.** Nagespeeld door Kay: 7,2 px omhoog zodra de kijker de fallback vervangt, op 360 × 740 met de oefening in het Engels (Passer, Cone, Run, Pass, Bounce, Shot) en op 320 × 568 met de kruising in het Nederlands. De rij van de legenda houdt nu altijd twee regels (41 px; was minstens 26 px), ook als het bord er één nodig heeft. Gemeten: een volle legenda (Aanspeelpunt, Pion en alle zes soorten pijl) neemt op 320 px twee regels, ook in Verdana (het bredere lettertype van CI nagebootst). Staand blijft het veld even groot: het wordt door de breedte begrensd. Waar de legenda op één regel paste (412 px), staat het ongeveer 7 px hoger.
+- **Breed (W2) blijft de zin hoorbaar.** Hij stond op `display: none` naast de lijst van stappen, zodat een schermlezer niets hoorde bij Volgende of een tik op een stap. Nu is hij alleen visueel verborgen en blijft hij `aria-live`.
+- **Als er niets beweegt, wacht de kijker niet** (besluit Kay). "Niets beweegt": spelers en ballen staan aan het eind van de beweging waar ze begonnen (`moves()` in `viewer.ts`). Volgende gaat dan meteen door, zonder de seconde van K7; Afspelen geeft zo'n stap alleen zijn leestijd; op een laatste stap zonder pijlen is Volgende meteen uit (Vorige gaat daar een stap terug: er is geen beweging om naar het begin van terug te gaan); een bord met één stap zonder pijlen (een opstelling) heeft Afspelen en Volgende uit. Vóór: Volgende wachtte 1 s zonder beweging, en op een laatste stap zonder pijlen deed hij 1 s niets en ging dan uit.
+- **Doel T5:** 1, en 4 stap voor stap (zie Doelen). De kruising beweegt in elke stap, dus de routes blijven gelijk.
+- **Bewuste afwijking van de schermafbeeldingen van het plan** (besluit Kay): Vorige en Volgende zonder pijltjes op telefoons (onder ongeveer 420 px, en liggend).
+- **Geen nieuwe schermafbeeldingen:** staand verandert alleen de plek van het veld (hoogstens ongeveer 7 px), niet wat je ziet.
+- `openViewer()` in `e2e/helpers.ts` wacht nu op "Bewerk een kopie" in plaats van een ingeschakelde Afspelen-knop, die op een opstelling uit blijft. `analytics.spec.ts` opende de kijker met de volle opstelling (één stap zonder pijlen), waar Volgende nu meteen uit is; hij gebruikt nu de kruising.
+
+| Meting (macOS, gzip) | Vóór de review | Na | Budget (bovengrens K2) |
+|---|--:|--:|--:|
+| JS `/board/link/` en `/board/qr/` | 24.953 B | **25.073 B** (+120) | 25,25 → 25,37 KB (25,5) |
+| JS `/board/` (de editor) | 34.856 B | 34.856 B | 35,2 KB (35,2) |
+| Alle JS in `_astro/` | 41.561 B | **41.681 B** (+120) | 41,9 → 42,0 KB (42,0) |
+| CSS `/board/link/` | 3.347 B | **3.372 B** (+25) | 3,53 → 3,57 KB (3,6) |
+
+- **Ruimte voor #45 (+142 B):** op Linux is alle JS ongeveer 139 B groter dan op macOS, dus rond 41,82 KB; met #45 rond 41,96 KB, 0,04 KB onder de grens van 42,0. De meting + 0,2 KB zou boven de grens komen, dus is het budget van alle JS nu de grens zelf, zoals bij de editor. De editor verandert niet (rond 35,15 KB met #45, budget 35,2).
+- **Tests:** unit `moves()` (de kruising beweegt in elke stap; een stap zonder pijlen niet, vóór een andere stap en aan het eind; wel een speler die de volgende stap met de hand verplaatst); e2e de vier regels van "niets beweegt" (`viewer.spec.ts`); "the court stays put when the viewer loads" ook op 360 × 740 met de oefening in het Engels en op 320 × 568 met de kruising in het Nederlands; breed blijft de zin in de toegankelijkheidsboom, met de zin van de stap (`layout.spec.ts`).
+  - **Controle:** met de CSS van vóór de review falen de twee nieuwe maten van "stays put" en de test van de zin breed.
+- **`npm run e2e`:** 716 geslaagd, 2 overgeslagen (was 704): 12 erbij (4 regels voor "niets beweegt" en 2 maten voor "stays put", elk in twee browsers). De eerste run faalde op de 6 tests van `analytics.spec.ts` hierboven; die slagen nu.

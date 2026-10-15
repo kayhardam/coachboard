@@ -26,15 +26,15 @@ import { gzipSync } from "node:zlib";
 // Baseline (docs/metingen.md, phase 3 and 4a) plus about 15%.
 export const BUDGETS = {
   boardJs: 35_200, // the editor's page: about 35.0 KB on Linux; plus 0.2 KB would pass phase 15's cap of 35.2 KB, so the cap, which leaves room for Dependabot's +142 B (K2; docs/metingen.md, phase 15-2)
-  // The viewer's pages (the pages for shared boards): about 25.05 KB on Linux plus 0.2 KB, under phase 15's cap of 25.5 KB (K2).
-  viewerJs: 25_250,
+  // The viewer's pages (the pages for shared boards): about 25.17 KB on Linux plus 0.2 KB, under phase 15's cap of 25.5 KB (K2).
+  viewerJs: 25_370,
   lazyJs: 10_000, // 0 KB
-  allJs: 41_900, // about 41.7 KB on Linux plus 0.2 KB, under phase 15's cap of 42.0 KB (K2; docs/metingen.md, phase 15-2)
+  allJs: 42_000, // about 41.82 KB on Linux; plus 0.2 KB would pass phase 15's cap of 42.0 KB, so the cap, which leaves room for Dependabot's +142 B (K2; docs/metingen.md, phase 15-2)
   css: 2_000, // 1.6 KB per page
   // The board pages also link the editor's stylesheet (BoardEditor.css). Content
   // pages stay at `css`, which is too small to take that stylesheet as well.
   boardCss: 5_780, // 5.57 KB plus 0.2 KB (docs/metingen.md, phase 14-3: play); phase 14 ends at 5.8 KB (D11)
-  viewerCss: 3_530, // the viewer's pages: 3.35 KB plus 0.2 KB, under phase 15's cap of 3.6 KB (K2)
+  viewerCss: 3_570, // the viewer's pages: 3.37 KB plus 0.2 KB, under phase 15's cap of 3.6 KB (K2)
   html: 6_500, // 5.5 KB on the board, the largest page
   png: 60_000, // 50.5 KB for og-default.png, the largest
 };

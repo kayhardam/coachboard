@@ -72,8 +72,9 @@ export async function openBoard(page: Page, hash = "", path = "/en/board/") {
  */
 export async function openViewer(page: Page, hash: string, path = "/en/board/link/") {
   await page.goto(`${path}${hash}`);
-  // The fallback's Play is disabled; the viewer's is enabled once a board is there.
-  await expect(page.locator(".viewer .play:enabled")).toBeVisible();
+  // The fallback has no Edit a copy; the viewer shows it once a board is there.
+  // (Not Play: on a board where nothing moves it stays off.)
+  await expect(page.locator(".viewer .edit")).toBeVisible();
 }
 
 /** The title bar's More button, which opens the menu with the QR code, the court size and clearing. */

@@ -157,6 +157,58 @@ test("with reduced motion, Next goes to the next step without moving", async ({ 
   expect(await players(page)).toEqual(drawn(play.board, 1));
 });
 
+// When nothing moves, the viewer doesn't wait (Kay, 15 October 2026): a step
+// where every player and ball ends where it starts.
+const [first, second] = play.board.frames as [Board["frames"][0], Board["frames"][0]];
+const still = (f: typeof first, text: string) => ({ ...f, arrows: [], text });
+
+test("Next on a step where nothing moves goes to the next step at once", async ({ page }) => {
+  // Step 1 without arrows, where step 2 starts: nothing moves.
+  const board = { ...play.board, frames: [still(first, "Line up."), ...play.board.frames] };
+  await openPaused(page, await encode(board));
+  await button(page, "viewer.next").click();
+  await expect(count(page)).toHaveText("2/5");
+  expect(await players(page)).toEqual(drawn(board, 1));
+});
+
+test("Play gives a step where nothing moves only its time to read", async ({ page }) => {
+  const board = { ...play.board, frames: [still(first, "Line up."), ...play.board.frames] };
+  await openPaused(page, await encode(board));
+  await button(page, "board.play").click();
+  await page.clock.runFor(stillFor(board.frames[0]!) - 100);
+  await expect(count(page)).toHaveText("1/5");
+  // Without the second of the move (K7).
+  await page.clock.runFor(200);
+  await expect(count(page)).toHaveText("2/5");
+});
+
+test("on a last step without arrows Next is off at once; Play ends there", async ({ page }) => {
+  // Step 2 is where step 1's arrows take everyone, and has none of its own.
+  const board = { ...play.board, frames: [first, still(second, "Done.")] };
+  await openPaused(page, await encode(board));
+  await button(page, "viewer.next").click();
+  await page.clock.runFor(moveFor(first) + 50);
+  await expect(count(page)).toHaveText("2/2");
+  await expect(button(page, "viewer.next")).toBeDisabled();
+  expect(await players(page)).toEqual(drawn(board, 1));
+
+  await button(page, "board.play").click();
+  await page.clock.runFor(stillFor(board.frames[0]!) + moveFor(first) + stillFor(board.frames[1]!) + 50);
+  await expect(button(page, "board.play")).toBeVisible();
+  await expect(count(page)).toHaveText("2/2");
+  await expect(button(page, "viewer.next")).toBeDisabled();
+  // Previous goes back a step: there was no move to go back to the start of.
+  await button(page, "viewer.prev").click();
+  await expect(count(page)).toHaveText("1/2");
+});
+
+test("a board of one step without arrows, a lineup, has Play and Next off", async ({ page }) => {
+  await openViewer(page, `#t=${await encode({ ...play.board, frames: [still(first, "Line up.")] })}`);
+  await expect(button(page, "board.play")).toBeDisabled();
+  await expect(button(page, "viewer.next")).toBeDisabled();
+  await expect(button(page, "viewer.prev")).toBeDisabled();
+});
+
 test("the arrow keys go to the next and the previous step", async ({ page }) => {
   await openPaused(page);
   await page.keyboard.press("ArrowRight");
