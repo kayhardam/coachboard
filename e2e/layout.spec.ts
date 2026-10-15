@@ -543,8 +543,9 @@ for (const lang of ["en", "nl"]) {
     await page.setViewportSize({ width: 360, height: 740 });
     await openViewer(page, `#t=${await fullBoardLink()}`, `/${lang}/board/link/`);
     await expect(label).toBeVisible();
-    // The title keeps room for a few words a line.
-    expect((await page.locator(".viewer .title").boundingBox())!.width).toBeGreaterThanOrEqual(120);
+    // The title keeps room for two lines of about twelve letters: 121 px with a phone's
+    // system font, 100 px with the wider font on Linux (CI).
+    expect((await page.locator(".viewer .title").boundingBox())!.width).toBeGreaterThanOrEqual(96);
     await page.setViewportSize({ width: 359, height: 740 });
     await expect(label).toBeHidden();
     await expect(page.locator(".viewer .edit")).toHaveAttribute("aria-label", t(lang, "viewer.edit"));

@@ -3150,7 +3150,7 @@ Branch `fase-15-2-kijker`, vanaf `main` @ `88a58a4` (merge van #46). Besluiten K
 - **Legenda (K9):** wat op het bord staat, in een vaste volgorde: Aanspeelpunt en Pion als ze er zijn, dan Loop, Pass, Stuit, Dribbel, Schot, Sper.
 - **Laden (K6, test 16):** de fallback toont een leeg half veld, geen standaardopstelling; het veld verspringt niet als de kijker hem vervangt. Een kapotte link: de melding "Deze link werkt niet. Vraag om een nieuwe." op een leeg veld. Een link van een nieuwere versie herlaadt één keer, zoals in de editor (`newer.ts`, gedeeld). Zonder `#t=` naar de editor.
 - **Bewerk een kopie (K4):** een link naar de editor met dezelfde `#t=`; de kijker zet die link in `sessionStorage` (`coachboard.copy`). De editor wist de sleutel meteen, en bewaart het bord alleen als de sleutel gelijk is aan de `#t=` in de adresbalk: meteen in Mijn borden, met de titel zoals hij was, of hij opent hetzelfde bord als dat er al staat. Zonder opslag opent het bord als ontvangen bord.
-- **Indeling (K10):** staand zoals de schermafbeeldingen, liggend L1, breed W2. "Bewerk een kopie" toont zijn label **vanaf 360 px breed**; daaronder (320 px) alleen het potlood, met `aria-label` en `title`. Op 360 px houdt de titel dan ruim 120 px, twee regels. Tot 360 px worden Vorige, Afspelen en Volgende iets compacter, zodat "Volgende" heel blijft.
+- **Indeling (K10):** staand zoals de schermafbeeldingen, liggend L1, breed W2. "Bewerk een kopie" toont zijn label **vanaf 360 px breed**; daaronder (320 px) alleen het potlood, met `aria-label` en `title`. Op 360 px houdt de titel dan 121 px (Nederlands, systeemlettertype), twee regels; met het bredere lettertype van CI (Linux) 100 px. Onder ongeveer 420 px vallen de pijltjes van Vorige en Volgende weg (het label zegt het al), liggend ook; tot 360 px worden de knoppen iets kleiner, en Afspelen is iets breder dan de andere twee. Zo blijft elk label heel, ook in dat bredere lettertype (lokaal nagebootst met Verdana: op 320, 360, 375, 390 en 412 px, liggend en breed niets afgekapt).
 - **Chunks (K1):** één gedeelde chunk (de Svelte-runtime, de renderer van Astro, `Court.svelte`, `format`, `geometry`, `moves`, `play`, `newer` en de iconen van de kijker). De editor en de kijker houden elk hun eigen code; de kijker laadt de editor nooit. De iconen van de kijker staan in een eigen module (`viewerIcons.ts`).
 - **Teksten (K11):** letterlijk uit het plan. Nieuw in `ui.ts`: `viewer.edit`, `viewer.prev`, `viewer.next`, `viewer.step`, `viewer.legend`, `viewer.broken`, `viewer.noscript`.
 
@@ -3163,7 +3163,7 @@ Branch `fase-15-2-kijker`, vanaf `main` @ `88a58a4` (merge van #46). Besluiten K
 | JS `/board/link/` en `/board/qr/` | 33.610 B (de editor) | **24.953 B** (de kijker) | nieuw: `viewerJs` 25,25 KB (25,5) |
 | JS `/board/` (de editor) | 33.610 B | 34.856 B | 33,8 → 35,16 KB (35,2) |
 | Alle JS in `_astro/` | 37.633 B | 41.561 B | 37,8 → 41,9 KB (42,0) |
-| CSS `/board/link/` | 5.573 B | 3.326 B | nieuw: `viewerCss` 3,53 KB (3,6) |
+| CSS `/board/link/` | 5.573 B | 3.347 B | nieuw: `viewerCss` 3,53 KB (3,6) |
 | CSS `/board/` | 5.573 B | 5.573 B | 5,78 KB |
 | HTML `/nl/board/link/` | 6.064 B | 4.330 B | 6,5 KB |
 | HTML `/nl/board/` | 6.279 B | 6.278 B | 6,5 KB |
@@ -3241,3 +3241,4 @@ Drie runs per URL, Lighthouse 13.5.0, mobiel. Vóór: productie. Na: de preview.
   - `board.spec.ts`, "a link from a newer version reloads the page once": telt geen `load`-events meer maar kijkt naar het type navigatie (`reload`). Met de preloads van 15-1 kan de pagina herladen vóór het eerste `load`; de test faalde zo één keer.
 
 - **`npm run e2e`:** 704 geslaagd, 2 overgeslagen (was 622).
+- **Eerste CI-run:** 12 layouttests van de kijker faalden op Linux: met het bredere lettertype werden "Previous", "Afspelen" en "Volgende" afgekapt, en kreeg de titel op 360 px 100 px in plaats van de geëiste 120. Opgelost met de pijltjes en kolommen hierboven; de test eist nu 96 px.

@@ -188,7 +188,8 @@
 .viewer .controls {
   grid-area: controls;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Play, with its icon and the longest label, a little wider. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
   gap: 6px;
   container-type: inline-size;
 }
@@ -234,12 +235,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Below about 420 px the arrows of Previous and Next give way to their labels,
+   which say it already: with a wide font (the e2e tests' on Linux) they didn't fit. */
+@container (max-width: 419px) {
+  .viewer :is(.prev, .next) svg {
+    display: none;
+  }
+}
 /* Up to a 360 px phone: the labels need the room the icons and padding take. */
 @container (max-width: 344px) {
   .viewer .controls button {
     gap: 2px;
     padding: 0 4px;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
   }
   .viewer .controls svg {
     width: 16px;
@@ -305,6 +313,10 @@
   }
   .viewer .controls button {
     min-height: 48px;
+  }
+  /* The side panels are narrow: the labels go first, as in portrait. */
+  .viewer :is(.prev, .next) svg {
+    display: none;
   }
   .viewer .prev {
     grid-area: prev;
