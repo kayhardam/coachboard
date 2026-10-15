@@ -1125,6 +1125,7 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
 | T2 | Maak de aanval Kruising MO–LO in vier stappen, met een zin per stap, en deel hem | telefoon | ~~als vier losse borden; als route zodra het bord stappen heeft~~ route als vier losse borden sinds Fase 14-1; met stappen sinds Fase 14-2 |
 | T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, een keeper, twee pionnen, een bal en de kruising, en deel hem | telefoon | ~~met spelers als pionnen; als route zodra het bord pionnen heeft~~ route sinds Fase 13-1, met dekkers als pionnen; met pionnen sinds Fase 13-2, met de startopstelling "2 rijen" sinds Fase 13-3 |
 | T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf (route sinds Fase 12b); ~~met Mijn borden zodra die er zijn~~ met export en import (route sinds Fase 12b-3) |
+| T5 | Een speler opent op zijn telefoon de link van de kruising MO–LO (het bord van T2) en ziet elke stap met zijn zin, en hoe de spelers van stap naar stap bewegen | telefoon | route sinds Fase 15-1 (nulmeting met de editor); met de kijker vanaf Fase 15-2 |
 
 ### Meetmethode
 
@@ -1239,6 +1240,7 @@ Dezelfde route in de nieuwe indeling: het gereedschap blijft onderaan, Delen sta
 | T3 zonder startopstelling | 21 handelingen | geen: ter vergelijking | 21 |
 | T2 als vier losse borden (Fase 14-1) | 32 handelingen | geen: ter vergelijking | 32 |
 | T2 met stappen (Fase 14-2) | 16 handelingen; 18 met een eigen bord | **16**, en 18 met een eigen bord (besluit Kay, 10 oktober 2026); gehaald in Fase 14-2 | 16 (18 met een eigen bord) |
+| T5 (Fase 15-1) | 1 handeling (Afspelen); 3 stap voor stap | Kay kiest na de telling met de kijker (Fase 15-2) | 1 (3 stap voor stap) |
 
 - **Stand na Fase 13 (13-3, 10 oktober 2026):** T1, T3 en T4 halen hun doel. T1 4 (doel 5), T3 5 (doel 5), T4 met export en import 20 (doel 20).
 - ~~**Het budget blijft 6** tot een fase de route echt korter maakt.~~ Een fase die een route echt korter maakt, verlaagt `TAP_BUDGET` in dezelfde PR, met de nieuwe meting hier.
@@ -3040,3 +3042,63 @@ Op de preview (`/nl/board/`), per toestel (model, iOS/Android-versie, browser).
 | 11 | Ga naar stap 3 en kies Meer → Leeg veld (en daarna Standaardopstelling): staat stap 1 aan, en kun je een bal neerzetten? Ook tijdens afspelen? | | |
 | 12 | Tik tijdens afspelen op de zin en wijzig hem: blijft de zin van de andere stappen gelijk? | | |
 | 13 | Een stap met CB → RB → P (twee passes): komt de bal eerst bij RB en gaat hij dan door naar P? | | |
+
+## Fase 15-1: voorbereiding (11 oktober 2026)
+
+Branch `fase-15-1-voorbereiding`, vanaf `main` @ `bbaed36`. Besluiten K1–K13 van Kay (productplan, Fase 15). De app doet hetzelfde; de JS van het bord komt eerder binnen.
+
+### Wat er veranderd is
+
+- **`modulepreload` op de bordpagina's (K3).** Astro schrijft er geen voor een eiland. Na de build zet `scripts/modulepreload.mjs` (de integratie `modulepreload` in `astro.config.mjs`) in de `<head>` van elke pagina met JS een `<link rel="modulepreload">` per bestand dat ze meteen laadt: het eiland, de renderer en hun statische imports. De QR-code laadt nog steeds later; contentpagina's blijven zonder JS.
+  - **Waarom:** zonder preload vond de browser de JS pas als het inline script van het eiland draaide, na de CSS, en de chunk één rondgang later.
+- **`moves.ts`:** `endOf()`, `ballTrips()`, `ballsAfter()`, `BESIDE` en `clampPt()` staan niet meer in `edit.ts`. `edit.ts` en `play.ts` gebruiken ze allebei, en de kijker (15-2) kan zo afspelen zonder de bewerkingen van de editor.
+- **T5-nulmeting** in `e2e/tasks.spec.ts` (zie Meettaken).
+- **`AGENTS.md`:** de preloads, `moves.ts`, en: blokkeer de beacon bij metingen tegen een lokale build.
+
+### Groottes
+
+`npm run budget` en gzip per bestand, vóór (`main` @ `bbaed36`) en na, op macOS:
+
+| Meting | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| JS van het bord (elke bordpagina) | 33.605 B | 33.610 B | 33,8 KB |
+| Alle JS in `_astro/` | 37.628 B | 37.633 B | 37,8 KB |
+| HTML `/nl/board/` | 6.251 B | 6.279 B | 6,5 KB |
+| HTML `/en/board/` | 6.142 B | 6.171 B | 6,5 KB |
+| HTML `/nl/board/link/` | 6.035 B | 6.064 B | 6,5 KB |
+
+- **JS +5 B:** de splitsing in `moves.ts`. De budgetten veranderen niet; de nieuwe grenzen van K2 komen met de kijker in 15-2.
+- **HTML +28 B per bordpagina:** drie preloads.
+
+### Klaar om te gebruiken
+
+Lokaal (`wrangler dev`), met de vertraging van Lighthouse (`--throttling-method=devtools`: 562,5 ms rondgang, 1,47 Mbit/s, 4× CPU), Moto G4, vijf keer per pagina, mediaan. Gemeten tot de werkbalk van de editor er is; op `/board/link/` is dat ook het moment waarop de gedeelde aanval verschijnt. Vóór: dezelfde build met de preloads weggehaald.
+
+| Pagina | Vóór | Na |
+|---|--:|--:|
+| `/nl/board/` | 2,57 s | **1,44 s** |
+| `/nl/board/link/` (de kruising, 4 stappen) | 2,57 s | **1,43 s** |
+
+- De LCP van de editor blijft de lege titel uit de HTML; `e2e/layout.spec.ts` houdt dat zo.
+- Tot de editor er is, toont `/board/link/` nog de standaardopstelling (test 16); dat lost de kijker in 15-2 op.
+
+### Meettaken
+
+| Route | Vóór | Na (`/en/` en `/nl/`) |
+|---|--:|--:|
+| T5: Afspelen | — | **1** |
+| T5 stap voor stap (de stapknoppen 2, 3, 4) | — | **3** |
+| T1 / T2 / T3 / T4 | 4 / 16 / 5 / 20 | gelijk |
+
+- **T5, de definitie (K12):** een speler opent op zijn telefoon de link van de kruising MO–LO (het bord dat de route van T2 deelt) en ziet elke stap met zijn zin, en hoe de spelers van stap naar stap bewegen. Het openen telt niet. De route van de trainer loopt eerst en telt niet mee; daarna wist de test de opslag, als op een tweede toestel.
+- **Nulmeting:** de link opent nog in de editor. Afspelen toont alles in één handeling. Stap voor stap kan alleen met de stapknoppen, zonder de beweging ertussen.
+- De test controleert de vier zinnen in volgorde, dat de link in de adresbalk gelijk blijft en dat Mijn borden leeg blijft.
+- **Controle** (tijdelijk, niet gecommit): met het budget op 2 falen beide routes ("Expected: 2, Received: 1" en "Received: 3").
+
+### Tests
+
+- **Unit:** `scripts/modulepreload.test.mjs` (nieuw): de bestanden van een eiland en een module-script met hun statische imports, niet de dynamische, niet die van een ander domein; geen preload dubbel; een pagina zonder JS blijft gelijk. `moves.test.ts` (nieuw) neemt de test van `clampPt()` over.
+- **`e2e/layout.spec.ts`:** op elke bordpagina in beide talen staat precies een preload voor elk JS-bestand dat de pagina meteen laadt.
+  - **Controle** (tijdelijk): met de preloads uit `dist/` gehaald en `wrangler dev` met de hand gestart, falen alle zes.
+- **`e2e/tasks.spec.ts`:** T5 en T5 stap voor stap, in `en` en `nl`.
+- **`npm run e2e`:** 622 geslaagd, 2 overgeslagen: 20 erbij (12 preload, 8 T5).
