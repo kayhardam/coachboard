@@ -11,6 +11,7 @@
   import { decode, encode, isNewerLink, MAX_STEPS, MAX_TEXT, MAX_TITLE, toBoard, type Board } from "../../lib/board/format";
   import { SETUPS, setup } from "../../lib/board/defaults";
   import { moment } from "../../lib/board/play";
+  import { endOf } from "../../lib/board/moves";
   import { HIT_R } from "../../lib/board/geometry";
   import { holder, inGoal, nearestPiece, reach } from "../../lib/board/hit";
   import { boardIcons as icons } from "../../lib/icons";
@@ -695,7 +696,7 @@
       // of whoever has it.
       const ball = hit?.kind === "ball" ? frame.balls[hit.index] : undefined;
       const player = hit?.kind === "player" ? hit.index : ball && holder(frame, ball, tapReach());
-      const from: XY = player !== undefined ? edit.endOf(frame, player) : ball ? [...ball] : at;
+      const from: XY = player !== undefined ? endOf(frame, player) : ball ? [...ball] : at;
       const pass = ball || (hit?.kind === "player" && edit.hasBall(frame, hit.index));
       drag = { type: "draw", kind: pass ? "pass" : "run", from, player, hit: hit as Selection | null, origin: at, moved: false };
     } else if (hit?.kind === "player" || hit?.kind === "ball" || hit?.kind === "cone") {
@@ -741,7 +742,7 @@
    */
   function arrowTo(d: Extract<Drag, { type: "draw" }>, at: XY): Parameters<typeof edit.addArrow> {
     const shot = d.kind === "pass" && d.player !== undefined && inGoal(board, at, tapReach());
-    const spots = [...frame.players, ...frame.players.map((p, i) => ({ ...p, at: edit.endOf(frame, i) }))];
+    const spots = [...frame.players, ...frame.players.map((p, i) => ({ ...p, at: endOf(frame, i) }))];
     const hit = shot ? null : nearestPiece({ ...frame, balls: [], players: spots }, at, tapReach());
     return [board, step, shot ? "shot" : d.kind, d.from, hit ? [...spots[hit.index]!.at] : at, d.player];
   }

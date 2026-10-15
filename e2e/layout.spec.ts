@@ -301,6 +301,28 @@ test("the largest text paints with the HTML, not after the editor's JS", async (
   expect(await lcp()).toEqual(["fallback"]);
 });
 
+// Astro writes no modulepreload for an island, so the board's JS used to start
+// only after the island's script ran, and its chunk one round trip later.
+// scripts/modulepreload.mjs puts every file a board page loads at once in the
+// head (phase 15-1 in docs/metingen.md); the QR code still loads later.
+for (const path of ["/en/board/", "/nl/board/", "/en/board/link/", "/nl/board/link/", "/en/board/qr/", "/nl/board/qr/"]) {
+  test(`${path} preloads every script it loads at once`, async ({ page }) => {
+    const loaded = new Set<string>();
+    page.on("request", (r) => {
+      const url = new URL(r.url());
+      if (r.resourceType() === "script" && url.pathname.startsWith("/_astro/") && !/\/qr\.[^/]+\.js$/.test(url.pathname)) {
+        loaded.add(url.pathname);
+      }
+    });
+    await openBoard(page, "", path);
+    const preloaded = await page.locator('head link[rel="modulepreload"]').evaluateAll((links) =>
+      links.map((l) => l.getAttribute("href")),
+    );
+    expect(loaded.size).toBeGreaterThan(0);
+    expect(preloaded.toSorted()).toEqual([...loaded].toSorted());
+  });
+}
+
 /** Three boards in My boards before the page loads: two in a folder, one with a long title, one without. */
 async function withBoards(page: Page, lang: string) {
   const board = (x: number, title?: string) => {

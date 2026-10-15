@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultBoard } from "./defaults";
-import { addArrow, addStep, ballsAfter, BESIDE, endOf, movePiece } from "./edit";
+import { addArrow, addStep, movePiece } from "./edit";
+import { ballsAfter, BESIDE, endOf } from "./moves";
 import type { Board, Frame, Pt } from "./format";
 import { pointAt } from "./geometry";
 import { moment } from "./play";

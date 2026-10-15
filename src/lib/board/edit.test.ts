@@ -4,17 +4,14 @@ import {
   addArrow,
   addPlayer,
   attachArrow,
-  clampPt,
   clearArrows,
   emptyCourt,
-  endOf,
   moveArrow,
   moveHandle,
   movePiece,
   addBall,
   addCone,
   addStep,
-  ballsAfter,
   hasBall,
   removeSelected,
   removeStep,
@@ -25,6 +22,7 @@ import {
   setText,
   setTitle,
 } from "./edit";
+import { ballsAfter, endOf } from "./moves";
 import { isBoard, MAX_BALLS, MAX_CONES, MAX_PLAYERS, MAX_STEPS, MAX_TEXT, MAX_TITLE, type Board } from "./format";
 
 const empty: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], balls: [], arrows: [] }] };
@@ -43,14 +41,6 @@ const owned = (): Board => {
 const twoSteps = (board: Board): Board => ({
   ...board,
   frames: [board.frames[0]!, { ...structuredClone(board.frames[0]!), arrows: [], text: "Step 2." }],
-});
-
-describe("clampPt", () => {
-  it("rounds to whole decimetres and keeps points on the visible court", () => {
-    expect(clampPt(empty, [10.4, 20.6])).toEqual([10, 21]);
-    expect(clampPt(empty, [-5, 250])).toEqual([0, 200]);
-    expect(clampPt({ ...empty, court: "full" }, [250, 250])).toEqual([200, 250]);
-  });
 });
 
 describe("pieces", () => {
