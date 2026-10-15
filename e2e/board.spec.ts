@@ -108,6 +108,10 @@ const brokenLink = "#t=1.this-is-not-a-board";
  * Counts the documents the page loads: a reload is one more. By load event,
  * not by request: WebKit reports the first request for a page twice.
  */
+/** How the page in `page` was opened: "navigate", or "reload" after location.reload(). */
+const navigationType = (page: Page) =>
+  page.evaluate(() => (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming).type);
+
 function countLoads(page: Page) {
   const loads = { count: 0 };
   page.on("load", () => loads.count++);
@@ -173,7 +177,10 @@ test("a link from a newer version reloads the page once, then says it doesn't wo
   await expect.poll(() => pieces(other)).toEqual(drawn);
   await other.waitForTimeout(600);
   expect(await saved(other)).toBe(own);
-  expect(loads.count).toBe(2);
+  // This page is the reload, and it didn't reload again. (Not a count of load
+  // events: with the board's JS preloaded, the reload can come before the first one.)
+  expect(await navigationType(other)).toBe("reload");
+  expect(loads.count).toBeLessThanOrEqual(2);
 });
 
 test("a tab opened before a deploy reloads for a link from a newer version", async ({ page }) => {

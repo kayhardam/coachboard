@@ -1,7 +1,7 @@
 ---
-// The board page: the editor, its static fallback and the statistics beacon.
-// /<lang>/board/ is the editor; /<lang>/board/link/ and /<lang>/board/qr/ are
-// where shared links and QR codes point, so statistics can count them apart.
+// The board page, /<lang>/board/: the editor, its static fallback and the
+// statistics beacon. Shared links and QR codes open the viewer on
+// /<lang>/board/link/ and /<lang>/board/qr/ (ViewerPage.astro).
 import { getRelativeLocaleUrl } from "astro:i18n";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { boardStrings, t } from "../../i18n/ui";
@@ -11,18 +11,11 @@ import { icons } from "../../lib/icons";
 import { sharePaths } from "../../data/nav";
 import Beacon from "../Beacon.astro";
 import BoardEditor from "./BoardEditor.svelte";
-// The editor's styles, linked on the board pages only (see the file).
+// The editor's styles, linked on the editor's page only (see the file).
 import "./BoardEditor.css";
 import Court from "./Court.svelte";
 
-interface Props {
-  /** The pages for shared boards: out of search results, like the 404. */
-  noindex?: boolean;
-}
-
-const { noindex = false } = Astro.props;
-
-// Only these pages may load the statistics beacon (Beacon.astro). This runs
+// Only the board pages (this one and ViewerPage.astro) may load the statistics beacon (Beacon.astro). This runs
 // before BaseLayout writes the CSP <meta>; content pages keep the plain CSP.
 // Astro.csp is undefined in `npm run dev`, which writes no CSP. A resource
 // replaces Astro's default 'self', so 'self' (the editor's files) goes first.
@@ -38,7 +31,7 @@ const links = {
 };
 ---
 
-<BaseLayout title={t(lang, "board.title")} description={t(lang, "board.description")} {noindex} fullscreen>
+<BaseLayout title={t(lang, "board.title")} description={t(lang, "board.description")} fullscreen>
   <h1 class="visually-hidden">{t(lang, "board.heading")}</h1>
   <BoardEditor client:only="svelte" strings={boardStrings(lang)} {home} {links} {lineup}>
     <div slot="fallback" class="fallback">

@@ -1,6 +1,7 @@
 import type { Browser, Locator, Page } from "@playwright/test";
 import { defaultBoardFor } from "../src/lib/board/defaults";
 import { decode } from "../src/lib/board/format";
+import { moveFor, stillFor } from "../src/lib/board/viewer";
 import { t } from "../src/i18n/ui";
 import {
   chooseFile,
@@ -9,6 +10,7 @@ import {
   expectBoard,
   moreButton,
   openBoard,
+  openViewer,
   savedBoards,
   saveOwnBoard,
   stubBeacon,
@@ -54,11 +56,12 @@ const TAP_BUDGET = {
   // T2 for a returning coach: their own board is on the court first.
   "T2 with your own board": 18,
   // T5: a player opens the shared crossing (T2's board) and sees every step with its sentence, and
-  // how the players move from step to step. Opening the link doesn't count. Phase 15-1, the baseline:
-  // the link still opens the editor, where Play shows it all.
+  // how the players move from step to step. Opening the link doesn't count. Phase 15-2: the link
+  // opens the viewer, where Play shows it all. (Phase 15-1, in the editor: also 1.)
   T5: 1,
-  // T5 step by step. In the editor the step buttons show each step, but without the moves between them.
-  "T5 step by step": 3,
+  // T5 step by step: Next three times to the last step, and once more for its move, the shot (K8).
+  // (Phase 15-1, in the editor: 3 step buttons, without the moves.)
+  "T5 step by step": 4,
 };
 /** Of those, the actions until the three boards are in My boards on the phone. */
 const T4_UNTIL_IMPORTED = 13;
@@ -228,7 +231,7 @@ for (const lang of ["en", "nl"]) {
       const board = (await decode(url.hash.replace(/^#t=/, "")))!;
       expect(board.frames[0]!.players).toEqual(defaultBoardFor(lang).frames[0]!.players);
       expect(board.frames[0]!.arrows).toMatchObject([{ kind: "run", from: runs[i] }]);
-      await openBoard(page, url.hash, url.pathname);
+      await openViewer(page, url.hash, url.pathname);
       await expectBoard(page, board);
     }
     expect(steps.count).toBe(TAP_BUDGET["T4 as links to yourself"]);
@@ -567,12 +570,11 @@ for (const lang of ["en", "nl"]) {
 }
 
 // T5: the player's side of T2. The coach's route runs first and isn't counted; then the player's
-// phone, with nothing of the coach in its storage, opens the shared link. Play's timing is the
-// editor's (phase 14-3): each step 1.2 s still, then 1 s of moving; the clock is Playwright's.
-const STILL = 1200;
-const MOVE = 1000;
+// phone, with nothing of the coach in its storage, opens the shared link in the viewer (phase
+// 15-2). Each step shows still long enough to read its sentence, and moves a share per turn of its
+// arrows (stillFor() and moveFor() in src/lib/board/viewer.ts); the clock is Playwright's.
 
-/** The coach shares the crossing (T2); the player's phone opens its link. */
+/** The coach shares the crossing (T2); the player's phone opens its link. Also returns the board. */
 async function openSharedCrossing(page: Page, lang: string) {
   const shared = await stubShareSheet(page);
   await openBoard(page, "", `/${lang}/board/`);
@@ -580,53 +582,61 @@ async function openSharedCrossing(page: Page, lang: string) {
   await expectSharedT2(shared, lang);
   const url = new URL((await shared())[0]!);
   await page.evaluate(() => localStorage.clear());
+  // The player never loads the editor.
+  const editor: string[] = [];
+  page.on("request", (r) => void (/\/BoardEditor\.[^/]+\.js$/.test(r.url()) && editor.push(r.url())));
   await page.clock.install();
-  await openBoard(page, url.hash, url.pathname);
+  await openViewer(page, url.hash, url.pathname);
   await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1000);
-  return url;
+  return { url, editor, board: (await decode(url.hash.slice(3)))! };
 }
 
-/** The sentence on the court. */
-const sentence = (page: Page) => page.locator(".text .line span");
+/** The sentence of the step on the court. */
+const sentence = (page: Page) => page.locator(".viewer .text p");
 
-/** Nothing the player watched reaches the link or My boards. */
-async function expectOnlyWatched(page: Page, url: URL) {
+/** Nothing the player watched reaches the link or My boards, and the editor never loaded. */
+async function expectOnlyWatched(page: Page, { url, editor }: { url: URL; editor: string[] }) {
   expect(new URL(page.url()).hash).toBe(url.hash);
   expect(await savedBoards(page)).toEqual([]);
+  expect(editor).toEqual([]);
 }
 
 for (const lang of ["en", "nl"]) {
+  const next = (page: Page) => page.getByRole("button", { name: t(lang, "viewer.next"), exact: true });
+
   test(`T5 (${lang}): the player sees every step and every move with one tap`, async ({ page }) => {
-    const url = await openSharedCrossing(page, lang);
+    const opened = await openSharedCrossing(page, lang);
     const steps = route(page);
 
     await steps.tap(page.getByRole("button", { name: t(lang, "board.play"), exact: true }));
-    for (const text of T2_SENTENCES[lang]!) {
+    for (const [i, text] of T2_SENTENCES[lang]!.entries()) {
       await expect(sentence(page)).toHaveText(text);
+      const frame = opened.board.frames[i]!;
       // Past the step's end (a little, so the frame that turns to the next step has run).
-      await page.clock.runFor(STILL + MOVE + 50);
+      await page.clock.runFor(stillFor(frame) + moveFor(frame) + 50);
     }
-    // Play ends on the last step, after its move and a still moment.
-    await page.clock.runFor(STILL);
+    // Play ends after the last move, the shot: the board stays there, and Next is off (K8).
     await expect(page.getByRole("button", { name: t(lang, "board.play"), exact: true })).toBeVisible();
+    await expect(next(page)).toBeDisabled();
 
-    await expectOnlyWatched(page, url);
+    await expectOnlyWatched(page, opened);
     expect(steps.count).toBe(TAP_BUDGET.T5);
   });
 
   test(`T5 (${lang}) step by step`, async ({ page }) => {
-    const url = await openSharedCrossing(page, lang);
+    const opened = await openSharedCrossing(page, lang);
     const steps = route(page);
-    const chips = page.getByRole("toolbar", { name: t(lang, "board.steps") }).locator(".chip");
 
-    await expect(sentence(page)).toHaveText(T2_SENTENCES[lang]![0]!);
+    // Next moves to the next step; on the last one it plays the shot (K8).
     for (const [i, text] of T2_SENTENCES[lang]!.entries()) {
-      if (i === 0) continue;
-      await steps.tap(chips.nth(i));
       await expect(sentence(page)).toHaveText(text);
+      await steps.tap(next(page));
+      await page.clock.runFor(moveFor(opened.board.frames[i]!) + 50);
     }
+    await expect(sentence(page)).toHaveText(T2_SENTENCES[lang]!.at(-1)!);
+    await expect(next(page)).toBeDisabled();
 
-    await expectOnlyWatched(page, url);
+    await expectOnlyWatched(page, opened);
     expect(steps.count).toBe(TAP_BUDGET["T5 step by step"]);
   });
 }

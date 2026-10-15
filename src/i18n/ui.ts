@@ -172,11 +172,38 @@ const en = {
   "board.removeStep": "Delete step",
   "board.qrLarge": "This code is large. If it doesn't scan, share the link.",
   "board.qrTooLarge": "This board is too big for a QR code. Share the link.",
+  // The viewer, on the pages a shared link and a QR code open (phase 15, K11)
+  "viewer.edit": "Edit a copy",
+  "viewer.prev": "Previous",
+  "viewer.next": "Next",
+  "viewer.step": "Step {n} of {count}",
+  "viewer.legend": "Legend",
+  "viewer.broken": "This link doesn't work. Ask for a new one.",
+  "viewer.noscript": "Turn on JavaScript to view this board.",
 } as const;
 
 export type UiKey = keyof typeof en;
 export type BoardKey = Extract<UiKey, `board.${string}`>;
 export type BoardStrings = Record<BoardKey, string>;
+
+/** What the viewer shows: its own texts, and the editor's that it shares (the legend, Play). */
+const viewerBoardKeys = [
+  "board.home",
+  "board.court",
+  "board.steps",
+  "board.play",
+  "board.stop",
+  "board.tool.run",
+  "board.tool.pass",
+  "board.kind.bounce",
+  "board.tool.dribble",
+  "board.kind.shot",
+  "board.kind.block",
+  "board.team.passer",
+  "board.tool.cone",
+] as const satisfies readonly BoardKey[];
+export type ViewerKey = Extract<UiKey, `viewer.${string}`> | (typeof viewerBoardKeys)[number];
+export type ViewerStrings = Record<ViewerKey, string>;
 
 /** Dutch. Its type requires every key, so no English shows under /nl/. */
 const nl: Record<UiKey, string> = {
@@ -349,6 +376,13 @@ const nl: Record<UiKey, string> = {
   "board.removeStep": "Stap verwijderen",
   "board.qrLarge": "Deze code is groot. Scant hij niet, deel dan de link.",
   "board.qrTooLarge": "Dit bord is te groot voor een QR-code. Deel de link.",
+  "viewer.edit": "Bewerk een kopie",
+  "viewer.prev": "Vorige",
+  "viewer.next": "Volgende",
+  "viewer.step": "Stap {n} van {count}",
+  "viewer.legend": "Legenda",
+  "viewer.broken": "Deze link werkt niet. Vraag om een nieuwe.",
+  "viewer.noscript": "Zet JavaScript aan om dit bord te bekijken.",
 };
 
 /** A language may leave keys out; those fall back to English. Dutch has them all. */
@@ -364,6 +398,12 @@ export function t(locale: string, key: UiKey, vars?: Record<string, string>): st
 export function boardStrings(locale: string): BoardStrings {
   const keys = (Object.keys(en) as UiKey[]).filter((k): k is BoardKey => k.startsWith("board."));
   return Object.fromEntries(keys.map((k) => [k, t(locale, k)])) as BoardStrings;
+}
+
+/** The viewer's strings, passed as a prop like boardStrings(): only the ones it shows. */
+export function viewerStrings(locale: string): ViewerStrings {
+  const keys = [...(Object.keys(en) as UiKey[]).filter((k) => k.startsWith("viewer.")), ...viewerBoardKeys] as ViewerKey[];
+  return Object.fromEntries(keys.map((k) => [k, t(locale, k)])) as ViewerStrings;
 }
 
 /** Open Graph wants language_TERRITORY. */

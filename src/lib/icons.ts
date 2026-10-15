@@ -3,31 +3,24 @@
 // in BoardEditor). Icons sit next to visible text and are decorative
 // (aria-hidden); an icon-only button needs aria-label and title. No emoji.
 
-// The icons BoardEditor draws. They are a separate object so the board's JS
-// carries only these: a bundle keeps every key of an object it imports.
+import { viewerIcons } from "./viewerIcons";
+
+// The icons BoardEditor draws: the viewer's (src/lib/viewerIcons.ts) and its
+// own. They are a separate object so the board's JS carries only these: a
+// bundle keeps every key of an object it imports.
 export const boardIcons = {
+  ...viewerIcons,
   // Board tools and actions
   move: "M12 3v18M3 12h18M12 3l-3 3m3-3 3 3m-3 15-3-3m3 3 3-3M3 12l3-3m-3 3 3 3m15-3-3-3m3 3-3 3",
-  run: "M5 19 19 5m0 0h-8m8 0v8",
-  pass: "M5 19 19 5m0 0h-8m8 0v8",
-  dribble: "M4 18c2-1 1-4 3-5s3 1 5-1-0-4 2-5 3 0 5-3m0 0h-7m7 0v7",
   cone: "M12 4 6 19h12zM4 19h16",
-  bounce: "M4 5l8 14 7-12m0 0h-5m5 0v5",
-  shot: "M4 14 14 4M10 20 20 10M14 4h6v6",
-  block: "M5 19 16 8m-5-5 10 10",
   undo: "M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-4",
   delete: "M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3",
-  court: "M5 3h14v18H5zM9 3v3h6V3",
   share: "M12 3v12m0-12-4 4m4-4 4 4M5 13v7h14v-7",
-  play: "M7 5v14l12-7z",
-  stop: "M7 7h10v10H7z",
   more: "M5 11a1 1 0 1 0 0 2 1 1 0 1 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 1 0 0-2zm7 0a1 1 0 1 0 0 2 1 1 0 1 0 0-2z",
   // My boards
   plus: "M12 5v14M5 12h14",
   folder: "M3 6h6l2 2h10v11H3z",
   check: "m5 12 5 5 9-10",
-  // The title (also on the home page, under How it works)
-  draw: "M4 20h4L19 9l-4-4L4 16zm9-13 4 4",
 } as const;
 
 export const icons = {

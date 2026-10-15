@@ -1,8 +1,9 @@
+import { readFileSync } from "node:fs";
 import { devices, type Page } from "@playwright/test";
 import { defaultBoard, defaultBoardFor } from "../src/lib/board/defaults";
 import { encode, MAX_STEPS, MAX_TEXT, MAX_TITLE } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
-import { dragPlayer, expect, fromMenu, moreButton, OLD_KEY, openBoard, STORE_KEY, test } from "./helpers";
+import { dragPlayer, expect, fromMenu, moreButton, OLD_KEY, openBoard, openViewer, STORE_KEY, test } from "./helpers";
 
 // Finding 1 and 2 in docs/metingen.md: the court scaled to the screen's width
 // only, so the full court (and, in landscape, the half court too) pushed both
@@ -305,6 +306,9 @@ test("the largest text paints with the HTML, not after the editor's JS", async (
 // only after the island's script ran, and its chunk one round trip later.
 // scripts/modulepreload.mjs puts every file a board page loads at once in the
 // head (phase 15-1 in docs/metingen.md); the QR code still loads later.
+// A shared board, for the viewer's pages: the crossing in four steps.
+const crossingLink = (JSON.parse(readFileSync(new URL("../src/lib/board/fixtures/v2-play.json", import.meta.url), "utf8")) as { link: string }).link;
+
 for (const path of ["/en/board/", "/nl/board/", "/en/board/link/", "/nl/board/link/", "/en/board/qr/", "/nl/board/qr/"]) {
   test(`${path} preloads every script it loads at once`, async ({ page }) => {
     const loaded = new Set<string>();
@@ -314,7 +318,8 @@ for (const path of ["/en/board/", "/nl/board/", "/en/board/link/", "/nl/board/li
         loaded.add(url.pathname);
       }
     });
-    await openBoard(page, "", path);
+    if (path.endsWith("/board/")) await openBoard(page, "", path);
+    else await openViewer(page, `#t=${crossingLink}`, path);
     const preloaded = await page.locator('head link[rel="modulepreload"]').evaluateAll((links) =>
       links.map((l) => l.getAttribute("href")),
     );
@@ -477,3 +482,107 @@ test("wide and low, with eight steps: the team bar fits under the list, which sc
   expect(await list.evaluate((l) => l.scrollHeight > l.clientHeight)).toBe(true);
   expect(await surface(page)).toEqual(court);
 });
+
+// ===== The viewer (phase 15-2): /<lang>/board/link/ and /board/qr/ =====
+
+/**
+ * The largest the viewer has to fit: a title of MAX_TITLE, eight steps with a
+ * sentence of MAX_TEXT each, and a legend with every item (a passer, a cone
+ * and all six kinds of arrow).
+ */
+async function fullBoardLink(): Promise<string> {
+  const crossing = JSON.parse(readFileSync(new URL("../src/lib/board/fixtures/v2-play.json", import.meta.url), "utf8")).board;
+  const frames = Array.from({ length: MAX_STEPS }, (_, i) => {
+    const f = structuredClone(crossing.frames[i % crossing.frames.length]);
+    f.players[7].team = "p";
+    f.text = `${i + 1} ${"Wie, wat en waar in deze stap, zodat iedereen het in de zaal meteen begrijpt. ".repeat(3)}`.slice(0, MAX_TEXT);
+    if (i === 1) f.arrows[1].kind = "bounce";
+    return f;
+  });
+  return encode({ ...crossing, title: "T".repeat(MAX_TITLE - 9) + " kruising", cones: [[40, 160]], frames });
+}
+
+const VIEWER_SIZES = {
+  "portrait 320": { width: 320, height: 568 },
+  "portrait 360": { width: 360, height: 740 },
+  "portrait 390": { width: 390, height: 844 },
+  "landscape 568": { width: 568, height: 320 },
+  "landscape 844": { width: 844, height: 390 },
+  "wide 860": { width: 860, height: 560 },
+  "wide 1280": WIDE,
+};
+
+for (const lang of ["en", "nl"]) {
+  for (const [name, size] of Object.entries(VIEWER_SIZES)) {
+    test(`viewer, ${lang}, ${name}: every button on screen and big enough, no label cut off`, async ({ page }) => {
+      await page.setViewportSize(size);
+      await openViewer(page, `#t=${await fullBoardLink()}`, `/${lang}/board/link/`);
+      for (const target of await page.locator(".viewer :is(.controls button, .edit, .home):visible").all()) {
+        await expect(target).toBeInViewport({ ratio: 1 });
+        expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+      }
+      await expect(page.locator(".viewer .stage svg")).toBeInViewport({ ratio: 1 });
+      await expect(page.locator(".viewer .legend")).toBeInViewport({ ratio: 1 });
+      const cut = await page
+        .locator(".viewer :is(.controls, .edit) span:visible")
+        .evaluateAll((spans) => spans.filter((s) => s.scrollWidth > s.clientWidth).map((s) => s.textContent));
+      expect(cut).toEqual([]);
+      const overflow = await page.evaluate(() => ({
+        x: document.documentElement.scrollWidth - innerWidth,
+        y: document.documentElement.scrollHeight - innerHeight,
+      }));
+      expect(overflow).toEqual({ x: 0, y: 0 });
+    });
+  }
+}
+
+// K10: "Edit a copy" keeps its label as long as it fits beside the title: from 360 px.
+for (const lang of ["en", "nl"]) {
+  test(`viewer, ${lang}: Edit a copy shows its label from 360 px, below that only the pencil`, async ({ page }) => {
+    const label = page.locator(".viewer .edit span");
+    await page.setViewportSize({ width: 360, height: 740 });
+    await openViewer(page, `#t=${await fullBoardLink()}`, `/${lang}/board/link/`);
+    await expect(label).toBeVisible();
+    // The title keeps room for a few words a line.
+    expect((await page.locator(".viewer .title").boundingBox())!.width).toBeGreaterThanOrEqual(120);
+    await page.setViewportSize({ width: 359, height: 740 });
+    await expect(label).toBeHidden();
+    await expect(page.locator(".viewer .edit")).toHaveAttribute("aria-label", t(lang, "viewer.edit"));
+  });
+}
+
+test("viewer, wide: every step with its sentence, the one on the court marked", async ({ page }) => {
+  await page.setViewportSize(WIDE);
+  await openViewer(page, `#t=${await fullBoardLink()}`);
+  const steps = page.locator(".viewer .all button");
+  await expect(steps).toHaveCount(MAX_STEPS);
+  await expect(steps.first()).toHaveAttribute("aria-current", "step");
+  await steps.nth(2).click();
+  await expect(steps.nth(2)).toHaveAttribute("aria-current", "step");
+  await expect(page.locator(".viewer .count [aria-hidden]")).toHaveText(`3/${MAX_STEPS}`);
+});
+
+// As for the editor (finding 14): the viewer replaces its fallback without moving the court.
+for (const orientation of ORIENTATIONS) {
+  test(`viewer, ${orientation}: the court stays put when the viewer loads`, async ({ page }) => {
+    await orient(page, orientation);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    await page.route(/\/_astro\/.*\.js$/, async (route) => {
+      await gate;
+      await route.continue();
+    });
+    await page.goto(`/en/board/link/#t=${crossingLink}`, { waitUntil: "commit" });
+    const court = page.locator(".viewer .stage svg > rect:first-of-type");
+    await expect(court).toBeInViewport({ ratio: 1 });
+    // Test 16: no default lineup before the shared board.
+    await expect(page.locator(".viewer .stage [data-kind=player]")).toHaveCount(0);
+    const before = (await court.boundingBox())!;
+    release();
+    await expect(page.locator(".viewer .play:enabled")).toBeVisible();
+    const after = (await court.boundingBox())!;
+    for (const key of ["x", "y", "width", "height"] as const) {
+      expect(Math.abs(after[key] - before[key]), `${key}: ${JSON.stringify(before)} → ${JSON.stringify(after)}`).toBeLessThanOrEqual(1);
+    }
+  });
+}

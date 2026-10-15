@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
 import { t } from "../src/i18n/ui";
 import { allPages, chooseFile, downloaded, dragPlayer, expect, fromMenu, openBoard, savedBoards, test, watchViolations } from "./helpers";
@@ -15,6 +16,10 @@ const headers = {
   "cross-origin-opener-policy": "same-origin",
 };
 
+/** The viewer's pages need a board in #t=; without one they send you to the editor. */
+const shared = (JSON.parse(readFileSync(new URL("../src/lib/board/fixtures/v2-play.json", import.meta.url), "utf8")) as { link: string }).link;
+const withBoard = (path: string) => (/\/board\/(?:link|qr)\/$/.test(path) ? `${path}#t=${shared}` : path);
+
 /** The board and the pages for shared boards: the only ones with the beacon. */
 const isBoard = (path: string) => /^\/[^/]+\/board\/(?:(?:link|qr)\/)?$/.test(path);
 
@@ -30,7 +35,7 @@ test("every language's board pages are among the pages checked here", () => {
 
 for (const path of allPages()) {
   test(`security headers and CSP on ${path}`, async ({ page }) => {
-    const response = await page.goto(path);
+    const response = await page.goto(withBoard(path));
     // Deployed, Cloudflare leaves _headers off the 404 page; `wrangler dev` adds
     // them. Only the <meta> CSP reaches it (docs/metingen.md, finding 15).
     if (response!.status() !== 404) {
@@ -57,7 +62,7 @@ for (const path of allPages()) {
   test(`no script from another origin on ${path}`, async ({ page }) => {
     const requested: string[] = [];
     page.on("request", (r) => void (r.resourceType() === "script" && requested.push(r.url())));
-    await page.goto(path, { waitUntil: "load" });
+    await page.goto(withBoard(path), { waitUntil: "load" });
     const inPage = await page.evaluate(() => [...document.scripts].map((s) => s.src).filter(Boolean));
     const origin = new URL(page.url()).origin;
     const foreign = [...new Set([...requested, ...inPage])].filter((url) => new URL(url).origin !== origin);
@@ -66,7 +71,7 @@ for (const path of allPages()) {
 
   test(`no CSP violations on ${path}`, async ({ page }) => {
     const violations = await watchViolations(page);
-    await page.goto(path);
+    await page.goto(withBoard(path));
     expect(await violations()).toEqual([]);
   });
 }

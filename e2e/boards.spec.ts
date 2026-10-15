@@ -84,7 +84,7 @@ test.describe("saving", () => {
   test("editing a received link makes a new board, and yours stays", async ({ page, context }) => {
     const own = JSON.parse(await saveOwnBoard(page))[0];
     const other = await context.newPage();
-    await openBoard(other, `#t=${play.link}`, "/en/board/link/");
+    await openBoard(other, `#t=${play.link}`);
     await settled(other);
     expect(await savedBoards(other)).toEqual([own]);
 
@@ -166,7 +166,7 @@ test.describe("reloading", () => {
   });
 
   test("a shared link: reload, edit makes one new board", async ({ page }) => {
-    await openBoard(page, `#t=${play.link}`, "/en/board/link/");
+    await openBoard(page, `#t=${play.link}`);
     await reload(page);
     await editAndCount(page, 1);
     await reload(page);

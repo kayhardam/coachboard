@@ -37,16 +37,19 @@ export default defineConfig({
         build: {
           rolldownOptions: {
             output: {
-              // The board's JS in one file: the Svelte runtime, Astro's Svelte
-              // renderer and the editor. Without this they are three chunks,
-              // with import and export lists between them (0.9 KB more).
-              // The QR code (uqr, src/lib/board/qr.ts) stays out, so it keeps
-              // loading later, and so does the inline script in board.astro.
+              // One chunk the editor and the viewer share: the Svelte runtime,
+              // Astro's Svelte renderer, the court and what reads and plays a
+              // board (decision K1, phase 15). The editor's own code stays in
+              // its entry chunk, and so does the viewer's: the viewer never
+              // loads the editor. A module both use must fall in this group, or
+              // it becomes a chunk of its own: another request, and import and
+              // export lists. The QR code (uqr, src/lib/board/qr.ts) stays out,
+              // so it keeps loading later, and so does the inline script in board.astro.
               codeSplitting: {
                 groups: [
                   {
                     name: "board",
-                    test: /node_modules\/(svelte|clsx|esm-env|@astrojs\/svelte)\/|src\/components\/board\/|src\/lib\/(icons|board\/(?!qr))/,
+                    test: /node_modules\/(svelte|clsx|esm-env|@astrojs\/svelte)\/|src\/components\/board\/Court\.svelte|src\/lib\/(viewerIcons|board\/(format|geometry|moves|play|newer))\./,
                   },
                 ],
               },

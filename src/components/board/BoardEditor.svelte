@@ -8,7 +8,8 @@
   import type { BoardStrings } from "../../i18n/ui";
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
-  import { decode, encode, isNewerLink, MAX_STEPS, MAX_TEXT, MAX_TITLE, toBoard, type Board } from "../../lib/board/format";
+  import { decode, encode, MAX_STEPS, MAX_TEXT, MAX_TITLE, sameBoard, toBoard, type Board } from "../../lib/board/format";
+  import { reloadForNewer } from "../../lib/board/newer";
   import { SETUPS, setup } from "../../lib/board/defaults";
   import { moment } from "../../lib/board/play";
   import { endOf } from "../../lib/board/moves";
@@ -38,8 +39,8 @@
     | { type: "handle"; index: number; handle: 0 | 1 | 2; start: Board; moved: boolean }
     | { type: "draw"; kind: "run" | "pass"; from: XY; player?: number; hit: Selection | null; origin: XY; moved: boolean };
 
-  /** The last link that reloaded this tab, so it reloads only once (sessionStorage). */
-  const RELOADED_KEY = "coachboard.reloaded";
+  /** Where the viewer's "Edit a copy" leaves the link it opens (sessionStorage). */
+  const COPY_KEY = "coachboard.copy";
   const HISTORY = 100;
   /** Pointer travel (dm) before a press counts as a drag rather than a tap. */
   const DRAG_START = 1.5;
@@ -325,25 +326,6 @@
     return decode(decodeURIComponent(location.hash.slice(3)));
   }
 
-  /**
-   * A link from a newer version reloads the page once: a tab opened before a
-   * deploy runs the old code, and the reload fetches the code that reads it.
-   * If that code doesn't read it either, the notice for a broken link follows.
-   */
-  function reloadForNewer(): boolean {
-    const link = decodeURIComponent(location.hash.slice(3));
-    if (!isNewerLink(link)) return false;
-    try {
-      if (sessionStorage.getItem(RELOADED_KEY) === link) return false;
-      sessionStorage.setItem(RELOADED_KEY, link);
-    } catch {
-      // No storage, so no way to stop at one reload: show the notice.
-      return false;
-    }
-    location.reload();
-    return true;
-  }
-
   /** The board you had on workers.dev, brought along as #own= by the redirect in board.astro. */
   function movedBoard(): Board | undefined {
     if (!location.hash.startsWith("#own=")) return undefined;
@@ -358,10 +340,21 @@
     const idle = window.requestIdleCallback ?? ((run: () => void) => setTimeout(run, 500));
     idle(() => loadQr().catch(() => (qrLibrary = undefined)));
 
+    // "Edit a copy" in the viewer leaves the link it opens here. Removed at
+    // once, whatever it holds: it counts only for this opening, and only for
+    // the link in the address bar, so an old one keeps no other board.
+    let copy: string | null = null;
+    try {
+      copy = sessionStorage.getItem(COPY_KEY);
+      sessionStorage.removeItem(COPY_KEY);
+    } catch {
+      // No storage: the board opens as a received one, kept at its first change.
+    }
+
     (async () => {
       const shared = await fromHash();
       // Before `loaded`, so the save doesn't replace the link in the address bar.
-      if (shared === null && reloadForNewer()) return;
+      if (shared === null && reloadForNewer(decodeURIComponent(location.hash.slice(3)))) return;
       const list = readList() ?? { current: null, boards: [] };
       boards = list.boards;
       const find = (id: unknown) => list.boards.find((s) => s.id === id);
@@ -373,8 +366,15 @@
       const was = Number(history.state?.step) || 0;
       const last = find(list.current);
       if (!own && last && (!shared || (await encode(last.board)) === (await encode(shared)))) own = last;
+      // A copy: the same board in My boards opens; else it is kept at once.
+      const isCopy = !!shared && copy === decodeURIComponent(location.hash.slice(3));
+      if (!own && isCopy) own = list.boards.find((s) => sameBoard(s.board, shared));
       if (own) open(own.board, own.id);
-      else if (shared) open(shared, null);
+      else if (shared) {
+        open(shared, null);
+        // Not as it was opened: the first save keeps it.
+        if (isCopy) kept = keptLink = null;
+      }
       if (own || shared) step = Math.min(was, board.frames.length - 1);
       else {
         // The board you had on workers.dev, only on a device without boards
@@ -395,7 +395,7 @@
       const shared = own ? undefined : await fromHash();
       if (own) open(own.board, own.id);
       else if (shared) open(shared, null);
-      else if (shared === null && !reloadForNewer()) show(strings["board.invalidLink"], true);
+      else if (shared === null && !reloadForNewer(decodeURIComponent(location.hash.slice(3)))) show(strings["board.invalidLink"], true);
       if (own || shared) step = Math.min(was, board.frames.length - 1);
     };
     addEventListener("hashchange", onHash);

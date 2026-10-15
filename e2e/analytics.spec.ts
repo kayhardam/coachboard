@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { analyticsToken, beaconSrc } from "../src/data/analytics";
 import type { BoardV1 } from "../src/lib/board/format";
-import { dragPlayer, expect, expectBoard, linkInAddressBar, openBoard, STORE_KEY, test, watchViolations } from "./helpers";
+import { dragPlayer, expect, expectBoard, linkInAddressBar, openViewer, test, watchViolations } from "./helpers";
 
 // The statistics beacon (Cloudflare Web Analytics) on the board pages; see
 // src/components/Beacon.astro. Other specs answer it with an empty script.
@@ -10,16 +10,25 @@ const fixture = JSON.parse(
   readFileSync(new URL("../src/lib/board/fixtures/v1-full-lineup.json", import.meta.url), "utf8"),
 ) as { link: string; board: BoardV1 };
 
-for (const path of ["/en/board/", "/en/board/link/", "/en/board/qr/"]) {
-  test(`the board on ${path} doesn't wait for the beacon`, async ({ page }) => {
-    // The beacon never arrives: the editor must load and work all the same.
-    // (The load event does wait for it, so goto waits only for the response.)
+test("the editor on /en/board/ doesn't wait for the beacon", async ({ page }) => {
+  // The beacon never arrives: the editor must load and work all the same.
+  // (The load event does wait for it, so goto waits only for the response.)
+  await page.route(beaconSrc, () => {});
+  await page.goto(`/en/board/#t=${fixture.link}`, { waitUntil: "commit" });
+  await expectBoard(page, fixture.board);
+  await dragPlayer(page, 5, 30, 30);
+  await expect.poll(() => page.url()).not.toContain(fixture.link);
+  expect(new URL(await linkInAddressBar(page)).pathname).toBe("/en/board/");
+});
+
+for (const path of ["/en/board/link/", "/en/board/qr/"]) {
+  test(`the viewer on ${path} doesn't wait for the beacon`, async ({ page }) => {
     await page.route(beaconSrc, () => {});
     await page.goto(`${path}#t=${fixture.link}`, { waitUntil: "commit" });
     await expectBoard(page, fixture.board);
-    await dragPlayer(page, 5, 30, 30);
-    await expect.poll(() => page.url()).not.toContain(fixture.link);
-    expect(new URL(await linkInAddressBar(page)).pathname).toBe(path);
+    // One step: Next plays its move, and then there is nothing further.
+    await page.getByRole("button", { name: "Next" }).click();
+    await expect(page.getByRole("button", { name: "Next" })).toBeDisabled();
   });
 }
 
@@ -28,12 +37,13 @@ test("the real beacon sends no board and stores nothing", async ({ page, context
   await page.route(beaconSrc, async (route) => route.fulfill({ response: await route.fetch() }));
   const violations = await watchViolations(page);
 
-  await openBoard(page, `?via=test#t=${fixture.link}`, "/en/board/link/");
+  await openViewer(page, `?via=test#t=${fixture.link}`);
   await expectBoard(page, fixture.board);
-  await dragPlayer(page, 5, 30, 30);
-  // The edit is saved: My boards' key is the only thing in storage.
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByRole("button", { name: "Next" })).toBeDisabled();
+  // The viewer keeps nothing: watching changes no storage.
   const storage = () => page.evaluate(() => ({ local: Object.keys(localStorage), session: sessionStorage.length }));
-  await expect.poll(storage).toEqual({ local: [STORE_KEY], session: 0 });
+  expect(await storage()).toEqual({ local: [], session: 0 });
   expect(await violations()).toEqual([]);
 
   // The beacon sends on load and again when the page is left. WebKit doesn't

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { renderSVG } from "uqr";
 import type { BoardV1 } from "../src/lib/board/format";
-import { dragPlayer, expect, expectBoard, fromMenu, linkInAddressBar, openBoard, test } from "./helpers";
+import { dragPlayer, expect, expectBoard, fromMenu, linkInAddressBar, openBoard, openViewer, test } from "./helpers";
 
 test("the QR dialog shows a QR code", async ({ page }) => {
   await openBoard(page);
@@ -53,7 +53,7 @@ for (const via of ["link", "qr"]) {
     const { link, board } = JSON.parse(
       readFileSync(new URL("../src/lib/board/fixtures/v1-full-lineup.json", import.meta.url), "utf8"),
     ) as { link: string; board: BoardV1 };
-    await openBoard(page, `#t=${link}`, `/en/board/${via}/`);
+    await openViewer(page, `#t=${link}`, `/en/board/${via}/`);
     await expectBoard(page, board);
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex");
     await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
