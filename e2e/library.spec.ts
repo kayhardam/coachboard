@@ -52,3 +52,33 @@ test("on a phone the steps stand one under the other; wider, side by side and le
   const four = await tops();
   expect(four.slice(1, 4)).toEqual([four[0], four[0], four[0]]);
 });
+
+for (const [width, height] of [
+  [844, 390],
+  [740, 360],
+]) {
+  test(`in landscape (${width} × ${height}) each step fits on the screen with its sentence, below the header`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    for (const slug of items) {
+      await page.goto(`/nl/tactics/${slug}/`);
+      const header = await page.locator(".site-header").evaluate((h) => h.getBoundingClientRect().height);
+      const steps = await page.locator(".strip figure").evaluateAll((figures) => figures.map((f) => f.getBoundingClientRect().height));
+      for (const step of steps) expect(step + header).toBeLessThanOrEqual(height);
+    }
+  });
+}
+
+test("in portrait the drawing keeps the full width of the column", async ({ page }) => {
+  for (const [width, height] of [
+    [320, 568],
+    [360, 740],
+    [390, 844],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/nl/tactics/fast-break-second-wave/");
+    const boxes = await page.locator(".strip > li").evaluateAll((steps) =>
+      steps.map((li) => [li.getBoundingClientRect().width, li.querySelector(".court")!.getBoundingClientRect().width]),
+    );
+    for (const [column, court] of boxes) expect(court).toBe(column);
+  }
+});

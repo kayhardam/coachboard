@@ -3332,3 +3332,12 @@ T1 4 / T2 16 / T3 5 / T4 20 (10 met links) / T5 1 en 4: gelijk. Ze lopen over de
   - **Controle** (tijdelijk, niet gecommit): zonder `subgrid` faalt de uitlijning (917 tegen 930 px).
 - **`e2e/tactics.spec.ts`:** de editor opent met de titel, 4 stappen en de zin van stap 1; vergelijkt met stap 1 van de strip.
 - **`npm run e2e`:** 726 geslaagd, 2 overgeslagen (was 716).
+
+### Na de review (16 oktober 2026)
+
+Review van PR #48 door Kay, opgelost in dezelfde PR.
+
+- **Liggend past een stap met zijn zin op het scherm.** Nagemeten door Kay op 844 × 390: het kader van stap 1 was 396 px hoog, het scherm 390 px, met de zin erboven. Nu is de tekening hoogstens zo hoog als het scherm (`100svh`) min de vaste kop (65 px), 8 px erboven en eronder, een zin van drie regels en de rand; zonder nieuw breekpunt. Op 844 × 390 is een stap nu 284 px hoog (de kop erbij: 349 px). Staand verandert niets: de tekening vult de kolom, hoogstens 420 px.
+  - **Test:** op 844 × 390 en 740 × 360 past elke stap van beide tactieken met zijn zin onder de kop; staand op 320, 360 en 390 px is de tekening zo breed als de kolom. Controle: zonder de begrenzing falen beide liggende tests.
+- **De controle op de vaste spatie** vangt nu elk getal met "meter" (ook "7 meter", "16 meters"), in de frontmatter én in de Markdown-tekst onder een item (`checkMeters()`). Controle: "Neem de 7 meter." onder de 6-0-dekking laat de build falen.
+- **Groottes** (macOS, gzip): HTML 6-0-dekking 5.675 → 5.706 B (+31, de begrenzing); CSS en alle JS gelijk (1.698 en 41.834 B; op Linux 41.975 B).

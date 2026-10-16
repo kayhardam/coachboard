@@ -2,7 +2,7 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import { locales } from "../i18n/locales";
 import { AGES, categorySlugs } from "./categories";
-import { breakableMeters, checkLibrary, itemPath, parseId, type ItemType } from "../lib/library";
+import { checkLibrary, checkMeters, itemPath, parseId, type ItemType } from "../lib/library";
 
 export type { ItemType };
 
@@ -29,12 +29,7 @@ async function allItems(): Promise<Item[]> {
     locales,
     categorySlugs,
   );
-  // A no-break space keeps "6 meter" on one line, on a phone and on paper.
-  for (const e of entries) {
-    for (const found of breakableMeters(JSON.stringify(e.data))) {
-      errors.push(`"${e.id}": write "${found}" with a no-break space (U+00A0)`);
-    }
-  }
+  errors.push(...checkMeters(entries));
   if (errors.length > 0) {
     throw new Error(`Invalid items in src/content/library/:\n  - ${errors.join("\n  - ")}`);
   }

@@ -35,9 +35,21 @@ export function stepsHaveText(board: Board): boolean {
   return board.frames.every((frame) => Boolean(frame.text?.trim()));
 }
 
-/** "6 meter" or "9 meter" with a plain space, which can break over two lines. */
+/** A number and "meter" with a plain space ("6 meter", "7 meters"), which can break over two lines. */
 export function breakableMeters(text: string): string[] {
-  return [...text.matchAll(/\b[69] meter/g)].map((m) => m[0]);
+  return [...text.matchAll(/\b\d+ meter/g)].map((m) => m[0]);
+}
+
+/**
+ * Every number and "meter" in an item, its frontmatter and its Markdown body,
+ * needs a no-break space (U+00A0), so it stays on one line on a phone and on paper.
+ */
+export function checkMeters(entries: { id: string; data: unknown; body?: string }[]): string[] {
+  return entries.flatMap(({ id, data, body }) =>
+    [...breakableMeters(JSON.stringify(data)), ...breakableMeters(body ?? "")].map(
+      (found) => `"${id}": write "${found}" with a no-break space (U+00A0)`,
+    ),
+  );
 }
 
 /** The drawing without labels and sentences, with its keys in a fixed order. */

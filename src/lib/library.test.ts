@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Board } from "./board/format";
-import { breakableMeters, checkLibrary, itemPath, parseId, sameDrawing, stepsHaveText, type ItemRef } from "./library";
+import { breakableMeters, checkLibrary, checkMeters, itemPath, parseId, sameDrawing, stepsHaveText, type ItemRef } from "./library";
 
 const board = (label = "LB", text = "One step."): Board => ({
   v: 2,
@@ -52,9 +52,24 @@ describe("stepsHaveText", () => {
 });
 
 describe("breakableMeters", () => {
-  it("finds 6 and 9 meter with a plain space, not with a no-break space", () => {
+  it("finds any number and meter with a plain space, not with a no-break space", () => {
+    expect(breakableMeters("de 7 meter, 16 meters en 9 meter")).toEqual(["7 meter", "16 meter"]);
     expect(breakableMeters("net buiten de 6 meter, voor de 9 meter")).toEqual(["6 meter"]);
-    expect(breakableMeters("de 9 meter en 16 meter")).toEqual(["9 meter"]);
+  });
+});
+
+describe("checkMeters", () => {
+  it("checks the frontmatter and the Markdown body", () => {
+    expect(
+      checkMeters([
+        { id: "nl/a", data: { summary: "Net buiten de 6 meter." }, body: "Neem de 7 meter." },
+        { id: "nl/b", data: { board: { frames: [{ text: "Vanaf 9 meter." }] } } },
+        { id: "nl/c", data: { summary: "Op de 9 meter." }, body: "Bij de 7 meter." },
+      ]),
+    ).toEqual([
+      '"nl/a": write "7 meter" with a no-break space (U+00A0)',
+      '"nl/b": write "9 meter" with a no-break space (U+00A0)',
+    ]);
   });
 });
 
