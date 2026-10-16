@@ -3306,6 +3306,21 @@ Branch `fase-16-1-schema-strip`, vanaf `main` @ `4ceafd4` (merge van #45). Beslu
 - **`libraryHtml` (L7)** geldt voor een pagina met een eigen `og.png` naast zich onder `tactics/` of `drills/`; de onderwerppagina's houden `html` 6,5 KB. Het grootste item dat het schema toelaat (8 verschillende stappen van 100 tekens, 3 verwante items): de tweede golf (6 stappen, 6.178 B) plus 2 stappen en 2 verwante items ≈ 7,3 KB.
 - Overzicht en onderwerppagina's worden kleiner: de meta is korter en de kaart van de 6-0-dekking toont stap 1, de opstelling zonder pijlen.
 
+### Lighthouse
+
+Drie runs per URL, Lighthouse 13.5.0, mobiel. Vóór: productie. Na: de preview (`fase-16-1-schema-strip-coachboard.hardamkay.workers.dev`). SEO pas na de merge, op productie. Performance, Accessibility en Best Practices 100, CLS 0 en TBT 0 ms op elke run, vóór en na. Het LCP-element is tekst uit de HTML (FCP = LCP).
+
+| URL | Echte vertraging, LCP vóór | na | Gesimuleerd, LCP vóór | na | Overdracht vóór → na |
+|---|--:|--:|--:|--:|--:|
+| `/nl/tactics/6-0-defense-basics/` | 1,37 / 1,36 / 1,36 s | 1,36 / 1,36 / 1,37 s | 0,92 / 0,88 / 0,85 s | 0,88 / 0,92 / 0,86 s | 8,8 → 9,6 KB |
+| `/nl/tactics/fast-break-second-wave/` | 1,35 / 1,34 / 1,35 s | 1,34 / 1,37 / 1,36 s | 0,86 / 0,85 / 0,85 s | 0,94 / 0,90 / 0,92 s | 8,4 → 10,1 KB |
+
+- **Echte vertraging (beslist): gelijk.** Gesimuleerd op de tweede golf ongeveer 0,06 s later, door 1,7 KB meer HTML.
+
+### CI (Linux)
+
+`npm run budget` in CI: alle JS 42,0 KB (gelijk aan `main`: de JS verandert niet), HTML 6-0-dekking 5,7 KB en tweede golf 6,2 KB (budget 7,5).
+
 ### Meettaken
 
 T1 4 / T2 16 / T3 5 / T4 20 (10 met links) / T5 1 en 4: gelijk. Ze lopen over de bordpagina's; `tasks.spec.ts` is groen.
