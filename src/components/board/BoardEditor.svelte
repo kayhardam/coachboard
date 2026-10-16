@@ -898,7 +898,9 @@
 
   async function copyJson() {
     menuOpen = false;
-    await navigator.clipboard.writeText(JSON.stringify(board));
+    // Without its title, ready to paste as a library item's `board:`.
+    const { title: _title, ...drawing } = board;
+    await navigator.clipboard.writeText(JSON.stringify(drawing));
     show("Board JSON copied.");
   }
 </script>

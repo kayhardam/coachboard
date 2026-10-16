@@ -27,7 +27,7 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
 
 - Tests sit next to the code: `*.test.ts` in `src/`, `*.test.mjs` in `scripts/`.
 - Vitest runs through Astro's Vite config (`getViteConfig` in `vitest.config.ts`), so a test can import a `.svelte` file and render it with `svelte/server` (see `Court.test.ts`).
-- `src/lib/` is plain TypeScript with no `astro:` imports, so vitest can test it. Code that needs `astro:content` goes in `src/data/` and calls into `src/lib/`: `src/data/tactics.ts` loads the collection and runs `checkTactics()` from `src/lib/tactics.ts`.
+- `src/lib/` is plain TypeScript with no `astro:` imports, so vitest can test it. Code that needs `astro:content` goes in `src/data/` and calls into `src/lib/`: `src/data/library.ts` loads the collection and runs `checkLibrary()` from `src/lib/library.ts`.
 - `src/data/categories.ts` must not import from `astro:` either, because `src/content.config.ts` imports it.
 - End-to-end tests are in `e2e/*.spec.ts`, with shared steps in `e2e/helpers.ts`:
   - compare boards by the pieces the editor draws (`pieces()`), not by the link text: compression can give other bytes per browser;
@@ -114,7 +114,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 - **`edit.ts` is pure:** every operation returns a new board. Where pieces go within a step (`endOf()`, `ballTrips()`, `ballsAfter()`) is in `moves.ts`, which `edit.ts` and `play.ts` both use, so a page that only plays a board needs none of the editing operations. The editor keeps the board in `$state.raw`, and undo is a list of earlier boards. The editor edits one step at a time: every operation on pieces, arrows and balls takes the step (`step`); adding or removing a player, changing a team, cones and the court size go to every step. A change in a step carries on into the later ones (`follow()`): a player (or ball) who stood where they ended the step before moves along, one moved there by hand keeps their place. The steps:
   - `addStep()` (New step) inserts a step after the given one: everyone where they end it (`endOf()`), the balls where they end it (`ballsAfter()`: with whoever has one, within 26 dm; with a pass, bounce or shot to its end, beside whoever stands there; after a shot, in the goal), no arrows, no sentence. Up to `MAX_STEPS`;
   - `removeStep()` keeps at least one; `setText()` keeps a sentence as one trimmed line of at most `MAX_TEXT`, like `setTitle()`. An arrow drawn from a player gets `from`; dragging the whole arrow lets go of the player, and its start handle, let go on a player, gives the arrow to them. An arrow of a player has no start handle (a drag there moves the player).
-- **`Court.svelte` stays pure SVG**, with no browser APIs, so Astro can render it without JS (the home page, the board's fallback, tactic pages and their thumbnails). Pieces carry `data-kind` and `data-index`; the editor finds them with event delegation. Colours are SVG attributes, not CSS variables, so `courtPng()` can render it to a PNG on the server. From step 2 on (`frame`), it draws where the players who moved stood in the step before: a thin grey dotted line and ring (`.trails`), without a head, so it doesn't look like a pass or a bounce; under the arrows and players, without `data-kind` and with `pointer-events="none"`, so it can't be tapped.
+- **`Court.svelte` stays pure SVG**, with no browser APIs, so Astro can render it without JS (the home page, the board's fallback, the steps on tactic pages and their thumbnails). Pieces carry `data-kind` and `data-index`; the editor finds them with event delegation. Colours are SVG attributes, not CSS variables, so `courtPng()` can render it to a PNG on the server. From step 2 on (`frame`), it draws where the players who moved stood in the step before: a thin grey dotted line and ring (`.trails`), without a head, so it doesn't look like a pass or a bounce; under the arrows and players, without `data-kind` and with `pointer-events="none"`, so it can't be tapped.
 - **Board pages:** three per language, each with the statistics beacon:
   - `/<lang>/board/`: the editor (`src/components/board/BoardPage.astro`, used by `src/pages/[lang]/board.astro`, which adds the workers.dev redirect). Old links to `/board/#t=…` and "Open in the board" from the library open here (decision 12);
   - `/<lang>/board/link/` and `/<lang>/board/qr/`: the viewer (`src/components/board/ViewerPage.astro`), where Share and the QR code point, so the statistics count opened shared boards per channel (the beacon drops `?` and `#`, so only a path can tell them apart). They are `noindex` and left out of the sitemap (`filter` in `astro.config.mjs`);
@@ -164,27 +164,34 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 - **Testing in a browser:** `npm run e2e` for the core flow; by hand, the Chrome extension, or headless Chrome over the DevTools protocol with `Emulation.setTouchEmulationEnabled` and `Input.dispatchTouchEvent`. Call `Page.bringToFront` first; a background tab ignores touch input.
 - **Measuring against a local build** (`wrangler dev`, a copy of the repo): block the statistics beacon, so no test traffic reaches the real dashboard. Lighthouse: add `--blocked-url-patterns="*cloudflareinsights.com*"` to every run. Your own Playwright scripts: route every other host (`context.route((url) => url.hostname !== "127.0.0.1", …)`), answer `beacon.min.js` with an empty script (CORS `*`) and abort the rest, as `stubBeacon()` in `e2e/helpers.ts` does for the tests.
 
-## Tactics content
+## Library content
 
-- **One Markdown file per tactic and language:** `src/content/tactics/<lang>/<slug>.md`. The entry id is `<lang>/<slug>` and the page is `/<lang>/tactics/<slug>/`. A translation gets the same file name in another language folder. Path segments and slugs are English in every language (`/nl/tactics/<slug>/`).
-- **Only the type is in the URL, not the category,** so a tactic can change category without moving. Category pages share the level (`/<lang>/tactics/attack/`), so `checkTactics()` fails the build on a slug that equals a category. Later, drills get `/<lang>/drills/<slug>/`.
+Tactics now; drills follow in phase 16-3 (decisions L1–L13 in the product plan).
+
+- **One collection, `library`, one Markdown file per item and language:** `src/content/library/<lang>/<slug>.md`, with its `type` (`tactic`) in the frontmatter. The entry id is `<lang>/<slug>` and a tactic's page is `/<lang>/tactics/<slug>/`. A translation gets the same file name in another language folder, with the same type. Path segments and slugs are English in every language (`/nl/tactics/<slug>/`).
+- **Only the type is in the URL, not the category,** so an item can change category without moving. Category pages share the level (`/<lang>/tactics/attack/`), so `checkLibrary()` fails the build on a slug that equals a category. Drills will get `/<lang>/drills/<slug>/`.
 - **A page that moves keeps its old URL working:** a 301 in `public/_redirects` (with and without the trailing slash, and its `og.png`) and a test in `e2e/routing.spec.ts`. The tactic pages moved from `tactics/<category>/<slug>/` in phase 10.
-- **The schema** is in `src/content.config.ts`:
-  - `title`, `theme`, `level`;
-  - `summary`: at least 50 characters, and also the meta description;
+- **The schema** is in `src/content.config.ts` (a `discriminatedUnion` on `type`):
+  - `title`: at most `MAX_TITLE`, because "Open in the board" gives it to the board;
   - `category`: one of `categorySlugs`;
-  - `steps` (at least one), `coachingPoints`;
-  - `related`: full ids in the same language, e.g. `en/fast-break-second-wave`;
-  - `board`: checked with `isBoard()`.
+  - `ages`: a run of `AGES` without a gap, youngest first; the page shows the first and the last ("C-jeugd t/m senioren");
+  - `level`: one of `LEVELS` (basic, intermediate, advanced);
+  - `summary`: at least 50 characters, and also the meta description;
+  - `coachingPoints`;
+  - `related`: at most 3 full ids in the same language, e.g. `en/fast-break-second-wave`, of any type ("See also");
+  - `board`: checked with `isBoard()`, with a sentence in every step (`frames[i].text`, `stepsHaveText()`) and no `title` of its own.
   - The Markdown body is optional extra text below the steps.
 - **The build fails** on:
-  - an invalid board or an unknown category (the schema);
+  - an invalid board, a step without its sentence, a board with a title, an unknown category, age group or level (the schema);
   - a `related` id that doesn't exist (`reference()`);
-  - a `related` that points at itself or another language, a file outside a language folder, or a slug that is a category (`checkTactics()` in `src/lib/tactics.ts`, called by `src/data/tactics.ts`).
-- **Diagrams:** draw the play at `/<lang>/board/` in `npm run dev`, press "JSON" (dev only) and paste the output as `board:` (a version 2 board: `v: 2`, `cones`, `balls`). A translation keeps the board and uses its language's labels (the Dutch tactics have LH, LO, MO and so on). JSON is valid YAML. The existing files write it in YAML flow style, one player or arrow per line, which is easier to review. Tactic pages show `frames[0]` (step 1), as do share images and the thumbnails in My boards.
-- **Categories:** `categorySlugs` in `src/data/categories.ts` is the only list. Their texts are the `category.<slug>.*` keys in `ui.ts`, and each has an icon of the same name in `icons.ts`. A category page and its card exist only when that language has a tactic in it, so no empty pages get indexed.
-- **Links into the board:** "Open in the board" carries the diagram in `#t=`, encoded at build time.
-- **Share image:** `src/pages/[lang]/tactics/[slug]/og.png.ts` renders the diagram with `courtPng()` (`svelte/server` + `sharp`) as a 1200×630 PNG next to the page. The only text in it is the player labels; without a font they drop out, and the build still passes.
+  - from `checkLibrary()` in `src/lib/library.ts`, called by `src/data/library.ts`: a `related` that points at itself or another language, a file outside a language folder, a slug that is a category, age groups out of order or with a gap, a translation of another type, or a translation that draws something else (`sameDrawing()`: the same steps, places and arrows; only labels and sentences differ);
+  - "6 meter" or "9 meter" with a plain space anywhere in an item: write a no-break space (U+00A0), so it never breaks over two lines (`breakableMeters()`).
+- **Text and drawing belong together** (Kay, 15 October 2026): each step's sentence is in the drawing, and a sentence or summary that says someone moves has that move drawn in its step. Agreed text goes over word for word.
+- **Drawings:** draw the item at `/<lang>/board/` in `npm run dev`, a step per sentence, press "JSON (dev)" in More and paste the output as `board:` (a version 2 board without its title). A translation keeps the drawing and uses its language's labels and sentences (the Dutch items have LH, LO, MO and so on). JSON is valid YAML. The files write it in YAML flow style, one player or arrow per line, which is easier to review.
+- **The page** (`src/components/LibraryItem.astro`): title, meta (`itemMeta()`: category · ages · level), summary, "Open in the board", then the strip (`StepStrip.astro`): every step as a static drawing (`Court` with `frame`, no JS) under its sentence, in an `<ol>`. One column on a phone, two from 560 px, `auto-fill` from 860 px; the sentences of a row share their height (`subgrid`), so the drawings beside each other stand level. Then the coaching points, the body and "See also". Cards (`LibraryCards.astro`), category pages and share images show `frames[0]` (step 1).
+- **Categories:** `categorySlugs` in `src/data/categories.ts` is the only list, like `AGES` and `LEVELS`. Their texts are the `category.<slug>.*`, `age.*` and `level.*` keys in `ui.ts`, and each category has an icon of the same name in `icons.ts`. A category page and its card exist only when that language has an item in it, so no empty pages get indexed.
+- **Links into the board:** "Open in the board" carries the drawing with the item's title and every step's sentence in `#t=`, encoded at build time. The editor opens it on step 1, as a received board.
+- **Share image:** `src/pages/[lang]/tactics/[slug]/og.png.ts` renders step 1 with `courtPng()` (`svelte/server` + `sharp`) as a 1200×630 PNG next to the page. The only text in it is the player labels; without a font they drop out, and the build still passes.
 
 ## Hosting
 
@@ -224,7 +231,7 @@ Don't add these without a plan:
 ## Optimization work
 
 - `docs/optimalisatieplan.md` (Dutch) lays out the optimization work in phases, one branch and one PR per phase. Its rules apply to every phase.
-- **Size budgets** are the `BUDGETS` constant in `scripts/check-budget.mjs`, in KB of 1000 bytes, gzipped except PNGs: the board's JS and its lazy chunks, all JS in `_astro/`, CSS and HTML per page (the editor's page has its own CSS budget, `boardCss`, for the editor's stylesheet; the viewer's pages have `viewerJs` and `viewerCss`), and each PNG. Raise one only on purpose, with the reason in the PR and the new measurement in `docs/metingen.md`.
+- **Size budgets** are the `BUDGETS` constant in `scripts/check-budget.mjs`, in KB of 1000 bytes, gzipped except PNGs: the board's JS and its lazy chunks, all JS in `_astro/`, CSS and HTML per page (the editor's page has its own CSS budget, `boardCss`, for the editor's stylesheet; the viewer's pages have `viewerJs` and `viewerCss`; a library item, a page with its own `og.png`, has `libraryHtml`, because it draws every step), and each PNG. Raise one only on purpose, with the reason in the PR and the new measurement in `docs/metingen.md`.
 - Measure before and after any change that affects speed, size or behaviour, and record both in `docs/metingen.md` (Dutch). Later phases run Lighthouse on their PR's preview URL, always twice: the default command (simulated throttling, to compare with earlier phases) and with real throttling (`--throttling-method=devtools`), both listed there. Real throttling, and the time until the board is ready to use or the shared board is on screen, decide. Compare SEO only on production: preview URLs send `X-Robots-Tag: noindex`.
 
 ## Astro documentation

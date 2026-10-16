@@ -31,10 +31,9 @@ export const icons = {
   json: "M8 4H6v16h2m8-16h2v16h-2",
   qr: "M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h2v2h-2zm4 4h2v2h-2zm-4 2h2m2-6h2",
 
-  // Tactic categories
+  // Library categories
   attack: "M13 2 4 14h7l-1 8 9-12h-7l1-8z",
   defense: "M12 3 5 6v5c0 4.5 3 8.5 7 10 4-1.5 7-5.5 7-10V6l-7-3z",
-  youth: "M12 21v-9m0 0C12 8 9.5 6 5 6c0 4 2.5 6 7 6zm0-2c0-3.5 2.5-6 7-6 0 4-2.5 6-7 6",
   goalkeeping: "M3 20V5h18v15M3 10h18M3 15h18M9 5v15m6-15v15",
 
   // How it works, links

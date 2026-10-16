@@ -1,20 +1,21 @@
 ---
-// A list of tactics as cards, each with its diagram as a static thumbnail.
+// A list of library items as cards, each with step 1 of its drawing as a static thumbnail.
 import { getRelativeLocaleUrl } from "astro:i18n";
-import type { Tactic } from "../data/tactics";
+import { itemMeta } from "../data/categories";
+import type { Item } from "../data/library";
 import Court from "./board/Court.svelte";
 
 interface Props {
   lang: string;
-  tactics: Tactic[];
+  items: Item[];
 }
 
-const { lang, tactics } = Astro.props;
+const { lang, items } = Astro.props;
 ---
 
 <ul class="cards">
   {
-    tactics.map(({ entry, path }) => (
+    items.map(({ entry, path }) => (
       <li>
         <a class="card" href={getRelativeLocaleUrl(lang, path)}>
           <span class="thumb" aria-hidden="true">
@@ -22,9 +23,7 @@ const { lang, tactics } = Astro.props;
           </span>
           <div class="text">
             <h3>{entry.data.title}</h3>
-            <p class="meta">
-              {entry.data.theme} · {entry.data.level}
-            </p>
+            <p class="meta">{itemMeta(lang, entry.data)}</p>
           </div>
         </a>
       </li>
