@@ -3446,3 +3446,14 @@ Ook met het Mac-lettertype schoven stap 3–4 dus al naar blad 2: de rij eindigd
 - **Controle 1** (tijdelijk, niet gecommit): met de printstijl van vóór de review falen de PDF-test (stap 4 niet op blad 1, ook met het eigen lettertype) en de vier tests van de aandachtspunten.
 - **Controle 2:** met alleen de kleinere tussenruimtes (tekeningen weer de volle kolom) slaagt het eigen lettertype op de Mac, maar faalt de PDF-test op het brede lettertype. De test vangt het Linux-geval dus ook op een Mac.
 - `npm run verify` groen; `npm run e2e`: 741 geslaagd, 3 overgeslagen (gelijk).
+
+**Lighthouse** (drie runs per URL, Lighthouse 13.5.0, mobiel; vóór: de preview van `f15465c`, hierboven; na: de preview van `4fc4cb3`). Performance, Accessibility en Best Practices 100, CLS 0, TBT 0 op elke run.
+
+| URL | Echte vertraging, LCP vóór | na | Gesimuleerd, LCP vóór | na | Overdracht |
+|---|--:|--:|--:|--:|--:|
+| `/nl/tactics/6-0-defense-basics/` | 1,35 / 1,34 / 1,35 s | 1,37 / 1,38 / 1,37 s | 0,87 / 0,86 / 0,87 s | 0,89 / 0,89 / 0,86 s | 9,8 KB |
+| `/nl/tactics/fast-break-second-wave/` | 1,36 / 1,35 / 1,35 s | 1,34 / 1,35 / 1,37 s | 0,86 / 0,87 / 0,85 s | 0,93 / 0,88 / 0,87 s | 10,2–10,3 KB |
+
+- **Echte vertraging (beslist):** mediaan 1,35 → 1,37 s en 1,35 → 1,35 s. Dat valt binnen de spreiding tussen runs (productie gaf hierboven 1,33–1,37 s). 20 B HTML verklaart geen 0,02 s.
+- **Gesimuleerd:** mediaan 0,87 → 0,89 s en 0,86 → 0,88 s, ook binnen de spreiding.
+- **Meettaken:** T1–T5 gelijk (`tasks.spec.ts` groen, het bord is niet veranderd).
