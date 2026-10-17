@@ -3272,3 +3272,74 @@ Review van PR #47 door Kay, opgelost in dezelfde PR.
 - **Tests:** unit `moves()` (de kruising beweegt in elke stap; een stap zonder pijlen niet, vóór een andere stap en aan het eind; wel een speler die de volgende stap met de hand verplaatst); e2e de vier regels van "niets beweegt" (`viewer.spec.ts`); "the court stays put when the viewer loads" ook op 360 × 740 met de oefening in het Engels en op 320 × 568 met de kruising in het Nederlands; breed blijft de zin in de toegankelijkheidsboom, met de zin van de stap (`layout.spec.ts`).
   - **Controle:** met de CSS van vóór de review falen de twee nieuwe maten van "stays put" en de test van de zin breed.
 - **`npm run e2e`:** 716 geslaagd, 2 overgeslagen (was 704): 12 erbij (4 regels voor "niets beweegt" en 2 maten voor "stays put", elk in twee browsers). De eerste run faalde op de 6 tests van `analytics.spec.ts` hierboven; die slagen nu.
+
+## Fase 16-1: schema en strip (16 oktober 2026)
+
+Branch `fase-16-1-schema-strip`, vanaf `main` @ `4ceafd4` (merge van #45). Besluiten L1–L13 en de vier aanpassingen van Kay (productplan, Fase 16); de tekeningen goedgekeurd op 16 oktober 2026.
+
+### Wat er veranderd is
+
+- **Eén collectie `library`** (`src/content/library/<taal>/<slug>.md`, was `tactics/`), met `type: tactic`. Id's, URL's en `related` blijven gelijk, dus geen redirect; `routing.spec.ts` is ongewijzigd groen.
+- **Schema:** `title` ≤ 40 tekens, `ages` (aaneengesloten groepen), `level` (basis, gemiddeld, gevorderd), `related` ≤ 3; de zin per stap staat in de tekening (`frames[i].text`), elke stap heeft er een, het bord zelf geen titel. `steps`, `theme` en de vrije `level` vervallen; `youth` ook (geen pagina, dus geen redirect).
+- **`checkLibrary()`** (was `checkTactics()`): daarbij een vertaling met hetzelfde type en dezelfde tekening (`sameDrawing()`: alleen labels en zinnen verschillen), leeftijden zonder gat, en "6 meter"/"9 meter" alleen met een vaste spatie.
+- **De twee tactieken in stappen:** 6-0-dekking 4 stappen, tweede golf 6; de zinnen letterlijk de oude `steps`, de samenvattingen en aandachtspunten ongewijzigd, met een vaste spatie in "6 meter".
+- **De strip** (`StepStrip.astro`, `LibraryItem.astro`): elke stap een statische tekening met zijn zin, zonder JS. Telefoon onder elkaar, vanaf 560 px twee naast elkaar, vanaf 860 px vier; de tekeningen van één rij staan gelijk (`subgrid`). Meta: "Verdediging · C-jeugd t/m senioren · Basis", ook op de kaarten. "Zie ook" in plaats van "Verwante tactieken".
+- **"Open in het bord"** draagt de titel en de zinnen mee: de editor opent op stap 1 met de titel en alle stappen, en bewaart niets tot de eerste wijziging. Lengte van de link: 6-0-dekking 505 tekens (en 484), tweede golf 733 (en 720), ruim onder QR-versie 30 (1732).
+- **JSON (dev)** laat de titel weg. Kost 0 B: alle JS is met en zonder de wijziging 41.834 B (macOS), en de tekst staat niet in de productiebundel.
+
+### Groottes
+
+`npm run budget`, gzip, macOS. Vóór: `main` @ `4ceafd4`.
+
+| Pagina | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| `/nl/tactics/6-0-defense-basics/` (1 → 4 stappen) | 4.793 B | 5.675 B | 6,5 → **7,5 KB** (`libraryHtml`, nieuw) |
+| `/en/tactics/6-0-defense-basics/` | 4.743 B | 5.604 B | 7,5 KB |
+| `/nl/tactics/fast-break-second-wave/` (1 → 6 stappen) | 4.410 B | 6.178 B | 7,5 KB |
+| `/en/tactics/fast-break-second-wave/` | 4.369 B | 6.114 B | 7,5 KB |
+| `/nl/tactics/` | 4.072 B | 3.861 B | 6,5 KB |
+| `/nl/tactics/defense/` | 3.866 B | 3.675 B | 6,5 KB |
+| CSS (gedeeld) | 1.698 B | 1.698 B | 2,0 KB |
+| Alle JS | 41.834 B | 41.834 B | 42,0 KB |
+
+- **Per stap** ongeveer 0,25 KB HTML (14 spelers, een zin); een verwant item ongeveer 0,3 KB (prototype).
+- **`libraryHtml` (L7)** geldt voor een pagina met een eigen `og.png` naast zich onder `tactics/` of `drills/`; de onderwerppagina's houden `html` 6,5 KB. Het grootste item dat het schema toelaat (8 verschillende stappen van 100 tekens, 3 verwante items): de tweede golf (6 stappen, 6.178 B) plus 2 stappen en 2 verwante items ≈ 7,3 KB.
+- Overzicht en onderwerppagina's worden kleiner: de meta is korter en de kaart van de 6-0-dekking toont stap 1, de opstelling zonder pijlen.
+
+### Lighthouse
+
+Drie runs per URL, Lighthouse 13.5.0, mobiel. Vóór: productie. Na: de preview (`fase-16-1-schema-strip-coachboard.hardamkay.workers.dev`). SEO pas na de merge, op productie. Performance, Accessibility en Best Practices 100, CLS 0 en TBT 0 ms op elke run, vóór en na. Het LCP-element is tekst uit de HTML (FCP = LCP).
+
+| URL | Echte vertraging, LCP vóór | na | Gesimuleerd, LCP vóór | na | Overdracht vóór → na |
+|---|--:|--:|--:|--:|--:|
+| `/nl/tactics/6-0-defense-basics/` | 1,37 / 1,36 / 1,36 s | 1,36 / 1,36 / 1,37 s | 0,92 / 0,88 / 0,85 s | 0,88 / 0,92 / 0,86 s | 8,8 → 9,6 KB |
+| `/nl/tactics/fast-break-second-wave/` | 1,35 / 1,34 / 1,35 s | 1,34 / 1,37 / 1,36 s | 0,86 / 0,85 / 0,85 s | 0,94 / 0,90 / 0,92 s | 8,4 → 10,1 KB |
+
+- **Echte vertraging (beslist): gelijk.** Gesimuleerd op de tweede golf ongeveer 0,06 s later, door 1,7 KB meer HTML.
+
+### CI (Linux)
+
+`npm run budget` in CI: alle JS 42,0 KB (gelijk aan `main`: de JS verandert niet), HTML 6-0-dekking 5,7 KB en tweede golf 6,2 KB (budget 7,5).
+
+### Meettaken
+
+T1 4 / T2 16 / T3 5 / T4 20 (10 met links) / T5 1 en 4: gelijk. Ze lopen over de bordpagina's; `tasks.spec.ts` is groen.
+
+### Tests
+
+- **Unit:** `library.test.ts` (was `tactics.test.ts`): `checkLibrary()` (type per taal, `sameDrawing()`, leeftijden, slug ≠ onderwerp onder `tactics/` en `drills/`), `stepsHaveText()`, `breakableMeters()`, `itemPath()`; `libraryHtml` in `check-budget.test.mjs`.
+- **`e2e/library.spec.ts` (nieuw):** per taal en tactiek één tekening per stap, de zin in de strip gelijk aan de zin in de link van "Open in het bord" (gedecodeerd), de h1 gelijk aan de titel in de link, en per stap de spelers en het aantal pijlen van die stap. Indeling: op 360 px onder elkaar, op 700 px twee en op 1280 px vier naast elkaar, gelijk uitgelijnd.
+  - **Controle** (tijdelijk, niet gecommit): zonder `subgrid` faalt de uitlijning (917 tegen 930 px).
+- **`e2e/tactics.spec.ts`:** de editor opent met de titel, 4 stappen en de zin van stap 1; vergelijkt met stap 1 van de strip.
+- **`npm run e2e`:** 726 geslaagd, 2 overgeslagen (was 716).
+
+### Na de review (16 oktober 2026)
+
+Review van PR #48 door Kay, opgelost in dezelfde PR.
+
+- **Liggend past een stap met zijn zin op het scherm.** Nagemeten door Kay op 844 × 390: het kader van stap 1 was 396 px hoog, het scherm 390 px, met de zin erboven. Nu is de tekening hoogstens zo hoog als het scherm (`100svh`) min de vaste kop (65 px), 8 px erboven en eronder, een zin van drie regels en de rand; zonder nieuw breekpunt. Op 844 × 390 is een stap nu 284 px hoog (de kop erbij: 349 px). Staand verandert niets: de tekening vult de kolom, hoogstens 420 px.
+  - **Test:** op 844 × 390 en 740 × 360 past elke stap van beide tactieken met zijn zin onder de kop; staand op 320, 360 en 390 px is de tekening zo breed als de kolom. Controle: zonder de begrenzing falen beide liggende tests.
+- **De controle op de vaste spatie** vangt nu elk getal met "meter" (ook "7 meter", "16 meters"), in de frontmatter én in de Markdown-tekst onder een item (`checkMeters()`). Controle: "Neem de 7 meter." onder de 6-0-dekking laat de build falen.
+- **Groottes** (macOS, gzip): HTML 6-0-dekking 5.675 → 5.706 B (+31, de begrenzing); CSS en alle JS gelijk (1.698 en 41.834 B; op Linux 41.975 B).
+- **Tweede golf, stap 4 tot en met 6** (besluit en akkoord Kay, 16 oktober 2026): in stap 5 en 6 stonden twee keer twee verdedigers half over elkaar, en hun schuifpijlen vielen weg. Nu eindigen de twee teruglopende verdedigers in stap 4 vóór de lijn, links en rechts van CL; in stap 5 schuiven de rechter teruggelopen verdediger en de verdediger schuin achter hem naar de kant van RO. Geen twee spelers staan in een stap dichter dan 2 m bij elkaar, en elke schuifpijl is minstens 2 m. Het schot in stap 6 gaat naar de linkerhoek, 1,3 m langs CL (was erdoorheen) en 1,1 m langs de verdediger links ernaast. Daarvoor staat CL op zijn plek uit de eerste versie: het formaat kent alleen links, midden en rechts in het doel, en vanaf MO gaat de lijn naar links anders door CL. Zinnen en stap 1 tot en met 3 ongewijzigd; het Engels tekent hetzelfde.
+- **Tests na de review:** `npm run e2e` 732 geslaagd, 2 overgeslagen (was 726): de twee liggende maten en de staande test, elk in twee browsers.

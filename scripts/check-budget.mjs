@@ -13,7 +13,9 @@
 //   their own budget, for JS and for CSS.
 // - All JS: every .js file in _astro/, so code moved into a lazy chunk still counts.
 // - CSS and HTML per page, and every PNG. The board pages have their own CSS
-//   budget: they also link the editor's stylesheet.
+//   budget: they also link the editor's stylesheet. A library item (a page with
+//   its own og.png next to it, under tactics/ or drills/) has its own HTML
+//   budget: it draws every step.
 //
 // Sizes are in KB of 1000 bytes; JS, CSS and HTML are gzipped (zlib default
 // level), as in the baseline in docs/metingen.md. PNGs are counted raw.
@@ -35,7 +37,10 @@ export const BUDGETS = {
   // pages stay at `css`, which is too small to take that stylesheet as well.
   boardCss: 5_780, // 5.57 KB plus 0.2 KB (docs/metingen.md, phase 14-3: play); phase 14 ends at 5.8 KB (D11)
   viewerCss: 3_570, // the viewer's pages: 3.37 KB plus 0.2 KB, under phase 15's cap of 3.6 KB (K2)
-  html: 6_500, // 5.5 KB on the board, the largest page
+  html: 6_500, // 6.4 KB on the board, the largest page
+  // A library item draws every step; the largest the schema allows (8 steps of
+  // 100 characters, 3 related items) is about 7.3 KB (L7, docs/metingen.md, phase 16-1).
+  libraryHtml: 7_500,
   png: 60_000, // 50.5 KB for og-default.png, the largest
 };
 
@@ -69,6 +74,9 @@ const gzipped = (path) => gzipSync(readFileSync(path)).length;
 
 const isBoard = (page) => /^[^/]+\/board\/(?:(?:link|qr)\/)?index\.html$/.test(page);
 const isViewer = (page) => /^[^/]+\/board\/(?:link|qr)\/index\.html$/.test(page);
+// A library item has its own share image next to it; a category page (tactics/attack/) doesn't.
+const isItem = (page, dist) =>
+  /^[^/]+\/(?:tactics|drills)\/[^/]+\/index\.html$/.test(page) && existsSync(join(dist, dirname(page), "og.png"));
 const isExternal = (url) => /^(?:[a-z]+:)?\/\//i.test(url);
 
 /**
@@ -177,7 +185,7 @@ export function checkBudget(dist, budgets = BUDGETS) {
 
     const css = stylesheets.map((href) => resolve(href, url)).filter(Boolean);
     measure("CSS (gzip)", url, sum(new Set(css)), isViewer(page) ? budgets.viewerCss : board ? budgets.boardCss : budgets.css);
-    measure("HTML (gzip)", url, gzipped(file), budgets.html);
+    measure("HTML (gzip)", url, gzipped(file), isItem(page, dist) ? budgets.libraryHtml : budgets.html);
   }
 
   // Each script found is already an error with its page; this row is the summary.

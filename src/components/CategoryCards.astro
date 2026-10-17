@@ -3,7 +3,7 @@
 // page yet, so they get no card until their first tactic.
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { categoryInfo, categorySlugs } from "../data/categories";
-import { tacticsFor } from "../data/tactics";
+import { itemsFor } from "../data/library";
 import Icon from "./Icon.astro";
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 }
 
 const { lang } = Astro.props;
-const tactics = await tacticsFor(lang);
+const tactics = await itemsFor(lang, "tactic");
 const cards = categorySlugs
   .filter((slug) => tactics.some((tactic) => tactic.entry.data.category === slug))
   .map((slug) => ({

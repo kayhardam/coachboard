@@ -180,6 +180,23 @@ describe("checkBudget", () => {
     ]);
   });
 
+  it("gives a library item, a page with its own share image, its own HTML budget", () => {
+    const html = "<p>x</p>".repeat(20);
+    const files = {
+      "en/tactics/a/index.html": html,
+      "en/tactics/a/og.png": "png",
+      "en/tactics/attack/index.html": html,
+      "en/drills/b/index.html": html,
+      "en/drills/b/og.png": "png",
+      "en/about/index.html": html,
+    };
+    const budgets = { ...BUDGETS, html: gz(html) - 1, libraryHtml: gz(html) };
+    expect(build(files, budgets).errors.map((e) => e.split(":")[0])).toEqual([
+      "HTML (gzip) /en/about/",
+      "HTML (gzip) /en/tactics/attack/",
+    ]);
+  });
+
   it("fails a budget just over its limit and passes at the limit", () => {
     const files = {
       "en/board/index.html": island,
@@ -190,11 +207,11 @@ describe("checkBudget", () => {
     };
     const js = gz(editor) + gz(renderer) + gz(client);
     const html = gz(island);
-    const at = { boardJs: js, viewerJs: 0, lazyJs: 0, allJs: js, css: 0, boardCss: 0, viewerCss: 0, html, png: 100 };
+    const at = { boardJs: js, viewerJs: 0, lazyJs: 0, allJs: js, css: 0, boardCss: 0, viewerCss: 0, html, libraryHtml: 0, png: 100 };
     expect(build(files, at).errors).toEqual([]);
     rmSync(dist, { recursive: true, force: true });
 
-    const over = { boardJs: js - 1, viewerJs: 0, lazyJs: 0, allJs: js - 1, css: 0, boardCss: 0, viewerCss: 0, html: html - 1, png: 99 };
+    const over = { boardJs: js - 1, viewerJs: 0, lazyJs: 0, allJs: js - 1, css: 0, boardCss: 0, viewerCss: 0, html: html - 1, libraryHtml: 0, png: 99 };
     const { errors } = build(files, over);
     expect(errors.map((e) => e.split(":")[0])).toEqual([
       "JS (gzip) /en/board/",

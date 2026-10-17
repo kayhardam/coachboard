@@ -1,0 +1,97 @@
+---
+// The steps of a board as a strip of static drawings, each with its sentence.
+// No JS: Court renders to SVG at build time, from step 2 on with the dotted
+// trails of the step before.
+import { t } from "../i18n/ui";
+import type { Board } from "../lib/board/format";
+import Court from "./board/Court.svelte";
+
+interface Props {
+  lang: string;
+  board: Board;
+}
+
+const { lang, board } = Astro.props;
+---
+
+<ol class="strip">
+  {
+    board.frames.map((frame, i) => (
+      <li>
+        <figure>
+          <figcaption>
+            <span class="n" aria-hidden="true">{i + 1}</span>
+            <span>{frame.text}</span>
+          </figcaption>
+          <div class="court">
+            <Court {board} frame={i} label={t(lang, "tactic.diagram", { n: String(i + 1) })} />
+          </div>
+        </figure>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .strip {
+    display: grid;
+    gap: 24px;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Each step takes two rows of the strip, so the sentences of one row share
+     their height and the drawings beside each other line up. */
+  li,
+  figure {
+    display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+    row-gap: 8px;
+  }
+
+  figcaption {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+
+  .n {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-accent-dark);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  /* Never taller than the screen, so a step and its sentence fit together below
+     the sticky site header (64 px and its border), also on a phone in
+     landscape: the screen's height less the header, 8 px above and below, a
+     sentence of three lines, the gap and the box's own 14 px, times the
+     court's width over its height (216 / 222). In portrait 420 px stays the cap. */
+  .court {
+    width: 100%;
+    max-width: min(420px, calc((100svh - 103px - 3lh) * 216 / 222 + 14px));
+    padding: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-bg);
+  }
+
+  @media (min-width: 560px) {
+    .strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 860px) {
+    .strip {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+  }
+</style>

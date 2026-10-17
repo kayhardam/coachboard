@@ -1,7 +1,7 @@
 ---
 import CategoryCards from "../../../components/CategoryCards.astro";
-import TacticCards from "../../../components/TacticCards.astro";
-import { tacticsFor } from "../../../data/tactics";
+import LibraryCards from "../../../components/LibraryCards.astro";
+import { itemsFor } from "../../../data/library";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import { localeParams } from "../../../i18n/locales";
 import { t } from "../../../i18n/ui";
@@ -9,7 +9,7 @@ import { t } from "../../../i18n/ui";
 export const getStaticPaths = localeParams;
 
 const { lang } = Astro.params;
-const tactics = await tacticsFor(lang);
+const tactics = await itemsFor(lang, "tactic");
 ---
 
 <BaseLayout title={t(lang, "tactics.title")} description={t(lang, "tactics.description")}>
@@ -27,7 +27,7 @@ const tactics = await tacticsFor(lang);
 
   <section class="container">
     <h2>{t(lang, "tactics.all")}</h2>
-    <TacticCards lang={lang} tactics={tactics} />
+    <LibraryCards lang={lang} items={tactics} />
   </section>
 </BaseLayout>
 

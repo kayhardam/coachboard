@@ -1,10 +1,10 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
 import Icon from "../../../../components/Icon.astro";
-import TacticCards from "../../../../components/TacticCards.astro";
+import LibraryCards from "../../../../components/LibraryCards.astro";
 import { categoryInfo, categorySlugs } from "../../../../data/categories";
 import { boardPath } from "../../../../data/nav";
-import { categoryLanguages, tacticsFor } from "../../../../data/tactics";
+import { categoryLanguages, itemsFor } from "../../../../data/library";
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import { locales } from "../../../../i18n/locales";
 import { t } from "../../../../i18n/ui";
@@ -14,7 +14,7 @@ import { t } from "../../../../i18n/ui";
 export async function getStaticPaths() {
   const paths = [];
   for (const lang of locales) {
-    const tactics = await tacticsFor(lang);
+    const tactics = await itemsFor(lang, "tactic");
     const used = categorySlugs.filter((c) => tactics.some((tc) => tc.entry.data.category === c));
     for (const category of used) {
       paths.push({
@@ -37,7 +37,7 @@ const info = categoryInfo(lang, category);
 <BaseLayout
   title={t(lang, "category.title", { label: info.label })}
   description={info.intro}
-  languages={await categoryLanguages(category)}
+  languages={await categoryLanguages("tactic", category)}
 >
   <div class="intro">
     <div class="container">
@@ -51,7 +51,7 @@ const info = categoryInfo(lang, category);
 
   <section class="container">
     <h2 class="visually-hidden">{t(lang, "tactics.all")}</h2>
-    <TacticCards lang={lang} tactics={tactics} />
+    <LibraryCards lang={lang} items={tactics} />
 
     {
       others.length > 0 && (
