@@ -94,4 +94,35 @@ const { lang, board } = Astro.props;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     }
   }
+
+  /* On paper (A4, LibraryItem's @page): two steps a row, a step never split
+     over two pages, the sentence at 12 pt and the number in its green circle.
+     Tight gaps and 82 mm drawings, so page 1 holds four steps also with the
+     wider font of Linux or Windows. */
+  @media print {
+    .strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 3mm 8mm;
+    }
+
+    li {
+      break-inside: avoid;
+    }
+
+    figcaption {
+      font-size: 12pt;
+      line-height: 1.35;
+    }
+
+    .n {
+      font-size: 12pt;
+      print-color-adjust: exact;
+    }
+
+    .court {
+      max-width: 82mm;
+      padding: 0;
+      border: 0;
+    }
+  }
 </style>
