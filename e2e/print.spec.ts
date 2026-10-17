@@ -47,11 +47,14 @@ for (const lang of ["en", "nl"]) {
   }
 }
 
-test("the PDF is portrait A4, each tactic on at most two pages", async ({ page, browserName }) => {
+// A tactic of four steps fits on two pages. The second wave (six steps) does
+// too with the system font of a Mac or an iPhone, but takes three with the
+// wider font of Linux (CI).
+test("the PDF is portrait A4: four steps on two pages, six on at most three", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "only Chromium makes a PDF");
   for (const [slug, most] of [
     ["6-0-defense-basics", 2],
-    ["fast-break-second-wave", 2],
+    ["fast-break-second-wave", 3],
   ] as const) {
     await page.goto(`/nl/tactics/${slug}/`);
     const pdf = (await page.pdf({ preferCSSPageSize: true })).toString("latin1");
