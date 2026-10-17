@@ -94,4 +94,33 @@ const { lang, board } = Astro.props;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     }
   }
+
+  /* On paper (A4, LibraryItem's @page): two steps a row, a step never split
+     over two pages, the sentence at 12 pt and the number in its green circle. */
+  @media print {
+    .strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6mm 8mm;
+    }
+
+    li,
+    figure {
+      break-inside: avoid;
+    }
+
+    figcaption {
+      font-size: 12pt;
+    }
+
+    .n {
+      font-size: 12pt;
+      print-color-adjust: exact;
+    }
+
+    .court {
+      max-width: none;
+      padding: 0;
+      border: 0;
+    }
+  }
 </style>

@@ -183,4 +183,47 @@ const hasBody = Boolean(item.entry.body?.trim());
   .related {
     margin-top: 48px;
   }
+
+  /* Print: an A4 page with the title, the steps and the coaching points.
+     Text is 16 px (12 pt) already; only the smaller meta grows, grey turns
+     black, and what only works on a screen is left out. */
+  @media print {
+    @page {
+      size: A4;
+      margin: 12mm;
+    }
+
+    :global(.skip-link),
+    :global(.site-header),
+    :global(.site-footer),
+    .crumbs,
+    .open,
+    .related {
+      display: none;
+    }
+
+    article {
+      padding: 0;
+    }
+
+    .meta {
+      font-size: 12pt;
+    }
+
+    .lead {
+      color: #000;
+    }
+
+    h1 {
+      font-size: 20pt;
+    }
+
+    h2 {
+      break-after: avoid;
+    }
+
+    section {
+      margin-top: 8mm;
+    }
+  }
 </style>

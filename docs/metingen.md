@@ -3343,3 +3343,44 @@ Review van PR #48 door Kay, opgelost in dezelfde PR.
 - **Groottes** (macOS, gzip): HTML 6-0-dekking 5.675 → 5.706 B (+31, de begrenzing); CSS en alle JS gelijk (1.698 en 41.834 B; op Linux 41.975 B).
 - **Tweede golf, stap 4 tot en met 6** (besluit en akkoord Kay, 16 oktober 2026): in stap 5 en 6 stonden twee keer twee verdedigers half over elkaar, en hun schuifpijlen vielen weg. Nu eindigen de twee teruglopende verdedigers in stap 4 vóór de lijn, links en rechts van CL; in stap 5 schuiven de rechter teruggelopen verdediger en de verdediger schuin achter hem naar de kant van RO. Geen twee spelers staan in een stap dichter dan 2 m bij elkaar, en elke schuifpijl is minstens 2 m. Het schot in stap 6 gaat naar de linkerhoek, 1,3 m langs CL (was erdoorheen) en 1,1 m langs de verdediger links ernaast. Daarvoor staat CL op zijn plek uit de eerste versie: het formaat kent alleen links, midden en rechts in het doel, en vanaf MO gaat de lijn naar links anders door CL. Zinnen en stap 1 tot en met 3 ongewijzigd; het Engels tekent hetzelfde.
 - **Tests na de review:** `npm run e2e` 732 geslaagd, 2 overgeslagen (was 726): de twee liggende maten en de staande test, elk in twee browsers.
+
+## Fase 16-2: print (17 oktober 2026)
+
+Branch `fase-16-2-print`, vanaf `main` @ `dbef970` (merge van #48). Volgens het plan van Fase 16 (paragraaf 4) en L10.
+
+### Wat er veranderd is
+
+- **Printstijl** (`@media print`, in de scoped styles van `LibraryItem.astro` en `StepStrip.astro`, dus alleen inline op itempagina's): A4 staand met marges van 12 mm; siteheader, footer, skiplink, kruimelpad, "Open in het bord" en "Zie ook" weg; twee stappen naast elkaar, een stap nooit over twee bladen; de meta op 12 pt, de samenvatting zwart; h1 20 pt; de groene bolletjes met `print-color-adjust: exact`.
+- **Geen nieuwe teksten.** Schermweergave ongewijzigd.
+
+### Gemeten (Chrome, A4)
+
+| | 6-0-dekking | Tweede golf |
+|---|--:|--:|
+| Bladen | 2 | 2 |
+| Breedte per tekening | 89 mm | 89 mm |
+| Kleinste tekst buiten de tekeningen | 12,0 pt | 12,0 pt |
+| Spelerslabels in de tekening (L10) | 8,8 pt | 8,8 pt |
+
+Nederlands en Engels gelijk. Blad 1: titel, meta, samenvatting en stap 1–2; blad 2: de andere stappen en de aandachtspunten.
+
+### Groottes
+
+| Pagina (gzip, macOS) | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| `/nl/tactics/6-0-defense-basics/` | 5.706 B | 5.866 B | 7,5 KB |
+| `/nl/tactics/fast-break-second-wave/` | 6.215 B | 6.375 B | 7,5 KB |
+| CSS (gedeeld) / alle JS | 1.698 / 41.834 B | gelijk | 2,0 / 42,0 KB |
+
+- **De printstijl kost 160 B per itempagina.** Een eerste versie kostte 199 B. Daarmee kwam het grootste item dat het schema toelaat, geschat (tweede golf + 2 stappen van ~0,25 KB + 2 verwante items van ~0,3 KB), op ongeveer 7,52 KB, boven `libraryHtml`. Regels voor tekst die op het scherm al 16 px (12 pt) is, zijn eruit; nu ongeveer 7,48 KB. Dat is krap: een volgende functie op itempagina's moet het budget opnieuw bekijken.
+- Andere pagina's: ongewijzigd.
+
+### Meettaken
+
+T1 4 / T2 16 / T3 5 / T4 20 (10 met links) / T5 1 en 4: gelijk.
+
+### Tests
+
+- **`e2e/print.spec.ts` (nieuw):** per taal en tactiek, in Chromium en WebKit, met printmedia op 703 px (A4 min de marges): header, footer, kruimelpad, skiplink, "Zie ook" en "Open in het bord" verborgen; de eerste twee tekeningen naast elkaar, elk ≥ 85 mm; elke tekst buiten de tekeningen ≥ 16 px (12 pt); `break-inside: avoid` op elke stap. Alleen Chromium: de PDF is staand A4 (595 × 842 pt) en elke tactiek past op 2 bladen.
+  - **Controle** (tijdelijk, niet gecommit): zonder de printkolommen faalt de PDF-test (3 bladen). De test "naast elkaar" vangt het niet: op 703 px geeft de schermregel vanaf 560 px ook twee kolommen; de printregel houdt de stappen op papier dichter bij elkaar (6 en 8 mm).
+- **`npm run e2e`:** 741 geslaagd, 3 overgeslagen (was 732 en 2): 9 erbij, en de PDF-test in WebKit overgeslagen.
