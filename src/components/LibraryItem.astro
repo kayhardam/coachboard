@@ -186,7 +186,8 @@ const hasBody = Boolean(item.entry.body?.trim());
 
   /* Print: an A4 page with the title, the steps and the coaching points.
      Text is 16 px (12 pt) already; only the smaller meta grows, grey turns
-     black, and what only works on a screen is left out. */
+     black, and what only works on a screen is left out. Tight gaps, so four
+     steps fit on page 1; the coaching points stay together. */
   @media print {
     @page {
       size: A4;
@@ -211,6 +212,7 @@ const hasBody = Boolean(item.entry.body?.trim());
     }
 
     .lead {
+      line-height: 1.35;
       color: #000;
     }
 
@@ -219,11 +221,16 @@ const hasBody = Boolean(item.entry.body?.trim());
     }
 
     h2 {
+      margin-bottom: 2mm;
       break-after: avoid;
     }
 
     section {
-      margin-top: 8mm;
+      margin-top: 4mm;
+    }
+
+    .points {
+      break-inside: avoid;
     }
   }
 </style>

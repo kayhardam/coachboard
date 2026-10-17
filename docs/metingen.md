@@ -3396,3 +3396,53 @@ T1 4 / T2 16 / T3 5 / T4 20 (10 met links) / T5 1 en 4: gelijk.
   - **Controle** (tijdelijk, niet gecommit): zonder de printkolommen faalt de PDF-test (3 bladen). De test "naast elkaar" vangt het niet: op 703 px geeft de schermregel vanaf 560 px ook twee kolommen; de printregel houdt de stappen op papier dichter bij elkaar (6 en 8 mm).
 - **`npm run e2e`:** 741 geslaagd, 3 overgeslagen (was 732 en 2): 9 erbij, en de PDF-test in WebKit overgeslagen.
 - **Eerste CI-run:** de PDF-test faalde op Linux: met het bredere lettertype neemt de tweede golf 3 bladen (lokaal nagebootst met Verdana; de 6-0-dekking blijft op 2). Op een Mac en een iPhone (systeemlettertype) blijven beide op 2. Het plan eist 2 bladen voor een tactiek van 4 stappen; de test eist nu 2 voor de 6-0-dekking en hoogstens 3 voor de tweede golf. De printstijl is niet groter gemaakt, omdat `libraryHtml` krap is.
+
+### Review: ruimer op papier (17 oktober 2026)
+
+Kay, review van #49: met het lettertype van Linux (zoals in CI) staan op blad 1 alleen de titel en stap 1–2, stap 3–4 schuiven naar blad 2, en de tweede golf krijgt een derde blad met alleen het laatste aandachtspunt. Met een Windows-laptop kan dat net zo gaan.
+
+**Nagespeeld** (Chrome, A4, `page.pdf()`; tekst per blad uitgelezen met pdf.js; "Linux" = DejaVu Sans, het lettertype dat Chromium op Ubuntu voor `system-ui` kiest, met `@font-face` in de pagina gezet):
+
+| | Mac-lettertype vóór | Linux vóór | Mac-lettertype na | Linux na |
+|---|---|---|---|---|
+| 6-0-dekking nl / en: stappen op blad 1 | 1–2 | 1–2 | 1–4 | 1–4 |
+| 6-0-dekking nl / en: bladen | 2 | 2 | 2 | 2 |
+| Tweede golf nl / en: stappen op blad 1 | 1–2 | 1–2 | 1–4 | 1–4 |
+| Tweede golf nl / en: bladen | 2 | 3 (laatste aandachtspunt alleen) | 2 | 2 |
+
+Ook met het Mac-lettertype schoven stap 3–4 dus al naar blad 2: de rij eindigde op 275–282 mm, blad 1 heeft 273 mm (297 min 2 × 12). Met DejaVu op 296 mm.
+
+**Waar de rij van stap 3–4 eindigt** (mm vanaf de bovenkant van blad 1, grens 273; slechtste van nl en en):
+
+| | Mac-lettertype | DejaVu Sans |
+|---|--:|--:|
+| Vóór | 282 | 296 |
+| Alleen kleinere tussenruimtes | 263 | 275 |
+| Tussenruimtes + tekeningen 84 mm | – | 267 |
+| **Tussenruimtes + tekeningen 82 mm (gekozen)** | **252** | **265** |
+| Tussenruimtes + tekeningen 80 mm | – | 259 |
+
+- **Eerst de tussenruimtes** (in print): secties 4 mm uit elkaar (was 8), onder een h2 2 mm, tussen de rijen 3 mm (was 6), regelafstand 1,35 voor de zinnen en de samenvatting (was 1,6). Dat was niet genoeg: met DejaVu 275 mm.
+- **Daarna de tekeningen: 82 mm** (was 89 mm, de volle kolom). Dat geeft met DejaVu 8 mm speling, met het Mac-lettertype 21 mm. 84 mm liet 6 mm, 80 mm was niet nodig. De spelerslabels gaan mee: 8,1 pt (gemeten 8,07 pt in de printweergave; was 8,8). De zinnen houden de volle kolombreedte, dus geen extra regels.
+- **Aandachtspunten:** `break-inside: avoid` op de lijst, dus nooit één punt alleen op een blad; ze staan op blad 2 onder de laatste stappen.
+- **Tekst:** nog altijd minstens 12 pt buiten de tekeningen.
+
+**Groottes** (gzip zoals `check-budget.mjs`, macOS):
+
+| Pagina | Vóór (`f15465c`) | Na | Budget |
+|---|--:|--:|--:|
+| `/nl/tactics/6-0-defense-basics/` | 5.866 B | 5.886 B | 7,5 KB |
+| `/nl/tactics/fast-break-second-wave/` | 6.375 B | 6.394 B | 7,5 KB |
+| `/en/tactics/6-0-defense-basics/` | 5.798 B | 5.817 B | 7,5 KB |
+| `/en/tactics/fast-break-second-wave/` | 6.319 B | 6.340 B | 7,5 KB |
+| CSS (gedeeld) / alle JS | 1.698 / 41.834 B | gelijk | 2,0 / 42,0 KB |
+
+- **+19 à 21 B per itempagina.** De eerste versie van deze aanpassing kostte 26 B; `break-inside` staat nu alleen op de `li` (niet ook op de `figure`) en de marge boven de samenvatting is gebleven, wat 6 B scheelt.
+- **Het grootste item dat het schema toelaat** (zelfde schatting als hierboven: tweede golf + 2 stappen + 2 verwante items) komt op ongeveer 7,49 KB, onder `libraryHtml` (7,5 KB), maar met nog maar ongeveer 6 B ruimte. Een volgende functie op itempagina's moet het budget eerst bekijken.
+
+**Tests:**
+
+- `e2e/print.spec.ts` is weer streng. De PDF-test (Chromium) eist voor beide tactieken, in beide talen, met het eigen lettertype van de pagina en met een breed lettertype (`Verdana, "DejaVu Sans"`: Verdana op een Mac, DejaVu Sans op Linux), precies 2 bladen staand A4, en dat stap 4 op blad 1 eindigt. Dat laatste meet de test in de printweergave op 186 mm breed: vóór stap 4 kan niets breken, dus stap 4 staat op blad 1 als hij binnen 273 mm eindigt. Daarnaast: tekeningen ≥ 80 mm (was 85), `break-inside: avoid` op elke stap en op de aandachtspunten.
+- **Controle 1** (tijdelijk, niet gecommit): met de printstijl van vóór de review falen de PDF-test (stap 4 niet op blad 1, ook met het eigen lettertype) en de vier tests van de aandachtspunten.
+- **Controle 2:** met alleen de kleinere tussenruimtes (tekeningen weer de volle kolom) slaagt het eigen lettertype op de Mac, maar faalt de PDF-test op het brede lettertype. De test vangt het Linux-geval dus ook op een Mac.
+- `npm run verify` groen; `npm run e2e`: 741 geslaagd, 3 overgeslagen (gelijk).
