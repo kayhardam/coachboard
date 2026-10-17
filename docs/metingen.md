@@ -3375,6 +3375,17 @@ Nederlands en Engels gelijk. Blad 1: titel, meta, samenvatting en stap 1–2; bl
 - **De printstijl kost 160 B per itempagina.** Een eerste versie kostte 199 B. Daarmee kwam het grootste item dat het schema toelaat, geschat (tweede golf + 2 stappen van ~0,25 KB + 2 verwante items van ~0,3 KB), op ongeveer 7,52 KB, boven `libraryHtml`. Regels voor tekst die op het scherm al 16 px (12 pt) is, zijn eruit; nu ongeveer 7,48 KB. Dat is krap: een volgende functie op itempagina's moet het budget opnieuw bekijken.
 - Andere pagina's: ongewijzigd.
 
+### Lighthouse
+
+Drie runs per URL, Lighthouse 13.5.0, mobiel. Vóór: productie (met 16-1). Na: de preview. Performance, Accessibility en Best Practices 100, CLS 0, TBT 0 op elke run; FCP = LCP (tekst uit de HTML).
+
+| URL | Echte vertraging, LCP vóór | na | Gesimuleerd, LCP vóór | na | Overdracht vóór → na |
+|---|--:|--:|--:|--:|--:|
+| `/nl/tactics/6-0-defense-basics/` | 1,37 / 1,33 / 1,35 s | 1,35 / 1,34 / 1,35 s | 0,84 / 0,84 / 0,84 s | 0,87 / 0,86 / 0,87 s | 9,5 → 9,8 KB |
+| `/nl/tactics/fast-break-second-wave/` | 1,34 / 1,35 / 1,34 s | 1,36 / 1,35 / 1,35 s | 0,85 / 0,83 / 0,84 s | 0,86 / 0,87 / 0,85 s | 9,9 → 10,2 KB |
+
+- **Echte vertraging (beslist): gelijk.** Gesimuleerd 0,01–0,03 s later.
+
 ### Meettaken
 
 T1 4 / T2 16 / T3 5 / T4 20 (10 met links) / T5 1 en 4: gelijk.
