@@ -3499,7 +3499,7 @@ Gzip zoals `check-budget.mjs`, macOS. Vóór: `main` (`e90078e`); na: deze branc
 | CSS (gedeeld) / alle JS | 1.697 / 41.802 B | gelijk | 2,0 / 42,0 KB |
 | `og.png` van de oefeningen | – | 22.165–29.348 B | 60 KB |
 
-- **Tactiekpagina's +26 à 32 B:** het menu-item (twee links per pagina, breed en smal), en bij de tweede golf de iets langere link van "Open in het bord" (de keuzes in stap 6, hierboven).
+- **Tactiekpagina's +26 à 32 B:** het menu-item (drie links per pagina: de header, het smalle menu en de footer), en bij de tweede golf de iets langere link van "Open in het bord" (de keuzes in stap 6, hierboven).
 - **De grootste oefening** is Uitstappen en meeschuiven (6.034 B), ruim onder `libraryHtml` (7,5 KB). Het budget blijft.
 - **JS en CSS gelijk:** contentpagina's laden geen JS (`check-budget` groen).
 
@@ -3510,6 +3510,19 @@ Elk van deze wijzigingen laat `astro sync` of de build falen, met een melding di
 ### Print (Chromium, A4)
 
 Blad 1 heeft bij elke oefening de titel, meta, samenvatting, doel, organisatie en stap 1 en 2 (stap 2 eindigt op 180–191 mm van 273 mm). Bladen, met het eigen en het brede lettertype (Verdana op de Mac): Kruisen 2, Uitstappen 3, Keeper 3. Dat is `DRILL_PAGES` in `e2e/print.spec.ts`; de test eist hoogstens dat aantal, met beide lettertypes. Tactieken: precies 2 bladen, stap 1–4 op blad 1 (ongewijzigd).
+
+### Lighthouse
+
+Drie runs per URL, Lighthouse 13.5.0, mobiel, in beide modi. Vóór: productie (`main` @ `e90078e`). Na: de preview (`fase-16-3-oefeningen-coachboard.hardamkay.workers.dev`). De oefenpagina's bestaan alleen op de preview, dus daarvan alleen na. Performance, Accessibility en Best Practices 100, CLS 0 en TBT 0 ms op elke run, vóór en na. SEO pas na de merge, op productie: de preview stuurt `X-Robots-Tag: noindex` (SEO 66).
+
+| URL | Echte vertraging, LCP vóór | na | Gesimuleerd, LCP vóór | na | Overdracht vóór → na |
+|---|--:|--:|--:|--:|--:|
+| `/nl/tactics/6-0-defense-basics/` | 1,29 / 1,29 / 1,28 s | 1,27 / 1,27 / 1,29 s | 0,93 / 0,87 / 0,86 s | 0,93 / 0,89 / 0,92 s | 9,7 → 9,8–9,9 KB |
+| `/nl/drills/crossing-in-pairs/` | – | 1,27 / 1,27 / 1,27 s | – | 0,90 / 0,85 / 0,91 s | 9,7–9,9 KB |
+| `/nl/drills/` | – | 1,39 / 1,28 / 1,27 s | – | 0,89 / 0,87 / 0,90 s | 8,2 KB |
+
+- **Echte vertraging (beslist): gelijk.** De 6-0-dekking: mediaan 1,29 → 1,27 s, binnen de spreiding tussen runs. Een oefenpagina laadt even snel als een tactiekpagina (mediaan 1,27 s); het overzicht 1,28 s (de eerste run 1,39 s, de andere twee 1,27–1,28 s).
+- **Gesimuleerd:** de 6-0-dekking mediaan 0,87 → 0,92 s, binnen de spreiding van eerdere fases (0,85–0,93 s); 26 B HTML verklaart geen 0,05 s.
 
 ### Header en menu
 
