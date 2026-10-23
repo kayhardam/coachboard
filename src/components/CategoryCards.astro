@@ -1,23 +1,22 @@
 ---
-// One card per category that has tactics in this language. The others have no
-// page yet, so they get no card until their first tactic.
+// One card per category that has items of this type in this language. The
+// others have no page yet, so they get no card until their first item.
 import { getRelativeLocaleUrl } from "astro:i18n";
-import { categoryInfo, categorySlugs } from "../data/categories";
-import { itemsFor } from "../data/library";
+import { categoryInfo } from "../data/categories";
+import { usedCategories } from "../data/library";
+import { typeDir, type ItemType } from "../lib/library";
 import Icon from "./Icon.astro";
 
 interface Props {
   lang: string;
+  type: ItemType;
 }
 
-const { lang } = Astro.props;
-const tactics = await itemsFor(lang, "tactic");
-const cards = categorySlugs
-  .filter((slug) => tactics.some((tactic) => tactic.entry.data.category === slug))
-  .map((slug) => ({
-    ...categoryInfo(lang, slug),
-    href: getRelativeLocaleUrl(lang, `tactics/${slug}/`),
-  }));
+const { lang, type } = Astro.props;
+const cards = (await usedCategories(lang, type)).map((slug) => ({
+  ...categoryInfo(lang, slug, type),
+  href: getRelativeLocaleUrl(lang, `${typeDir(type)}/${slug}/`),
+}));
 ---
 
 <ul class="cards">

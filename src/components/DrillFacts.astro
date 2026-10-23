@@ -1,0 +1,154 @@
+---
+// The parts of a drill page that a tactic doesn't have. `setup`: the goal,
+// then players, equipment and space as a definition list, above "Open in the
+// board". `lists`: the rules, coaching points, mistakes and the easier and
+// harder variations below the steps, each only when it has points
+// (drillSections()). drills/[slug].astro passes both into LibraryItem's slots,
+// so these styles, print too, stay on drill pages.
+import { t, type UiKey } from "../i18n/ui";
+import { drillSections, type DrillList } from "../lib/library";
+
+interface Props {
+  lang: string;
+  part: "setup" | "lists";
+  drill: {
+    goal: string;
+    organization: { players: string; equipment: string; space: string };
+  } & Record<DrillList, string[]>;
+}
+
+const { lang, part, drill } = Astro.props;
+
+const headings: Record<DrillList, UiKey> = {
+  rules: "drill.rules",
+  coachingPoints: "tactic.coachingPoints",
+  mistakes: "drill.mistakes",
+  easier: "drill.easier",
+  harder: "drill.harder",
+};
+const sections = drillSections(drill);
+const lists = sections.filter(({ key }) => key !== "easier" && key !== "harder");
+const variations = sections.filter(({ key }) => key === "easier" || key === "harder");
+const setup: [UiKey, string][] = [
+  ["drill.players", drill.organization.players],
+  ["drill.equipment", drill.organization.equipment],
+  ["drill.space", drill.organization.space],
+];
+---
+
+{
+  part === "setup" ? (
+    <section class="setup">
+      <h2>{t(lang, "drill.goal")}</h2>
+      <p>{drill.goal}</p>
+      <dl>
+        {setup.map(([key, value]) => (
+          <div>
+            <dt>{t(lang, key)}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  ) : (
+    <>
+      {lists.map(({ key, points }) => (
+        <section class="list">
+          <h2>{t(lang, headings[key])}</h2>
+          <ul class="points">
+            {points.map((point) => (
+              <li>{point}</li>
+            ))}
+          </ul>
+        </section>
+      ))}
+      {variations.length > 0 && (
+        <div class="variations">
+          {variations.map(({ key, points }) => (
+            <section class="list">
+              <h2>{t(lang, headings[key])}</h2>
+              <ul class="points">
+                {points.map((point) => (
+                  <li>{point}</li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
+
+<style>
+  section {
+    max-width: 720px;
+    margin-top: 32px;
+  }
+
+  h2 {
+    margin-bottom: 12px;
+    font-size: 1.375rem;
+  }
+
+  dl {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  dt {
+    font-weight: 700;
+  }
+
+  .points {
+    display: grid;
+    gap: 12px;
+    padding-left: 24px;
+  }
+
+  .variations {
+    display: grid;
+    max-width: 720px;
+  }
+
+  @media (min-width: 560px) {
+    dl div {
+      display: grid;
+      grid-template-columns: 7.5rem 1fr;
+      gap: 16px;
+    }
+
+    .variations {
+      grid-template-columns: 1fr 1fr;
+      gap: 0 32px;
+    }
+  }
+
+  /* Print: tight gaps like the rest of an item page; no list splits over two pages. */
+  @media print {
+    section {
+      margin-top: 4mm;
+    }
+
+    h2 {
+      margin-bottom: 2mm;
+      break-after: avoid;
+    }
+
+    p,
+    dl {
+      line-height: 1.35;
+    }
+
+    dl {
+      gap: 1mm;
+      margin-top: 2mm;
+    }
+
+    .points {
+      gap: 1.5mm;
+      break-inside: avoid;
+    }
+  }
+</style>

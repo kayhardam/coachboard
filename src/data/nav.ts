@@ -15,6 +15,7 @@ export const nav: NavItem[] = [
   { path: "", label: "nav.home" },
   { path: "board/", label: "nav.board" },
   { path: "tactics/", label: "nav.tactics" },
+  { path: "drills/", label: "nav.drills" },
 ];
 
 /** The header's call to action. */

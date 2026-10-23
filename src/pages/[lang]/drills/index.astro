@@ -1,0 +1,8 @@
+---
+import LibraryIndex from "../../../components/LibraryIndex.astro";
+import { localeParams } from "../../../i18n/locales";
+
+export const getStaticPaths = localeParams;
+---
+
+<LibraryIndex lang={Astro.params.lang} type="drill" />
