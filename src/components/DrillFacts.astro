@@ -3,8 +3,8 @@
 // then players, equipment and space as a definition list, above "Open in the
 // board". `lists`: the rules, coaching points, mistakes and the easier and
 // harder variations below the steps, each only when it has points
-// (drillSections()). LibraryItem.astro renders both; their styles, print too,
-// stay on drill pages.
+// (drillSections()). drills/[slug].astro passes both into LibraryItem's slots,
+// so these styles, print too, stay on drill pages.
 import { t, type UiKey } from "../i18n/ui";
 import { drillSections, type DrillList } from "../lib/library";
 

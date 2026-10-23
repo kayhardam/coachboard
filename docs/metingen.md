@@ -3468,3 +3468,59 @@ Ook met het Mac-lettertype schoven stap 3–4 dus al naar blad 2: de rij eindigd
 - **Afspelen:** in de editor (Afspelen) en in de kijker (Volgende op stap 6), nl en en, beweegt alleen de bal van het schot, van [110,120] naar [90,0], en hij blijft in het doel. De spelers en de passes staan stil.
 - **Link van "Open in het bord":** nl 737 → 740 tekens, en 722 → 726. Een pijl zonder speler bewaart zijn beginpunt; een pijl van een speler alleen de speler.
 - `isBoard()` en `settle()` laten de passes zonder speler zoals ze zijn; `sameDrawing()` geeft nl en en nog steeds dezelfde tekening.
+
+## Fase 16-3: oefeningen (23 oktober 2026)
+
+### Wat er veranderd is
+
+- **Een tweede type in `library`: oefening.** Naast de velden van een tactiek: `goal`, `organization` (`players`, `equipment`, `space`) en de lijsten `rules`, `easier`, `harder` en `mistakes`. Elke lijst heeft hoogstens 6 punten, ook `coachingPoints` van een tactiek.
+- **Pagina's onder `drills/`:** het overzicht, een pagina per onderwerp met een oefening en de oefening zelf, met een eigen `og.png`. Overzicht en onderwerppagina zijn nu gedeelde componenten voor beide types (`LibraryIndex.astro`, `LibraryCategory.astro`). Het doel, de organisatie en de lijsten staan in `DrillFacts.astro`; alleen `drills/[slug].astro` importeert die, zodat de CSS ervan niet op tactiekpagina's komt (in de eerste versie wel: +180 B per tactiekpagina).
+- **Drie oefeningen, nl en en:** Kruisen in tweetallen, Uitstappen en meeschuiven (baan van 6 m, besluit Kay) en Keeper: schoten van drie plekken. Het menu-item Oefeningen staat erbij, op elke contentpagina.
+- **`checkBalls()`** (eerdere commit van deze fase): de build faalt op een pass, stuit, schot of dribbel van een speler die de bal dan niet heeft, en op een bal in het doel die zou meegaan met een speler die beweegt.
+
+### Groottes
+
+Gzip zoals `check-budget.mjs`, macOS. Vóór: `main` (`e90078e`); na: deze branch.
+
+| Pagina | Vóór | Na | Budget |
+|---|--:|--:|--:|
+| `/nl/tactics/6-0-defense-basics/` | 5.886 B | 5.912 B | 7,5 KB |
+| `/nl/tactics/fast-break-second-wave/` | 6.394 B | 6.426 B | 7,5 KB |
+| `/en/tactics/6-0-defense-basics/` | 5.817 B | 5.843 B | 7,5 KB |
+| `/en/tactics/fast-break-second-wave/` | 6.340 B | 6.369 B | 7,5 KB |
+| `/nl/drills/crossing-in-pairs/` | – | 5.585 B | 7,5 KB |
+| `/nl/drills/step-out-and-shift/` | – | 6.034 B | 7,5 KB |
+| `/nl/drills/goalkeeper-shots-from-three-spots/` | – | 5.767 B | 7,5 KB |
+| `/en/drills/crossing-in-pairs/` | – | 5.534 B | 7,5 KB |
+| `/en/drills/step-out-and-shift/` | – | 5.962 B | 7,5 KB |
+| `/en/drills/goalkeeper-shots-from-three-spots/` | – | 5.747 B | 7,5 KB |
+| `/nl/tactics/` / `/nl/drills/` | 3.861 B / – | 3.892 / 4.047 B | 6,5 KB |
+| `/nl/drills/attack/`, `defense/`, `goalkeeping/` | – | 3.805 / 3.681 / 3.822 B | 6,5 KB |
+| CSS (gedeeld) / alle JS | 1.697 / 41.802 B | gelijk | 2,0 / 42,0 KB |
+| `og.png` van de oefeningen | – | 22.165–29.348 B | 60 KB |
+
+- **Tactiekpagina's +26 à 32 B:** het menu-item (twee links per pagina, breed en smal), en bij de tweede golf de iets langere link van "Open in het bord" (de keuzes in stap 6, hierboven).
+- **De grootste oefening** is Uitstappen en meeschuiven (6.034 B), ruim onder `libraryHtml` (7,5 KB). Het budget blijft.
+- **JS en CSS gelijk:** contentpagina's laden geen JS (`check-budget` groen).
+
+### Schema, met de hand (tijdelijk, niet gecommit)
+
+Elk van deze wijzigingen laat `astro sync` of de build falen, met een melding die de oefening noemt: `goal` weg; `organization.space` als lijst in plaats van tekst; een stap met alleen een spatie als zin ("Every step needs its sentence"); `harder` met 7 punten; de 6-0-dekking met 7 aandachtspunten; "6 meter" met een gewone spatie in `organization.space` (`checkMeters()`).
+
+### Print (Chromium, A4)
+
+Blad 1 heeft bij elke oefening de titel, meta, samenvatting, doel, organisatie en stap 1 en 2 (stap 2 eindigt op 180–191 mm van 273 mm). Bladen, met het eigen en het brede lettertype (Verdana op de Mac): Kruisen 2, Uitstappen 3, Keeper 3. Dat is `DRILL_PAGES` in `e2e/print.spec.ts`; de test eist hoogstens dat aantal, met beide lettertypes. Tactieken: precies 2 bladen, stap 1–4 op blad 1 (ongewijzigd).
+
+### Header en menu
+
+Vier menu-items. Op 860 px past de header op één regel naast "Open het bord" (nl en en); op 320 px opent het smalle menu met vier items, zonder horizontaal scrollen.
+
+### Meettaken
+
+T1–T5 gelijk: het bord is niet veranderd (`tasks.spec.ts`).
+
+### Tests
+
+- **Unit:** `checkBalls()` (bal bij wie hem heeft, ook na een ontvangen pass; een speler zonder bal krijgt geen vrije bal; een pass zonder speler mag; de bal in het doel), `drillSections()`, `checkMeters()` op de velden van een oefening, en een vertaling van een oefening die iets anders tekent.
+- **e2e:** de strip van elk item uit de content (tactieken en oefeningen); per oefening de koppen in volgorde, geen kop bij een lege lijst, het kruimelpad Oefeningen; `/nl/drills/` en `/en/drills/` tonen zoveel kaarten als er oefeningen in de content staan, een onderwerppagina alleen met een oefening; Oefeningen in het menu van elke contentpagina; "Open in het bord" vanaf een oefening; print van elke oefening (twee stappen per rij, tekst ≥ 12 pt, elke lijst heel, stap 1–2 op blad 1, hoogstens `DRILL_PAGES` bladen).
+- `npm run verify` groen; `npm run e2e`: 984 geslaagd, 4 overgeslagen (de twee PDF-tests in WebKit; was 741 en 3).

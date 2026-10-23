@@ -1,4 +1,5 @@
 ---
+import DrillFacts from "../../../components/DrillFacts.astro";
 import LibraryItem from "../../../components/LibraryItem.astro";
 import { itemPaths, type Item } from "../../../data/library";
 
@@ -7,6 +8,12 @@ export const getStaticPaths = () => itemPaths("drill");
 interface Props {
   item: Item;
 }
+
+const { item } = Astro.props;
+const { data } = item.entry;
 ---
 
-<LibraryItem item={Astro.props.item} />
+<LibraryItem item={item}>
+  {data.type === "drill" && <DrillFacts slot="setup" lang={item.lang} part="setup" drill={data} />}
+  {data.type === "drill" && <DrillFacts slot="lists" lang={item.lang} part="lists" drill={data} />}
+</LibraryItem>

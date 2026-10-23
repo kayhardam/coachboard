@@ -4,7 +4,7 @@
 import { categorySlugs } from "../src/data/categories";
 import { decode } from "../src/lib/board/format";
 import { t, type UiKey } from "../src/i18n/ui";
-import { expect, libraryItems, test } from "./helpers";
+import { allPages, expect, libraryItems, test } from "./helpers";
 
 const all = libraryItems();
 const drills = all.filter((item) => item.type === "drill");
@@ -121,5 +121,16 @@ for (const lang of ["en", "nl"]) {
       const response = await page.request.get(`/${lang}/drills/${category}/`);
       expect(response.status(), `${category}: a page only with a drill in it`).toBe(used ? 200 : 404);
     }
+  });
+}
+
+// Every content page has Drills in its menu, wide and narrow (the board pages have their own title bar).
+for (const path of allPages().filter((p) => /^\/(en|nl)\//.test(p) && !p.includes("/board/") && !p.includes("does-not-exist"))) {
+  test(`${path} has Drills in its menu`, async ({ page }) => {
+    const lang = path.split("/")[1]!;
+    await page.goto(path);
+    const links = page.locator(`.site-header nav a[href="/${lang}/drills/"]`);
+    await expect(links).toHaveCount(2);
+    await expect(links.first()).toHaveText(t(lang, "nav.drills"));
   });
 }
