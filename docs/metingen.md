@@ -3457,3 +3457,14 @@ Ook met het Mac-lettertype schoven stap 3–4 dus al naar blad 2: de rij eindigd
 - **Echte vertraging (beslist):** mediaan 1,35 → 1,37 s en 1,35 → 1,35 s. Dat valt binnen de spreiding tussen runs (productie gaf hierboven 1,33–1,37 s). 20 B HTML verklaart geen 0,02 s.
 - **Gesimuleerd:** mediaan 0,87 → 0,89 s en 0,86 → 0,88 s, ook binnen de spreiding.
 - **Meettaken:** T1–T5 gelijk (`tasks.spec.ts` groen, het bord is niet veranderd).
+
+## Fase 16-3: tweede golf, de keuzes in stap 6 (23 oktober 2026)
+
+**Wat er op productie misging:** in stap 6 van de tweede golf ("Daarna kiezen ze: een schot van afstand, de cirkelloper of de hoek.") waren het schot en de twee passes (naar CL en naar RH) alle drie pijlen van MO. Het bord las ze als drie acties na elkaar met één bal. Afspelen (editor) en Volgende op stap 6 (kijker) speelden eerst het schot, de bal in het doel; daarna vloog de bal vanuit het doel naar CL, want een speler zonder bal krijgt van `ballTrips()` de dichtstbijzijnde vrije bal. De pass naar RH kreeg geen bal meer. Gemeten met `moment()`: de bal ging van [110,120] naar [90,0] en daarna naar [120,80] (naast CL).
+
+**Wat het nu doet (besluit Kay, 23 oktober 2026):** de twee passes zijn pijlen zonder speler (geen `from`), met hun beginpunt op de plek van MO ([100,128]), in nl en en. Alleen het schot is een pijl van MO.
+
+- **Tekening:** stap 6 op `/nl/tactics/fast-break-second-wave/` en `/en/…` is vóór en na pixel-gelijk (schermafbeelding van de tekening, `cmp`).
+- **Afspelen:** in de editor (Afspelen) en in de kijker (Volgende op stap 6), nl en en, beweegt alleen de bal van het schot, van [110,120] naar [90,0], en hij blijft in het doel. De spelers en de passes staan stil.
+- **Link van "Open in het bord":** nl 737 → 740 tekens, en 722 → 726. Een pijl zonder speler bewaart zijn beginpunt; een pijl van een speler alleen de speler.
+- `isBoard()` en `settle()` laten de passes zonder speler zoals ze zijn; `sameDrawing()` geeft nl en en nog steeds dezelfde tekening.

@@ -135,6 +135,6 @@ board:
       balls: [[110, 120]]
       arrows:
         - { kind: shot, from: 3, pts: [[100, 128], [90, 0]] }
-        - { kind: pass, from: 3, pts: [[100, 128], [110, 88]] }
-        - { kind: pass, from: 3, pts: [[100, 128], [182, 64]] }
+        - { kind: pass, pts: [[100, 128], [110, 88]] }
+        - { kind: pass, pts: [[100, 128], [182, 64]] }
 ---
