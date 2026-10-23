@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Board } from "./board/format";
-import { breakableMeters, checkLibrary, checkMeters, itemPath, parseId, sameDrawing, stepsHaveText, type ItemRef } from "./library";
+import { settle, type Board, type Pt } from "./board/format";
+import { breakableMeters, checkBalls, checkLibrary, checkMeters, itemPath, parseId, sameDrawing, stepsHaveText, type ItemRef } from "./library";
 
 const board = (label = "LB", text = "One step."): Board => ({
   v: 2,
@@ -73,6 +73,95 @@ describe("checkMeters", () => {
   });
 });
 
+describe("checkBalls", () => {
+  /** One step: a back with the ball beside them, a receiver, a goalkeeper, and `arrows`. */
+  const step = (arrows: Board["frames"][number]["arrows"], balls: Pt[] = [[58, 114]]): Board["frames"][number] => ({
+    players: [
+      { team: "a", label: "LB", at: [48, 122] },
+      { team: "a", label: "CB", at: [100, 132] },
+      { team: "d", label: "GK", at: [100, 10] },
+    ],
+    balls,
+    arrows,
+  });
+  const drawn = (...frames: Board["frames"]): Board => settle({ v: 2, court: "half", cones: [], frames });
+
+  it("accepts a pass, a dribble and a shot by whoever has the ball, also after receiving it", () => {
+    expect(
+      checkBalls(
+        drawn(
+          step([
+            { kind: "dribble", from: 0, pts: [[48, 122], [60, 110]] },
+            { kind: "pass", from: 0, pts: [[60, 110], [100, 132]] },
+            { kind: "dribble", from: 1, pts: [[100, 132], [100, 110]] },
+            { kind: "shot", from: 1, pts: [[100, 110], [90, 0]] },
+          ]),
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  it("accepts a run with the ball: it goes along", () => {
+    expect(checkBalls(drawn(step([{ kind: "run", from: 0, pts: [[48, 122], [80, 110]] }])))).toEqual([]);
+  });
+
+  it("rejects a dribble, pass or shot of a player who doesn't have the ball, though another ball is free", () => {
+    expect(
+      checkBalls(
+        drawn(
+          step([
+            { kind: "dribble", from: 1, pts: [[100, 132], [100, 110]] },
+            { kind: "pass", from: 1, pts: [[100, 110], [48, 122]] },
+          ], [[58, 114], [150, 180]]),
+          step([{ kind: "shot", from: 1, pts: [[100, 132], [90, 0]] }]),
+        ),
+      ),
+    ).toEqual([
+      "step 1: the dribble of CB has no ball",
+      "step 1: the pass of CB has no ball",
+      "step 2: the shot of CB has no ball",
+    ]);
+  });
+
+  it("accepts a pass without a player and without a ball: another choice in the same step", () => {
+    expect(
+      checkBalls(
+        drawn(
+          step([
+            { kind: "shot", from: 0, pts: [[48, 122], [90, 0]] },
+            { kind: "pass", pts: [[48, 122], [100, 132]] },
+          ]),
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  it("rejects a pass after the ball has gone", () => {
+    expect(
+      checkBalls(
+        drawn(
+          step([
+            { kind: "pass", from: 0, pts: [[48, 122], [100, 132]] },
+            { kind: "bounce", from: 0, pts: [[48, 122], [100, 132]] },
+          ]),
+        ),
+      ),
+    ).toEqual(["step 1: the bounce of LB has no ball"]);
+  });
+
+  it("wants a ball in the goal kept there when the goalkeeper moves", () => {
+    const run = step([{ kind: "run", from: 2, pts: [[100, 10], [90, 16]] }], [[110, 0]]);
+    const after = (ball: Pt) => ({ ...step([], [ball]), players: run.players.map((p, i) => (i === 2 ? { ...p, at: [90, 16] as Pt } : p)) });
+    expect(checkBalls(drawn(run, after([110, 0])))).toEqual([]);
+    expect(checkBalls(drawn(run, after([100, 6])))).toEqual([
+      "step 1: the ball in the goal goes along with GK; keep it in the goal in the next step",
+    ]);
+    expect(checkBalls(drawn(run))).toEqual([
+      "step 1: the ball in the goal goes along with GK; keep it in the goal in the next step",
+    ]);
+  });
+});
+
 describe("sameDrawing", () => {
   it("ignores labels, sentences and key order", () => {
     const nl = board("LO", "Eén stap.");
@@ -131,6 +220,12 @@ describe("checkLibrary", () => {
     expect(checkLibrary([entry("en/a"), { ...entry("nl/a"), type: "drill" }], locales)).toEqual([
       '"nl/a": is a drill, but "en/a" is a tactic; a translation has the same type',
     ]);
+  });
+
+  it("rejects a dribble or shot without a ball", () => {
+    const shot = board();
+    shot.frames[0]!.arrows = [{ kind: "shot", from: 1, pts: [[48, 58], [100, 0]] }];
+    expect(checkLibrary([{ ...entry("en/a"), board: settle(shot) }], locales)).toEqual(['"en/a": step 1: the shot of player 2 has no ball']);
   });
 
   it("rejects a translation that draws something else", () => {

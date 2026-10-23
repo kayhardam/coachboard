@@ -6,7 +6,9 @@
 // has id "en/6-0-defense-basics". The folder is the language, the file name
 // the slug, and `related` lists full ids. A translation has the same file name
 // in another language folder, so its URL differs only in the prefix.
-import type { Board } from "./board/format";
+import { MOVES, type Board, type Pt } from "./board/format";
+import { POST_LEFT, POST_RIGHT } from "./board/geometry";
+import { ballTrips, same } from "./board/moves";
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -50,6 +52,45 @@ export function checkMeters(entries: { id: string; data: unknown; body?: string 
       (found) => `"${id}": write "${found}" with a no-break space (U+00A0)`,
     ),
   );
+}
+
+/**
+ * Every ball stays with whoever has it, as the board plays it. A pass, bounce,
+ * shot or dribble of a player needs the ball at that moment: they have it at
+ * the start of the step, or received it earlier in it, in drawing order.
+ * ballTrips() would hand a player without one the nearest free ball, so it
+ * isn't enough that a ball went along. A ball in a goal lies within HOLD of
+ * the goalkeeper and would go along when they move, so the next step has to
+ * keep it there. A pass without a player needs no ball: that is how a step
+ * draws another choice.
+ */
+export function checkBalls(board: Board): string[] {
+  const errors: string[] = [];
+  const length = board.court === "full" ? 400 : 200;
+  const inGoal = ([x, y]: Pt) => x >= POST_LEFT && x <= POST_RIGHT && (y === 0 || y === length);
+  board.frames.forEach((frame, s) => {
+    const who = (i: number) => frame.players[i]!.label ?? `player ${i + 1}`;
+    const trips = ballTrips(frame);
+    // Who has each ball, arrow by arrow.
+    const holder = trips.map((t) => t.has);
+    frame.arrows.forEach((a, k) => {
+      if (a.from === undefined) return;
+      const b = trips.findIndex((t) => t.passes.some((p) => p.arrow === k));
+      if (a.kind === "dribble" ? !holder.includes(a.from) : !MOVES.includes(a.kind) && holder[b] !== a.from) {
+        errors.push(`step ${s + 1}: the ${a.kind} of ${who(a.from)} has no ball`);
+      }
+      if (b >= 0) holder[b] = trips[b]!.passes.find((p) => p.arrow === k)!.to;
+    });
+    trips.forEach(({ start, has, passes }, b) => {
+      if (has === undefined || passes.length || !inGoal(start)) return;
+      if (!frame.arrows.some((a) => a.from === has && MOVES.includes(a.kind))) return;
+      const next = board.frames[s + 1]?.balls[b];
+      if (!next || !same(next, start)) {
+        errors.push(`step ${s + 1}: the ball in the goal goes along with ${who(has)}; keep it in the goal in the next step`);
+      }
+    });
+  });
+  return errors;
 }
 
 /** The drawing without labels and sentences, with its keys in a fixed order. */
@@ -119,6 +160,7 @@ export function checkLibrary(entries: ItemRef[], locales: readonly string[], cat
       if (r.id === id) errors.push(`"${id}": lists itself as related`);
       else if (parseId(r.id).lang !== lang) errors.push(`"${id}": related "${r.id}" is in another language`);
     }
+    errors.push(...checkBalls(board).map((e) => `"${id}": ${e}`));
     const other = bySlug.get(slug);
     if (!other) {
       bySlug.set(slug, entry);
