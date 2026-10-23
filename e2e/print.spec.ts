@@ -15,6 +15,7 @@ const items = ["6-0-defense-basics", "fast-break-second-wave"];
 /** The most pages each drill may take: what it takes with the wide font. */
 const DRILL_PAGES: Record<string, number> = {
   "crossing-in-pairs": 2,
+  "step-out-and-shift": 3,
 };
 const drills = libraryItems().filter((item) => item.type === "drill");
 // Verdana on a Mac, DejaVu Sans on Linux: wider than the system font of a Mac,
