@@ -32,6 +32,16 @@ export function itemPath(type: ItemType, slug: string): string {
   return `${typeDir(type)}/${slug}/`;
 }
 
+/** The lists of a drill below its steps, in the order the page shows them. */
+export const DRILL_LISTS = ["rules", "coachingPoints", "mistakes", "easier", "harder"] as const;
+
+export type DrillList = (typeof DRILL_LISTS)[number];
+
+/** The lists a drill shows, in order: an empty list gets no heading. */
+export function drillSections(drill: Record<DrillList, string[]>): { key: DrillList; points: string[] }[] {
+  return DRILL_LISTS.map((key) => ({ key, points: drill[key] })).filter(({ points }) => points.length > 0);
+}
+
 /** Every step has its sentence: the page shows it beside the step's drawing. */
 export function stepsHaveText(board: Board): boolean {
   return board.frames.every((frame) => Boolean(frame.text?.trim()));

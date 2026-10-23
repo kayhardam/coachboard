@@ -71,3 +71,32 @@ export async function categoryLanguages(type: ItemType, category: string): Promi
     .map((item) => item.lang);
   return [...new Set(langs)];
 }
+
+/** The categories with at least one item of a type in a language, in the order of categorySlugs. */
+export async function usedCategories(lang: string, type: ItemType) {
+  const items = await itemsFor(lang, type);
+  return categorySlugs.filter((c) => items.some((item) => item.entry.data.category === c));
+}
+
+/**
+ * getStaticPaths() for the category pages of a type. Only categories with at
+ * least one item get a page, so search engines never index an empty one.
+ */
+export async function categoryPaths(type: ItemType) {
+  const paths = [];
+  for (const lang of locales) {
+    const items = await itemsFor(lang, type);
+    const used = await usedCategories(lang, type);
+    for (const category of used) {
+      paths.push({
+        params: { lang, category },
+        props: {
+          type,
+          items: items.filter((item) => item.entry.data.category === category),
+          others: used.filter((c) => c !== category),
+        },
+      });
+    }
+  }
+  return paths;
+}

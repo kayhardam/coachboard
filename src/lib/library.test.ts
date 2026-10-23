@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { settle, type Board, type Pt } from "./board/format";
-import { breakableMeters, checkBalls, checkLibrary, checkMeters, itemPath, parseId, sameDrawing, stepsHaveText, type ItemRef } from "./library";
+import { breakableMeters, checkBalls, checkLibrary, checkMeters, drillSections, itemPath, parseId, sameDrawing, stepsHaveText, type ItemRef } from "./library";
 
 const board = (label = "LB", text = "One step."): Board => ({
   v: 2,
@@ -51,6 +51,19 @@ describe("stepsHaveText", () => {
   });
 });
 
+describe("drillSections", () => {
+  it("lists rules, coaching points, mistakes, easier and harder in that order, leaving out an empty list", () => {
+    const drill = { harder: ["Wider."], rules: ["A point."], coachingPoints: [], mistakes: ["Too late."], easier: ["Narrower."] };
+    expect(drillSections(drill)).toEqual([
+      { key: "rules", points: ["A point."] },
+      { key: "mistakes", points: ["Too late."] },
+      { key: "easier", points: ["Narrower."] },
+      { key: "harder", points: ["Wider."] },
+    ]);
+    expect(drillSections({ rules: [], coachingPoints: [], mistakes: [], easier: [], harder: [] })).toEqual([]);
+  });
+});
+
 describe("breakableMeters", () => {
   it("finds any number and meter with a plain space, not with a no-break space", () => {
     expect(breakableMeters("de 7 meter, 16 meters en 9 meter")).toEqual(["7 meter", "16 meter"]);
@@ -72,6 +85,22 @@ describe("checkMeters", () => {
     ]);
   });
 });
+
+  it("checks a drill's goal, setup and lists too", () => {
+    const nb = (text: string) => text.replace(" meter", "\u00a0meter");
+    const fields = {
+      goal: "Uitstappen op 9 meter.",
+      organization: { players: "Drie.", equipment: "Twee pionnen.", space: "Een baan van 6 meter breed." },
+      rules: ["Na 4 meter wissel je."],
+      mistakes: ["Te laat op 6 meter."],
+      easier: ["Een baan van 4 meter."],
+    };
+    expect(checkMeters([{ id: "nl/d", data: fields }])).toEqual(
+      ["9 meter", "6 meter", "4 meter", "6 meter", "4 meter"].map((m) => `"nl/d": write "${m}" with a no-break space (U+00A0)`),
+    );
+    const fixed = JSON.parse(JSON.stringify(fields), (_, v) => (typeof v === "string" ? nb(v) : v));
+    expect(checkMeters([{ id: "nl/d", data: fixed }])).toEqual([]);
+  });
 
 describe("checkBalls", () => {
   /** One step: a back with the ball beside them, a receiver, a goalkeeper, and `arrows`. */
@@ -226,6 +255,15 @@ describe("checkLibrary", () => {
     const shot = board();
     shot.frames[0]!.arrows = [{ kind: "shot", from: 1, pts: [[48, 58], [100, 0]] }];
     expect(checkLibrary([{ ...entry("en/a"), board: settle(shot) }], locales)).toEqual(['"en/a": step 1: the shot of player 2 has no ball']);
+  });
+
+  it("rejects a drill whose translation draws something else", () => {
+    const other = board("LO");
+    other.frames[0]!.players[1]!.at = [50, 58];
+    const drill = { ...entry("en/a"), type: "drill" as const };
+    expect(checkLibrary([drill, { ...drill, id: "nl/a", board: other }], locales)).toEqual([
+      '"nl/a": draws something else than "en/a"; a translation changes only labels and sentences',
+    ]);
   });
 
   it("rejects a translation that draws something else", () => {

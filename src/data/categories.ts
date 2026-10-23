@@ -1,7 +1,8 @@
 // The library's categories, age groups and levels. Each list here is the only
 // one: the content schema, the routes and the cards all read it. No astro: imports here, because
 // src/content.config.ts imports this file.
-import { t } from "../i18n/ui";
+import { t, type UiKey } from "../i18n/ui";
+import type { ItemType } from "../lib/library";
 import type { IconName } from "../lib/icons";
 
 export const categorySlugs = ["attack", "defense", "goalkeeping"] as const;
@@ -18,13 +19,30 @@ export interface CategoryInfo {
   intro: string;
 }
 
-export function categoryInfo(locale: string, slug: Category): CategoryInfo {
+/** A category of tactics, or of drills: the same label and icon, its own card line and intro. */
+export function categoryInfo(locale: string, slug: Category, type: ItemType = "tactic"): CategoryInfo {
+  const of = type === "tactic" ? "category" : "drillCategory";
   return {
     slug,
     icon: slug, // src/lib/icons.ts has an icon for each category
     label: t(locale, `category.${slug}.label`),
-    desc: t(locale, `category.${slug}.desc`),
-    intro: t(locale, `category.${slug}.intro`),
+    desc: t(locale, `${of}.${slug}.desc`),
+    intro: t(locale, `${of}.${slug}.intro`),
+  };
+}
+
+/** The texts of the pages of a type: its overview, its category pages and the heading of its steps. */
+export function typeText(type: ItemType) {
+  const tactic = type === "tactic";
+  return {
+    title: (tactic ? "tactics.title" : "drills.title") as UiKey,
+    description: (tactic ? "tactics.description" : "drills.description") as UiKey,
+    heading: (tactic ? "tactics.heading" : "drills.heading") as UiKey,
+    lead: (tactic ? "tactics.lead" : "drills.lead") as UiKey,
+    all: (tactic ? "tactics.all" : "drills.all") as UiKey,
+    categoryTitle: (tactic ? "category.title" : "drillCategory.title") as UiKey,
+    cta: (tactic ? "category.cta" : "drillCategory.cta") as UiKey,
+    steps: (tactic ? "tactic.steps" : "drill.steps") as UiKey,
   };
 }
 

@@ -4,6 +4,7 @@ import { test as base, expect, type BrowserContext, type Page } from "@playwrigh
 import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
 import { STORE_KEY } from "../src/lib/board/boards";
 import { toBoard, type Board, type BoardV1 } from "../src/lib/board/format";
+import { DRILL_LISTS } from "../src/lib/library";
 import { t } from "../src/i18n/ui";
 
 export { expect };
@@ -57,6 +58,32 @@ export function allPages(): string[] {
     // A missing page in each language: the host serves the one 404 page.
     .concat("/en/does-not-exist/", "/nl/does-not-exist/")
     .sort();
+}
+
+/** An item of src/content/library as the tests need it: where its page is and which lists it fills. */
+export interface LibraryItem {
+  lang: string;
+  type: "tactic" | "drill";
+  slug: string;
+  path: string;
+  /** The lists of a drill with points, in the page's order (drillSections()). */
+  lists: string[];
+}
+
+/** Every item in src/content/library, read from the files, so a test counts what the content has. */
+export function libraryItems(): LibraryItem[] {
+  const root = new URL("../src/content/library/", import.meta.url).pathname;
+  return readdirSync(root).flatMap((lang) =>
+    readdirSync(join(root, lang))
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => {
+        const text = readFileSync(join(root, lang, f), "utf8");
+        const type = text.match(/^type: (\w+)$/m)![1] as LibraryItem["type"];
+        const slug = f.replace(/\.md$/, "");
+        const lists = DRILL_LISTS.filter((key) => new RegExp(`^${key}:\\n  - `, "m").test(text));
+        return { lang, type, slug, path: `/${lang}/${type === "tactic" ? "tactics" : "drills"}/${slug}/`, lists };
+      }),
+  );
 }
 
 /** Opens the board and waits until the editor has replaced the static fallback. */

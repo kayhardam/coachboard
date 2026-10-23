@@ -1,12 +1,14 @@
 ---
 // The page of a library item: the steps as a strip of drawings, each with its
-// sentence, then the coaching points. tactics/[slug].astro renders it.
+// sentence, then the coaching points. tactics/[slug].astro and drills/[slug].astro
+// render it; a drill also has its goal and setup above and its lists below (DrillFacts).
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { render } from "astro:content";
+import DrillFacts from "./DrillFacts.astro";
 import Icon from "./Icon.astro";
 import LibraryCards from "./LibraryCards.astro";
 import StepStrip from "./StepStrip.astro";
-import { categoryInfo, itemMeta } from "../data/categories";
+import { categoryInfo, itemMeta, typeText } from "../data/categories";
 import { allItemsFor, itemLanguages, type Item } from "../data/library";
 import { boardPath } from "../data/nav";
 import BaseLayout from "../layouts/BaseLayout.astro";
@@ -23,6 +25,7 @@ const { lang, type } = item;
 const { data } = item.entry;
 const category = categoryInfo(lang, data.category);
 const dir = typeDir(type);
+const text = typeText(type);
 const all = await allItemsFor(lang);
 const related = data.related
   .map((r) => all.find((other) => other.entry.id === r.id))
@@ -44,7 +47,7 @@ const hasBody = Boolean(item.entry.body?.trim());
   <article class="container">
     <nav aria-label={t(lang, "tactic.breadcrumb")} class="crumbs">
       <ol>
-        <li><a href={getRelativeLocaleUrl(lang, `${dir}/`)}>{t(lang, "tactics.heading")}</a></li>
+        <li><a href={getRelativeLocaleUrl(lang, `${dir}/`)}>{t(lang, text.heading)}</a></li>
         <li><a href={getRelativeLocaleUrl(lang, `${dir}/${category.slug}/`)}>{category.label}</a></li>
       </ol>
     </nav>
@@ -55,6 +58,8 @@ const hasBody = Boolean(item.entry.body?.trim());
       <p class="lead">{data.summary}</p>
     </header>
 
+    {data.type === "drill" && <DrillFacts lang={lang} part="setup" drill={data} />}
+
     <div class="open">
       <a class="btn btn-primary" href={boardHref}>
         {t(lang, "tactic.open")}
@@ -64,12 +69,14 @@ const hasBody = Boolean(item.entry.body?.trim());
     </div>
 
     <section>
-      <h2>{t(lang, "tactic.steps")}</h2>
+      <h2>{t(lang, text.steps)}</h2>
       <StepStrip lang={lang} board={data.board} />
     </section>
 
+    {data.type === "drill" && <DrillFacts lang={lang} part="lists" drill={data} />}
+
     {
-      data.coachingPoints.length > 0 && (
+      data.type === "tactic" && data.coachingPoints.length > 0 && (
         <section class="text">
           <h2>{t(lang, "tactic.coachingPoints")}</h2>
           <ul class="points">

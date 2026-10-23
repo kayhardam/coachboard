@@ -61,7 +61,7 @@ const steps: { icon: IconName; title: string; body: string }[] = [
     <div class="container">
       <h2>{t(lang, "home.libraryTitle")}</h2>
       <p class="sub">{t(lang, "home.libraryLead")}</p>
-      <CategoryCards lang={lang} />
+      <CategoryCards lang={lang} type="tactic" />
       <p class="more">
         <a href={getRelativeLocaleUrl(lang, "tactics/")}>{t(lang, "home.allTactics")}<Icon name="arrowRight" /></a>
       </p>
