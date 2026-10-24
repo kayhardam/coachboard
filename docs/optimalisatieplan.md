@@ -35,14 +35,14 @@ Al gevonden bij het doorlezen van de code:
 
 1. Zet dit bestand in de repo als `docs/optimalisatieplan.md`. Fase 3 commit het mee.
 2. De nummering sluit aan op je eerdere fases (Fase 2 was PR #3). Eén fase is één branch (`fase-3-nulmeting` enzovoort) en één PR. Een fase met delen (4a, 4b) krijgt per deel een eigen PR.
-3. Start elke fase in een nieuwe Claude Code-sessie (of na `/clear`) met de startprompt onderaan. Die begint met `/plan`: Claude Code onderzoekt eerst en doet een voorstel, en gaat pas bouwen als jij het voorstel goedkeurt.
+3. Start elke fase in een nieuwe Claude Code-sessie (of na `/clear`) met de startprompt onderaan. Claude Code onderzoekt eerst en doet een voorstel van één pagina (doel, aanpak, bestanden, risico's, wat jij beslist), en gaat pas bouwen als jij het goedkeurt.
 4. Test elke PR op je eigen telefoon via de preview-URL die Workers Builds per branch maakt, voordat je merget. Een merge naar `main` gaat direct live.
 5. Een punt met **Beslissing (Kay)** is aan jou. Claude Code legt de opties met hun afweging voor en wacht.
 6. Blijkt tijdens een fase dat het plan niet klopt, dan past Claude Code het plan aan in dezelfde PR en legt uit waarom.
 
 ## Regels voor Claude Code
 
-Deze regels gelden in elke fase.
+Deze regels gelden in elke fase. Vanaf 24 oktober 2026 gaat "How we work" in `AGENTS.md` voor: daar staan de lean werkwijze, de budgetten als vangnet, Lighthouse en `docs/metingen.md`.
 
 **Voor je begint**
 
@@ -53,7 +53,7 @@ Deze regels gelden in elke fase.
 
 **Tijdens het werk**
 
-- Meet vóór en na elke wijziging die snelheid, grootte of gedrag raakt, en noteer beide in `docs/metingen.md`.
+- Verandert een budget of gemeten gedrag, noteer dat kort in `docs/metingen.md` (zie "How we work" in `AGENTS.md`).
 - Maak kleine, losse commits. `npm run verify` is groen vóór elke commit.
 - Voeg geen dependency toe zonder akkoord van Kay. Noem naam, versie, grootte, de reden en het alternatief zonder dependency.
 - `src/lib/board/format.ts` is een contract. Links met prefix `1.` moeten altijd blijven werken, en de fixtures in `src/lib/board/fixtures/` pas je nooit aan.
@@ -65,7 +65,7 @@ Deze regels gelden in elke fase.
 **Afronden**
 
 - Push de branch en open een PR (met `gh` als die beschikbaar is; anders geef je Kay de titel en de beschrijving).
-- De PR-beschrijving bevat: wat er veranderd is en waarom, de metingen vóór en na, wat Kay op zijn telefoon moet testen, en open vragen.
+- De PR-beschrijving bevat: wat er veranderd is en waarom, wat Kay op zijn telefoon moet testen, en open vragen; metingen alleen als een budget of gemeten gedrag verandert. Een PR voor tekst of inhoud houdt het bij wat, waarom, hoe testen (hoogstens 3 regels) en de preview-link.
 - Vink de fase af onder Voortgang, in dezelfde PR.
 
 ## Fase 3: Nulmeting en werkwijze
