@@ -3537,3 +3537,15 @@ T1–T5 gelijk: het bord is niet veranderd (`tasks.spec.ts`).
 - **Unit:** `checkBalls()` (bal bij wie hem heeft, ook na een ontvangen pass; een speler zonder bal krijgt geen vrije bal; een pass zonder speler mag; de bal in het doel), `drillSections()`, `checkMeters()` op de velden van een oefening, en een vertaling van een oefening die iets anders tekent.
 - **e2e:** de strip van elk item uit de content (tactieken en oefeningen); per oefening de koppen in volgorde, geen kop bij een lege lijst, het kruimelpad Oefeningen; `/nl/drills/` en `/en/drills/` tonen zoveel kaarten als er oefeningen in de content staan, een onderwerppagina alleen met een oefening; Oefeningen in het menu van elke contentpagina; "Open in het bord" vanaf een oefening; print van elke oefening (twee stappen per rij, tekst ≥ 12 pt, elke lijst heel, stap 1–2 op blad 1, hoogstens `DRILL_PAGES` bladen).
 - `npm run verify` groen; `npm run e2e`: 984 geslaagd, 4 overgeslagen (de twee PDF-tests in WebKit; was 741 en 3).
+
+## Lean werkwijze: JS-budgetten (24 oktober 2026)
+
+Budgetten zijn een vangnet (zie "How we work" in `AGENTS.md`). `main` @ `ee0a77c`, ook met Dependabot-PR #50 erop: die voegt 0 B JS toe (macOS gelijk, 41.834 B alle JS).
+
+| Budget | macOS | Linux (geschat, +~140 B) | Was | Wordt |
+|---|---|---|---|---|
+| `allJs` | 41.834 B | ~41.975 B | 42.000 | 43.000 |
+| `boardJs` | 35.008 B | ~35,15 KB | 35.200 | 35.600 |
+| `viewerJs` | 25.110 B | ~25,25 KB | 25.370 | 25.700 |
+
+Reden: op Linux was nog ongeveer 25 B over in alle JS; #45 kostte 142 B. De bovengrens van K2 vervalt.
