@@ -4,7 +4,10 @@
 //
 // A board enters the list at its first real change (the editor decides when
 // that is), not when it opens: a received link, a tactic or a new board stays
-// out until you change it.
+// out until you change it, or until you save it from More.
+//
+// The order of the list is the order within a folder: a training's boards in
+// the order you run them. Folders, and the boards without one, show by date.
 
 import { decode, encode, MAX_TITLE, sameBoard, toBoard, type Board } from "./format";
 
@@ -106,6 +109,35 @@ export function put(boards: Saved[], entry: Saved): Saved[] {
 
 export const remove = (boards: Saved[], id: string) => boards.filter((s) => s.id !== id);
 
+/** The list with `entry` at `index`, or last if the list is shorter by now: Undo after a delete. */
+export function restore(boards: Saved[], entry: Saved, index: number): Saved[] {
+  const rest = remove(boards, entry.id);
+  return [...rest.slice(0, index), entry, ...rest.slice(index)];
+}
+
+/** The list with `entry` right after the board `id`: a copy goes under its original. */
+export function putAfter(boards: Saved[], id: string, entry: Saved): Saved[] {
+  const i = boards.findIndex((s) => s.id === id);
+  return restore(boards, entry, i < 0 ? 0 : i + 1);
+}
+
+/**
+ * The board `id` swapped with the one above it in its folder (`by` -1) or
+ * below it (1); the list as it is when there is none.
+ */
+export function shift(boards: Saved[], id: string, by: -1 | 1): Saved[] {
+  const i = boards.findIndex((s) => s.id === id);
+  const others = boards.map((s, j) => j).filter((j) => j !== i && boards[j]!.folder === boards[i]?.folder);
+  const j = by < 0 ? others.filter((j) => j < i).at(-1) : others.find((j) => j > i);
+  if (j === undefined) return boards;
+  const list = boards.slice();
+  [list[i], list[j]] = [list[j]!, list[i]!];
+  return list;
+}
+
+/** The boards in `folder` in their order, or those without one (undefined). */
+export const inFolder = (boards: Saved[], folder: string | undefined) => boards.filter((s) => s.folder === folder);
+
 /** The boards with the most recently changed first. */
 export const byDate = (boards: Saved[]) => boards.slice().sort((a, b) => b.at - a.at);
 
@@ -123,16 +155,66 @@ export function copyOf(s: Saved, suffix: string, at = Date.now()): Saved {
   return { ...s, id: newId(), board, at };
 }
 
-/** `s` in `folder`: one line, trimmed, at most MAX_FOLDER characters; none when empty. */
+/** A folder name: one line, trimmed, at most MAX_FOLDER characters; empty for none. */
+const folderName = (folder: string) => folder.replace(/[\0-\x1f\x7f]/g, " ").trim().slice(0, MAX_FOLDER).trimEnd();
+
+/** `s` in `folder` (see folderName()); none when empty. */
 export function withFolder(s: Saved, folder: string): Saved {
-  const name = folder.replace(/[\0-\x1f\x7f]/g, " ").trim().slice(0, MAX_FOLDER).trimEnd();
+  const name = folderName(folder);
   const { folder: _, ...rest } = s;
   return name ? { ...rest, folder: name } : rest;
 }
 
-/** Every board in folder `from` moved to `to`: a folder's new name. */
-export const renameFolder = (boards: Saved[], from: string, to: string) =>
-  boards.map((s) => (s.folder === from ? withFolder(s, to) : s));
+/**
+ * The boards `moved` (in their order) put last in the list: in a folder they
+ * now show at its bottom. The others keep their order.
+ */
+const toEnd = (boards: Saved[], moved: Saved[]) => [...boards.filter((s) => !moved.some((m) => m.id === s.id)), ...moved];
+
+/** The board `id` in `folder`: a board that changes folder goes to its bottom. */
+export function toFolder(boards: Saved[], id: string, folder: string): Saved[] {
+  const s = boards.find((b) => b.id === id);
+  if (!s) return boards;
+  const next = withFolder(s, folder);
+  return next.folder === s.folder ? boards : toEnd(boards, [next]);
+}
+
+/**
+ * Every board in folder `from` moved to `to`: a folder's new name. A folder
+ * is its name, so a name already in use joins that folder, its boards at
+ * the bottom.
+ */
+export function renameFolder(boards: Saved[], from: string, to: string): Saved[] {
+  const name = folderName(to);
+  const moved = inFolder(boards, from).map((s) => withFolder(s, name));
+  const joins = name !== from && boards.some((s) => s.folder === name);
+  const renamed = boards.map((s) => moved.find((m) => m.id === s.id) ?? s);
+  return joins ? toEnd(renamed, moved) : renamed;
+}
+
+/**
+ * `name` with `suffix` (" (copy)"), or with `numbered` (" (copy {n})") from 2
+ * on, whichever is first not in `taken`; the name cut short before it, so
+ * the whole stays within MAX_FOLDER.
+ */
+export function uniqueName(name: string, taken: string[], suffix: string, numbered: string): string {
+  for (let n = 1; ; n++) {
+    const end = n === 1 ? suffix : numbered.replace("{n}", String(n));
+    const next = name.slice(0, MAX_FOLDER - end.length).trimEnd() + end;
+    if (!taken.includes(next)) return next;
+  }
+}
+
+/**
+ * A copy of folder `from`: each of its boards under a new id, in the same
+ * order and with the same title, dated `at`, in a folder of its own named
+ * as uniqueName() gives; last in the list.
+ */
+export function copyFolder(boards: Saved[], from: string, suffix: string, numbered: string, at = Date.now()) {
+  const name = uniqueName(from, folders(boards), suffix, numbered);
+  const copies = inFolder(boards, from).map((s) => ({ id: newId(), board: structuredClone(s.board), folder: name, at }));
+  return { name, boards: [...boards, ...copies] };
+}
 
 // ===== The default lineup, untouched =====
 
@@ -176,12 +258,15 @@ export interface ExportFile {
   boards: { link: string; folder?: string; at: string }[];
 }
 
-/** The export of `boards`, the most recently changed first; `base` is the board's URL up to the link (…/board/#t=). */
+/**
+ * The export of `boards`, in the order of the list, so a folder imports in
+ * its order; `base` is the board's URL up to the link (…/board/#t=).
+ */
 export async function exportFile(boards: Saved[], base: string): Promise<string> {
   const file: ExportFile = {
     coachboard: 1,
     boards: await Promise.all(
-      byDate(boards).map(async (s) => ({
+      boards.map(async (s) => ({
         link: base + (await encode(s.board)),
         ...(s.folder ? { folder: s.folder } : {}),
         at: new Date(s.at).toISOString(),
@@ -221,8 +306,18 @@ export async function importFile(text: string, now = Date.now()): Promise<Saved[
   return read.flat();
 }
 
-/** The boards of `found` that draw like no board in `boards` nor an earlier one in `found`, whatever their folder. */
+/**
+ * The boards of `found` that draw like no board in the same folder, in
+ * `boards` nor earlier in `found`: the boards of a copied folder come
+ * along. The boards without a folder count as one folder.
+ */
 export function newOnly(boards: Saved[], found: Saved[]): Saved[] {
-  const have = boards.map((s) => s.board);
-  return found.filter((s) => !have.some((b) => sameBoard(b, s.board)) && have.push(s.board));
+  const have = boards.slice();
+  return found.filter((s) => !have.some((h) => h.folder === s.folder && sameBoard(h.board, s.board)) && have.push(s));
+}
+
+/** `boards` with the new boards of `found` (newOnly()) last, in the file's order: in a folder that exists they go to its bottom. */
+export function addImported(boards: Saved[], found: Saved[]) {
+  const added = newOnly(boards, found);
+  return { added, boards: [...boards, ...added] };
 }

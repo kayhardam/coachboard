@@ -183,6 +183,14 @@ const en = {
   "board.moreForUntitled": "More for this board",
   "board.duplicate": "Duplicate",
   "board.copySuffix": " (copy)",
+  "board.copySuffixN": " (copy {n})",
+  "board.save": "Save to My boards",
+  "board.saved": "Saved to My boards.",
+  "board.moveUp": "Move up",
+  "board.moveDown": "Move down",
+  "board.shareFolder": "Share folder",
+  "board.linksCopied": "Links copied.",
+  "board.duplicateFolder": "Duplicate folder",
   "board.deleted": "Board deleted.",
   "board.folder": "Folder",
   "board.noFolder": "No folder",
@@ -219,7 +227,9 @@ const en = {
 } as const;
 
 export type UiKey = keyof typeof en;
-export type BoardKey = Extract<UiKey, `board.${string}`>;
+/** The board page's own texts: the page shows them, the editor doesn't, so they stay out of its prop. */
+const pageKeys = ["board.title", "board.description", "board.heading", "board.noscript"] as const;
+export type BoardKey = Exclude<Extract<UiKey, `board.${string}`>, (typeof pageKeys)[number]>;
 export type BoardStrings = Record<BoardKey, string>;
 
 /** What the viewer shows: its own texts, and the editor's that it shares (the legend, Play). */
@@ -423,6 +433,14 @@ const nl: Record<UiKey, string> = {
   "board.moreForUntitled": "Meer voor dit bord",
   "board.duplicate": "Dupliceren",
   "board.copySuffix": " (kopie)",
+  "board.copySuffixN": " (kopie {n})",
+  "board.save": "Bewaren in Mijn borden",
+  "board.saved": "Bewaard in Mijn borden.",
+  "board.moveUp": "Omhoog",
+  "board.moveDown": "Omlaag",
+  "board.shareFolder": "Map delen",
+  "board.linksCopied": "Links gekopieerd.",
+  "board.duplicateFolder": "Map dupliceren",
   "board.deleted": "Bord verwijderd.",
   "board.folder": "Map",
   "board.noFolder": "Geen map",
@@ -468,7 +486,9 @@ export function t(locale: string, key: UiKey, vars?: Record<string, string>): st
 
 /** The board editor's strings, passed as a prop so no dictionary ships to the browser. */
 export function boardStrings(locale: string): BoardStrings {
-  const keys = (Object.keys(en) as UiKey[]).filter((k): k is BoardKey => k.startsWith("board."));
+  const keys = (Object.keys(en) as UiKey[]).filter(
+    (k): k is BoardKey => k.startsWith("board.") && !(pageKeys as readonly string[]).includes(k),
+  );
   return Object.fromEntries(keys.map((k) => [k, t(locale, k)])) as BoardStrings;
 }
 

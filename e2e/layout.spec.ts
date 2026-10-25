@@ -154,6 +154,21 @@ for (const orientation of ORIENTATIONS) {
     }
   });
 
+  test(`${orientation}: More opens on screen for a received board with steps, with Save to My boards and Delete step`, async ({ page }) => {
+    await orient(page, orientation);
+    // The lowest phone in landscape: More holds the most there (nine items).
+    if (orientation === "landscape") await page.setViewportSize({ width: 568, height: 320 });
+    const board = defaultBoardFor("en");
+    board.frames.push(structuredClone(board.frames[0]!));
+    await openBoard(page, `#t=${await encode(board)}`);
+    await moreButton(page).click();
+    const panel = page.locator(".menu-panel");
+    await expect(panel.getByRole("button")).toHaveCount(9);
+    for (const button of await panel.getByRole("button").all()) await expect(button).toBeInViewport({ ratio: 1 });
+    await expect(panel.getByRole("button", { name: "Save to My boards" })).toBeVisible();
+    await expect(panel.getByRole("button", { name: "Delete step" })).toBeVisible();
+  });
+
   test(`${orientation}: Delete is there only with a selection, and it neither moves nor covers the court`, async ({ page }) => {
     await orient(page, orientation);
     await openBoard(page);
@@ -401,6 +416,40 @@ for (const lang of ["en", "nl"]) {
       expect((await importButton.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
       expect(await importButton.evaluate((e) => e.scrollWidth - e.clientWidth)).toBe(0);
       await expect(list.getByRole("button", { name: t(lang, "board.exportAll") })).toHaveCount(0);
+    });
+  }
+}
+
+for (const lang of ["en", "nl"]) {
+  for (const [name, viewport] of [
+    ["portrait, 320 px wide", { width: 320, height: 568 }],
+    ["landscape, 320 px high", { width: 568, height: 320 }],
+  ] as const) {
+    test(`${lang}, ${name}: a folder's ⋯ and a board's ⋯ open on screen, with labels that fit`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await withBoards(page, lang);
+      await openBoard(page, "", `/${lang}/board/`);
+      await fromMenu(page, "board.myBoards", lang);
+      const list = page.getByRole("dialog", { name: t(lang, "board.myBoards") });
+      const folder = list.getByTitle(t(lang, "board.moreFor", { title: "Training dinsdag" }), { exact: true });
+      await expect(folder).toBeInViewport({ ratio: 1 });
+      await folder.click();
+      for (const key of ["board.shareFolder", "board.duplicateFolder"] as const) {
+        await expect(list.getByRole("button", { name: t(lang, key), exact: true })).toBeInViewport({ ratio: 1 });
+      }
+      await folder.click();
+      // The first board in the folder: Move down, no Move up.
+      const board = list.getByTitle(t(lang, "board.moreFor", { title: "Kruising MO–LO" }), { exact: true });
+      await board.click();
+      const down = list.getByRole("button", { name: t(lang, "board.moveDown"), exact: true });
+      await down.scrollIntoViewIfNeeded();
+      await expect(down).toBeInViewport({ ratio: 1 });
+      await expect(list.getByRole("button", { name: t(lang, "board.moveUp"), exact: true })).toHaveCount(0);
+      const cut = await list
+        .locator(":is(h3, .actions-panel button)")
+        .evaluateAll((els) => els.filter((e) => e.clientWidth > 1 && e.scrollWidth > e.clientWidth).map((e) => e.textContent));
+      expect(cut).toEqual([]);
+      expect(await list.evaluate((d) => d.scrollWidth - d.clientWidth)).toBe(0);
     });
   }
 }
