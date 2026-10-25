@@ -197,6 +197,12 @@ describe("the list", () => {
     expect(shift(list, "c", 1)).toBe(list);
   });
 
+  it("leaves the list as it is for a board that is gone, deleted in another tab", () => {
+    const list = [saved("a", 1, "Dinsdag"), saved("x", 2), saved("y", 3)];
+    expect(shift(list, "gone", -1)).toBe(list);
+    expect(shift(list, "gone", 1)).toBe(list);
+  });
+
   it("sorts the most recently changed first, without changing the list", () => {
     const list = [saved("a", 1), saved("b", 3), saved("c", 2)];
     expect(byDate(list).map((s) => s.id)).toEqual(["b", "c", "a"]);

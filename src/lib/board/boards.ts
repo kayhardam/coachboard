@@ -123,10 +123,12 @@ export function putAfter(boards: Saved[], id: string, entry: Saved): Saved[] {
 
 /**
  * The board `id` swapped with the one above it in its folder (`by` -1) or
- * below it (1); the list as it is when there is none.
+ * below it (1); the list as it is when there is none, or when the board is
+ * gone (deleted in another tab).
  */
 export function shift(boards: Saved[], id: string, by: -1 | 1): Saved[] {
   const i = boards.findIndex((s) => s.id === id);
+  if (i < 0) return boards;
   const others = boards.map((s, j) => j).filter((j) => j !== i && boards[j]!.folder === boards[i]?.folder);
   const j = by < 0 ? others.filter((j) => j < i).at(-1) : others.find((j) => j > i);
   if (j === undefined) return boards;
