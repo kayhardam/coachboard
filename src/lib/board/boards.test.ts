@@ -1,7 +1,9 @@
 import { deflateRawSync, inflateRawSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import {
+  addImported,
   byDate,
+  copyFolder,
   copyOf,
   deleteBoard,
   exportFile,
@@ -11,11 +13,16 @@ import {
   newOnly,
   OLD_KEY,
   put,
+  putAfter,
   read,
   remove,
   renameFolder,
+  restore,
   saveBoard,
+  shift,
   STORE_KEY,
+  toFolder,
+  uniqueName,
   update,
   withFolder,
   write,
@@ -171,6 +178,31 @@ describe("the list", () => {
     expect(remove([saved("a", 1), saved("b", 2)], "a").map((s) => s.id)).toEqual(["b"]);
   });
 
+  it("puts a deleted board back in its place with Undo, or last if the list got shorter meanwhile", () => {
+    const list = [saved("a", 1), saved("b", 2), saved("c", 3)];
+    expect(restore(remove(list, "b"), list[1]!, 1).map((s) => s.id)).toEqual(["a", "b", "c"]);
+    expect(restore([list[0]!], list[2]!, 2).map((s) => s.id)).toEqual(["a", "c"]);
+  });
+
+  it("puts a duplicate right under its original", () => {
+    const list = [saved("a", 1, "Dinsdag"), saved("b", 2, "Dinsdag"), saved("c", 3, "Dinsdag")];
+    expect(putAfter(list, "a", saved("copy", 4, "Dinsdag")).map((s) => s.id)).toEqual(["a", "copy", "b", "c"]);
+  });
+
+  it("moves a board up or down within its folder, past the boards of other folders", () => {
+    const list = [saved("a", 1, "Dinsdag"), saved("x", 2), saved("b", 3, "Dinsdag"), saved("c", 4, "Dinsdag")];
+    expect(shift(list, "b", -1).map((s) => s.id)).toEqual(["b", "x", "a", "c"]);
+    expect(shift(list, "b", 1).map((s) => s.id)).toEqual(["a", "x", "c", "b"]);
+    expect(shift(list, "a", -1)).toBe(list);
+    expect(shift(list, "c", 1)).toBe(list);
+  });
+
+  it("leaves the list as it is for a board that is gone, deleted in another tab", () => {
+    const list = [saved("a", 1, "Dinsdag"), saved("x", 2), saved("y", 3)];
+    expect(shift(list, "gone", -1)).toBe(list);
+    expect(shift(list, "gone", 1)).toBe(list);
+  });
+
   it("sorts the most recently changed first, without changing the list", () => {
     const list = [saved("a", 1), saved("b", 3), saved("c", 2)];
     expect(byDate(list).map((s) => s.id)).toEqual(["b", "c", "a"]);
@@ -188,6 +220,23 @@ describe("folders", () => {
     expect(withFolder(saved("a", 1), "  Training\tdinsdag ").folder).toBe("Training dinsdag");
     expect(withFolder(saved("a", 1, "Dinsdag"), "  ")).not.toHaveProperty("folder");
     expect(withFolder(saved("a", 1), "x".repeat(50)).folder).toHaveLength(40);
+  });
+
+  it("puts a board that changes folder at the bottom of its new folder", () => {
+    const list = [saved("a", 1, "Dinsdag"), saved("b", 2), saved("c", 3, "Dinsdag")];
+    const moved = toFolder(list, "b", "Dinsdag");
+    expect(moved.map((s) => [s.id, s.folder])).toEqual([["a", "Dinsdag"], ["c", "Dinsdag"], ["b", "Dinsdag"]]);
+    expect(toFolder(list, "a", " Dinsdag ")).toBe(list);
+  });
+
+  it("renames a folder into one that exists: its boards join it, at the bottom", () => {
+    const list = [saved("a", 1, "Kopie"), saved("b", 2, "Dinsdag"), saved("c", 3, "Kopie"), saved("d", 4, "Dinsdag")];
+    expect(renameFolder(list, "Kopie", "Dinsdag").map((s) => [s.id, s.folder])).toEqual([
+      ["b", "Dinsdag"],
+      ["d", "Dinsdag"],
+      ["a", "Dinsdag"],
+      ["c", "Dinsdag"],
+    ]);
   });
 
   it("renames a folder for every board in it", () => {
@@ -257,6 +306,34 @@ describe("copyOf", () => {
   });
 });
 
+describe("a folder's copy", () => {
+  it("is named with the suffix, then numbered, cut short before it", () => {
+    expect(uniqueName("Doel X", ["Doel X"], " (kopie)", " (kopie {n})")).toBe("Doel X (kopie)");
+    expect(uniqueName("Doel X", ["Doel X", "Doel X (kopie)"], " (kopie)", " (kopie {n})")).toBe("Doel X (kopie 2)");
+    expect(uniqueName("Doel X", ["Doel X (kopie)", "Doel X (kopie 2)"], " (kopie)", " (kopie {n})")).toBe("Doel X (kopie 3)");
+    const long = "x".repeat(40);
+    const first = uniqueName(long, [long], " (copy)", " (copy {n})");
+    expect(first).toBe("x".repeat(33) + " (copy)");
+    expect(uniqueName(long, [long, first], " (copy)", " (copy {n})")).toBe("x".repeat(31) + " (copy 2)");
+  });
+
+  it("holds every board of the folder in its order, with its title, under new ids and dated now", () => {
+    const titled = (id: string, at: number, folder?: string, title = id) => ({ ...saved(id, at, folder), board: { ...edited(), title } });
+    const list = [titled("a", 1, "Doel X"), titled("x", 2), titled("b", 3, "Doel X")];
+    const { name, boards } = copyFolder(list, "Doel X", " (kopie)", " (kopie {n})", 9);
+    expect(name).toBe("Doel X (kopie)");
+    const copies = boards.slice(3);
+    expect(boards.slice(0, 3)).toEqual(list);
+    expect(copies.map((s) => [s.board.title, s.folder, s.at])).toEqual([
+      ["a", "Doel X (kopie)", 9],
+      ["b", "Doel X (kopie)", 9],
+    ]);
+    expect(copies.map((s) => s.id)).not.toContain("a");
+    expect(folders(boards)[0]).toBe("Doel X (kopie)");
+    expect(copyFolder(boards, "Doel X", " (kopie)", " (kopie {n})").name).toBe("Doel X (kopie 2)");
+  });
+});
+
 describe("export and import", () => {
   const BASE = "https://handballcoachboard.com/nl/board/#t=";
   const titled = (title: string): Board => ({ ...edited(), title });
@@ -266,18 +343,18 @@ describe("export and import", () => {
   ];
   const strip = ({ board, folder, at }: Saved) => ({ board, folder, at });
 
-  it("exports each board as a full link, with its folder and date, the most recently changed first", async () => {
+  it("exports each board as a full link, with its folder and date, in the order of the list", async () => {
     const file = JSON.parse(await exportFile(list(), BASE));
     expect(file.coachboard).toBe(1);
     expect(file.boards).toEqual([
-      { link: BASE + (await encode(edited("nl"))), at: "2026-10-09T09:30:00.000Z" },
       { link: BASE + (await encode(titled("Kruising MO–LO"))), folder: "Training dinsdag", at: "2026-10-08T17:12:00.000Z" },
+      { link: BASE + (await encode(edited("nl"))), at: "2026-10-09T09:30:00.000Z" },
     ]);
   });
 
   it("imports what it exported: the same boards, folders and dates, under new ids", async () => {
     const found = await importFile(await exportFile(list(), BASE));
-    expect(found.map(strip)).toEqual(byDate(list()).map(strip));
+    expect(found.map(strip)).toEqual(list().map(strip));
     expect(found.map((s) => s.id)).not.toContain("a");
     expect(new Set(found.map((s) => s.id)).size).toBe(2);
   });
@@ -317,16 +394,45 @@ describe("export and import", () => {
     expect(c!.at).toBe(1234);
   });
 
-  it("leaves out the boards that are already there, in any folder, and the second of two in one file", async () => {
+  it("leaves out the boards already in the same folder, and the second of two in one folder of the file", async () => {
     const mine: Saved[] = [{ id: "x", board: edited(), folder: "Dinsdag", at: 1 }];
     const found: Saved[] = [
-      { id: "1", board: edited(), at: 2 },
+      { id: "1", board: edited(), folder: "Dinsdag", at: 2 },
       { id: "2", board: titled("Nieuw"), folder: "Donderdag", at: 3 },
-      { id: "3", board: titled("Nieuw"), at: 4 },
+      { id: "3", board: titled("Nieuw"), folder: "Donderdag", at: 4 },
+      { id: "4", board: edited(), at: 5 },
+      { id: "5", board: edited(), at: 6 },
     ];
-    expect(newOnly(mine, found).map((s) => s.id)).toEqual(["2"]);
+    expect(newOnly(mine, found).map((s) => s.id)).toEqual(["2", "4"]);
     expect(newOnly([...mine, ...found], found)).toEqual([]);
-    expect(newOnly([], found).map((s) => s.id)).toEqual(["1", "2"]);
+    expect(newOnly([], found).map((s) => s.id)).toEqual(["1", "2", "4"]);
+  });
+
+  it("brings a copied folder along with its unchanged boards, also on an empty device", async () => {
+    const week = [titled("Kruising"), titled("Schot")].map((board, i) => ({ id: `w${i}`, board, folder: "Doel X", at: i }));
+    const { boards } = copyFolder(week, "Doel X", " (kopie)", " (kopie {n})", 9);
+    const found = await importFile(await exportFile(boards, BASE));
+    expect(addImported([], found).boards.map((s) => [s.folder, s.board.title])).toEqual([
+      ["Doel X", "Kruising"],
+      ["Doel X", "Schot"],
+      ["Doel X (kopie)", "Kruising"],
+      ["Doel X (kopie)", "Schot"],
+    ]);
+  });
+
+  it("puts the new boards of an import at the bottom of a folder the device already has, in the file's order", () => {
+    const mine: Saved[] = [
+      { id: "a", board: titled("Kruising"), folder: "Doel X", at: 1 },
+      { id: "x", board: titled("Los"), at: 2 },
+    ];
+    const found: Saved[] = [
+      { id: "1", board: titled("Schot"), folder: "Doel X", at: 3 },
+      { id: "2", board: titled("Kruising"), folder: "Doel X", at: 4 },
+      { id: "3", board: titled("Afronden"), folder: "Doel X", at: 5 },
+    ];
+    const { added, boards } = addImported(mine, found);
+    expect(added.map((s) => s.id)).toEqual(["1", "3"]);
+    expect(boards.filter((s) => s.folder === "Doel X").map((s) => s.board.title)).toEqual(["Kruising", "Schot", "Afronden"]);
   });
 
   it("knows a board again when another browser compressed its link to other bytes", async () => {

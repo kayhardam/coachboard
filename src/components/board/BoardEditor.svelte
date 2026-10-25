@@ -444,12 +444,14 @@
     }
   }
 
-  /** Changes the list in localStorage (see store.update()) and shows the result. */
+  /** Changes the list in localStorage (see store.update()) and shows the result; false when it couldn't. */
   function change(run: (storage: Storage) => store.Store) {
     try {
       boards = run(localStorage).boards;
+      return true;
     } catch {
       // Storage full or blocked: the URL still holds the board.
+      return false;
     }
   }
 
@@ -505,6 +507,31 @@
     if (board === now && link !== (await keptLink)) save(now, link);
   }
 
+  /**
+   * A received board (a link, a QR code, a tactic) with nothing changed yet:
+   * More saves it as it is. Says "Saved" only when it was.
+   */
+  const received = $derived(loaded && current === null && !isNew);
+
+  async function saveToList() {
+    menuOpen = false;
+    keepText();
+    const now = board;
+    const link = await encode(now);
+    // Saved meanwhile, with a sentence that was being typed.
+    if (current !== null) return show(strings["board.saved"]);
+    const id = store.newId();
+    if (board !== now || !change((storage) => store.saveBoard(storage, id, now))) return;
+    current = id;
+    keep(now, link);
+    try {
+      history.replaceState({ ...history.state, board: id }, "");
+    } catch {
+      // Throttled: the next save writes it.
+    }
+    show(strings["board.saved"]);
+  }
+
   /** Export all boards: one file of links, downloaded. The board on the court goes in with its latest change. */
   async function exportAll() {
     await saveNow();
@@ -530,8 +557,9 @@
     let added: store.Saved[] = [];
     try {
       boards = store.update(localStorage, (list) => {
-        added = store.newOnly(list.boards, found);
-        return { ...list, boards: [...added, ...list.boards] };
+        const next = store.addImported(list.boards, found);
+        added = next.added;
+        return { ...list, boards: next.boards };
       }).boards;
     } catch {
       return show(strings["board.importFailed"]);
@@ -571,12 +599,19 @@
   function duplicate(s: store.Saved, e: Event) {
     closeMenu(e);
     const copy = store.copyOf(s, strings["board.copySuffix"]);
-    change((storage) => store.update(storage, (list) => ({ ...list, boards: store.put(list.boards, copy) })));
+    change((storage) => store.update(storage, (list) => ({ ...list, boards: store.putAfter(list.boards, s.id, copy) })));
+  }
+
+  /** Move up or Move down in its folder. */
+  function shift(s: store.Saved, by: -1 | 1, e: Event) {
+    closeMenu(e);
+    change((storage) => store.update(storage, (list) => ({ ...list, boards: store.shift(list.boards, s.id, by) })));
   }
 
   function deleteSaved(s: store.Saved, e: Event) {
     closeMenu(e);
     const wasOpen = s.id === current;
+    const index = boards.findIndex((b) => b.id === s.id);
     change((storage) => store.deleteBoard(storage, s.id));
     if (wasOpen) {
       kept = board; // deleted: not to be saved again on the way out
@@ -585,7 +620,7 @@
     show(strings["board.deleted"], false, {
       label: strings["board.undo"],
       run() {
-        change((storage) => store.update(storage, (list) => ({ ...list, boards: store.put(list.boards, s) })));
+        change((storage) => store.update(storage, (list) => ({ ...list, boards: store.restore(list.boards, s, index) })));
         if (wasOpen) open(s.board, s.id);
       },
     });
@@ -594,11 +629,36 @@
   function moveTo(s: store.Saved, folder: string, e?: Event) {
     closeMenu(e);
     change((storage) =>
-      store.update(storage, (list) => ({
-        ...list,
-        boards: list.boards.map((b) => (b.id === s.id ? store.withFolder(b, folder) : b)),
-      })),
+      store.update(storage, (list) => ({ ...list, boards: store.toFolder(list.boards, s.id, folder) })),
     );
+  }
+
+  /**
+   * Share folder: one message with the folder's name, then each board's
+   * title and its link, in the folder's order. The board on the court goes
+   * in with its latest change.
+   */
+  async function shareFolder(folder: string, e: Event) {
+    closeMenu(e);
+    await saveNow();
+    const list = store.inFolder(readList()?.boards ?? boards, folder);
+    const lines = await Promise.all(list.map(async (s) => `${titleOf(s)}\n${location.origin}${links.link}#t=${await encode(s.board)}`));
+    send({ text: [folder, ...lines].join("\n\n") }, strings["board.linksCopied"]);
+  }
+
+  /** Duplicate folder: a copy of it with every board, on top of the list, its name ready to change. */
+  async function duplicateFolder(folder: string, e: Event) {
+    closeMenu(e);
+    await saveNow();
+    let name = "";
+    const copied = change((storage) =>
+      store.update(storage, (list) => {
+        const copy = store.copyFolder(list.boards, folder, strings["board.copySuffix"], strings["board.copySuffixN"]);
+        name = copy.name;
+        return { ...list, boards: copy.boards };
+      }),
+    );
+    if (copied) renaming = name;
   }
 
   /** Enter or leaving the field keeps a folder name; Escape drops it (and keeps the list open). */
@@ -622,18 +682,20 @@
     }
   }
 
-  /** Folders first, the most recently changed first, then the boards without one. */
+  /**
+   * Folders first, the most recently changed first, each in its own order;
+   * then the boards without one, the most recently changed first.
+   */
   const folders = $derived(store.folders(boards));
-  const groups = $derived.by(() => {
-    const sorted = store.byDate(boards);
-    return [...folders, undefined]
-      .map((folder) => [folder, sorted.filter((s) => s.folder === folder)] as const)
-      .filter(([, list]) => list.length > 0);
-  });
+  const groups = $derived(
+    [
+      ...folders.map((folder) => [folder, store.inFolder(boards, folder)] as const),
+      [undefined, store.byDate(store.inFolder(boards, undefined))] as const,
+    ].filter(([, list]) => list.length > 0),
+  );
 
   const titleOf = (s: store.Saved) => s.board.title ?? strings["board.untitled"];
-  const moreFor = (s: store.Saved) =>
-    s.board.title ? strings["board.moreFor"].replace("{title}", s.board.title) : strings["board.moreForUntitled"];
+  const moreFor = (title?: string) => (title ? strings["board.moreFor"].replace("{title}", title) : strings["board.moreForUntitled"]);
   const date = (at: number) =>
     new Date(at).toLocaleDateString(document.documentElement.lang, { day: "numeric", month: "short" });
 
@@ -857,21 +919,26 @@
 
   async function share() {
     keepText();
-    const url = await shareUrl("link");
+    send({ url: await shareUrl("link"), title: document.title }, strings["board.linkCopied"]);
+  }
+
+  /** Shares a link or a message; without a share sheet it is copied (`copied` says so), else shown to copy by hand. */
+  async function send(data: { url?: string; title?: string; text?: string }, copied: string) {
     if (navigator.share) {
       try {
-        await navigator.share({ url, title: document.title });
+        await navigator.share(data);
         return;
       } catch (e) {
         if ((e as DOMException).name === "AbortError") return;
         // Not allowed here (e.g. desktop without a share target): copy instead.
       }
     }
+    const text = data.url ?? data.text ?? "";
     try {
-      await navigator.clipboard.writeText(url);
-      show(strings["board.linkCopied"]);
+      await navigator.clipboard.writeText(text);
+      show(copied);
     } catch {
-      manualLink = url;
+      manualLink = text;
     }
   }
 
@@ -945,6 +1012,9 @@
       <div class="menu-panel">
         <button type="button" onclick={openList}>{strings["board.myBoards"]}</button>
         <button type="button" class="last" onclick={newBoard}>{strings["board.newBoard"]}</button>
+        {#if received}
+          <button type="button" onclick={saveToList}>{strings["board.save"]}</button>
+        {/if}
         <button type="button" onclick={showQr}>{strings["board.qr"]}</button>
         {#if board.frames.length > 1}
           <button type="button" onclick={removeStep}>{strings["board.removeStep"]}</button>
@@ -1134,27 +1204,41 @@
     <p class="empty">{strings["board.noBoards"]}</p>
   {/if}
   {#each groups as [folder, list] (folder ?? "")}
-    <h3>
-      {#if folder === undefined}
-        {strings["board.noFolder"]}
-      {:else if renaming === folder}
-        <input
-          value={folder}
-          maxlength={store.MAX_FOLDER}
-          aria-label={strings["board.folderName"]}
-          use:focusTitle
-          onkeydown={folderKey}
-          onblur={(e) => renaming !== null && finishFolder(e, true)}
-        />
-      {:else}
-        <button type="button" title={strings["board.renameFolder"]} onclick={() => (renaming = folder)}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.folder} /></svg>
-          {folder}
-        </button>
+    <!-- ⋯ beside the heading, not in it: a <details> can't sit in a heading. -->
+    <div class="folder">
+      <h3>
+        {#if folder === undefined}
+          {strings["board.noFolder"]}
+        {:else if renaming === folder}
+          <input
+            value={folder}
+            maxlength={store.MAX_FOLDER}
+            aria-label={strings["board.folderName"]}
+            use:focusTitle
+            onkeydown={folderKey}
+            onblur={(e) => renaming !== null && finishFolder(e, true)}
+          />
+        {:else}
+          <button type="button" title={strings["board.renameFolder"]} onclick={() => (renaming = folder)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.folder} /></svg>
+            <span>{folder}</span>
+          </button>
+        {/if}
+      </h3>
+      {#if folder !== undefined && renaming !== folder}
+        <details class="actions">
+          <summary aria-label={moreFor(folder)} title={moreFor(folder)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.more} /></svg>
+          </summary>
+          <div class="actions-panel">
+            <button type="button" onclick={(e) => shareFolder(folder, e)}>{strings["board.shareFolder"]}</button>
+            <button type="button" onclick={(e) => duplicateFolder(folder, e)}>{strings["board.duplicateFolder"]}</button>
+          </div>
+        </details>
       {/if}
-    </h3>
+    </div>
     <ul>
-      {#each list as s (s.id)}
+      {#each list as s, i (s.id)}
         <li class:current={s.id === current}>
           <button type="button" class="open" onclick={() => openSaved(s)}>
             <span class="thumb" aria-hidden="true"><Court board={s.board} label={titleOf(s)} /></span>
@@ -1162,11 +1246,17 @@
             <time datetime={new Date(s.at).toISOString()}>{date(s.at)}</time>
           </button>
           <details class="actions">
-            <summary aria-label={moreFor(s)} title={moreFor(s)}>
+            <summary aria-label={moreFor(s.board.title)} title={moreFor(s.board.title)}>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.more} /></svg>
             </summary>
             <div class="actions-panel">
               <button type="button" onclick={(e) => duplicate(s, e)}>{strings["board.duplicate"]}</button>
+              {#if folder !== undefined && i > 0}
+                <button type="button" onclick={(e) => shift(s, -1, e)}>{strings["board.moveUp"]}</button>
+              {/if}
+              {#if folder !== undefined && i < list.length - 1}
+                <button type="button" onclick={(e) => shift(s, 1, e)}>{strings["board.moveDown"]}</button>
+              {/if}
               <p>{strings["board.folder"]}</p>
               {#each ["", ...folders] as f (f)}
                 <button type="button" aria-pressed={(s.folder ?? "") === f} onclick={(e) => moveTo(s, f, e)}>

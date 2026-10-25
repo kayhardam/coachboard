@@ -12,11 +12,13 @@ import {
   expectBoard,
   expectedPieces,
   fromMenu,
+  moreButton,
   OLD_KEY,
   openBoard,
   pieces,
   savedBoards,
   saveOwnBoard,
+  STORE_KEY,
   test,
 } from "./helpers";
 
@@ -79,6 +81,43 @@ test.describe("saving", () => {
     await fromMenu(page, "board.resetLineup");
     await settled(page);
     expect(await savedBoards(page)).toEqual([]);
+  });
+
+  test("a received board is saved from More as it is, once, and a reload opens it without a copy", async ({ page }) => {
+    await openBoard(page);
+    await moreButton(page).click();
+    // A new board isn't received: it is saved at its first change.
+    await expect(page.getByRole("button", { name: "Save to My boards" })).toHaveCount(0);
+
+    await page.goto("/en/");
+    await openBoard(page, `#t=${play.link}`);
+    await fromMenu(page, "board.save");
+    await expect(page.getByRole("status")).toContainText("Saved to My boards.");
+    const boards = await savedBoards(page);
+    expect(boards).toHaveLength(1);
+    await expectBoard(page, boards[0]!.board);
+    await moreButton(page).click();
+    await expect(page.getByRole("button", { name: "Save to My boards" })).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByRole("toolbar", { name: "Tools" })).toBeVisible();
+    await dragPlayer(page, 0, 20, 20);
+    await settled(page);
+    expect((await savedBoards(page)).map((s) => s.id)).toEqual([boards[0]!.id]);
+  });
+
+  test("without storage, saving a received board says nothing", async ({ page }) => {
+    await page.addInitScript(() => {
+      Storage.prototype.setItem = () => {
+        throw new DOMException("Blocked", "SecurityError");
+      };
+    });
+    await openBoard(page, `#t=${play.link}`);
+    await fromMenu(page, "board.save");
+    await page.waitForTimeout(300);
+    await expect(page.getByRole("status")).toHaveCount(0);
+    await moreButton(page).click();
+    await expect(page.getByRole("button", { name: "Save to My boards" })).toBeVisible();
   });
 
   test("editing a received link makes a new board, and yours stays", async ({ page, context }) => {
@@ -221,6 +260,24 @@ test.describe("two tabs", () => {
   });
 });
 
+/** `boards` in My boards, then the editor opened. */
+async function withList(page: Page, boards: Saved[]) {
+  await page.goto("/en/");
+  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [STORE_KEY, JSON.stringify({ current: null, boards })]);
+  await openBoard(page);
+}
+
+/** A board with a title, LB moved by `x`, so each is its own board. */
+function titled(title: string, x: number): Board {
+  const board = { ...defaultBoardFor("en"), title };
+  board.frames[0]!.players[1]!.at = [30 + x, 100];
+  return board;
+}
+
+/** The titles in the list, from group `group` on (all groups by default), in the order shown. */
+const namesIn = (page: Page, group?: number) =>
+  (group === undefined ? list(page) : list(page).locator("ul").nth(group)).locator(".name");
+
 test.describe("the list", () => {
   test("New board, open, duplicate with (copy), delete with Undo", async ({ page }) => {
     await openBoard(page);
@@ -294,6 +351,97 @@ test.describe("the list", () => {
     expect((await savedBoards(page))[0]).not.toHaveProperty("folder");
   });
 
+  test("a folder keeps its own order: a board put in it goes last, Move up and Move down, and the export keeps it", async ({ page }) => {
+    await withList(page, [
+      { id: "a", board: titled("Opwarmen", 1), folder: "Tuesday", at: 3 },
+      { id: "b", board: titled("Kruising", 2), folder: "Tuesday", at: 1 },
+      { id: "c", board: titled("Afronden", 3), at: 5 },
+    ]);
+    await openList(page);
+    await list(page).getByTitle("More for Afronden", { exact: true }).click();
+    await list(page).locator(".actions-panel").getByRole("button", { name: "Tuesday", exact: true }).click();
+    await expect(namesIn(page)).toHaveText(["Opwarmen", "Kruising", "Afronden"]);
+
+    await list(page).getByTitle("More for Opwarmen", { exact: true }).click();
+    await expect(list(page).getByRole("button", { name: "Move up" })).toHaveCount(0);
+    await list(page).getByRole("button", { name: "Move down" }).click();
+    await expect(namesIn(page)).toHaveText(["Kruising", "Opwarmen", "Afronden"]);
+    await list(page).getByTitle("More for Afronden", { exact: true }).click();
+    await expect(list(page).getByRole("button", { name: "Move down" })).toHaveCount(0);
+    await list(page).getByRole("button", { name: "Move up" }).click();
+    await expect(namesIn(page)).toHaveText(["Kruising", "Afronden", "Opwarmen"]);
+
+    const file = await downloaded(page, () => list(page).getByRole("button", { name: "Export all boards" }).click());
+    const titles = await Promise.all(JSON.parse(file.text).boards.map(async (b: { link: string }) => (await decode(new URL(b.link).hash.slice(3)))!.title));
+    expect(titles).toEqual(["Kruising", "Afronden", "Opwarmen"]);
+  });
+
+  test("Share folder sends the folder's name, then each board's title and its link to the viewer, in order", async ({ page }) => {
+    await page.addInitScript(() => {
+      navigator.share = async (data) => void ((window as unknown as { shared: ShareData }).shared = data!);
+    });
+    await withList(page, [
+      { id: "a", board: titled("Opwarmen", 1), folder: "Tuesday", at: 3 },
+      { id: "c", board: titled("Los", 3), at: 5 },
+      { id: "b", board: defaultBoardFor("en"), folder: "Tuesday", at: 1 },
+    ]);
+    await openList(page);
+    await list(page).getByTitle("More for Tuesday", { exact: true }).click();
+    await list(page).getByRole("button", { name: "Share folder" }).click();
+    const shared = await page.waitForFunction(() => (window as unknown as { shared?: ShareData }).shared);
+    const { text } = (await shared.jsonValue())!;
+    const [name, ...boards] = text!.split("\n\n");
+    expect(name).toBe("Tuesday");
+    expect(boards.map((b) => b.split("\n")[0])).toEqual(["Opwarmen", "Untitled"]);
+    for (const [i, want] of [titled("Opwarmen", 1), defaultBoardFor("en")].entries()) {
+      const link = new URL(boards[i]!.split("\n")[1]!);
+      expect(link.pathname).toBe("/en/board/link/");
+      expect(await decode(link.hash.slice(3))).toEqual(want);
+    }
+  });
+
+  test("Share folder without a share sheet copies the message", async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "share", { value: undefined });
+      Object.defineProperty(navigator, "clipboard", {
+        value: { writeText: async (text: string) => void ((window as unknown as { copied: string }).copied = text) },
+      });
+    });
+    await withList(page, [{ id: "a", board: titled("Opwarmen", 1), folder: "Tuesday", at: 3 }]);
+    await openList(page);
+    await list(page).getByTitle("More for Tuesday", { exact: true }).click();
+    await list(page).getByRole("button", { name: "Share folder" }).click();
+    await expect(list(page).getByRole("status")).toContainText("Links copied.");
+    expect(await page.evaluate(() => (window as unknown as { copied: string }).copied)).toMatch(/^Tuesday\n\nOpwarmen\nhttp.*\/en\/board\/link\/#t=2\./);
+  });
+
+  test("Duplicate folder: a copy on top with every board in order, its name open to change, and (copy 2) the next time", async ({ page }) => {
+    await withList(page, [
+      { id: "a", board: titled("Opwarmen", 1), folder: "Week 1", at: 3 },
+      { id: "b", board: titled("Kruising", 2), folder: "Week 1", at: 1 },
+      { id: "c", board: titled("Los", 3), folder: "Later", at: 9 },
+    ]);
+    await openList(page);
+    await list(page).getByTitle("More for Week 1", { exact: true }).click();
+    await list(page).getByRole("button", { name: "Duplicate folder" }).click();
+    const name = list(page).getByRole("textbox", { name: "Folder name" });
+    await expect(name).toBeFocused();
+    await expect(name).toHaveValue("Week 1 (copy)");
+    await name.fill("Week 2");
+    await page.keyboard.press("Enter");
+    await expect(list(page).locator("h3")).toHaveText(["Week 2", "Later", "Week 1"]);
+    await expect(namesIn(page, 0)).toHaveText(["Opwarmen", "Kruising"]);
+    expect((await savedBoards(page)).filter((s) => s.folder === "Week 2").map((s) => s.board.title)).toEqual(["Opwarmen", "Kruising"]);
+
+    await list(page).getByTitle("More for Week 1", { exact: true }).click();
+    await list(page).getByRole("button", { name: "Duplicate folder" }).click();
+    await expect(name).toHaveValue("Week 1 (copy)");
+    await page.keyboard.press("Enter");
+    await list(page).getByTitle("More for Week 1", { exact: true }).click();
+    await list(page).getByRole("button", { name: "Duplicate folder" }).click();
+    await expect(name).toHaveValue("Week 1 (copy 2)");
+  });
+
   test("Escape in a folder name drops it and keeps the list open", async ({ page }) => {
     await openBoard(page);
     await setTitle(page, "Opwarmen");
@@ -365,7 +513,7 @@ test.describe("export and import", () => {
     const at = Date.parse("2026-10-08T17:12:00Z");
     const file = await exportFile(
       [
-        { id: "x", board: own!.board, folder: "Somewhere else", at },
+        { id: "x", board: own!.board, at },
         { id: "y", board: withRun(1), folder: "Training Tuesday", at },
         { id: "z", board: withRun(2), at: at - 1 },
       ] as Saved[],
@@ -376,7 +524,7 @@ test.describe("export and import", () => {
     await expect(notice(page)).toContainText("2 boards added.");
     const boards = await savedBoards(page);
     expect(boards).toHaveLength(3);
-    // Yours is already there: it stays one board, in its own folder.
+    // Yours is already there, without a folder: it stays one board.
     expect(boards.find((s) => s.id === own!.id)).toEqual(own);
     expect(boards.filter((s) => s.id !== own!.id).map((s) => [s.folder, s.at])).toEqual([
       ["Training Tuesday", at],

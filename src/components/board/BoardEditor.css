@@ -478,13 +478,15 @@
   .editor .menu {
     display: grid;
   }
-  /* The menu opens to the left of More, and up, so it stays on screen. Seven
-     items under each other don't fit in 320 px of height: two columns, My
-     boards and New board on the first row. */
+  /* The menu opens to the left of the title panel, from the bottom of the
+     screen up, so it stays on screen. Nine items under each other don't fit
+     in 320 px of height: two columns, My boards and New board on the first
+     row. Fixed: from More up, the five rows would run off the top. */
   .editor .menu-panel {
+    position: fixed;
     top: auto;
-    right: calc(100% + 6px);
-    bottom: 0;
+    right: calc(var(--board-panel) + 10px);
+    bottom: max(4px, env(safe-area-inset-bottom));
     grid-template-columns: 1fr 1fr;
     min-width: 400px;
   }
@@ -674,17 +676,27 @@
   margin-top: 16px;
   color: var(--color-text-muted);
 }
+/* A folder's name, and on the right ⋯ for the whole folder, as for a board. */
+.boards .folder {
+  position: relative;
+  margin: 16px 0 4px;
+  padding-right: var(--tap);
+}
+.boards .folder:has(.actions[open]) {
+  z-index: 4;
+}
 .boards h3 {
   display: flex;
   align-items: center;
   min-height: var(--tap);
-  margin: 16px 0 4px;
+  margin: 0;
   color: var(--color-text-muted);
   font-size: 0.9375rem;
   font-weight: 600;
 }
 .boards h3 button {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 8px;
   min-height: var(--tap);
@@ -698,6 +710,11 @@
 }
 .boards h3 button svg {
   color: var(--color-accent-dark);
+}
+.boards h3 span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .boards input {
   width: 100%;

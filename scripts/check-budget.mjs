@@ -27,16 +27,16 @@ import { gzipSync } from "node:zlib";
 // Raise a budget only on purpose, and give the reason in the pull request.
 // Baseline (docs/metingen.md, phase 3 and 4a) plus about 15%.
 export const BUDGETS = {
-  boardJs: 35_600, // the editor's page: about 35.15 KB on Linux, plus about 0.4 KB for dependency updates (Dependabot's #45 added 142 B)
+  boardJs: 36_400, // the editor's page: about 35.96 KB on Linux after phase 17 (folders as trainings, +0.8 KB), plus about 0.4 KB for dependency updates (Dependabot's #45 added 142 B)
   viewerJs: 25_700, // the viewer's pages (shared boards): about 25.25 KB on Linux, plus about 0.4 KB for dependency updates
   lazyJs: 10_000, // 0 KB
-  allJs: 43_000, // about 41.98 KB on Linux, plus about 1 KB for dependency updates: seven times Dependabot's largest so far (+142 B, #45)
+  allJs: 43_800, // about 42.79 KB on Linux after phase 17, plus about 1 KB for dependency updates: seven times Dependabot's largest so far (+142 B, #45)
   css: 2_000, // 1.6 KB per page
   // The board pages also link the editor's stylesheet (BoardEditor.css). Content
   // pages stay at `css`, which is too small to take that stylesheet as well.
   boardCss: 5_780, // 5.57 KB plus 0.2 KB (docs/metingen.md, phase 14-3: play); phase 14 ends at 5.8 KB (D11)
   viewerCss: 3_570, // the viewer's pages: 3.37 KB plus 0.2 KB, under phase 15's cap of 3.6 KB (K2)
-  html: 6_500, // 6.4 KB on the board, the largest page
+  html: 6_700, // 6.5 KB on the board, the largest page: every text of the board goes along as a prop (about 12 B each)
   // A library item draws every step; the largest the schema allows (8 steps of
   // 100 characters, 3 related items) is about 7.3 KB (L7, docs/metingen.md, phase 16-1).
   libraryHtml: 7_500,

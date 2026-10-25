@@ -3549,3 +3549,16 @@ Budgetten zijn een vangnet (zie "How we work" in `AGENTS.md`). `main` @ `ee0a77c
 | `viewerJs` | 25.110 B | ~25,25 KB | 25.370 | 25.700 |
 
 Reden: op Linux was nog ongeveer 25 B over in alle JS; #45 kostte 142 B. De bovengrens van K2 vervalt.
+
+## Fase 17: Overzicht (25 oktober 2026)
+
+Bewaren in Mijn borden, volgorde in een map (met export), Map delen en Map dupliceren (O1–O9). Gemeten op macOS, gzip, `/nl/board/`; Linux geschat met +~140 B JS.
+
+| Budget | Voor (macOS) | Na (macOS) | Linux (geschat) | Was | Wordt |
+|---|--:|--:|--:|--:|--:|
+| `boardJs` | 35.008 B | 35.822 B | ~35,96 KB | 35.600 | 36.400 |
+| `allJs` | 41.834 B | 42.648 B | ~42,79 KB | 43.000 | 43.800 |
+| `html` | 6.438 B | 6.486 B | | 6.500 | 6.700 |
+| `boardCss` | 5.573 B | 5.616 B | | 5.780 | 5.780 |
+
+Reden: +814 B JS (het plan schatte +0,76 KB met O7); de vier paginateksten (`board.title`, `.description`, `.heading`, `.noscript`) gaan niet meer als prop mee. De kijker blijft gelijk. Tikbudget gelijk.
