@@ -40,7 +40,7 @@ export const BUDGETS = {
   // A library item draws every step; the largest the schema allows (8 steps of
   // 100 characters, 3 related items) is about 7.3 KB (L7, docs/metingen.md, phase 16-1).
   libraryHtml: 7_500,
-  png: 60_000, // 50.5 KB for og-default.png, the largest
+  png: 60_000, // about 52.5 KB for the second wave's og.png (en), the largest
 };
 
 // The one script from another origin, on the board pages only. The same URL as
