@@ -58,7 +58,7 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
 - `BaseLayout` renders `Header`, `<main id="main">` and `Footer`. With `fullscreen` (the board pages) the body fills the viewport and there is no site header or footer: the board has its own title bar. The footer has the language links on every content page; a language the page doesn't exist in links to its home page.
 - `404.astro` is one page for the whole site (the host serves `dist/404.html` for any missing path), so it shows the text in every language.
 - Menu and footer links come from `src/data/nav.ts`. Labels and short page texts come from `t(locale, key)` in `src/i18n/ui.ts`; `t(locale, key, { title })` fills `{title}` placeholders.
-- The site owner's name and contact address are in `src/data/site.ts` (about and privacy pages).
+- The site owner's name, website and contact address are in `src/data/site.ts` (about and privacy pages).
 - English is the source dictionary. A language may leave keys out (they fall back to English per key), but a launched one shouldn't: Dutch is typed `Record<UiKey, string>`, so `npm run check` fails on a missing key.
 - Long page text (about, privacy) lives per language in `src/i18n/pages/<page>/<lang>.astro`; the page in `src/pages/[lang]/` keeps the layout and styles (with `:global()`, since scoped styles don't reach a child component). `pageText()` fails the build for a language without its file, so no English shows under `/nl/`.
 - Board labels must fit: a tool has about 40 px for its label on a 360 px phone, and Share's label sits in the title bar beside the title. Undo and More show only their icon, except in landscape (`.label`). `e2e/layout.spec.ts` fails on a label cut off by its ellipsis, per language, in portrait, landscape and wide.
@@ -69,6 +69,7 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
 New or changed site text is agreed with Kay first. Take it over literally. If a text you need isn't agreed yet, ask. If an agreed text breaks a rule below, say so instead of changing it.
 
 - Say what the board does, in a coach's words. No slogans. One thought per sentence.
+- The site's full name is "Handball Coachboard". In running text and on kayhardam.dev, "Coachboard" is its short name.
 - Promise only what exists and what has been measured. No "always" or "never" about what is free, about accounts, or about what we see.
 - "Gratis"/"free" appears in one place: the "Free, without an account" block on the about page (`src/i18n/pages/about/<lang>.astro`). Elsewhere, say what the board does; "no account or app needed" is fine.
 - Text that appears on every board says "the board" (`het bord`), not "the attack": a board can show a defense too.
