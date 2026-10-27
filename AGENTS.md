@@ -240,12 +240,15 @@ Don't add these without a plan:
 
 Less process, the same quality: the automatic checks are the safety net.
 
+- **Done means merged.** A phase is done when its last planned PR lands on `main`. Tests on real phones, in the hall or with the team feed "Na de tests" in the product plan; they never hold a phase open.
 - **Automatic, always:** `npm run verify` (with the size budgets and the content checks in `checkLibrary()`) before every commit, and the e2e tests in CI.
 - **Plans fit on one page:** goal, approach, files, risks, and what Kay decides. Build after Kay's approval.
 - **Lighthouse** runs only when the JS or CSS of the board pages changes: one run per mode on the PR's preview URL, the default command (simulated throttling) and real throttling (`--throttling-method=devtools`). Real throttling, and the time until the board is ready to use or the shared board is on screen, decide. Compare SEO only on production: preview URLs send `X-Robots-Tag: noindex`.
 - **`docs/metingen.md`** (Dutch) gets an entry only when a budget or measured behaviour (a Lighthouse result, the tap budget) changes, and that entry is short.
+- **Look at production when a phase merges:** opens of `/board/link/` and `/board/qr/` per channel, and which library pages get found. Note something only when it changes a decision.
 - **A PR for text or content** says what, why, and how to test (at most 3 lines), with the preview link. No screenshots, PDFs or tables of measurements.
 - **Size budgets are a safety net:** the `BUDGETS` constant in `scripts/check-budget.mjs`, in KB of 1000 bytes, gzipped except PNGs: the board's JS and its lazy chunks, all JS in `_astro/`, CSS and HTML per page (the editor's page has its own CSS budget, `boardCss`, for the editor's stylesheet; the viewer's pages have `viewerJs` and `viewerCss`; a library item, a page with its own `og.png`, has `libraryHtml`, because it draws every step), and each PNG. Raising one takes one sentence of reason, in the comment beside it and in the PR. CI (Linux) builds the JS about 0.14 KB larger than macOS.
+- **Budgets follow the measurement.** After a merge that changes a measured size, set each affected budget to the new measurement plus its fixed margin: 1 KB for `allJs`, 0.4 KB for the other JS budgets, 0.2 KB for CSS and HTML. Plans estimate no bytes and build no throwaway prototypes; the budget script is the arbiter. Raising a budget still takes its one sentence of reason.
 - **Dependabot:** merge when CI is green (see Hosting).
 - `docs/optimalisatieplan.md` (Dutch) holds the earlier optimization phases; "How we work" goes before its rules.
 
