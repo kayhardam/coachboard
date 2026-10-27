@@ -3,7 +3,7 @@
 // src/pages/[lang]/about.astro; elke taal heeft hier een eigen bestand.
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { boardPath } from "../../../data/nav";
-import { contactEmail, owner } from "../../../data/site";
+import { contactEmail, owner, ownerUrl } from "../../../data/site";
 
 interface Props {
   lang: string;
@@ -41,7 +41,7 @@ const { lang } = Astro.props;
 <section id="contact">
   <h2>Contact</h2>
   <p>
-    Handball Coachboard is gemaakt door {owner}. Een vraag of een idee?
+    Handball Coachboard is gemaakt door <a href={ownerUrl}>{owner}</a>. Een vraag of een idee?
     Mail naar <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
   </p>
 </section>

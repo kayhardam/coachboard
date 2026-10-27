@@ -3,7 +3,7 @@
 // src/pages/[lang]/about.astro; every language needs its own file here.
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { boardPath } from "../../../data/nav";
-import { contactEmail, owner } from "../../../data/site";
+import { contactEmail, owner, ownerUrl } from "../../../data/site";
 
 interface Props {
   lang: string;
@@ -41,7 +41,7 @@ const { lang } = Astro.props;
 <section id="contact">
   <h2>Contact</h2>
   <p>
-    Handball Coachboard is made by {owner}. A question or an idea?
+    Handball Coachboard is made by <a href={ownerUrl}>{owner}</a>. A question or an idea?
     Email <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
   </p>
 </section>

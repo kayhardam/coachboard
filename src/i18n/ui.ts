@@ -30,7 +30,7 @@ const en = {
   "home.howLead": "",
   "home.step1Title": "Draw your play.",
   "home.step1Body":
-    "Drag your players into place and draw runs, passes and dribbles.",
+    "Drag from a player to draw a run, or from the ball to draw a pass. Use Move to put your players in place.",
   "home.step2Title": "Share it.",
   "home.step2Body": "Send the link to your team's group chat, or show the QR code in the sports hall.",
   "home.step3Title": "Your players open it.",
@@ -57,9 +57,9 @@ const en = {
   "category.defense.intro":
     "Every defense shows who covers which attacker, when to step out and how to shift together. Open one in the board and adapt it for your team.",
   "category.goalkeeping.label": "Goalkeeping",
-  "category.goalkeeping.desc": "Positioning, reflex drills, fast-break starts",
+  "category.goalkeeping.desc": "",
   "category.goalkeeping.intro":
-    "The keeper is the first attacker. These sessions work on angle and positioning in the goal, reflex saves from close range, reading the shooter, and launching the fast break with the first pass out.",
+    "For the goalkeeper: picking your spot in the goal for each shot, on the line between the ball and the middle of the goal. Open one in the board and adapt it for your team.",
   "tactics.title": "Handball tactics with diagrams | Handball Coachboard",
   "tactics.description":
     "Handball tactics for attack and defense, each with a diagram and the steps. Open one in the tactics board and adapt it for your team.",
@@ -280,7 +280,7 @@ const nl: Record<UiKey, string> = {
   "home.howLead": "",
   "home.step1Title": "Teken je aanval.",
   "home.step1Body":
-    "Sleep je spelers op hun plek en teken loopacties, passes en dribbels.",
+    "Sleep vanaf een speler voor een loopactie, of vanaf de bal voor een pass. Met Schuif zet je spelers op hun plek.",
   "home.step2Title": "Deel hem.",
   "home.step2Body": "Stuur de link in de appgroep van je team, of laat de QR-code zien in de zaal.",
   "home.step3Title": "Je spelers openen hem.",
@@ -309,7 +309,7 @@ const nl: Record<UiKey, string> = {
   "category.goalkeeping.label": "Keepers",
   "category.goalkeeping.desc": "",
   "category.goalkeeping.intro":
-    "De keeper is de eerste aanvaller. Deze trainingen werken aan hoek en positie in het doel, reflexreddingen van dichtbij, de schutter lezen, en de break starten met de eerste pass.",
+    "Voor de keeper: bij elk schot je plek in het doel kiezen, op de lijn tussen de bal en het midden van het doel. Open er een in het bord en pas die aan voor je team.",
   "tactics.title": "Handbaltactieken met tekeningen | Handball Coachboard",
   "tactics.description":
     "Handbaltactieken voor aanval en verdediging, elk met een tekening en de stappen. Open er een in het tactiekbord en pas die aan voor je team.",
