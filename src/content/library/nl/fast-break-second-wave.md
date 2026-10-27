@@ -26,17 +26,21 @@ board:
         - { team: a, label: RO, at: [142, 192] }
         - { team: a, label: CL, at: [122, 196] }
         - { team: d, label: K, at: [96, 8] }
-        - { team: d, at: [48, 64] }
-        - { team: d, at: [84, 66] }
-        - { team: d, at: [124, 70] }
-        - { team: d, at: [160, 52] }
-        - { team: d, at: [80, 138] }
-        - { team: d, at: [136, 146] }
+        - { team: d, at: [58, 128] }
+        - { team: d, at: [96, 116] }
+        - { team: d, at: [118, 120] }
+        - { team: d, at: [150, 118] }
+        - { team: d, at: [82, 170] }
+        - { team: d, at: [130, 172] }
       balls: [[8, 199]]
       arrows:
         - { kind: run, from: 0, pts: [[40, 170], [18, 56]] }
         - { kind: run, from: 1, pts: [[166, 176], [182, 64]] }
         - { kind: pass, pts: [[8, 199], [18, 56]] }
+        - { kind: run, from: 7, pts: [[58, 128], [48, 64]] }
+        - { kind: run, from: 8, pts: [[96, 116], [84, 66]] }
+        - { kind: run, from: 9, pts: [[118, 120], [124, 70]] }
+        - { kind: run, from: 10, pts: [[150, 118], [160, 52]] }
     - text: "Wordt de eerste golf gestopt, dan gaat de bal terug naar de opbouwers."
       players:
         - { team: a, label: LH, at: [18, 56] }
@@ -50,11 +54,13 @@ board:
         - { team: d, at: [84, 66] }
         - { team: d, at: [124, 70] }
         - { team: d, at: [160, 52] }
-        - { team: d, at: [80, 138] }
-        - { team: d, at: [136, 146] }
+        - { team: d, at: [82, 170] }
+        - { team: d, at: [130, 172] }
       balls: [[28, 48]]
       arrows:
         - { kind: pass, from: 0, pts: [[18, 56], [58, 192]] }
+        - { kind: run, from: 11, pts: [[82, 170], [80, 138]] }
+        - { kind: run, from: 12, pts: [[130, 172], [136, 146]] }
     - text: "De opbouwers komen breed mee: links, midden en rechts."
       players:
         - { team: a, label: LH, at: [18, 56] }

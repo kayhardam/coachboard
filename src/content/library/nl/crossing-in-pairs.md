@@ -30,52 +30,52 @@ board:
   frames:
     - text: "De eerste van links loopt met de bal schuin naar het midden."
       players:
-        - { team: a, at: [56, 132] }
-        - { team: a, at: [56, 154] }
-        - { team: a, at: [56, 176] }
-        - { team: a, at: [144, 132] }
-        - { team: a, at: [144, 154] }
-        - { team: a, at: [144, 176] }
+        - { team: a, at: [70, 118] }
+        - { team: a, at: [70, 140] }
+        - { team: a, at: [70, 162] }
+        - { team: a, at: [130, 118] }
+        - { team: a, at: [130, 140] }
+        - { team: a, at: [130, 162] }
         - { team: d, label: K, at: [100, 10] }
-      balls: [[66, 124], [66, 146], [66, 168]]
+      balls: [[80, 110], [80, 132], [80, 154]]
       arrows:
-        - { kind: run, from: 0, pts: [[56, 132], [100, 112]] }
+        - { kind: run, from: 0, pts: [[70, 118], [96, 104]] }
     - text: "De eerste van rechts kruist erachter langs en krijgt de bal."
       players:
-        - { team: a, at: [100, 112] }
-        - { team: a, at: [56, 154] }
-        - { team: a, at: [56, 176] }
-        - { team: a, at: [144, 132] }
-        - { team: a, at: [144, 154] }
-        - { team: a, at: [144, 176] }
+        - { team: a, at: [96, 104] }
+        - { team: a, at: [70, 140] }
+        - { team: a, at: [70, 162] }
+        - { team: a, at: [130, 118] }
+        - { team: a, at: [130, 140] }
+        - { team: a, at: [130, 162] }
         - { team: d, label: K, at: [100, 10] }
-      balls: [[110, 104], [66, 146], [66, 168]]
+      balls: [[106, 96], [80, 132], [80, 154]]
       arrows:
-        - { kind: run, from: 3, pts: [[144, 132], [104, 140], [70, 112]] }
-        - { kind: pass, from: 0, pts: [[100, 112], [70, 112]] }
+        - { kind: run, from: 3, pts: [[130, 118], [98, 134], [80, 90]] }
+        - { kind: pass, from: 0, pts: [[96, 104], [80, 90]] }
     - text: "Die schiet op doel."
       players:
-        - { team: a, at: [100, 112] }
-        - { team: a, at: [56, 154] }
-        - { team: a, at: [56, 176] }
-        - { team: a, at: [70, 112] }
-        - { team: a, at: [144, 154] }
-        - { team: a, at: [144, 176] }
+        - { team: a, at: [96, 104] }
+        - { team: a, at: [70, 140] }
+        - { team: a, at: [70, 162] }
+        - { team: a, at: [80, 90] }
+        - { team: a, at: [130, 140] }
+        - { team: a, at: [130, 162] }
         - { team: d, label: K, at: [100, 10] }
-      balls: [[80, 104], [66, 146], [66, 168]]
+      balls: [[90, 82], [80, 132], [80, 154]]
       arrows:
-        - { kind: shot, from: 3, pts: [[70, 112], [90, 0]] }
+        - { kind: shot, from: 3, pts: [[80, 90], [90, 0]] }
     - text: "Daarna sluiten ze allebei aan bij de andere rij."
       players:
-        - { team: a, at: [100, 112] }
-        - { team: a, at: [56, 154] }
-        - { team: a, at: [56, 176] }
-        - { team: a, at: [70, 112] }
-        - { team: a, at: [144, 154] }
-        - { team: a, at: [144, 176] }
+        - { team: a, at: [96, 104] }
+        - { team: a, at: [70, 140] }
+        - { team: a, at: [70, 162] }
+        - { team: a, at: [80, 90] }
+        - { team: a, at: [130, 140] }
+        - { team: a, at: [130, 162] }
         - { team: d, label: K, at: [100, 10] }
-      balls: [[90, 0], [66, 146], [66, 168]]
+      balls: [[90, 0], [80, 132], [80, 154]]
       arrows:
-        - { kind: run, from: 0, pts: [[100, 112], [124, 172], [144, 198]] }
-        - { kind: run, from: 3, pts: [[70, 112], [80, 170], [56, 198]] }
+        - { kind: run, from: 0, pts: [[96, 104], [146, 140], [130, 184]] }
+        - { kind: run, from: 3, pts: [[80, 90], [54, 140], [70, 184]] }
 ---
