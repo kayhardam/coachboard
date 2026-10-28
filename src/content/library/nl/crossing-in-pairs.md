@@ -22,7 +22,8 @@ easier:
   - "Zonder schot: de tweede speelt de bal terug naar de rij."
 harder:
   - "Zet een verdediger tussen de pionnen."
-related: []
+related:
+  - nl/crossing-cb-lb
 board:
   v: 2
   court: half

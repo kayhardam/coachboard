@@ -17,7 +17,7 @@ const { lang } = Astro.props;
 <h2>Wat het doet</h2>
 <ul>
   <li>
-    Teken een aanval of verdediging op <a href={getRelativeLocaleUrl(lang, boardPath)}>het bord</a>,
+    Teken een aanval, verdediging of oefening op <a href={getRelativeLocaleUrl(lang, boardPath)}>het bord</a>,
     op een half of een heel veld.
   </li>
   <li>Sleep je spelers op hun plek en teken loopacties, passes en dribbels.</li>
@@ -26,8 +26,9 @@ const { lang } = Astro.props;
     zonder app of account.
   </li>
   <li>
-    Blader door de <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactieken</a>. Open er een in
-    het bord en pas die aan voor je team.
+    Blader door de <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactieken</a> en <a
+      href={getRelativeLocaleUrl(lang, "drills/")}>oefeningen</a>. Open er een in het bord en pas die
+    aan voor je team.
   </li>
 </ul>
 
