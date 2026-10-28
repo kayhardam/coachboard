@@ -11,13 +11,13 @@ import { expect, libraryItems, test } from "./helpers";
 const PAGE_WIDTH = 703;
 const MM = 96 / 25.4;
 const PAGE_HEIGHT = 273 * MM;
-const items = ["6-0-defense-basics", "fast-break-second-wave"];
 /** The most pages each drill may take: what it takes with the wide font. */
 const DRILL_PAGES: Record<string, number> = {
   "crossing-in-pairs": 2,
   "step-out-and-shift": 3,
   "goalkeeper-shots-from-three-spots": 3,
 };
+const tactics = libraryItems().filter((item) => item.type === "tactic");
 const drills = libraryItems().filter((item) => item.type === "drill");
 // Verdana on a Mac, DejaVu Sans on Linux: wider than the system font of a Mac,
 // an iPhone or Windows, so a run on a Mac checks the page as CI prints it.
@@ -69,20 +69,18 @@ for (const { lang, path } of libraryItems()) {
 test("the PDF is portrait A4: two pages, the first four steps on page 1", async ({ page, browserName }) => {
   test.skip(browserName !== "chromium", "only Chromium makes a PDF");
   await page.setViewportSize({ width: PAGE_WIDTH, height: 1000 });
-  for (const lang of ["en", "nl"]) {
-    for (const slug of items) {
-      for (const font of ["own", "wide"]) {
-        await page.goto(`/${lang}/tactics/${slug}/`);
-        if (font === "wide") await page.addStyleTag({ content: WIDE });
-        await page.emulateMedia({ media: "print" });
-        const fourth = await page.locator(".strip figure").nth(3).evaluate((f) => f.getBoundingClientRect().bottom + scrollY);
-        expect(fourth, `${lang}/${slug}, ${font} font: step 4 on page 1`).toBeLessThanOrEqual(PAGE_HEIGHT);
+  for (const { path } of tactics) {
+    for (const font of ["own", "wide"]) {
+      await page.goto(path);
+      if (font === "wide") await page.addStyleTag({ content: WIDE });
+      await page.emulateMedia({ media: "print" });
+      const fourth = await page.locator(".strip figure").nth(3).evaluate((f) => f.getBoundingClientRect().bottom + scrollY);
+      expect(fourth, `${path}, ${font} font: step 4 on page 1`).toBeLessThanOrEqual(PAGE_HEIGHT);
 
-        const pdf = (await page.pdf({ preferCSSPageSize: true })).toString("latin1");
-        const boxes = [...pdf.matchAll(/\/MediaBox\s*\[\s*0 0 ([\d.]+) ([\d.]+)\s*\]/g)].map((m) => [Math.round(+m[1]!), Math.round(+m[2]!)]);
-        expect(boxes, `${lang}/${slug}, ${font} font: two pages`).toHaveLength(2);
-        for (const box of boxes) expect(box).toEqual([595, 842]);
-      }
+      const pdf = (await page.pdf({ preferCSSPageSize: true })).toString("latin1");
+      const boxes = [...pdf.matchAll(/\/MediaBox\s*\[\s*0 0 ([\d.]+) ([\d.]+)\s*\]/g)].map((m) => [Math.round(+m[1]!), Math.round(+m[2]!)]);
+      expect(boxes, `${path}, ${font} font: two pages`).toHaveLength(2);
+      for (const box of boxes) expect(box).toEqual([595, 842]);
     }
   }
 });

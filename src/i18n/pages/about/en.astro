@@ -17,7 +17,7 @@ const { lang } = Astro.props;
 <h2>What it does</h2>
 <ul>
   <li>
-    Draw an attack or a defense on <a href={getRelativeLocaleUrl(lang, boardPath)}>the board</a>,
+    Draw an attack, a defense or a drill on <a href={getRelativeLocaleUrl(lang, boardPath)}>the board</a>,
     on a half or a full court.
   </li>
   <li>Drag your players into place and draw runs, passes and dribbles.</li>
@@ -26,8 +26,9 @@ const { lang } = Astro.props;
     without an app or account.
   </li>
   <li>
-    Browse the <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactics</a>. Open one in the board
-    and adapt it for your team.
+    Browse the <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactics</a> and <a
+      href={getRelativeLocaleUrl(lang, "drills/")}>drills</a>. Open one in the board and adapt it for
+    your team.
   </li>
 </ul>
 
