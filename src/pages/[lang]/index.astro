@@ -64,6 +64,7 @@ const steps: { icon: IconName; title: string; body: string }[] = [
       <CategoryCards lang={lang} type="tactic" />
       <p class="more">
         <a href={getRelativeLocaleUrl(lang, "tactics/")}>{t(lang, "home.allTactics")}<Icon name="arrowRight" /></a>
+        <a href={getRelativeLocaleUrl(lang, "drills/")}>{t(lang, "drills.all")}<Icon name="arrowRight" /></a>
       </p>
     </div>
   </section>
@@ -182,7 +183,10 @@ const steps: { icon: IconName; title: string; body: string }[] = [
 
   .more {
     margin-top: 24px;
-    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 24px;
   }
 
   .more a {
