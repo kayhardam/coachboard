@@ -23,6 +23,14 @@ export interface Saved {
 export interface Store {
   current: string | null;
   boards: Saved[];
+  /**
+   * Entries this version can't read (saved by newer code, which an old tab or
+   * a rollback still runs), each with its place: right after the entry with
+   * the id `after`, else right before the one with the id `before`, else at
+   * `index` (no such entries left). Never shown; written back as they are, so
+   * they come back once the newer code runs again.
+   */
+  kept?: { after: string | null; before: string | null; index: number; entry: unknown }[];
 }
 
 export const STORE_KEY = "coachboard.boards";
@@ -39,8 +47,8 @@ export const newId = () => Date.now().toString(36) + Math.random().toString(36).
  * becomes the first, unless it is an untouched default lineup (that version
  * saved the lineup on the first visit). That happens once: the new list is
  * written at once, so the old board doesn't come back when you later delete
- * every board. Boards that don't read are left out. Throws when there is no
- * storage.
+ * every board. Boards that don't read are left out of `boards` and go into
+ * `kept`. Throws when there is no storage.
  */
 export function read(storage: Storage): Store {
   const raw = storage.getItem(STORE_KEY);
@@ -58,29 +66,53 @@ export function read(storage: Storage): Store {
   }
   try {
     const data = JSON.parse(raw) as Partial<Store>;
-    const boards = (Array.isArray(data.boards) ? data.boards : []).flatMap((s: Saved) => {
-      const board = toBoard(s?.board);
-      if (!board || typeof s.id !== "string" || typeof s.at !== "number") return [];
-      return [typeof s.folder === "string" && s.folder ? { id: s.id, board, folder: s.folder, at: s.at } : { id: s.id, board, at: s.at }];
+    const boards: Saved[] = [];
+    const kept: NonNullable<Store["kept"]> = [];
+    const list: Saved[] = Array.isArray(data.boards) ? data.boards : [];
+    const idOf = (s: unknown) => (typeof (s as Partial<Saved>)?.id === "string" ? (s as Saved).id : null);
+    const readable = (s: Saved) => (typeof s?.id === "string" && typeof s.at === "number" && toBoard(s.board)) || null;
+    list.forEach((s, index) => {
+      const board = readable(s);
+      if (!board) {
+        if (s && typeof s === "object") {
+          // After the entry above (kept ones too, so a run of them keeps its order),
+          // else before the next board this version reads.
+          const after = list.slice(0, index).map(idOf).filter((id) => id !== null).at(-1) ?? null;
+          const before = idOf(list.slice(index + 1).find((t) => readable(t))) ?? null;
+          kept.push({ after, before, index, entry: s });
+        }
+        return;
+      }
+      boards.push(typeof s.folder === "string" && s.folder ? { id: s.id, board, folder: s.folder, at: s.at } : { id: s.id, board, at: s.at });
     });
-    return { current: typeof data.current === "string" ? data.current : null, boards };
+    const store: Store = { current: typeof data.current === "string" ? data.current : null, boards };
+    return kept.length ? { ...store, kept } : store;
   } catch {
     return { current: null, boards: [] };
   }
 }
 
-export function write(storage: Storage, store: Store) {
-  storage.setItem(STORE_KEY, JSON.stringify(store));
+/** Writes the list, with the entries in `kept` back in their places (see Store). */
+export function write(storage: Storage, { current, boards, kept = [] }: Store) {
+  const list: unknown[] = boards.slice();
+  const at = (id: string | null) => (id === null ? -1 : list.findIndex((s) => (s as Partial<Saved>).id === id));
+  for (const { after, before, index, entry } of kept) {
+    const i = at(after) >= 0 ? at(after) + 1 : at(before) >= 0 ? at(before) : Math.min(index, list.length);
+    list.splice(i, 0, entry);
+  }
+  storage.setItem(STORE_KEY, JSON.stringify({ current, boards: list }));
 }
 
 /**
  * Changes the list as it is in `storage` now: reads it again, applies
  * `change` and writes the result. Every change goes through here, so a board
- * another tab saved in the meantime stays. Returns the list as written.
+ * another tab saved in the meantime stays, and so does a board this version
+ * can't read (`kept`, which `change` never sees). Returns the list as written.
  */
 export function update(storage: Storage, change: (store: Store) => Store): Store {
-  const store = change(read(storage));
-  write(storage, store);
+  const { kept, ...readable } = read(storage);
+  const store = change(readable);
+  write(storage, { ...store, kept });
   return store;
 }
 
