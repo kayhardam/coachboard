@@ -6,7 +6,7 @@ Static site built with [Astro](https://astro.build) 7 and hosted on Cloudflare W
 
 ## Development
 
-Requires Node 22.12 or newer.
+Requires Node 22.23.4 or newer.
 
 ```sh
 npm install
