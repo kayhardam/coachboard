@@ -14,6 +14,7 @@ coachingPoints:
   - Shift with small, quick steps and don't cross your feet.
 related:
   - en/fast-break-second-wave
+  - en/step-out-and-shift
 board:
   v: 2
   court: half

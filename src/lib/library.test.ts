@@ -209,7 +209,7 @@ describe("checkLibrary", () => {
   const locales = ["en", "nl"];
 
   it("accepts related items in the same language", () => {
-    expect(checkLibrary([entry("en/a", "en/b"), entry("en/b"), entry("nl/a", "nl/b")], locales)).toEqual([]);
+    expect(checkLibrary([entry("en/a", "en/b"), entry("en/b"), entry("nl/a", "nl/b"), entry("nl/b")], locales)).toEqual([]);
   });
 
   it("rejects an unknown or missing language folder", () => {
@@ -243,6 +243,10 @@ describe("checkLibrary", () => {
     expect(checkLibrary([entry("en/a", "nl/b"), entry("nl/b")], locales)).toEqual([
       '"en/a": related "nl/b" is in another language',
     ]);
+  });
+
+  it("rejects a related item that doesn't exist", () => {
+    expect(checkLibrary([entry("en/a", "en/b")], locales)).toEqual(['"en/a": related "en/b" doesn\'t exist']);
   });
 
   it("rejects a translation of another type", () => {

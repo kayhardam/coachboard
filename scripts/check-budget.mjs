@@ -25,11 +25,11 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { gzipSync } from "node:zlib";
 
 // Raise a budget only on purpose, and give the reason in the pull request.
-// Baseline (docs/metingen.md, phase 3 and 4a) plus about 15%.
+// Each is a measured size plus a fixed margin ("How we work" in AGENTS.md).
 export const BUDGETS = {
   boardJs: 36_400, // the editor's page: about 35.96 KB on Linux after phase 17 (folders as trainings, +0.8 KB), plus about 0.4 KB for dependency updates (Dependabot's #45 added 142 B)
   viewerJs: 25_700, // the viewer's pages (shared boards): about 25.25 KB on Linux, plus about 0.4 KB for dependency updates
-  lazyJs: 10_000, // 0 KB
+  lazyJs: 10_000, // the QR code (qr.ts), about 4.0 KB on the editor's page; the viewer loads none
   allJs: 43_800, // about 42.79 KB on Linux after phase 17, plus about 1 KB for dependency updates: seven times Dependabot's largest so far (+142 B, #45)
   css: 2_000, // 1.6 KB per page
   // The board pages also link the editor's stylesheet (BoardEditor.css). Content

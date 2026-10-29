@@ -82,7 +82,7 @@ for (const lang of ["en", "nl"]) {
     await openBoard(page, "", `/${lang}/board/`);
     await fromMenu(page, "board.qr", lang);
     await expect(page.getByRole("dialog", { name: t(lang, "board.qr") }).locator("svg")).toBeVisible();
-    // The editor's CSS arrives as a <style> that Svelte injects; a blocked one leaves the bars unstyled.
+    // The editor's CSS is a stylesheet; a blocked one leaves the bars unstyled.
     await expect(page.locator(".editor")).toHaveCSS("display", "grid");
     await page.keyboard.press("Escape");
     // Export (a download from a blob: URL) and import (reading the file) in My boards.

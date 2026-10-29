@@ -14,6 +14,7 @@ coachingPoints:
   - Schuif met kleine, snelle passen en kruis je voeten niet.
 related:
   - nl/fast-break-second-wave
+  - nl/step-out-and-shift
 board:
   v: 2
   court: half
