@@ -113,10 +113,34 @@ describe("read", () => {
     expect(read(s)).toEqual(list);
   });
 
-  it("leaves out boards that don't read, and keeps the rest", () => {
+  it("keeps boards that don't read apart, in their places", () => {
     const good = saved("a", 1);
-    const raw = { current: "a", boards: [good, { id: "b", at: 2, board: { v: 2 } }, { board: edited(), at: 3 }, null] };
-    expect(read(storage({ [STORE_KEY]: JSON.stringify(raw) }))).toEqual({ current: "a", boards: [good] });
+    const newer = { id: "b", at: 2, board: { v: 3 } };
+    const noId = { board: edited(), at: 3 };
+    const raw = { current: "a", boards: [good, newer, noId, null] };
+    expect(read(storage({ [STORE_KEY]: JSON.stringify(raw) }))).toEqual({
+      current: "a",
+      boards: [good],
+      kept: [
+        { after: "a", before: null, index: 1, entry: newer },
+        { after: "b", before: null, index: 2, entry: noId },
+      ],
+    });
+  });
+
+  it("writes boards it can't read back where they were, through every change", () => {
+    const newer = { id: "n", at: 5, folder: "Training", board: { v: 3, frames: [] } };
+    const newer2 = { id: "m", at: 6, board: { v: 3, frames: [] } };
+    const s = storage({ [STORE_KEY]: JSON.stringify({ current: "a", boards: [saved("a", 1), newer, newer2, saved("b", 2)] }) });
+    const ids = () => (JSON.parse(s.getItem(STORE_KEY)!).boards as { id: string }[]).map((b) => b.id);
+    saveBoard(s, "c", edited(), false, 3);
+    expect(ids()).toEqual(["c", "a", "n", "m", "b"]);
+    deleteBoard(s, "a");
+    expect(ids()).toEqual(["c", "n", "m", "b"]);
+    deleteBoard(s, "c");
+    deleteBoard(s, "b");
+    expect(JSON.parse(s.getItem(STORE_KEY)!).boards).toEqual([newer, newer2]);
+    expect(read(s).boards).toEqual([]);
   });
 
   it("reads a broken list as empty", () => {
