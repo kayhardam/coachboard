@@ -530,7 +530,7 @@
   gap: 4px;
   padding-block: 8px;
 }
-:is(.editor, .boards) .notice input {
+:is(.editor, .boards) .notice :is(input, textarea) {
   width: 100%;
   min-width: 0;
   padding: 6px 8px;
@@ -538,6 +538,9 @@
   border-radius: 4px;
   font: inherit;
   font-size: 0.8125rem;
+}
+:is(.editor, .boards) .notice textarea {
+  resize: none;
 }
 
 .qr {

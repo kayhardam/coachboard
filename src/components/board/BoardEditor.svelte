@@ -1163,7 +1163,12 @@
     <div class="notice" role="status">
       <label>
         {strings["board.copyManually"]}
-        <input readonly value={manualLink} onfocus={(e) => e.currentTarget.select()} />
+        {#if manualLink.includes("\n")}
+          <!-- A folder's message: an input would drop its line breaks. -->
+          <textarea readonly rows="4" value={manualLink} onfocus={(e) => e.currentTarget.select()}></textarea>
+        {:else}
+          <input readonly value={manualLink} onfocus={(e) => e.currentTarget.select()} />
+        {/if}
       </label>
       <button type="button" class="dismiss" onclick={() => (manualLink = null)} aria-label={strings["board.dismiss"]}>×</button>
     </div>

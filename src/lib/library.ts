@@ -143,14 +143,15 @@ export interface ItemRef {
 
 /**
  * What the schema can't see: the file's folder, how entries point at each
- * other and how translations match. reference() already fails the build on a
- * related id that doesn't exist. `categories` share the URL level with the
+ * other and how translations match. reference() only logs a related id that
+ * doesn't exist, so that is checked here too. `categories` share the URL level with the
  * items (tactics/attack/ and tactics/<slug>/, the same under drills/), so no
  * slug may equal one.
  */
 export function checkLibrary(entries: ItemRef[], locales: readonly string[], categories: readonly string[] = []): string[] {
   const errors: string[] = [];
   const bySlug = new Map<string, ItemRef>();
+  const ids = new Set(entries.map((e) => e.id));
   for (const entry of entries) {
     const { id, type, ages, board, related } = entry;
     const { lang, slug } = parseId(id);
@@ -169,6 +170,7 @@ export function checkLibrary(entries: ItemRef[], locales: readonly string[], cat
     for (const r of related) {
       if (r.id === id) errors.push(`"${id}": lists itself as related`);
       else if (parseId(r.id).lang !== lang) errors.push(`"${id}": related "${r.id}" is in another language`);
+      else if (!ids.has(r.id)) errors.push(`"${id}": related "${r.id}" doesn't exist`);
     }
     errors.push(...checkBalls(board).map((e) => `"${id}": ${e}`));
     const other = bySlug.get(slug);

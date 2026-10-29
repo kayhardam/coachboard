@@ -23,9 +23,10 @@ export default defineConfig({
   security: {
     csp: {
       directives: ["default-src 'self'", "object-src 'none'", "base-uri 'none'", "form-action 'none'"],
-      // The board editor injects its CSS as a <style> at runtime (css="injected"),
-      // whose hash Astro can't know. 'unsafe-inline' for styles only; scripts keep
-      // their hashes. Astro then leaves out the style hashes.
+      // Nothing injects a <style> at runtime (the editor's CSS is a stylesheet), but
+      // without 'unsafe-inline' Astro adds a hash for every inline <style>, about
+      // 0.6 KB of HTML per page. 'unsafe-inline' for styles only; scripts keep
+      // their hashes.
       styleDirective: { resources: ["'self'", "'unsafe-inline'"] },
     },
   },
