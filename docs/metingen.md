@@ -3635,3 +3635,5 @@ Na Bewaren in Mijn borden blijft de melding staan en biedt hij de map: "Zet in {
 | `boardCss` | 5.669 B | 5.744 B | | 5.870 | 5.950 |
 
 Reden: de margeregel uit "How we work"; de twee knoppen, het naamveld en twee teksten als prop.
+
+Lighthouse, mobiel, `/nl/board/`, productie tegenover de preview, drie runs per modus (beacon geblokkeerd): Performance 100 (gesimuleerd 99), Accessibility en Best Practices 100, CLS 0, TBT 0. Echte vertraging, LCP mediaan: 1,38 → 1,38 s, gelijk; gesimuleerd 1,61 → 1,64 s.
