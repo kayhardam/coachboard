@@ -40,7 +40,7 @@ const hasBody = Boolean(item.entry.body?.trim());
 ---
 
 <BaseLayout
-  title={t(lang, "tactic.title", { title: data.title })}
+  title={t(lang, text.itemTitle, { title: data.title })}
   description={data.summary}
   image={`${getRelativeLocaleUrl(lang, item.path)}og.png`}
   languages={await itemLanguages(item.slug)}

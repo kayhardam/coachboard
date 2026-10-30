@@ -5,6 +5,7 @@ import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import { ogLocale } from "../i18n/ui";
 import { defaultLocale, locales } from "../i18n/locales";
+import { siteName } from "../data/site";
 
 interface Props {
   title: string;
@@ -32,7 +33,6 @@ const {
   fullscreen = false,
 } = Astro.props;
 
-const siteName = "Handball Coachboard";
 const locale = Astro.currentLocale ?? defaultLocale;
 const abs = (path: string) => new URL(path, Astro.site).href;
 const canonical = abs(Astro.url.pathname);

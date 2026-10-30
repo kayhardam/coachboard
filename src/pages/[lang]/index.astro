@@ -4,6 +4,7 @@ import CategoryCards from "../../components/CategoryCards.astro";
 import Icon from "../../components/Icon.astro";
 import Court from "../../components/board/Court.svelte";
 import { boardPath } from "../../data/nav";
+import { owner, ownerUrl, shortName, siteName } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { localeParams } from "../../i18n/locales";
 import { t } from "../../i18n/ui";
@@ -19,9 +20,24 @@ const steps: { icon: IconName; title: string; body: string }[] = [
   { icon: "link", title: t(lang, "home.step2Title"), body: t(lang, "home.step2Body") },
   { icon: "phone", title: t(lang, "home.step3Title"), body: t(lang, "home.step3Body") },
 ];
+
+// Google takes the site name from this. The url is the root, which Google
+// already indexes (with the Dutch home page). A < is escaped, so no text can
+// close the script element.
+const webSite = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: siteName,
+  alternateName: shortName,
+  url: new URL("/", Astro.site).href,
+  inLanguage: lang,
+  creator: { "@type": "Person", name: owner, url: new URL(ownerUrl).href },
+};
+const jsonLd = JSON.stringify(webSite).replace(/</g, "\\u003c");
 ---
 
 <BaseLayout title={t(lang, "home.title")} description={t(lang, "home.description")}>
+  <script type="application/ld+json" set:html={jsonLd} />
   <section class="hero">
     <div class="container">
       <h1>{t(lang, "home.heading")}</h1>

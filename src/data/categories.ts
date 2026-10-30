@@ -43,6 +43,7 @@ export function typeText(type: ItemType) {
     categoryTitle: (tactic ? "category.title" : "drillCategory.title") as UiKey,
     cta: (tactic ? "category.cta" : "drillCategory.cta") as UiKey,
     steps: (tactic ? "tactic.steps" : "drill.steps") as UiKey,
+    itemTitle: (tactic ? "tactic.title" : "drill.title") as UiKey,
   };
 }
 

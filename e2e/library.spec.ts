@@ -36,6 +36,21 @@ for (const { lang, path } of all) {
   });
 }
 
+// Phase 19-1 (Z1): the title in the tab and in a search result names the type;
+// the heading stays the item's own title.
+const typeWord = {
+  en: { tactic: "handball tactic", drill: "handball drill" },
+  nl: { tactic: "handbaltactiek", drill: "handbaloefening" },
+} as Record<string, Record<string, string>>;
+for (const { lang, type, path } of all) {
+  test(`${path}: the page title names the type, og:title too`, async ({ page }) => {
+    await page.goto(path);
+    const title = `${await page.locator("h1").textContent()} – ${typeWord[lang]![type]} | Handball Coachboard`;
+    await expect(page).toHaveTitle(title);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", title);
+  });
+}
+
 test("on a phone the steps stand one under the other; wider, side by side and level", async ({ page }) => {
   await page.goto("/nl/tactics/fast-break-second-wave/");
   const tops = () => page.locator(".strip svg").evaluateAll((svgs) => svgs.map((s) => Math.round(s.getBoundingClientRect().top)));
