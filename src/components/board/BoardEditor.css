@@ -617,6 +617,33 @@
   cursor: pointer;
 }
 
+/* After Save to My boards: its folder to pick. A long folder name ends in an ellipsis. */
+:is(.editor, .boards) .notice.filing {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+:is(.editor, .boards) .notice.filing span {
+  flex: 1 1 calc(100% - var(--tap) - 8px);
+}
+/* × beside "Saved", the folders on the line below it. */
+:is(.editor, .boards) .notice.filing .dismiss {
+  order: 1;
+}
+:is(.editor, .boards) .notice.filing .action {
+  order: 2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 16 px, or iOS zooms in on the field. */
+:is(.editor, .boards) .notice.filing input {
+  flex: 1 1 12em;
+  width: auto;
+  min-height: var(--tap);
+  font-size: 1rem;
+}
+
 /* ===== My boards: over the board, the whole screen on a phone and a panel on the right when wide. ===== */
 .boards {
   width: 100%;

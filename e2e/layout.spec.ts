@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { devices, type Page } from "@playwright/test";
 import { defaultBoard, defaultBoardFor } from "../src/lib/board/defaults";
+import { MAX_FOLDER } from "../src/lib/board/boards";
 import { encode, MAX_STEPS, MAX_TEXT, MAX_TITLE } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
 import { dragPlayer, expect, fromMenu, moreButton, OLD_KEY, openBoard, openViewer, STORE_KEY, test } from "./helpers";
@@ -455,6 +456,44 @@ for (const lang of ["en", "nl"]) {
         .evaluateAll((els) => els.filter((e) => e.clientWidth > 1 && e.scrollWidth > e.clientWidth).map((e) => e.textContent));
       expect(cut).toEqual([]);
       expect(await list.evaluate((d) => d.scrollWidth - d.clientWidth)).toBe(0);
+    });
+  }
+}
+
+// After Save to My boards, the notice offers the board's folder: Add to the latest folder (its name
+// may end in an ellipsis), New folder and ×, each whole on screen and big enough (t6-korter-a).
+for (const lang of ["en", "nl"]) {
+  for (const [name, viewport] of [
+    ["portrait, 320 px wide", { width: 320, height: 568 }],
+    ["landscape, 320 px high", { width: 568, height: 320 }],
+  ] as const) {
+    test(`${lang}, ${name}: the notice after saving fits, with a folder name of ${MAX_FOLDER} characters`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      const folder = "Training dinsdag 4 november, C1 en C2 in de grote zaal".slice(0, MAX_FOLDER);
+      await page.goto(`/${lang}/`);
+      const entry = { id: "lastweek", board: { ...defaultBoardFor(lang), title: "Warm-up" }, folder, at: 1000 };
+      await page.evaluate(([key, value]) => localStorage.setItem(key, value), [STORE_KEY, JSON.stringify({ current: null, boards: [entry] })] as const);
+      const board = defaultBoardFor(lang);
+      board.title = "Kruising";
+      await openBoard(page, `#t=${await encode(board)}`, `/${lang}/board/`);
+      await fromMenu(page, "board.save", lang);
+      const notice = page.getByRole("status");
+      const buttons = [
+        notice.getByRole("button", { name: t(lang, "board.toFolder").replace("{folder}", folder), exact: true }),
+        notice.getByRole("button", { name: t(lang, "board.newFolder"), exact: true }),
+        notice.getByRole("button", { name: t(lang, "board.dismiss"), exact: true }),
+      ];
+      for (const button of buttons) {
+        await expect(button).toBeInViewport({ ratio: 1 });
+        expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+      }
+      // Only the folder's name may end in an ellipsis.
+      expect(await buttons[1]!.evaluate((b) => b.scrollWidth - b.clientWidth)).toBe(0);
+      await buttons[1]!.click();
+      const field = notice.getByRole("textbox", { name: t(lang, "board.folderName") });
+      await expect(field).toBeInViewport({ ratio: 1 });
+      expect((await field.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+      await expectEverythingOnScreen(page);
     });
   }
 }
