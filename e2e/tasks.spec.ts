@@ -12,6 +12,7 @@ import {
   openBoard,
   openViewer,
   savedBoards,
+  STORE_KEY,
   saveOwnBoard,
   stubBeacon,
   test,
@@ -62,6 +63,20 @@ const TAP_BUDGET = {
   // T5 step by step: Next three times to the last step, and once more for its move, the shot (K8).
   // (Phase 15-1, in the editor: 3 step buttons, without the moves.)
   "T5 step by step": 4,
+  // T6: three items from the library in one new folder, in the training's order, with last week's
+  // training already in My boards. Each item opened in the board and saved from More, Back to the
+  // library; the folder made and filled in My boards. The baseline (S1, Kay, 30 October 2026); Kay
+  // sets the goal after it. The swipes come on top (SWIPE_BUDGET).
+  T6: 25,
+};
+/**
+ * Swipes to a button off screen, on a content page or in My boards, counted apart: how many a
+ * route needs depends on the phone's height and the length of the texts, so it differs per phone
+ * and language. The most each phone may need, in every language (Kay, 30 October 2026); fewer
+ * passes. The buttons each one costs are in docs/metingen.md ("UX-metingen", T6).
+ */
+const SWIPE_BUDGET = {
+  T6: { iphone: 5, android: 4 },
 };
 /** Of those, the actions until the three boards are in My boards on the phone. */
 const T4_UNTIL_IMPORTED = 13;
@@ -69,6 +84,7 @@ const T4_UNTIL_IMPORTED = 13;
 /** Counts the actions of a route. Every tap is on a button that's already on screen. */
 function route(page: Page) {
   let count = 0;
+  let swipes = 0;
   /** A point on the court (decimetres) on the screen. */
   const onScreen = (x: number, y: number) =>
     page.locator(".stage svg").evaluate((svg: SVGSVGElement, [x, y]) => {
@@ -90,6 +106,10 @@ function route(page: Page) {
     get count() {
       return count;
     },
+    /** Swipes to a button off screen, counted apart from the other actions (see SWIPE_BUDGET). */
+    get swipes() {
+      return swipes;
+    },
     async tap(target: Locator) {
       // Not click() alone: it scrolls first, and a route can't ask that of a thumb.
       await expect(target).toBeInViewport();
@@ -105,6 +125,29 @@ function route(page: Page) {
     /** Drags a player (or a ball) from its centre to a spot on the court, in decimetres. */
     async dragToSpot(from: number, x: number, y: number, kind = "player") {
       await drag(await centre(from, kind), await onScreen(x, y));
+    },
+    /**
+     * Taps a link or button on a content page or in My boards, which scroll. When it isn't wholly
+     * on screen, one swipe to it comes first, however far (docs/metingen.md, "Meetmethode"). The
+     * court, the bars and More never ask for a swipe: use tap() there.
+     */
+    async tapOnPage(target: Locator) {
+      const box = (await target.boundingBox())!;
+      if (box.y < 0 || box.y + box.height > page.viewportSize()!.height) {
+        await target.scrollIntoViewIfNeeded();
+        swipes++;
+      }
+      await this.tap(target);
+    },
+    /** A key press, such as Enter: one action. */
+    async press(key: string) {
+      await page.keyboard.press(key);
+      count++;
+    },
+    /** The browser's Back: its button, or the swipe from the edge of the screen. */
+    async back() {
+      await page.goBack();
+      count++;
     },
     /** Types a whole sentence: one action, however long (docs/metingen.md, "Meetmethode"). */
     async type(text: string) {
@@ -638,5 +681,88 @@ for (const lang of ["en", "nl"]) {
 
     await expectOnlyWatched(page, opened);
     expect(steps.count).toBe(TAP_BUDGET["T5 step by step"]);
+  });
+}
+
+// T6: a training from the library (S1 under "Lessen van Sportplan", Kay, 30 October 2026). On the
+// phone, from the drills overview, with last week's training in My boards as a folder of one board:
+// three items in one new folder, in the order of the training. The goalkeepers warm up, the defense
+// practises stepping out, then the 6-0 as a whole. The second item's "See also" leads to the third.
+const T6 = {
+  nl: {
+    items: ["Keeper: schoten van drie plekken", "Uitstappen en meeschuiven", "6-0-dekking: de basis"],
+    folder: "Training 6-0-dekking",
+    lastWeek: "Training vorige week",
+  },
+  en: {
+    items: ["Goalkeeper: shots from three spots", "Step out and shift", "6-0 defense: the basics"],
+    folder: "6-0 defense training",
+    lastWeek: "Last week's training",
+  },
+} as const;
+
+/** My boards with last week's training: one board, in its folder, a week old. */
+async function lastWeeksTraining(page: Page, lang: "en" | "nl") {
+  const board = { ...defaultBoardFor(lang), title: "Warm-up" };
+  const entry = { id: "lastweek", board, folder: T6[lang].lastWeek, at: Date.now() - 7 * 24 * 3600 * 1000 };
+  await page.evaluate(([key, value]) => localStorage.setItem(key, value), [STORE_KEY, JSON.stringify({ current: null, boards: [entry] })] as const);
+  return entry;
+}
+
+for (const lang of ["en", "nl"] as const) {
+  test(`T6 (${lang}): three items from the library in one new folder takes exactly its tap budget`, async ({ page }) => {
+    const { items, folder } = T6[lang];
+    await page.goto(`/${lang}/drills/`);
+    const lastWeek = await lastWeeksTraining(page, lang);
+    const steps = route(page);
+    const card = (scope: Locator, title: string) => scope.locator("a.card", { has: page.getByRole("heading", { name: title, exact: true }) });
+    const more = () => moreButton(page, lang);
+    const menuItem = (key: Parameters<typeof t>[1]) => page.getByRole("button", { name: t(lang, key), exact: true });
+
+    /** "Open in the board" on the item's page, then Save to My boards in More. */
+    const openAndSave = async () => {
+      await steps.tapOnPage(page.getByRole("link", { name: t(lang, "tactic.open"), exact: true }));
+      await expect(page.getByRole("toolbar", { name: t(lang, "board.tools") })).toBeVisible();
+      await steps.tap(more());
+      await steps.tap(menuItem("board.save"));
+      await expect(page.getByRole("status")).toContainText(t(lang, "board.saved"));
+    };
+
+    await steps.tapOnPage(card(page.locator("main"), items[0]));
+    await openAndSave();
+    // Back to the item, back to the overview, the next drill.
+    await steps.back();
+    await steps.back();
+    await steps.tapOnPage(card(page.locator("main"), items[1]));
+    await openAndSave();
+    // Back to the drill: its "See also" leads to the tactic.
+    await steps.back();
+    await steps.tapOnPage(card(page.locator("main .related"), items[2]));
+    await openAndSave();
+
+    // My boards: the three without a folder, the newest first. The first goes into a new folder,
+    // the other two after it, each at the folder's bottom, so the order is the training's.
+    await steps.tap(more());
+    await steps.tap(menuItem("board.myBoards"));
+    const list = page.getByRole("dialog", { name: t(lang, "board.myBoards") });
+    const actions = (title: string) => list.getByLabel(t(lang, "board.moreFor").replace("{title}", title), { exact: true });
+    await steps.tapOnPage(actions(items[0]));
+    await steps.tapOnPage(list.getByRole("button", { name: t(lang, "board.newFolder"), exact: true }));
+    await steps.type(folder);
+    await steps.press("Enter");
+    for (const title of items.slice(1)) {
+      await steps.tapOnPage(actions(title));
+      await steps.tapOnPage(list.locator("details[open]").getByRole("button", { name: folder, exact: true }));
+    }
+
+    // One new folder with the three items in the training's order, each with its title and its
+    // sentences; last week's training as it was.
+    await expect.poll(async () => (await savedBoards(page)).filter((s) => s.folder === folder).map((s) => s.board.title)).toEqual(items);
+    const after = await savedBoards(page);
+    expect(after).toHaveLength(4);
+    expect(after).toContainEqual(lastWeek);
+    expect(after.filter((s) => s.folder === folder).every((s) => s.board.frames.every((f) => f.text))).toBe(true);
+    expect(steps.count).toBe(TAP_BUDGET.T6);
+    expect(steps.swipes).toBeLessThanOrEqual(SWIPE_BUDGET.T6[test.info().project.name as keyof typeof SWIPE_BUDGET.T6]);
   });
 }
