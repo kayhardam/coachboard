@@ -15,6 +15,7 @@ coachingPoints:
 related:
   - nl/fast-break-second-wave
   - nl/step-out-and-shift
+  - nl/5-1-defense-basics
 board:
   v: 2
   court: half
