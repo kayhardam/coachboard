@@ -41,6 +41,25 @@ for (const lang of languages) {
   }
 }
 
+// Phase 19-1 (Z2): Google takes the site name from one WebSite block per home page.
+for (const lang of languages) {
+  test(`/${lang}/ has exactly one valid JSON-LD block: the WebSite with its creator`, async ({ request }) => {
+    const html = await (await request.get(`/${lang}/`)).text();
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">([^<]*)<\/script>/g)];
+    expect(blocks).toHaveLength(1);
+    expect(html.match(/application\/ld\+json/g)).toHaveLength(1);
+    expect(JSON.parse(blocks[0]![1]!)).toEqual({
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "Handball Coachboard",
+      alternateName: "Coachboard",
+      url: `${site}/`,
+      inLanguage: lang,
+      creator: { "@type": "Person", name: "Kay Hardam", url: "https://kayhardam.dev/" },
+    });
+  });
+}
+
 test("the sitemap lists every indexable page, and no shared-board page", async ({ request }) => {
   const xml = await (await request.get("/sitemap-0.xml")).text();
   const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]!).pathname).sort();

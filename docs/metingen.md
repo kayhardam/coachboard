@@ -3575,3 +3575,14 @@ Twee links onderaan Meer, de enige route van het bord naar de bibliotheek. Gemet
 | `boardCss` | 5.634 B | 5.669 B | | 5.780 | 5.870 |
 
 Reden: de margeregel uit "How we work"; `boardCss` gaat daarmee voorbij de 5,8 KB van D11 (fase 14). Lighthouse, mobiel, `/nl/board/`, productie tegenover de preview: Performance, Accessibility en Best Practices 100, CLS 0, TBT 0. Echte vertraging, LCP mediaan van drie runs: 1,37 → 1,38 s, gelijk. Meer past vol op 320 × 568 en 568 × 320 (`e2e/layout.spec.ts`). Tikbudget gelijk.
+
+## Fase 19-1: titels en sitenaam (30 oktober 2026)
+
+Elke itemtitel noemt zijn type (ook in `og:title`); de homepagina's krijgen een JSON-LD `WebSite`. Gemeten op macOS, gzip.
+
+| Pagina | Voor | Na | Budget |
+|---|--:|--:|--:|
+| `/nl/tactics/fast-break-second-wave/` (grootste item) | 6.614 B | 6.632 B | `libraryHtml` 7.500 → 7.550 |
+| `/nl/` | 4.321 B | 4.452 B | `html` 6.740, gelijk (het bord blijft de grootste pagina) |
+
+Reden: het grootste item dat het schema toelaat (de schatting van fase 16-2) komt met +18 B op ongeveer 7,51 KB, boven 7,5 KB. Het bord verandert niet: tikbudget gelijk, geen Lighthouse.

@@ -38,8 +38,9 @@ export const BUDGETS = {
   viewerCss: 3_570, // the viewer's pages: 3.37 KB plus 0.2 KB, under phase 15's cap of 3.6 KB (K2)
   html: 6_740, // 6.54 KB on the board, the largest page, plus 0.2 KB: every text of the board goes along as a prop (about 12 B each), since V1.4 also More's two library links (+51 B)
   // A library item draws every step; the largest the schema allows (8 steps of
-  // 100 characters, 3 related items) is about 7.3 KB (L7, docs/metingen.md, phase 16-1).
-  libraryHtml: 7_500,
+  // 100 characters, 3 related items) is about 7.3 KB (L7, docs/metingen.md, phase 16-1),
+  // about 7.51 KB since phase 19-1: the type in the title and og:title (+18 B).
+  libraryHtml: 7_550,
   png: 60_000, // about 52.5 KB for the second wave's og.png (en), the largest
 };
 
