@@ -152,12 +152,15 @@ for (const orientation of ORIENTATIONS) {
     for (const name of ["My boards", "New board", "QR code", "Full court", "Clear arrows and ball", "Default lineup", "Empty court"]) {
       await expect(page.getByRole("button", { name, exact: true })).toBeInViewport({ ratio: 1 });
     }
+    for (const name of ["Tactics", "Drills"]) await expect(page.getByRole("link", { name, exact: true })).toBeInViewport({ ratio: 1 });
+    await expectEverythingOnScreen(page);
   });
 
   test(`${orientation}: More opens on screen for a received board with steps, with Save to My boards and Delete step`, async ({ page }) => {
     await orient(page, orientation);
-    // The lowest phone in landscape: More holds the most there (nine items).
+    // The smallest phone: More holds the most there (nine buttons and two links).
     if (orientation === "landscape") await page.setViewportSize({ width: 568, height: 320 });
+    if (orientation === "portrait") await page.setViewportSize({ width: 320, height: 568 });
     const board = defaultBoardFor("en");
     board.frames.push(structuredClone(board.frames[0]!));
     await openBoard(page, `#t=${await encode(board)}`);
@@ -167,6 +170,8 @@ for (const orientation of ORIENTATIONS) {
     for (const button of await panel.getByRole("button").all()) await expect(button).toBeInViewport({ ratio: 1 });
     await expect(panel.getByRole("button", { name: "Save to My boards" })).toBeVisible();
     await expect(panel.getByRole("button", { name: "Delete step" })).toBeVisible();
+    await expect(panel.getByRole("link")).toHaveCount(2);
+    await expectEverythingOnScreen(page);
   });
 
   test(`${orientation}: Delete is there only with a selection, and it neither moves nor covers the court`, async ({ page }) => {

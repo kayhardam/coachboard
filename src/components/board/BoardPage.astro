@@ -8,7 +8,7 @@ import { boardStrings, t } from "../../i18n/ui";
 import { beaconEndpoint, beaconSrc } from "../../data/analytics";
 import { defaultBoardFor } from "../../lib/board/defaults";
 import { icons } from "../../lib/icons";
-import { sharePaths } from "../../data/nav";
+import { nav, sharePaths } from "../../data/nav";
 import Beacon from "../Beacon.astro";
 import BoardEditor from "./BoardEditor.svelte";
 // The editor's styles, linked on the editor's page only (see the file).
@@ -29,11 +29,15 @@ const links = {
   link: getRelativeLocaleUrl(lang, sharePaths.link),
   qr: getRelativeLocaleUrl(lang, sharePaths.qr),
 };
+// The library's overviews, with the site menu's labels, at the bottom of More.
+const library = nav
+  .filter((item) => item.path === "tactics/" || item.path === "drills/")
+  .map((item) => ({ href: getRelativeLocaleUrl(lang, item.path), label: t(lang, item.label) }));
 ---
 
 <BaseLayout title={t(lang, "board.title")} description={t(lang, "board.description")} fullscreen>
   <h1 class="visually-hidden">{t(lang, "board.heading")}</h1>
-  <BoardEditor client:only="svelte" strings={boardStrings(lang)} {home} {links} {lineup}>
+  <BoardEditor client:only="svelte" strings={boardStrings(lang)} {home} {links} {lineup} {library}>
     <div slot="fallback" class="fallback">
       <!-- The title bar's place, with its Home link: also the way back without JavaScript.
            Its placeholder is the same text as the editor's, so the page's largest

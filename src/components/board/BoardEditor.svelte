@@ -23,13 +23,21 @@
    * `home`: the home page, linked from the title bar (the board has no site header).
    * `links`: the pages a shared link and a QR code open, so statistics can count them apart.
    * `lineup`: the default lineup, labelled in the page's language.
+   * `library`: the tactics and drills overviews, at the bottom of More: the board's only way to the library.
    */
   let {
     strings,
     home,
     links,
     lineup,
-  }: { strings: BoardStrings; home: string; links: { link: string; qr: string }; lineup: Board } = $props();
+    library,
+  }: {
+    strings: BoardStrings;
+    home: string;
+    links: { link: string; qr: string };
+    lineup: Board;
+    library: { href: string; label: string }[];
+  } = $props();
 
   type Tool = "move" | "arrow" | "attack" | "defence" | "ball" | "cone";
   type XY = [number, number];
@@ -1026,6 +1034,12 @@
         {#if import.meta.env.DEV}
           <button type="button" onclick={copyJson}>JSON (dev)</button>
         {/if}
+        <!-- Closed on the way out, so More isn't open after Back. -->
+        <div class="library">
+          {#each library as item (item.href)}
+            <a href={item.href} onclick={() => (menuOpen = false)}>{item.label}</a>
+          {/each}
+        </div>
       </div>
     </details>
   </div>
