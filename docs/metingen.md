@@ -153,6 +153,7 @@ Geordend op impact en moeite, met de uitkomsten van de testronde erin verwerkt. 
 | 14 | ~~**Staand verspringt het veld 52 px zodra de editor laadt** (Fase 5, Lighthouse-filmstrip en Playwright). De fallback in `board.astro` houdt geen ruimte vrij voor de knoppenbalken. CLS blijft 0, omdat de editor het veld vervangt in plaats van verschuift; Lighthouse ziet het dus niet. Liggend blijft het veld staan en verschijnen alleen de balken.~~ **Opgelost:** de fallback houdt de ruimte van de balken vrij; zie "Bevinding 14: het veld verspringt niet meer" onderaan. | laag tot middel | laag | aparte PR |
 | 15 | **De 404-pagina krijgt op Cloudflare geen headers uit `_headers`** (Fase 6, gemeten op de preview-URL). Geen `X-Frame-Options`, `frame-ancestors`, `nosniff`, COOP en de rest; `wrangler dev` zet ze er wel op. De CSP-`<meta>` staat in de HTML, dus de regels voor scripts en styles gelden er wel. De pagina heeft geen functie, dus het risico is klein. Oplossen kan alleen met Worker-code. `e2e/security.spec.ts` controleert de headers daarom niet op de 404. | laag | hoog (Worker-code) | — |
 | 16 | **Een tabblad dat vóór een deploy al open stond, draait de oude code.** Landt daar een link van een nieuwere versie (na Fase 11: `2.`), dan toont het de melding voor een kapotte link, terwijl de link goed is. Herladen zou de nieuwe code halen: de HTML is `max-age=0, must-revalidate`. Gevonden door Kay op 5 oktober 2026, vastgelegd in `e2e/board.spec.ts` (`test.fail()`). Zie "Herladen bij een link van een nieuwere versie" onderaan. | middel (vanaf Fase 11) | laag | vóór 11 |
+| 17 | **Het ⋯-menu van een onderste rij in Mijn borden opent onder het scherm.** Het menu klapt omlaag uit en is 266 px hoog. Op de iPhone 15 (659 px) vallen Nieuwe map en de mappen van de onderste rijen buiten beeld, zodra er een map boven de borden zonder map staat. Gevonden bij de nulmeting van T6 (30 oktober 2026); zie "T6: nulmeting". | middel | laag | eigen PR, met een layout-test dat het menu van de onderste rij in beeld staat |
 
 ## Fase 4a: vangnet met end-to-end-tests (27 september 2026)
 
@@ -1134,6 +1135,7 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
 | T3 | Zet de oefening Kruisen in tweetallen neer: twee rijen, een keeper, twee pionnen, een bal en de kruising, en deel hem | telefoon | ~~met spelers als pionnen; als route zodra het bord pionnen heeft~~ route sinds Fase 13-1, met dekkers als pionnen; met pionnen sinds Fase 13-2, met de startopstelling "2 rijen" sinds Fase 13-3 |
 | T4 | Bereid een training voor: drie borden klaarzetten op de laptop en ze de volgende dag op je telefoon openen | laptop en telefoon | met links naar jezelf (route sinds Fase 12b); ~~met Mijn borden zodra die er zijn~~ met export en import (route sinds Fase 12b-3) |
 | T5 | Een speler opent op zijn telefoon de link van de kruising MO–LO (het bord van T2) en ziet elke stap met zijn zin, en hoe de spelers van stap naar stap bewegen | telefoon | route sinds Fase 15-1 (nulmeting met de editor); met de kijker sinds Fase 15-2 |
+| T6 | Zet drie items uit de bibliotheek in één map, in de volgorde van de training, terwijl de training van vorige week al als map in Mijn borden staat | telefoon | route sinds 30 oktober 2026 (S1) |
 
 ### Meetmethode
 
@@ -1141,9 +1143,11 @@ Hoe snel tekenen en voorbereiden nu gaan, als nulmeting voor de fases die het bo
   - Het openen van het bord telt niet mee.
   - Het deelvenster van de telefoon (app kiezen, chat kiezen, versturen) ligt buiten de pagina en telt ook niet.
 - **Route.** De kortste route per taak is een e2e-test: `e2e/tasks.spec.ts`, in beide projecten (iPhone en Android).
-  - Een tik gaat alleen naar een knop die al in beeld staat (`toBeInViewport()`): de route mag niet om scrollen vragen.
+  - Op het bord (het veld, de balken en Meer) gaat een tik alleen naar een knop die al in beeld staat (`toBeInViewport()`): de route mag daar niet om scrollen vragen.
+  - Op een contentpagina en in de lijst van Mijn borden telt één veeg naar een knop buiten beeld als één handeling, hoe ver ook (besluit Kay, 30 oktober 2026). Het aantal vegen hangt af van de hoogte van de telefoon en de lengte van de teksten, dus telt de test ze apart: `SWIPE_BUDGET` is het maximum per telefoon, in elke taal; minder mag.
+  - Terug (de knop of de veeg van de browser) telt als één handeling (besluit Kay, 30 oktober 2026).
   - De test controleert ook de uitkomst. De gedeelde link (`/en/board/link/#t=…`) wordt gedecodeerd en moet de standaardopstelling met twee looppijlen en één pass bevatten.
-- **Budget.** `TAP_BUDGET` in die test moet precies kloppen.
+- **Budget.** `TAP_BUDGET` in die test moet precies kloppen (zonder de vegen).
   - Vraagt de route een handeling meer, dan faalt de test. Vraagt hij er een minder, dan faalt hij ook. Zo blijft elke winst vastgelegd.
   - Het budget gaat alleen bewust omhoog of omlaag, met de reden in de PR en de nieuwe meting hieronder.
 - **Geen seconden** (besluit Kay, 8 oktober 2026): de stopwatch vervalt, ook bij de sessies met trainers.
@@ -3586,3 +3590,26 @@ Elke itemtitel noemt zijn type (ook in `og:title`); de homepagina's krijgen een 
 | `/nl/` | 4.321 B | 4.452 B | `html` 6.740, gelijk (het bord blijft de grootste pagina) |
 
 Reden: het grootste item dat het schema toelaat (de schatting van fase 16-2) komt met +18 B op ongeveer 7,51 KB, boven 7,5 KB. Het bord verandert niet: tikbudget gelijk, geen Lighthouse.
+
+## T6: nulmeting (30 oktober 2026)
+
+S1 (besluit Kay, 30 oktober 2026): zet drie items uit de bibliotheek in één nieuwe map, in de volgorde van de training. Je begint op `/<taal>/drills/` met de training van vorige week in Mijn borden (een map met één bord). De items zijn Keeper: schoten van drie plekken, Uitstappen en meeschuiven en 6-0-dekking: de basis; de map heet "Training 6-0-dekking" ("6-0 defense training").
+
+| Deel | Handelingen | Aantal |
+|---|---|--:|
+| Item 1 | kaart, Open in het bord, Meer, Bewaren in Mijn borden | 4 |
+| Item 2 | Terug, Terug, kaart, Open in het bord, Meer, Bewaren | 6 |
+| Item 3 | Terug, kaart onder "Zie ook" van item 2, Open in het bord, Meer, Bewaren | 5 |
+| De map | Meer, Mijn borden, ⋯ van item 1, Nieuwe map, de naam, Enter, en voor item 2 en 3 ⋯ en de map | 10 |
+| **Samen** | | **25** |
+
+Daarbij komen de vegen, per telefoon en taal:
+
+| Telefoon | `en` | `nl` | Welke knoppen |
+|---|--:|--:|---|
+| iPhone 15 | 5 | 5 | de kaart van item 1, Open in het bord bij item 1 en 2, de kaart onder "Zie ook", Nieuwe map |
+| Pixel 7 | 3 | 4 | de kaart van item 1, in `nl` ook die van item 2 (na Terug), de kaart onder "Zie ook", de map in het ⋯-menu van item 2 |
+
+- `TAP_BUDGET.T6` is 25, in beide talen en op beide telefoons; `SWIPE_BUDGET.T6` is 5 op de iPhone en 4 op Android. Kay kiest het doel na deze meting.
+- De volgorde komt vanzelf goed: een bord dat in een map komt, gaat onderaan, dus Omhoog en Omlaag zijn niet nodig. Via Meer → Oefeningen en Meer → Tactieken in plaats van Terug zijn het 26 handelingen.
+- De vegen in Mijn borden zijn bevinding 17: het ⋯-menu van een onderste rij opent onder het scherm.
