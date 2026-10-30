@@ -3562,3 +3562,16 @@ Bewaren in Mijn borden, volgorde in een map (met export), Map delen en Map dupli
 | `boardCss` | 5.573 B | 5.616 B | | 5.780 | 5.780 |
 
 Reden: +814 B JS (het plan schatte +0,76 KB met O7); de vier paginateksten (`board.title`, `.description`, `.heading`, `.noscript`) gaan niet meer als prop mee. De kijker blijft gelijk. Tikbudget gelijk.
+
+## V1.4: Tactieken en Oefeningen in Meer (30 oktober 2026)
+
+Twee links onderaan Meer, de enige route van het bord naar de bibliotheek. Gemeten op macOS, gzip, `/nl/board/`; Linux geschat met +~140 B JS.
+
+| Budget | Voor (macOS) | Na (macOS) | Linux (geschat) | Was | Wordt |
+|---|--:|--:|--:|--:|--:|
+| `boardJs` | 36.098 B | 36.161 B | ~36,3 KB | 36.400 | 36.700 |
+| `allJs` | 42.911 B | 42.974 B | ~43,1 KB | 43.800 | 44.100 |
+| `html` | 6.484 B | 6.535 B | | 6.700 | 6.740 |
+| `boardCss` | 5.634 B | 5.669 B | | 5.780 | 5.870 |
+
+Reden: de margeregel uit "How we work"; `boardCss` gaat daarmee voorbij de 5,8 KB van D11 (fase 14). Lighthouse, mobiel, `/nl/board/`, productie tegenover de preview: Performance, Accessibility en Best Practices 100, CLS 0, TBT 0. Echte vertraging, LCP mediaan van drie runs: 1,37 → 1,38 s, gelijk. Meer past vol op 320 × 568 en 568 × 320 (`e2e/layout.spec.ts`). Tikbudget gelijk.
