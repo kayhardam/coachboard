@@ -133,6 +133,102 @@ test.describe("saving", () => {
   });
 });
 
+// After Save to My boards, the notice stays and offers the board's folder (t6-korter-a): Add to the
+// latest folder, or New folder with a name field in the notice. The field works as in My boards.
+test.describe("the folder from the notice after saving", () => {
+  const notice = (page: Page) => page.getByRole("status");
+  const nameField = (page: Page) => notice(page).getByRole("textbox", { name: "Folder name" });
+
+  /** My boards with these folders, one board each; the last is the latest. */
+  async function withFolders(page: Page, folders: string[]) {
+    await page.goto("/en/");
+    const boards = folders.map((folder, i) => ({ id: `f${i}`, board: { ...defaultBoardFor("en"), title: `Board ${i}` }, folder, at: 1000 + i }));
+    await page.evaluate(([key, value]) => localStorage.setItem(key, value), [STORE_KEY, JSON.stringify({ current: null, boards })] as const);
+  }
+
+  async function saveReceived(page: Page) {
+    await openBoard(page, `#t=${play.link}`);
+    await fromMenu(page, "board.save");
+    await expect(notice(page)).toContainText("Saved to My boards.");
+  }
+
+  /** The folder of the board on the court (the one saved last). */
+  const folderOfSaved = async (page: Page) => (await savedBoards(page)).find((s) => s.board.title === play.board.title)?.folder;
+
+  test("without folders only New folder; Enter puts the board in it, and the notice says so for six seconds", async ({ page }) => {
+    await page.clock.install();
+    await saveReceived(page);
+    await expect(notice(page).getByRole("button", { name: /^Add to / })).toHaveCount(0);
+    // Lasting: it waits for the coach.
+    await page.clock.runFor(10_000);
+    await notice(page).getByRole("button", { name: "New folder", exact: true }).click();
+    await nameField(page).fill("Tuesday");
+    await page.keyboard.press("Enter");
+    await expect(notice(page)).toContainText("Saved to Tuesday.");
+    expect(await folderOfSaved(page)).toBe("Tuesday");
+    await page.clock.runFor(6500);
+    await expect(notice(page)).toHaveCount(0);
+  });
+
+  test("leaving the name field keeps the name, as Done or a tap beside it does on a phone", async ({ page }) => {
+    await saveReceived(page);
+    await notice(page).getByRole("button", { name: "New folder", exact: true }).click();
+    await nameField(page).fill("Tuesday");
+    // A tap beside the field: on the court's empty top corner.
+    const court = (await page.locator(".stage svg").boundingBox())!;
+    await page.mouse.click(court.x + 4, court.y + court.height - 4);
+    await expect(notice(page)).toContainText("Saved to Tuesday.");
+    expect(await folderOfSaved(page)).toBe("Tuesday");
+  });
+
+  test("Escape drops the name: the board stays saved without a folder, and the notice offers it again", async ({ page }) => {
+    await saveReceived(page);
+    await notice(page).getByRole("button", { name: "New folder", exact: true }).click();
+    await nameField(page).fill("Tuesday");
+    await page.keyboard.press("Escape");
+    await expect(nameField(page)).toHaveCount(0);
+    await expect(notice(page).getByRole("button", { name: "New folder", exact: true })).toBeVisible();
+    const boards = await savedBoards(page);
+    expect(boards).toHaveLength(1);
+    expect(boards[0]!.folder).toBeUndefined();
+  });
+
+  test("Add to the latest folder puts the board at its bottom; New folder can start the next training", async ({ page }) => {
+    await withFolders(page, ["Older", "Last week"]);
+    await saveReceived(page);
+    await expect(notice(page).getByRole("button", { name: "Add to Older" })).toHaveCount(0);
+    await notice(page).getByRole("button", { name: "Add to Last week", exact: true }).click();
+    await expect(notice(page)).toContainText("Saved to Last week.");
+    expect((await savedBoards(page)).filter((s) => s.folder === "Last week").map((s) => s.board.title)).toEqual(["Board 1", play.board.title]);
+  });
+
+  test("New folder with a name in use adds the board to that folder's bottom", async ({ page }) => {
+    await withFolders(page, ["Older", "Last week"]);
+    await saveReceived(page);
+    await notice(page).getByRole("button", { name: "New folder", exact: true }).click();
+    await nameField(page).fill("Older");
+    await page.keyboard.press("Enter");
+    await expect(notice(page)).toContainText("Saved to Older.");
+    expect((await savedBoards(page)).filter((s) => s.folder === "Older").map((s) => s.board.title)).toEqual(["Board 0", play.board.title]);
+  });
+
+  test("an empty name puts the board in no folder", async ({ page }) => {
+    await saveReceived(page);
+    await notice(page).getByRole("button", { name: "New folder", exact: true }).click();
+    await nameField(page).fill("   ");
+    await page.keyboard.press("Enter");
+    await expect(notice(page)).toHaveCount(0);
+    expect(await folderOfSaved(page)).toBeUndefined();
+  });
+
+  test("an edit closes the notice; the board stays saved without a folder", async ({ page }) => {
+    await saveReceived(page);
+    await dragPlayer(page, 0, 20, 20);
+    await expect(notice(page)).toHaveCount(0);
+    expect(await folderOfSaved(page)).toBeUndefined();
+  });
+});
+
 test.describe("your board from before My boards", () => {
   test("becomes the first board, and doesn't come back after you delete it", async ({ page }) => {
     const before = { ...defaultBoardFor("en"), title: "Kruising" };

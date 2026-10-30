@@ -3613,3 +3613,25 @@ Daarbij komen de vegen, per telefoon en taal:
 - `TAP_BUDGET.T6` is 25, in beide talen en op beide telefoons; `SWIPE_BUDGET.T6` is 5 op de iPhone en 4 op Android. Kay kiest het doel na deze meting.
 - De volgorde komt vanzelf goed: een bord dat in een map komt, gaat onderaan, dus Omhoog en Omlaag zijn niet nodig. Via Meer → Oefeningen en Meer → Tactieken in plaats van Terug zijn het 26 handelingen.
 - De vegen in Mijn borden zijn bevinding 17: het ⋯-menu van een onderste rij opent onder het scherm.
+
+## T6 korter, deel A: de map in de melding na Bewaren (30 oktober 2026)
+
+Na Bewaren in Mijn borden blijft de melding staan en biedt hij de map: "Zet in {folder}" (de laatst gewijzigde map) en "Nieuwe map", met een naamveld in de melding. Daarna zegt hij "Bewaard in {folder}." (teksten: Kay, 30 oktober 2026). Mijn borden hoeft niet meer open.
+
+| Route | Vóór | Na |
+|---|--:|--:|
+| T6 (`en` en `nl`) | 25 | **20** (doel 20, besluit Kay, 30 oktober 2026: gehaald) |
+| Vegen, iPhone 15 (`en` en `nl`) | 5 | **4** |
+| Vegen, Pixel 7 (`en` / `nl`) | 3 / 4 | **2 / 3** |
+
+- Item 1: Nieuwe map, de naam, Enter (de map van vorige week is de laatste, dus hij is niet de juiste). Item 2 en 3: Zet in Training 6-0-dekking. De vegen in Mijn borden vallen weg; bevinding 17 blijft voor zijn eigen PR.
+- `SWIPE_BUDGET.T6` gaat van 5 en 4 naar 4 en 3. T1 t/m T5 gelijk: ze komen niet langs Bewaren.
+
+| Budget | Voor (macOS) | Na (macOS) | Linux (geschat) | Was | Wordt |
+|---|--:|--:|--:|--:|--:|
+| `boardJs` | 36.161 B | 36.481 B | ~36,6 KB | 36.700 | 37.000 |
+| `allJs` | 42.974 B | 43.294 B | ~43,4 KB | 44.100 | 44.400 |
+| `html` | 6.535 B | 6.561 B | | 6.740 | 6.760 |
+| `boardCss` | 5.669 B | 5.744 B | | 5.870 | 5.950 |
+
+Reden: de margeregel uit "How we work"; de twee knoppen, het naamveld en twee teksten als prop.

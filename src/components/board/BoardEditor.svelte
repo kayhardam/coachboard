@@ -132,6 +132,10 @@
   let noticeBoard = $state.raw<Board | null>(null);
   /** A button in the notice, e.g. Undo after deleting a board. */
   let noticeAction = $state<{ label: string; run: () => void } | null>(null);
+  /** The board just saved from More: the notice offers its folder (Add to …, New folder). */
+  let filing = $state<string | null>(null);
+  /** The notice's field for the new folder's name is open. */
+  let filingName = $state(false);
 
   const frame = $derived(board.frames[step] ?? board.frames[0]!);
 
@@ -304,6 +308,8 @@
     clearTimeout(noticeTimer);
     notice = text;
     noticeAction = action;
+    filing = null;
+    filingName = false;
     noticeBoard = lasting ? board : null;
     if (!lasting) noticeTimer = setTimeout(() => (notice = null), 6000);
   }
@@ -312,6 +318,8 @@
     notice = null;
     noticeBoard = null;
     noticeAction = null;
+    filing = null;
+    filingName = false;
   }
 
   // Every edit makes a new board (edit.ts is pure), so a new board means an edit.
@@ -527,7 +535,7 @@
     const now = board;
     const link = await encode(now);
     // Saved meanwhile, with a sentence that was being typed.
-    if (current !== null) return show(strings["board.saved"]);
+    if (current !== null) return offerFolder(current);
     const id = store.newId();
     if (board !== now || !change((storage) => store.saveBoard(storage, id, now))) return;
     current = id;
@@ -537,7 +545,38 @@
     } catch {
       // Throttled: the next save writes it.
     }
-    show(strings["board.saved"]);
+    offerFolder(id);
+  }
+
+  /** "Saved", until dismissed or the board is edited, with its folder to pick: the latest folder, or a new one. */
+  function offerFolder(id: string) {
+    show(strings["board.saved"], true);
+    filing = id;
+  }
+
+  /** Puts the board just saved in `folder` (its bottom); an empty name puts it nowhere. */
+  function fileIn(folder: string) {
+    const id = filing;
+    if (id === null) return;
+    const done = change((storage) => store.update(storage, (list) => ({ ...list, boards: store.toFolder(list.boards, id, folder) })));
+    const name = boards.find((b) => b.id === id)?.folder;
+    if (done && name) show(strings["board.savedIn"].replace("{folder}", name));
+    else dismiss();
+  }
+
+  /** Enter or leaving the field (Done on a phone, a tap elsewhere) keeps the name, as in My boards; Escape drops it. */
+  function finishFiling(e: Event, keepName: boolean) {
+    if (!filingName) return;
+    filingName = false;
+    if (keepName) fileIn((e.currentTarget as HTMLInputElement).value);
+  }
+
+  function filingKey(e: KeyboardEvent) {
+    if (e.key === "Enter") finishFiling(e, true);
+    else if (e.key === "Escape") {
+      e.preventDefault();
+      finishFiling(e, false);
+    }
   }
 
   /** Export all boards: one file of links, downloaded. The board on the court goes in with its latest change. */
@@ -1187,9 +1226,26 @@
       <button type="button" class="dismiss" onclick={() => (manualLink = null)} aria-label={strings["board.dismiss"]}>×</button>
     </div>
   {:else if notice}
-    <div class="notice" role="status">
-      <span>{notice}</span>
-      {#if noticeAction}
+    <div class="notice" class:filing={filing !== null} role="status">
+      {#if filingName}
+        <input
+          maxlength={store.MAX_FOLDER}
+          enterkeyhint="done"
+          aria-label={strings["board.folderName"]}
+          use:focusTitle
+          onkeydown={filingKey}
+          onblur={(e) => finishFiling(e, true)}
+        />
+      {:else}
+        <span>{notice}</span>
+      {/if}
+      {#if filing !== null && !filingName}
+        {@const latest = folders[0]}
+        {#if latest}
+          <button type="button" class="action" onclick={() => fileIn(latest)}>{strings["board.toFolder"].replace("{folder}", latest)}</button>
+        {/if}
+        <button type="button" class="action" onclick={() => (filingName = true)}>{strings["board.newFolder"]}</button>
+      {:else if noticeAction}
         {@const action = noticeAction}
         <button type="button" class="action" onclick={() => (action.run(), dismiss())}>{action.label}</button>
       {/if}

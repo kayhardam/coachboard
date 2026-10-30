@@ -65,9 +65,10 @@ const TAP_BUDGET = {
   "T5 step by step": 4,
   // T6: three items from the library in one new folder, in the training's order, with last week's
   // training already in My boards. Each item opened in the board and saved from More, Back to the
-  // library; the folder made and filled in My boards. The baseline (S1, Kay, 30 October 2026); Kay
-  // sets the goal after it. The swipes come on top (SWIPE_BUDGET).
-  T6: 25,
+  // library. Baseline 25, with the folder made and filled in My boards (S1, Kay, 30 October 2026).
+  // t6-korter-a: the notice after Save offers New folder, then Add to the latest folder, so My
+  // boards stays shut. Goal 20 (Kay, 30 October 2026), reached. The swipes come on top (SWIPE_BUDGET).
+  T6: 20,
 };
 /**
  * Swipes to a button off screen, on a content page or in My boards, counted apart: how many a
@@ -76,7 +77,8 @@ const TAP_BUDGET = {
  * passes. The buttons each one costs are in docs/metingen.md ("UX-metingen", T6).
  */
 const SWIPE_BUDGET = {
-  T6: { iphone: 5, android: 4 },
+  // t6-korter-a: no swipe in My boards any more (it was 5 and 4).
+  T6: { iphone: 4, android: 3 },
 };
 /** Of those, the actions until the three boards are in My boards on the phone. */
 const T4_UNTIL_IMPORTED = 13;
@@ -719,41 +721,39 @@ for (const lang of ["en", "nl"] as const) {
     const more = () => moreButton(page, lang);
     const menuItem = (key: Parameters<typeof t>[1]) => page.getByRole("button", { name: t(lang, key), exact: true });
 
+    const notice = page.getByRole("status");
     /** "Open in the board" on the item's page, then Save to My boards in More. */
     const openAndSave = async () => {
       await steps.tapOnPage(page.getByRole("link", { name: t(lang, "tactic.open"), exact: true }));
       await expect(page.getByRole("toolbar", { name: t(lang, "board.tools") })).toBeVisible();
       await steps.tap(more());
       await steps.tap(menuItem("board.save"));
-      await expect(page.getByRole("status")).toContainText(t(lang, "board.saved"));
+      await expect(notice).toContainText(t(lang, "board.saved"));
+    };
+    /** The notice after Save puts the board in the latest folder: the new training's, after the first item. */
+    const addToFolder = async () => {
+      await steps.tap(notice.getByRole("button", { name: t(lang, "board.toFolder").replace("{folder}", folder), exact: true }));
+      await expect(notice).toContainText(t(lang, "board.savedIn").replace("{folder}", folder));
     };
 
     await steps.tapOnPage(card(page.locator("main"), items[0]));
     await openAndSave();
+    // Last week's folder is the latest, so the notice's New folder: the new training.
+    await steps.tap(notice.getByRole("button", { name: t(lang, "board.newFolder"), exact: true }));
+    await steps.type(folder);
+    await steps.press("Enter");
+    await expect(notice).toContainText(t(lang, "board.savedIn").replace("{folder}", folder));
     // Back to the item, back to the overview, the next drill.
     await steps.back();
     await steps.back();
     await steps.tapOnPage(card(page.locator("main"), items[1]));
     await openAndSave();
+    await addToFolder();
     // Back to the drill: its "See also" leads to the tactic.
     await steps.back();
     await steps.tapOnPage(card(page.locator("main .related"), items[2]));
     await openAndSave();
-
-    // My boards: the three without a folder, the newest first. The first goes into a new folder,
-    // the other two after it, each at the folder's bottom, so the order is the training's.
-    await steps.tap(more());
-    await steps.tap(menuItem("board.myBoards"));
-    const list = page.getByRole("dialog", { name: t(lang, "board.myBoards") });
-    const actions = (title: string) => list.getByLabel(t(lang, "board.moreFor").replace("{title}", title), { exact: true });
-    await steps.tapOnPage(actions(items[0]));
-    await steps.tapOnPage(list.getByRole("button", { name: t(lang, "board.newFolder"), exact: true }));
-    await steps.type(folder);
-    await steps.press("Enter");
-    for (const title of items.slice(1)) {
-      await steps.tapOnPage(actions(title));
-      await steps.tapOnPage(list.locator("details[open]").getByRole("button", { name: folder, exact: true }));
-    }
+    await addToFolder();
 
     // One new folder with the three items in the training's order, each with its title and its
     // sentences; last week's training as it was.

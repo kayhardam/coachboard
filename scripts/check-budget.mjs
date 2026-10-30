@@ -27,16 +27,16 @@ import { gzipSync } from "node:zlib";
 // Raise a budget only on purpose, and give the reason in the pull request.
 // Each is a measured size plus a fixed margin ("How we work" in AGENTS.md).
 export const BUDGETS = {
-  boardJs: 36_700, // the editor's page: about 36.3 KB on Linux after V1.4 (Tactics and Drills in More, +63 B), plus about 0.4 KB for dependency updates (Dependabot's #45 added 142 B)
+  boardJs: 37_000, // the editor's page: about 36.6 KB on Linux after t6-korter-a (the folder in the notice after Save, +320 B), plus about 0.4 KB for dependency updates (Dependabot's #45 added 142 B)
   viewerJs: 25_700, // the viewer's pages (shared boards): about 25.25 KB on Linux, plus about 0.4 KB for dependency updates
   lazyJs: 10_000, // the QR code (qr.ts), about 4.0 KB on the editor's page; the viewer loads none
-  allJs: 44_100, // about 43.1 KB on Linux after V1.4 (+63 B), plus about 1 KB for dependency updates: seven times Dependabot's largest so far (+142 B, #45)
+  allJs: 44_400, // about 43.4 KB on Linux after t6-korter-a (+320 B), plus about 1 KB for dependency updates: seven times Dependabot's largest so far (+142 B, #45)
   css: 2_000, // 1.6 KB per page
   // The board pages also link the editor's stylesheet (BoardEditor.css). Content
   // pages stay at `css`, which is too small to take that stylesheet as well.
-  boardCss: 5_870, // 5.67 KB plus 0.2 KB, after V1.4 (the library's links in More, +35 B; docs/metingen.md)
+  boardCss: 5_950, // 5.74 KB plus 0.2 KB, after t6-korter-a (the notice's folder buttons and name field, +75 B; docs/metingen.md)
   viewerCss: 3_570, // the viewer's pages: 3.37 KB plus 0.2 KB, under phase 15's cap of 3.6 KB (K2)
-  html: 6_740, // 6.54 KB on the board, the largest page, plus 0.2 KB: every text of the board goes along as a prop (about 12 B each), since V1.4 also More's two library links (+51 B)
+  html: 6_760, // 6.56 KB on the board, the largest page, plus 0.2 KB: every text of the board goes along as a prop (about 12 B each), since t6-korter-a also Add to and Saved to (+26 B)
   // A library item draws every step; the largest the schema allows (8 steps of
   // 100 characters, 3 related items) was about 7.3 KB in phase 16-1 (L7, docs/metingen.md),
   // 7.49 KB after the print styles of 16-2, and about 7.51 KB since phase 19-1: the type
