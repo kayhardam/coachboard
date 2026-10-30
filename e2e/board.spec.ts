@@ -2,11 +2,13 @@ import { readdirSync, readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { defaultBoard } from "../src/lib/board/defaults";
 import { decode, MAX_TITLE, toBoard, type Board, type BoardV1 } from "../src/lib/board/format";
+import { t } from "../src/i18n/ui";
 import {
   dragPlayer,
   expect,
   expectBoard,
   linkInAddressBar,
+  moreButton,
   openBoard,
   pieces,
   saved,
@@ -239,3 +241,22 @@ test("Escape leaves the title as it was, and it takes at most MAX_TITLE characte
   await input.pressSequentially("x".repeat(MAX_TITLE + 5));
   await expect(input).toHaveValue("x".repeat(MAX_TITLE));
 });
+
+// More's links are the board's only way to the library. scripts/check-links.mjs doesn't
+// see them (they are an island's props), so this checks that they open.
+for (const lang of ["en", "nl"]) {
+  test(`${lang}: More links to the tactics and drills, and is closed after Back`, async ({ page }) => {
+    for (const [key, path] of [["nav.tactics", "tactics/"], ["nav.drills", "drills/"]] as const) {
+      await openBoard(page, "", `/${lang}/board/`);
+      await moreButton(page, lang).click();
+      const link = page.locator(".menu-panel").getByRole("link", { name: t(lang, key), exact: true });
+      await expect(link).toHaveAttribute("href", `/${lang}/${path}`);
+      await link.click();
+      await expect(page).toHaveURL(`/${lang}/${path}`);
+      await expect(page.locator("h1")).toBeVisible();
+      await page.goBack();
+      await expect(page.getByRole("toolbar", { name: t(lang, "board.tools") })).toBeVisible();
+      await expect(page.locator(".menu-panel")).toBeHidden();
+    }
+  });
+}

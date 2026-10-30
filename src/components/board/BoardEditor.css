@@ -193,7 +193,9 @@
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
 }
-.editor .menu-panel button {
+.editor .menu-panel :is(button, a) {
+  display: flex;
+  align-items: center;
   min-height: var(--tap);
   padding: 8px 12px;
   border: 0;
@@ -210,8 +212,20 @@
   border-bottom: 1px solid var(--color-border);
   border-radius: 6px 6px 0 0;
 }
-.editor .menu-panel button:hover {
+.editor .menu-panel :is(button, a):hover {
   background: var(--color-bg-soft);
+}
+.editor .menu-panel a {
+  text-decoration: none;
+}
+/* The library's overviews leave the board: last, apart, side by side on one row. */
+.editor .menu-panel .library {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border);
 }
 
 /* Over the top right of the court's box, so the court stays put when it comes and goes. */
@@ -479,9 +493,10 @@
     display: grid;
   }
   /* The menu opens to the left of the title panel, from the bottom of the
-     screen up, so it stays on screen. Nine items under each other don't fit
+     screen up, so it stays on screen. Eleven items under each other don't fit
      in 320 px of height: two columns, My boards and New board on the first
-     row. Fixed: from More up, the five rows would run off the top. */
+     row, Tactics and Drills on the last. Fixed: from More up, the six rows
+     would run off the top. */
   .editor .menu-panel {
     position: fixed;
     top: auto;
