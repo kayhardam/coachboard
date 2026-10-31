@@ -1,6 +1,7 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
-import { footerOnly, nav } from "../data/nav";
+import { footerOnly } from "../data/nav";
+import { owner, ownerUrl } from "../data/site";
 import { t } from "../i18n/ui";
 import { defaultLocale, locales } from "../i18n/locales";
 
@@ -11,10 +12,14 @@ interface Props {
 
 const { languages: available } = Astro.props;
 const locale = Astro.currentLocale ?? defaultLocale;
-const siteLinks = [...nav, ...footerOnly].map((item) => ({
+// The header's links (nav) stay out: the header sticks to the top of every page.
+const siteLinks = footerOnly.map((item) => ({
   href: getRelativeLocaleUrl(locale, item.path) + (item.hash ? `#${item.hash}` : ""),
   label: t(locale, item.label),
 }));
+
+// "Made by {name}, handball coach": the name becomes the link to the owner's site.
+const [madeBefore, madeAfter] = t(locale, "footer.madeBy").split("{name}");
 
 // The same page in each other language, e.g. /en/privacy/ → /nl/privacy/.
 const prefix = `/${locale}/`;
@@ -30,37 +35,38 @@ const languages = locales.map((code) => ({
 
 <footer class="site-footer">
   <div class="container">
-    <div class="grid">
+    <div class="top">
       <div>
         <p class="brand">Coachboard</p>
         <p>{t(locale, "footer.tagline")}</p>
       </div>
-      <nav aria-labelledby="footer-site">
-        <h2 id="footer-site">{t(locale, "footer.site")}</h2>
-        <ul>
-          {siteLinks.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
-        </ul>
-      </nav>
+      <div class="links">
+        <nav aria-label={t(locale, "footer.site")}>
+          <ul>
+            {siteLinks.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+          </ul>
+        </nav>
+        {
+          languages.length > 1 && (
+            <nav aria-label={t(locale, "footer.language")}>
+              <ul class="languages">
+                {languages.map((l) => (
+                  <li>
+                    <a href={l.href} hreflang={l.code} lang={l.code} aria-current={l.current}>
+                      {l.code.toUpperCase()}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )
+        }
+      </div>
     </div>
 
     <div class="bottom">
-      <span>{t(locale, "footer.madeBy")}</span>
-      {
-        languages.length > 1 && (
-          <nav aria-label={t(locale, "footer.language")}>
-            <ul class="languages">
-              {languages.map((l) => (
-                <li>
-                  <a href={l.href} hreflang={l.code} lang={l.code} aria-current={l.current}>
-                    {l.code.toUpperCase()}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )
-      }
-      <span>© {new Date().getFullYear()} Handball Coachboard</span>
+      <p>{madeBefore}<a href={ownerUrl}>{owner}</a>{madeAfter}</p>
+      <p>© {new Date().getFullYear()} Handball Coachboard</p>
     </div>
   </div>
 </footer>
@@ -68,26 +74,31 @@ const languages = locales.map((code) => ({
 <style>
   .site-footer {
     margin-top: 64px;
-    padding: 48px 0 24px;
+    padding: 24px 0 8px;
     background: var(--color-primary);
     color: #cbd5e1;
   }
 
-  .grid {
-    display: grid;
-    gap: 32px;
+  .top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 32px;
   }
 
-  .brand,
-  h2 {
-    margin-bottom: 8px;
+  .brand {
     color: #fff;
     font-weight: 700;
   }
-  h2 {
-    font-size: 1rem;
-  }
 
+  /* Over, Contact, Privacy and EN NL: one row that wraps. */
+  .links,
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 24px;
+  }
   ul {
     list-style: none;
     padding: 0;
@@ -103,30 +114,34 @@ const languages = locales.map((code) => ({
     color: #fff;
   }
 
-  .bottom {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 24px;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 32px;
-    padding-top: 16px;
-    border-top: 1px solid var(--color-primary-soft);
-    font-size: 0.875rem;
-  }
-
   .languages {
-    display: flex;
-    gap: 16px;
+    column-gap: 16px;
   }
   .languages a[aria-current="page"] {
     color: #fff;
     font-weight: 700;
   }
 
+  .bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    column-gap: 24px;
+    margin-top: 16px;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-primary-soft);
+    font-size: 0.875rem;
+  }
+
+  /* A link inside a sentence: not by colour alone. */
+  .bottom a {
+    text-decoration: underline;
+  }
+
   @media (min-width: 560px) {
-    .grid {
-      grid-template-columns: 2fr 1fr;
+    .bottom {
+      flex-wrap: nowrap;
     }
   }
 </style>
