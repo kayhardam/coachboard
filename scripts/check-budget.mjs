@@ -40,8 +40,8 @@ export const BUDGETS = {
   // A library item draws every step; the largest the schema allows (8 steps of
   // 100 characters, 3 related items) was about 7.3 KB in phase 16-1 (L7, docs/metingen.md),
   // 7.49 KB after the print styles of 16-2, and about 7.51 KB since phase 19-1: the type
-  // in the title and og:title (+18 B).
-  libraryHtml: 7_550,
+  // in the title and og:title (+18 B); about 7.47 KB since the two-row footer (-35 B).
+  libraryHtml: 7_510,
   png: 60_000, // about 52.5 KB for the second wave's og.png (en), the largest
 };
 

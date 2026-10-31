@@ -10,7 +10,7 @@ export interface NavItem {
 
 // Only pages that exist: scripts/check-links.mjs fails the build otherwise.
 
-/** Header menu and the footer's site column. */
+/** Header menu. */
 export const nav: NavItem[] = [
   { path: "", label: "nav.home" },
   { path: "board/", label: "nav.board" },

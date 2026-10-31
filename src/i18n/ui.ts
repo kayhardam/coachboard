@@ -16,7 +16,7 @@ const en = {
   "footer.tagline":
     "Tactics board for handball coaches.",
   "footer.site": "Site",
-  "footer.madeBy": "Made by a handball coach",
+  "footer.madeBy": "Made by {name}, handball coach",
   "footer.language": "Language",
   "home.title": "Handball Coachboard: draw and share handball tactics",
   "home.description":
@@ -269,7 +269,7 @@ const nl: Record<UiKey, string> = {
   "footer.tagline":
     "Tactiekbord voor handbaltrainers.",
   "footer.site": "Site",
-  "footer.madeBy": "Gemaakt door een handbaltrainer",
+  "footer.madeBy": "Gemaakt door {name}, handbaltrainer",
   "footer.language": "Taal",
   "home.title": "Handball Coachboard: handbaltactieken tekenen en delen",
   "home.description":
