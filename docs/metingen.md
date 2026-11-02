@@ -3637,3 +3637,18 @@ Na Bewaren in Mijn borden blijft de melding staan en biedt hij de map: "Zet in {
 Reden: de margeregel uit "How we work"; de twee knoppen, het naamveld en twee teksten als prop.
 
 Lighthouse, mobiel, `/nl/board/`, productie tegenover de preview, drie runs per modus (beacon geblokkeerd): Performance 100 (gesimuleerd 99), Accessibility en Best Practices 100, CLS 0, TBT 0. Echte vertraging, LCP mediaan: 1,38 → 1,38 s, gelijk; gesimuleerd 1,61 → 1,64 s.
+
+## Lite MVP (branch vibe/lite-mvp-a911ed)
+
+De lite-pagina's (`/<lang>/lite/` en `/<lang>/lite/v/`) zijn app-pagina's als het bord: ze shippen JS, zonder beacon. Gemeten op Linux:
+
+| Budget | Meting | Was | Wordt |
+|---|--:|--:|--:|
+| `liteJs` (`/lite/`) | 31,3 KB | — | 31.700 |
+| `liteViewerJs` (`/lite/v/`) | 25,3 KB | — | 25.700 |
+| `liteCss` (beide) | 3,6 KB | — | 3.800 |
+| `boardJs` | 37,9 KB | 37.000 | 38.300 |
+| `viewerJs` | 25,9 KB | 25.700 | 26.300 |
+| `allJs` | 52,3 KB | 44.400 | 53.300 |
+
+Reden: de lite editor/viewer delen `edit`/`hit`/`defaults`/`viewer` als chunks met het bord (dus `boardJs`/`viewerJs` iets omhoog), en de lite-chunks zelf komen erbij in `allJs`. Marges volgens "How we work" (0,4 KB JS, 0,2 KB CSS, 1 KB allJs). `html` en `lazyJs` passen zonder wijziging: `/lite/` is 5,3 KB HTML, de QR-lazy-chunk 4,0 KB.

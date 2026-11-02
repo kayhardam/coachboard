@@ -25,9 +25,11 @@
     frame?: number;
     selected?: Selection | null;
     label?: string;
+    /** "chalk" draws the dark theme of the lite board (/lite/); the default is the light court. */
+    theme?: "light" | "chalk";
   }
 
-  let { board, frame = 0, selected = null, label = "Handball court" }: Props = $props();
+  let { board, frame = 0, selected = null, label = "Handball court", theme = "light" }: Props = $props();
 
   const uid = $props.id();
   const current = $derived(board.frames[frame] ?? board.frames[0]!);
@@ -35,21 +37,42 @@
   const goals = $derived(board.court === "full" ? [0, 400] : [0]);
   const viewBox = $derived(`-8 -14 ${COURT_WIDTH + 16} ${length + 14 + (length === 400 ? 14 : 8)}`);
 
-  const colors = {
-    court: "#f1f5f9",
-    area: "#dbe4ee",
-    line: "#64748b",
-    ink: "#0f172a",
-    attack: "#15803d",
-    defence: "#0f172a",
-    passer: "#2563eb",
-    ball: "#f59e0b",
-    cone: "#dc2626",
-    coneEdge: "#7f1d1d",
-    ballEdge: "#78350f",
-    select: "#16a34a",
-    trail: "#94a3b8",
-  };
+  const palettes = {
+    light: {
+      court: "#f1f5f9",
+      area: "#dbe4ee",
+      line: "#64748b",
+      ink: "#0f172a",
+      attack: "#15803d",
+      defence: "#0f172a",
+      passer: "#2563eb",
+      ball: "#f59e0b",
+      cone: "#dc2626",
+      coneEdge: "#7f1d1d",
+      ballEdge: "#78350f",
+      select: "#16a34a",
+      trail: "#94a3b8",
+      label: "#ffffff",
+    },
+    chalk: {
+      court: "#101f33",
+      area: "#1a3050",
+      line: "#7fa6cc",
+      ink: "#e8f1fa",
+      attack: "#fbbf24",
+      defence: "#7dd3fc",
+      passer: "#c4b5fd",
+      ball: "#fb923c",
+      cone: "#f87171",
+      coneEdge: "#fecaca",
+      ballEdge: "#7c2d12",
+      select: "#fde047",
+      trail: "#475569",
+      label: "#0f172a",
+    },
+  } as const;
+
+  const colors = $derived(palettes[theme]);
 
   /** Stop an arrow short when it ends on a player, so its head stays visible. */
   function trimFor(end: [number, number]): number {
@@ -73,7 +96,7 @@
     }),
   );
 
-  const teamColor = { a: colors.attack, d: colors.defence, p: colors.passer };
+  const teamColor = $derived({ a: colors.attack, d: colors.defence, p: colors.passer });
 
   /**
    * Where players stood in the step before, for each who moved: [then, now].
@@ -231,7 +254,7 @@
       {#if player.label}
         <text
           y="0.5"
-          fill="#ffffff"
+          fill={colors.label}
           font-family="system-ui, sans-serif"
           font-size={player.label.length > 2 ? 6 : 7.5}
           font-weight="700"

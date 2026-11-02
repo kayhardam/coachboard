@@ -1,0 +1,630 @@
+/*
+ * The lite board's styles (LiteEditor.svelte, LiteViewer.svelte), the "chalk"
+ * theme: dark ink background, light court lines, one chalk-yellow accent.
+ * Only the lite pages (LitePage.astro, ViewerLitePage.astro) import this file,
+ * so it stays out of the other pages. Svelte doesn't scope it: every rule
+ * starts at .lite, or at .share for the dialog next to the editor. The
+ * fallbacks in the page components use the same classes, so the court doesn't
+ * move when the island replaces them.
+ */
+.lite,
+.share {
+  --bg: #0b1526;
+  --panel: #14233b;
+  --panel-2: #1c3252;
+  --border: #2a3f5f;
+  --text: #eef4fc;
+  --muted: #9db2cc;
+  --accent: #facc15;
+  --accent-ink: #0f172a;
+}
+
+body:has(.lite) {
+  background: var(--bg);
+}
+
+.lite {
+  display: grid;
+  grid-template:
+    "top" auto
+    "steps" auto
+    "stage" minmax(0, 1fr)
+    "sentence" auto
+    "dock" auto / minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+  min-height: 0;
+  max-width: 760px;
+  margin-inline: auto;
+  padding: 8px 10px max(10px, env(safe-area-inset-bottom));
+  background: var(--bg);
+  color: var(--text);
+  color-scheme: dark;
+}
+
+.lite.viewer-lite {
+  grid-template:
+    "top" auto
+    "text" auto
+    "stage" minmax(0, 1fr)
+    "controls" auto / minmax(0, 1fr);
+}
+
+.lite .top {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+}
+
+.lite .home {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.lite .title {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.lite .title::placeholder {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* As an input (the editor) or a placeholder span (the fallback). */
+span.title {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lite .icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.lite .icon:disabled {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.lite .share {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+/* The bars' icons: not the court's svg, which carries its own colours. */
+.lite :is(.top, .steps, .dock, .strip, .controls) svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lite .steps {
+  grid-area: steps;
+  display: flex;
+  gap: 6px;
+  min-height: 44px;
+  overflow-x: auto;
+}
+
+.lite .pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.lite .pill.on {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.lite .pill svg {
+  width: 18px;
+  height: 18px;
+}
+
+.lite .stage {
+  grid-area: stage;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #101f33;
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+.lite .stage > svg {
+  position: absolute;
+  inset: 0;
+}
+
+.lite .float-del {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-2);
+  color: #f87171;
+}
+
+.lite .float-del svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lite .strip {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  display: flex;
+  gap: 4px;
+  max-width: calc(100% - 16px);
+  padding: 4px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  transform: translateX(-50%);
+}
+
+.lite .strip button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.lite .strip button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.lite .strip button:disabled {
+  opacity: 0.4;
+}
+
+.lite .strip svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Team and ball dots in the dock and the strip: the chalk team colours. */
+.lite svg circle.attack,
+.lite svg circle.a {
+  fill: #fbbf24;
+  stroke: none;
+}
+
+.lite svg circle.defence,
+.lite svg circle.d {
+  fill: #7dd3fc;
+  stroke: none;
+}
+
+.lite svg circle.p {
+  fill: #c4b5fd;
+  stroke: none;
+}
+
+.lite svg circle.ball {
+  fill: #fb923c;
+  stroke: #7c2d12;
+  stroke-width: 1.5;
+}
+
+.lite .sentence {
+  grid-area: sentence;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.lite .sentence::placeholder {
+  color: var(--muted);
+}
+
+/* As an input (the editor) or a placeholder span (the fallback). */
+span.sentence {
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+}
+
+.lite .dock {
+  grid-area: dock;
+  display: flex;
+  gap: 8px;
+  min-height: 68px;
+}
+
+.lite .tool {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 60px;
+  padding: 6px 4px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+  color: var(--muted);
+}
+
+.lite .tool.on {
+  border-color: var(--accent);
+  background: var(--panel-2);
+  color: var(--accent);
+}
+
+.lite .tool svg {
+  width: 24px;
+  height: 24px;
+}
+
+.lite .tool span {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.lite .notice {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(92vw, 560px);
+  padding: 6px 8px 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-2);
+  transform: translateX(-50%);
+}
+
+.lite .notice label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lite .notice input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.lite .dismiss {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.3rem;
+}
+
+/* ===== The viewer ===== */
+
+.lite .text {
+  grid-area: text;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 4px;
+}
+
+.lite .count {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.lite .text p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lite .controls {
+  grid-area: controls;
+  display: flex;
+  gap: 8px;
+}
+
+.lite .controls button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.lite .controls button:disabled {
+  opacity: 0.4;
+}
+
+.lite .controls .play {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.lite .controls svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Play and stop are solid shapes. */
+.lite .controls .play svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+.lite .edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.lite .top .title {
+  font-size: 1.05rem;
+}
+
+.lite.viewer-lite .top .title,
+.lite.viewer-lite h2.title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 1.05rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lite.viewer-lite .top svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lite noscript p {
+  padding: 8px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ===== The share dialog, next to the .lite root ===== */
+
+.share {
+  width: 100%;
+  max-width: 420px;
+  margin: auto;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.share::backdrop {
+  background: rgb(2 6 23 / 0.72);
+}
+
+.share-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.share h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.share .dismiss {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.4rem;
+}
+
+/* A QR code scans only on light ground. */
+.share .code {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.share .code svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.share p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.share .linkrow {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.share .linkrow input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.share .linkrow button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+/* ===== Wide screens: the dock becomes a rail on the left ===== */
+
+@media (min-width: 860px) {
+  .lite {
+    grid-template:
+      "top top" auto
+      "dock stage" minmax(0, 1fr)
+      "dock sentence" auto
+      "dock steps" auto / 148px minmax(0, 1fr);
+    max-width: none;
+  }
+
+  .lite .dock {
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .lite .tool {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    min-height: 48px;
+    padding: 0 14px;
+  }
+
+  .lite .tool span {
+    font-size: 0.85rem;
+  }
+
+  .lite.viewer-lite {
+    grid-template:
+      "top top" auto
+      "text stage" auto
+      "controls stage" minmax(0, 1fr) / minmax(0, 1fr) minmax(0, 1.8fr);
+  }
+}

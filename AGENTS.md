@@ -135,6 +135,15 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 - **Testing in a browser:** `npm run e2e` for the core flow; by hand, the Chrome extension, or headless Chrome over the DevTools protocol with `Emulation.setTouchEmulationEnabled` and `Input.dispatchTouchEvent`. Call `Page.bringToFront` first; a background tab ignores touch input.
 - **Measuring against a local build** (`wrangler dev`, a copy of the repo): block the statistics beacon, so no test traffic reaches the real dashboard. Lighthouse: add `--blocked-url-patterns="*cloudflareinsights.com*"` to every run. Your own Playwright scripts: route every other host (`context.route((url) => url.hostname !== "127.0.0.1", …)`), answer `beacon.min.js` with an empty script (CORS `*`) and abort the rest, as `stubBeacon()` in `e2e/helpers.ts` does for the tests.
 
+## The lite board (MVP)
+
+An experimental minimal version of the board, on its own branch (`vibe/lite-mvp-a911ed`): only the core — draw, steps, undo, share a link or QR code, and a viewer that opens it. Code in `src/components/lite/` and `src/lib/lite/`; routes `/[lang]/lite/` (the editor) and `/[lang]/lite/v/` (the viewer).
+
+- **It shares the contract, not a copy of it:** the lite editor and viewer use `src/lib/board/` as it is (`format`, `edit`, `moves`, `play`, `hit`, `defaults`, `viewer`, `newer`, `qr`) and `Court.svelte` with `theme="chalk"`. A lite share link is a normal `2.` link, and every `1.`/`2.` link opens in the lite viewer — `e2e/lite.spec.ts` proves the v1 fixture opens there. Never change the link format for the lite.
+- **No beacon, no storage:** the lite pages keep the plain CSP (no `Astro.csp` additions, unlike the board pages), no localStorage, no My boards. They are the only app pages besides the board's, so `isLite()` in `scripts/check-budget.mjs` lists them next to `isBoard()`, with their own budgets (`liteJs`, `liteViewerJs`, `liteCss`); `/[lang]/lite/v/` is `noindex` and out of the sitemap like `board/link/` and `board/qr/` (the filter in `astro.config.mjs`, `isNoindex` in `e2e/i18n.spec.ts`).
+- **Its UI differs on purpose** (the chalk theme: dark ground, `Lite.css`, all rules under `.lite` or `.share`; the dock is a `role="toolbar"` like the board's). It is a prototype to look at, not the board's new look: changes to the shared board stay on `main`.
+- Its strings are a subset passed as a prop (`liteStrings()` in `src/i18n/ui.ts`, the `lite.*` keys are its pages' own titles); its tests: `src/lib/lite/lite.test.ts`, a chalk case in `Court.test.ts`, and `e2e/lite.spec.ts` for the core flow.
+
 ## Library content
 
 Tactics and drills (phase 16; decisions L1–L13 in the product plan, and Kay's decisions of 22 and 23 October 2026 for 16-3).

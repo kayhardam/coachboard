@@ -1,0 +1,9 @@
+---
+// Where a lite share link or QR code points: the lite viewer (ViewerLitePage.astro).
+import ViewerLitePage from "../../../components/lite/ViewerLitePage.astro";
+import { localeParams } from "../../../i18n/locales";
+
+export const getStaticPaths = localeParams;
+---
+
+<ViewerLitePage />

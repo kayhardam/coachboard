@@ -1,0 +1,9 @@
+---
+// The lite board (the MVP): /<lang>/lite/ is the editor, /<lang>/lite/v/ the viewer.
+import LitePage from "../../components/lite/LitePage.astro";
+import { localeParams } from "../../i18n/locales";
+
+export const getStaticPaths = localeParams;
+---
+
+<LitePage />

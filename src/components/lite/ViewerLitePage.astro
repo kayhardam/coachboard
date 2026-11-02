@@ -1,0 +1,50 @@
+---
+// The lite viewer's page, /<lang>/lite/v/, where a lite share link or QR code
+// opens: the board in #t= step by step. noindex, like the board's own pages
+// for shared boards (the sitemap filter in astro.config.mjs leaves it out).
+import { getRelativeLocaleUrl } from "astro:i18n";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { t, viewerStrings } from "../../i18n/ui";
+import { viewerIcons } from "../../lib/viewerIcons";
+import type { Board } from "../../lib/board/format";
+import LiteViewer from "./LiteViewer.svelte";
+import "./Lite.css";
+import Court from "../board/Court.svelte";
+
+const lang = Astro.currentLocale!;
+const home = getRelativeLocaleUrl(lang);
+const editor = getRelativeLocaleUrl(lang, "lite/");
+const strings = viewerStrings(lang);
+// An empty court before the shared board appears, as in ViewerPage.astro.
+const empty: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], balls: [], arrows: [] }] };
+---
+
+<BaseLayout title={t(lang, "board.title")} description={t(lang, "board.description")} noindex fullscreen>
+  <h1 class="visually-hidden">{t(lang, "board.heading")}</h1>
+  <LiteViewer client:only="svelte" {strings} {home} {editor}>
+    <div slot="fallback" class="lite viewer-lite">
+      <header class="top">
+        <a class="home" href={home} aria-label={strings["board.home"]} title={strings["board.home"]}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={viewerIcons.court} /></svg>
+        </a>
+      </header>
+      <div class="text"></div>
+      <div class="stage"><Court board={empty} theme="chalk" label={strings["board.court"]} /></div>
+      <div class="controls">
+        <button type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={viewerIcons.prev} /></svg>
+          <span>{strings["viewer.prev"]}</span>
+        </button>
+        <button type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={viewerIcons.play} /></svg>
+          <span>{strings["board.play"]}</span>
+        </button>
+        <button type="button" disabled>
+          <span>{strings["viewer.next"]}</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={viewerIcons.next} /></svg>
+        </button>
+      </div>
+      <noscript><p>{strings["viewer.noscript"]}</p></noscript>
+    </div>
+  </LiteViewer>
+</BaseLayout>

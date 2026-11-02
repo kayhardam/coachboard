@@ -1,8 +1,9 @@
 // Checks the built site against size budgets. Run after `astro build`:
 //   node scripts/check-budget.mjs
 //
-// - Content pages (every page except the board pages: <lang>/board/ and the
-//   pages for shared boards, <lang>/board/link/ and <lang>/board/qr/) ship no
+// - Content pages (every page except the app pages: <lang>/board/ and the
+//   pages for shared boards, <lang>/board/link/ and <lang>/board/qr/, and the
+//   lite MVP's <lang>/lite/ and <lang>/lite/v/) ship no
 //   JavaScript: no <script> other than JSON-LD, no <astro-island>, no modulepreload.
 // - A board page loads JS from another origin only from EXTERNAL_SCRIPTS: the
 //   statistics beacon, at most once. It isn't in dist/, so it has no size here;
@@ -10,7 +11,8 @@
 // - The board's JS: the files its page loads plus everything they import
 //   statically. Dynamic imports count as its lazy JS. The editor's page
 //   (<lang>/board/) and the viewer's (the pages for shared boards) each have
-//   their own budget, for JS and for CSS.
+//   their own budget, for JS and for CSS; so do the lite pages (<lang>/lite/
+//   and <lang>/lite/v/, budgets liteJs, liteViewerJs and liteCss).
 // - All JS: every .js file in _astro/, so code moved into a lazy chunk still counts.
 // - CSS and HTML per page, and every PNG. The board pages have their own CSS
 //   budget: they also link the editor's stylesheet. A library item (a page with
@@ -27,15 +29,19 @@ import { gzipSync } from "node:zlib";
 // Raise a budget only on purpose, and give the reason in the pull request.
 // Each is a measured size plus a fixed margin ("How we work" in AGENTS.md).
 export const BUDGETS = {
-  boardJs: 37_000, // the editor's page: about 36.6 KB on Linux after t6-korter-a (the folder in the notice after Save, +320 B), plus about 0.4 KB for dependency updates (Dependabot's #45 added 142 B)
-  viewerJs: 25_700, // the viewer's pages (shared boards): about 25.25 KB on Linux, plus about 0.4 KB for dependency updates
+  boardJs: 38_300, // the editor's page: 37.9 KB on Linux on the lite MVP branch — edit/hit/defaults became chunks the lite editor shares, +1.3 KB — plus 0.4 KB margin
+  viewerJs: 26_300, // the viewer's pages (shared boards): 25.9 KB on Linux on the lite MVP branch (viewer.ts is now shared with the lite viewer), plus 0.4 KB margin
   lazyJs: 10_000, // the QR code (qr.ts), about 4.0 KB on the editor's page; the viewer loads none
-  allJs: 44_400, // about 43.4 KB on Linux after t6-korter-a (+320 B), plus about 1 KB for dependency updates: seven times Dependabot's largest so far (+142 B, #45)
+  allJs: 53_300, // 52.3 KB on Linux on the lite MVP branch (the lite editor's and viewer's chunks, +8.9 KB over the 43.4 KB of main after t6-korter-a), plus 1 KB margin
   css: 2_000, // 1.6 KB per page
   // The board pages also link the editor's stylesheet (BoardEditor.css). Content
   // pages stay at `css`, which is too small to take that stylesheet as well.
   boardCss: 5_950, // 5.74 KB plus 0.2 KB, after t6-korter-a (the notice's folder buttons and name field, +75 B; docs/metingen.md)
   viewerCss: 3_570, // the viewer's pages: 3.37 KB plus 0.2 KB, under phase 15's cap of 3.6 KB (K2)
+  // The lite MVP's pages (the vibe/lite-mvp branch), measured there on Linux plus the fixed margin.
+  liteJs: 31_700, // the lite editor's page, /<lang>/lite/: 31.3 KB plus 0.4 KB
+  liteViewerJs: 25_700, // the lite viewer's page, /<lang>/lite/v/: 25.3 KB plus 0.4 KB
+  liteCss: 3_800, // the lite pages link Lite.css (the chalk theme, 2.0 KB) as well as the global CSS: 3.6 KB plus 0.2 KB
   html: 6_760, // 6.56 KB on the board, the largest page, plus 0.2 KB: every text of the board goes along as a prop (about 12 B each), since t6-korter-a also Add to and Saved to (+26 B)
   // A library item draws every step; the largest the schema allows (8 steps of
   // 100 characters, 3 related items) was about 7.3 KB in phase 16-1 (L7, docs/metingen.md),
@@ -75,6 +81,9 @@ const gzipped = (path) => gzipSync(readFileSync(path)).length;
 
 const isBoard = (page) => /^[^/]+\/board\/(?:(?:link|qr)\/)?index\.html$/.test(page);
 const isViewer = (page) => /^[^/]+\/board\/(?:link|qr)\/index\.html$/.test(page);
+// The lite MVP's pages: /<lang>/lite/ (its editor) and /<lang>/lite/v/ (its viewer).
+const isLite = (page) => /^[^/]+\/lite\/(?:v\/)?index\.html$/.test(page);
+const isLiteViewer = (page) => /^[^/]+\/lite\/v\/index\.html$/.test(page);
 // A library item has its own share image next to it; a category page (tactics/attack/) doesn't.
 const isItem = (page, dist) =>
   /^[^/]+\/(?:tactics|drills)\/[^/]+\/index\.html$/.test(page) && existsSync(join(dist, dirname(page), "og.png"));
@@ -142,6 +151,8 @@ export function checkBudget(dist, budgets = BUDGETS) {
     const url = `/${page.replace(/(^|\/)index\.html$/, "$1")}`;
     const html = readFileSync(file, "utf8");
     const board = isBoard(page);
+    const lite = isLite(page);
+    const app = board || lite;
     const scripts = [];
     const external = [];
     const stylesheets = [];
@@ -155,28 +166,28 @@ export function checkBudget(dist, budgets = BUDGETS) {
       const name = tag.toLowerCase();
       if (name === "script") {
         if (a.type?.toLowerCase() === "application/ld+json") continue;
-        if (!board) forbid(`<script${source}>`);
+        if (!app) forbid(`<script${source}>`);
         if (a.src && isExternal(a.src)) external.push(a.src);
         else if (a.src) scripts.push(a.src);
       } else if (name === "astro-island") {
-        if (!board) forbid("<astro-island>");
+        if (!app) forbid("<astro-island>");
         for (const key of ["component-url", "renderer-url"]) if (a[key]) scripts.push(a[key]);
       } else {
         const rel = (a.rel ?? "").toLowerCase().split(/\s+/);
         if (rel.includes("modulepreload")) {
-          if (!board) forbid(`<link rel="modulepreload">`);
+          if (!app) forbid(`<link rel="modulepreload">`);
           if (a.href) scripts.push(a.href);
         }
         if (rel.includes("stylesheet") && a.href) stylesheets.push(a.href);
       }
     }
 
-    if (!board) {
+    if (!app) {
       contentPages++;
     } else {
       const entries = scripts.map((src) => resolve(src, url)).filter(Boolean);
       const { eager, lazy } = importGraph(new Set(entries), url);
-      measure("JS (gzip)", url, sum(eager), isViewer(page) ? budgets.viewerJs : budgets.boardJs);
+      measure("JS (gzip)", url, sum(eager), isViewer(page) ? budgets.viewerJs : isLiteViewer(page) ? budgets.liteViewerJs : lite ? budgets.liteJs : budgets.boardJs);
       measure("Lazy JS (gzip)", url, sum(lazy), budgets.lazyJs);
       for (const src of external) {
         if (!EXTERNAL_SCRIPTS.includes(src)) errors.push(`${url}: script from another origin: ${src}`);
@@ -185,7 +196,7 @@ export function checkBudget(dist, budgets = BUDGETS) {
     }
 
     const css = stylesheets.map((href) => resolve(href, url)).filter(Boolean);
-    measure("CSS (gzip)", url, sum(new Set(css)), isViewer(page) ? budgets.viewerCss : board ? budgets.boardCss : budgets.css);
+    measure("CSS (gzip)", url, sum(new Set(css)), isViewer(page) ? budgets.viewerCss : lite ? budgets.liteCss : board ? budgets.boardCss : budgets.css);
     measure("HTML (gzip)", url, gzipped(file), isItem(page, dist) ? budgets.libraryHtml : budgets.html);
   }
 

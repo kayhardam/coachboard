@@ -5,8 +5,8 @@ import { allPages, expect, test } from "./helpers";
 
 const languages = ["en", "nl"];
 const site = "https://handballcoachboard.com";
-/** The pages for shared boards and the 404: noindex, so no canonical or hreflang. */
-const isNoindex = (path: string) => /\/board\/(link|qr)\/$|does-not-exist/.test(path);
+/** The pages for shared boards (the board's and the lite viewer's) and the 404: noindex, so no canonical or hreflang. */
+const isNoindex = (path: string) => /\/(?:board\/(?:link|qr)|lite\/v)\/$|does-not-exist/.test(path);
 
 const alternates = (html: string) =>
   Object.fromEntries([...html.matchAll(/<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"/g)].map((m) => [m[1], m[2]]));
@@ -31,7 +31,7 @@ for (const path of pages.filter((p) => p !== "/" && !isNoindex(p))) {
 }
 
 for (const lang of languages) {
-  for (const page of ["board/link/", "board/qr/"]) {
+  for (const page of ["board/link/", "board/qr/", "lite/v/"]) {
     test(`/${lang}/${page} is noindex, without canonical or hreflang`, async ({ request }) => {
       const html = await (await request.get(`/${lang}/${page}`)).text();
       expect(html).toContain('<meta name="robots" content="noindex">');

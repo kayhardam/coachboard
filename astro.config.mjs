@@ -61,8 +61,8 @@ export default defineConfig({
     },
   },
   integrations: [
-    // The pages for shared boards (/<lang>/board/link/ and /qr/) are noindex.
-    sitemap({ i18n: { defaultLocale, locales }, filter: (page) => !/\/board\/(link|qr)\/$/.test(page) }),
+    // The pages for shared boards (/<lang>/board/link/ and /qr/, and the lite viewer /<lang>/lite/v/) are noindex.
+    sitemap({ i18n: { defaultLocale, locales }, filter: (page) => !/\/(?:board\/(?:link|qr)|lite\/v)\/$/.test(page) }),
     svelte(),
     // The board pages fetch their JS while the page parses, not after the
     // island's script runs (scripts/modulepreload.mjs).

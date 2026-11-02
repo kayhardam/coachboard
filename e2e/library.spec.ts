@@ -139,8 +139,8 @@ for (const lang of ["en", "nl"]) {
   });
 }
 
-// Every content page has Drills in its menu, wide and narrow (the board pages have their own title bar).
-for (const path of allPages().filter((p) => /^\/(en|nl)\//.test(p) && !p.includes("/board/") && !p.includes("does-not-exist"))) {
+// Every content page has Drills in its menu, wide and narrow (the app pages — the board's and the lite's — have their own title bar).
+for (const path of allPages().filter((p) => /^\/(en|nl)\//.test(p) && !p.includes("/board/") && !p.includes("/lite/") && !p.includes("does-not-exist"))) {
   test(`${path} has Drills in its menu`, async ({ page }) => {
     const lang = path.split("/")[1]!;
     await page.goto(path);

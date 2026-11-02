@@ -90,4 +90,15 @@ describe("Court", () => {
     // Under the arrows and the players.
     expect(body.indexOf('class="trails"')).toBeLessThan(body.indexOf('data-kind="player"'));
   });
+
+  it("draws the chalk theme of the lite board, with dark text on the light team colours", () => {
+    const light = render(Court, { props: { board: defaultBoard } }).body;
+    const chalk = render(Court, { props: { board: defaultBoard, theme: "chalk" } }).body;
+    expect(chalk).toContain('fill="#101f33"'); // the court
+    expect(chalk).toContain('fill="#fbbf24"'); // attack
+    expect(chalk).toContain('fill="#0f172a"'); // the labels on them
+    expect(chalk).not.toContain('fill="#f1f5f9"');
+    expect(light).toContain('fill="#f1f5f9"');
+    expect(light).toContain('fill="#ffffff"'); // the labels stay white on the dark teams
+  });
 });

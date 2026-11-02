@@ -227,6 +227,11 @@ const en = {
   "viewer.legend": "Legend",
   "viewer.broken": "This link doesn't work. Ask for a new one.",
   "viewer.noscript": "Turn on JavaScript to view this board.",
+  // The lite board's own pages (the MVP: /[lang]/lite/ and its viewer /[lang]/lite/v/)
+  "lite.title": "Lite board | Handball Coachboard",
+  "lite.description": "The core of the coachboard: draw a play on the court and share it with a link or QR code.",
+  "lite.heading": "Lite board",
+  "lite.copy": "Copy",
 } as const;
 
 export type UiKey = keyof typeof en;
@@ -479,6 +484,10 @@ const nl: Record<UiKey, string> = {
   "viewer.legend": "Legenda",
   "viewer.broken": "Deze link werkt niet. Vraag om een nieuwe.",
   "viewer.noscript": "Zet JavaScript aan om dit bord te bekijken.",
+  "lite.title": "Lite-bord | Handball Coachboard",
+  "lite.description": "De kern van het coachboard: teken een speelwijze op het veld en deel deze met een link of QR-code.",
+  "lite.heading": "Lite-bord",
+  "lite.copy": "Kopieer",
 };
 
 /** A language may leave keys out; those fall back to English. Dutch has them all. */
@@ -502,6 +511,56 @@ export function boardStrings(locale: string): BoardStrings {
 export function viewerStrings(locale: string): ViewerStrings {
   const keys = [...(Object.keys(en) as UiKey[]).filter((k) => k.startsWith("viewer.")), ...viewerBoardKeys] as ViewerKey[];
   return Object.fromEntries(keys.map((k) => [k, t(locale, k)])) as ViewerStrings;
+}
+
+/** What the lite editor shows: only the keys it uses, so the lite pages carry less than the board's. */
+const liteKeys = [
+  "board.home",
+  "board.court",
+  "board.tools",
+  "board.actions",
+  "board.tool.move",
+  "board.tool.arrow",
+  "board.tool.attack",
+  "board.tool.defence",
+  "board.tool.ball",
+  "board.tool.run",
+  "board.tool.pass",
+  "board.tool.dribble",
+  "board.kind",
+  "board.kind.shot",
+  "board.team",
+  "board.team.passer",
+  "board.undo",
+  "board.delete",
+  "board.share",
+  "board.qr",
+  "board.qrHint",
+  "board.qrFailed",
+  "board.qrTooLarge",
+  "board.close",
+  "lite.copy",
+  "board.linkCopied",
+  "board.copyManually",
+  "board.dismiss",
+  "board.invalidLink",
+  "board.steps",
+  "board.step",
+  "board.newStep",
+  "board.play",
+  "board.stop",
+  "board.addText",
+  "board.editText",
+  "board.addTitle",
+  "board.editTitle",
+  "board.removeStep",
+] as const satisfies readonly UiKey[];
+export type LiteKey = (typeof liteKeys)[number];
+export type LiteStrings = Record<LiteKey, string>;
+
+/** The lite editor's strings, passed as a prop like boardStrings(). */
+export function liteStrings(locale: string): LiteStrings {
+  return Object.fromEntries(liteKeys.map((k) => [k, t(locale, k)])) as LiteStrings;
 }
 
 /** Open Graph wants language_TERRITORY. */

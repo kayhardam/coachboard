@@ -1,0 +1,40 @@
+---
+// The lite editor's page, /<lang>/lite/ (the MVP): the editor and its static
+// fallback. No beacon: the lite pages keep the plain CSP, so no Astro.csp
+// changes here (see BoardPage.astro for the board's).
+import { getRelativeLocaleUrl } from "astro:i18n";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { liteStrings, t } from "../../i18n/ui";
+import { defaultBoardFor } from "../../lib/board/defaults";
+import { boardIcons } from "../../lib/icons";
+import LiteEditor from "./LiteEditor.svelte";
+// The lite pages' styles, linked on the lite pages only.
+import "./Lite.css";
+import Court from "../board/Court.svelte";
+
+const lang = Astro.currentLocale!;
+const home = getRelativeLocaleUrl(lang);
+const viewer = getRelativeLocaleUrl(lang, "lite/v/");
+const lineup = defaultBoardFor(lang);
+const strings = liteStrings(lang);
+---
+
+<BaseLayout title={t(lang, "lite.title")} description={t(lang, "lite.description")} fullscreen>
+  <h1 class="visually-hidden">{t(lang, "lite.heading")}</h1>
+  <LiteEditor client:only="svelte" {strings} {home} {viewer} {lineup}>
+    <!-- The editor's box and bars, with its classes, so the court doesn't move when it replaces this. -->
+    <div slot="fallback" class="lite">
+      <header class="top">
+        <a class="home" href={home} aria-label={strings["board.home"]} title={strings["board.home"]}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={boardIcons.court} /></svg>
+        </a>
+        <span class="title" aria-hidden="true">{strings["board.addTitle"]}</span>
+      </header>
+      <div class="steps"></div>
+      <div class="stage"><Court board={lineup} theme="chalk" label={strings["board.court"]} /></div>
+      <span class="sentence" aria-hidden="true">{strings["board.addText"]}</span>
+      <div class="dock"></div>
+      <noscript><p>{t(lang, "board.noscript")}</p></noscript>
+    </div>
+  </LiteEditor>
+</BaseLayout>

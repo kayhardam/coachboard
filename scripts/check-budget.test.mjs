@@ -77,6 +77,21 @@ describe("checkBudget", () => {
     ]);
   });
 
+  it("allows scripts on the lite pages (the editor and its viewer), and not elsewhere under lite/", () => {
+    const files = {
+      "_astro/Editor.js": editor,
+      "_astro/renderer.js": renderer,
+      "_astro/client.js": client,
+      "en/lite/index.html": island,
+      "en/lite/v/index.html": island,
+      "en/lite/other/index.html": island,
+    };
+    const budgets = { ...BUDGETS, liteJs: 100_000, liteViewerJs: 100_000, liteCss: 100_000 };
+    const { rows, errors } = build(files, budgets);
+    expect(errors).toEqual([expect.stringMatching(/^\/en\/lite\/other\/: content pages ship no JS/)]);
+    expect(rows.filter((r) => r.budget === "JS (gzip)").map((r) => r.item)).toEqual(["/en/lite/", "/en/lite/v/"]);
+  });
+
   it("allows the beacon once on a board page and no other script from another origin", () => {
     const beacon = `<script type="module" src="${beaconSrc}" data-cf-beacon='{"token":""}'></script>`;
     const { rows, errors } = build({
