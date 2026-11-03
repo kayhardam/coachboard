@@ -1,18 +1,15 @@
 ---
 // The privacy page's text in English. Its layout and styles are in
 // src/pages/[lang]/privacy.astro; every language needs its own file here.
-import { getRelativeLocaleUrl } from "astro:i18n";
-import { sharePaths } from "../../../data/nav";
 import { contactEmail, owner } from "../../../data/site";
 
-interface Props {
+// The page passes `lang`, like the other page texts; this text needs no link that depends on it.
+export interface Props {
   lang: string;
 }
-
-const { lang } = Astro.props;
 ---
 
-<p class="updated">Last updated: 9 October 2026</p>
+<p class="updated">Last updated: 3 November 2026</p>
 
 <p class="lead">
   Handball Coachboard sets no cookies and has no accounts. Your boards stay on your device until
@@ -28,8 +25,8 @@ const { lang } = Astro.props;
 
 <h2>Cookies</h2>
 <p>
-  This site sets no cookies, first-party or third-party. There are no ads either. The statistics
-  below work without cookies. That's why there is no cookie banner.
+  This site sets no cookies, first-party or third-party. There are no ads either. That's why there
+  is no cookie banner.
 </p>
 
 <h2>The board</h2>
@@ -52,36 +49,9 @@ const { lang } = Astro.props;
     rel="noopener">Cloudflare privacy policy</a
   >.
 </p>
-
-<h2>Statistics</h2>
 <p>
-  The board pages load <a href="https://www.cloudflare.com/web-analytics/" rel="noopener"
-    >Cloudflare Web Analytics</a
-  >. That tells us whether coaches use the board, and how fast it is on their phones. The other
-  pages load no script at all.
-</p>
-<p>
-  Web Analytics counts page views and measures loading speed. It works without cookies, without
-  storage in your browser and without fingerprinting. Cloudflare receives:
-</p>
-<ul>
-  <li>
-    the address of the page, without the part after the <code>#</code> or <code>?</code>, so not
-    your drawing either;
-  </li>
-  <li>the page you came from;</li>
-  <li>your browser, operating system and device type;</li>
-  <li>your country;</li>
-  <li>how fast the page loaded and responded.</li>
-</ul>
-<p>
-  Cloudflare drops your IP address at its nearest data center and doesn't store it. Cloudflare
-  keeps the statistics for six months.
-</p>
-<p>
-  A shared link opens <code>{getRelativeLocaleUrl(lang, sharePaths.link)}</code>, a QR
-  code <code>{getRelativeLocaleUrl(lang, sharePaths.qr)}</code>. That shows us how often shared
-  boards are opened. We don't see what's on them.
+  In Cloudflare's dashboard we see totals only: how many requests and visitors the site gets. The
+  site loads no statistics script and no other script from outside. We don't see what you draw.
 </p>
 
 <h2>Changes</h2>
