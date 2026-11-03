@@ -847,9 +847,15 @@
   /**
    * The arrow a draw released at `at` makes. A pass of a player into a goal
    * is a shot. Else, released on (or near) a player, where they stand or
-   * where their run ends, the arrow ends there.
+   * where their run ends, the arrow ends there: a pass goes to them. A run
+   * of a player never ends on a player who stays, nor where a run ends: it
+   * stops before them (edit.runEnd(), CLEAR), so nobody hides behind another
+   * in the next step.
    */
   function arrowTo(d: Extract<Drag, { type: "draw" }>, at: XY): Parameters<typeof edit.addArrow> {
+    if (d.kind === "run" && d.player !== undefined) {
+      return [board, step, "run", d.from, edit.runEnd(frame, d.player, d.from, at, tapReach()), d.player];
+    }
     const shot = d.kind === "pass" && d.player !== undefined && inGoal(board, at, tapReach());
     const spots = [...frame.players, ...frame.players.map((p, i) => ({ ...p, at: endOf(frame, i) }))];
     const hit = shot ? null : nearestPiece({ ...frame, balls: [], players: spots }, at, tapReach());

@@ -4,7 +4,11 @@ import {
   addArrow,
   addPlayer,
   attachArrow,
+  CLEAR,
   clearArrows,
+  clearOf,
+  runEnd,
+  TOUCH,
   emptyCourt,
   moveArrow,
   moveHandle,
@@ -107,6 +111,57 @@ describe("pieces", () => {
     expect(frame(removeSelected(defaultBoard, 0, { kind: "player", index: 0 })).players).toHaveLength(12);
     expect(frame(removeSelected(board, 0, { kind: "arrow", index: 0 })).arrows).toHaveLength(0);
     expect(frame(removeSelected(defaultBoard, 0, { kind: "ball", index: 0 })).balls).toEqual([]);
+  });
+});
+
+describe("clear of each other (Kay, 3 November 2026)", () => {
+  const dist = (a: [number, number], b: [number, number]) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  /** Two attackers 40 dm apart and a defender who stays. */
+  const three: Board = {
+    ...empty,
+    frames: [{ players: [{ team: "a", at: [60, 100] }, { team: "a", at: [100, 100] }, { team: "d", at: [100, 60] }], balls: [], arrows: [] }],
+  };
+
+  it("clearOf() pushes a spot out to TOUCH from the nearest other player, away from them", () => {
+    expect(clearOf(frame(three), [100, 90], [100, 150])).toEqual([100, 100 - TOUCH]);
+    expect(clearOf(frame(three), [100, 70], [100, 150], 1)).toEqual([100, 60 + TOUCH]);
+    // Right on top of someone: away along the way from `from`.
+    expect(clearOf(frame(three), [100, 100], [100, 150], 0)).toEqual([100, 100 + TOUCH]);
+    // Far enough already, or only yourself near: as it is.
+    expect(clearOf(frame(three), [100, 130], [100, 150])).toEqual([100, 130]);
+    expect(clearOf(frame(three), [102, 100], [100, 150], 1)).toEqual([102, 100]);
+  });
+
+  it("Move never puts a player on another, nor a new player", () => {
+    const moved = movePiece(three, 0, { kind: "player", index: 0 }, [100, 100]);
+    expect(dist(frame(moved).players[0]!.at, [100, 100])).toBeGreaterThanOrEqual(TOUCH - 1);
+    expect(frame(moved).players[0]!.at).toEqual([100 - TOUCH, 100]);
+    const added = addPlayer(three, "a", [100, 86]);
+    expect(frame(added).players[3]!.at).toEqual([100, 100 - TOUCH]);
+    expect(isBoard(moved) && isBoard(added)).toBe(true);
+    // A ball may lie anywhere.
+    expect(frame(movePiece(addBall(three, 0, [10, 10]), 0, { kind: "ball", index: 0 }, [100, 100])).balls).toEqual([[100, 100]]);
+  });
+
+  it("a run released on a player who stays stops CLEAR before them, on the way there", () => {
+    expect(runEnd(frame(three), 0, [60, 100], [100, 100], 13)).toEqual([100 - CLEAR, 100]);
+    // Near them too (within reach), and whatever the direction.
+    expect(runEnd(frame(three), 0, [60, 100], [96, 110], 13)).toEqual([100 - CLEAR, 100]);
+    const end = runEnd(frame(three), 1, [100, 100], [100, 60], 13);
+    expect(end).toEqual([100, 60 + CLEAR]);
+    // Too close to stop before them: the run ends where it starts, so there is none (MIN_ARROW).
+    const close: Board = { ...empty, frames: [{ players: [{ team: "a", at: [60, 100] }, { team: "d", at: [75, 100] }], balls: [], arrows: [] }] };
+    expect(runEnd(frame(close), 0, [60, 100], [76, 101], 13)).toEqual([60, 100]);
+    // Released elsewhere: as released.
+    expect(runEnd(frame(three), 0, [60, 100], [80, 140], 13)).toEqual([80, 140]);
+  });
+
+  it("a run may end on the spot of a player who leaves it, but not where their run ends", () => {
+    const crossing = addArrow(three, 0, "run", [0, 0], [140, 100], 1);
+    expect(runEnd(frame(crossing), 0, [60, 100], [98, 104], 13)).toEqual([100, 100]);
+    expect(runEnd(frame(crossing), 0, [60, 100], [142, 98], 13)).toEqual([140 - CLEAR, 100]);
+    // The player's own spot and run end don't count.
+    expect(runEnd(frame(crossing), 1, [140, 100], [139, 101], 13)).toEqual([139, 101]);
   });
 });
 
