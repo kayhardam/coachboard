@@ -41,7 +41,7 @@ export const BUDGETS = {
   // Worst case: a library item draws every step, and the largest the schema allows
   // (8 steps of 100 characters, 3 related items) was about 7.5 KB in phase 19-1 (L7, docs/metingen.md).
   libraryHtml: 8_500,
-  png: 60_000, // worst case: about 52.5 KB for the second wave's og.png (en), the largest, with room for a new one
+  png: 60_000, // worst case: about 55.5 KB for og-default.png (en, the board's court since 3 November 2026), the largest, with room for a new one
 };
 
 const TAG = /<(script|astro-island|link)\b([^>]*)>/gi;
