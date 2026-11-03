@@ -320,10 +320,13 @@ test.describe("clear of each other", () => {
     await openBoard(page);
     await tool(page, "Move").click();
     await dragTo(page, "player", LB, CB);
-    const board = await inLink(page);
-    const [lb, cb] = [board.frames[0]!.players[LB]!.at, board.frames[0]!.players[CB]!.at];
-    expect(cb).toEqual([100, 130]);
-    expect(dist(lb, cb)).toBeGreaterThanOrEqual(17);
-    expect(dist(lb, cb)).toBeLessThan(20);
+    // The link follows the drag 300 ms later; poll until it has the drop.
+    const between = async () => {
+      const f = (await inLink(page)).frames[0]!;
+      expect(f.players[CB]!.at).toEqual([100, 130]);
+      return dist(f.players[LB]!.at, f.players[CB]!.at);
+    };
+    await expect.poll(between).toBeLessThan(20);
+    expect(await between()).toBeGreaterThanOrEqual(17);
   });
 });
