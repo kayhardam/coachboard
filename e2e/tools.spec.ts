@@ -83,17 +83,17 @@ test.describe("Arrow", () => {
     await expect(teams(page)).toHaveCount(0);
     expect((await inLink(page)).frames[0]!.arrows).toMatchObject([{ kind: "run", from: 1 }]);
 
-    // A tap on an empty spot picks nothing; a tap on the arrow picks it again.
+    // A tap on an empty spot picks nothing; a tap on the arrow (straight up from LB) picks it again.
     await tapAt(page, 150, 90);
     await expect(kinds(page)).toHaveCount(0);
-    await tapAt(page, 30, 95);
+    await tapAt(page, 16, 95);
     await expect(kinds(page)).toBeVisible();
   });
 
   test("a drag from the ball is a pass of the player nearest it; far from everyone, of nobody", async ({ page }) => {
     await openBoard(page);
     // The ball is with CB (2): their pass, which starts at CB.
-    await dragPiece(page, "ball", 0, await onCourt(page, 170, 118));
+    await dragPiece(page, "ball", 0, await onCourt(page, 184, 112));
     expect((await inLink(page)).frames[0]!.arrows).toMatchObject([{ kind: "pass", from: 2 }]);
     await expect(kinds(page).getByRole("button", { name: "Pass" })).toHaveAttribute("aria-pressed", "true");
 
@@ -172,7 +172,7 @@ test.describe("Arrow", () => {
     await teams(page).getByRole("button", { name: "Passer" }).click();
     await expect(teams(page).getByRole("button", { name: "Passer" })).toHaveAttribute("aria-pressed", "true");
     await expect(player(page, 0).locator("text")).toHaveCount(0);
-    await expect.poll(async () => (await savedBoards(page))[0]?.board.frames[0]!.players[0]).toEqual({ team: "p", at: [8, 48] });
+    await expect.poll(async () => (await savedBoards(page))[0]?.board.frames[0]!.players[0]).toEqual({ team: "p", at: [8, 16] });
   });
 });
 
@@ -207,7 +207,7 @@ test.describe("cones and balls", () => {
   test("Ball adds a ball, up to four", async ({ page }) => {
     await openBoard(page);
     await tool(page, "Ball").click();
-    for (const x of [20, 60, 140, 180]) await tapAt(page, x, 100);
+    for (const x of [20, 60, 140, 180]) await tapAt(page, x, 150);
     await expect(page.locator('.stage [data-kind="ball"]')).toHaveCount(4);
     expect((await inLink(page)).frames[0]!.balls).toHaveLength(4);
   });

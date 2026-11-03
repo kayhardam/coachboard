@@ -447,8 +447,11 @@ describe("hasBall", () => {
 });
 
 describe("steps", () => {
-  // The default lineup: 1 LB at (30, 118), 2 CB at (100, 130) with the ball at (110, 122).
-  const [LB, CB] = [1, 2];
+  // The default lineup: 1 LB, 2 CB at (100, 130) with the ball at (110, 122), 3 RB.
+  // LB and RB by at(): their spots have moved before and may again.
+  const [LB, CB, RB] = [1, 2, 3];
+  const at = (player: number): [number, number] => [...defaultBoard.frames[0]!.players[player]!.at];
+  const beside = ([x, y]: [number, number]): [number, number] => [x + 10, y - 8];
   /** CB runs diagonally left with the ball, then New step. */
   const crossing = () => addStep(addArrow(structuredClone(defaultBoard), 0, "run", [0, 0], [75, 95], CB), 0);
 
@@ -489,12 +492,12 @@ describe("steps", () => {
     // 30 dm from CB (100, 130): further than HOLD, but within twice a tap's reach on a phone (holder()).
     const board = structuredClone(defaultBoard);
     board.frames[0]!.balls = [[100, 160]];
-    const passed = addArrow(board, 0, "pass", [0, 0], [170, 118], CB);
-    expect(ballsAfter(passed, passed.frames[0]!)).toEqual([[180, 110]]);
+    const passed = addArrow(board, 0, "pass", [0, 0], at(RB), CB);
+    expect(ballsAfter(passed, passed.frames[0]!)).toEqual([beside(at(RB))]);
     // A ball someone else has stays with them.
-    board.frames[0]!.balls = [[100, 160], [40, 120]];
-    const two = addArrow(board, 0, "pass", [0, 0], [170, 118], CB);
-    expect(ballsAfter(two, two.frames[0]!)).toEqual([[180, 110], [40, 120]]);
+    board.frames[0]!.balls = [[100, 160], [26, 114]];
+    const two = addArrow(board, 0, "pass", [0, 0], at(RB), CB);
+    expect(ballsAfter(two, two.frames[0]!)).toEqual([beside(at(RB)), [26, 114]]);
   });
 
   it("keeps a ball beside its player on the court", () => {
@@ -516,7 +519,7 @@ describe("steps", () => {
     const board = crossing();
     const moved = movePiece(board, 1, { kind: "player", index: LB }, [40, 140]);
     expect(moved.frames[1]!.players[LB]!.at).toEqual([40, 140]);
-    expect(moved.frames[0]!.players[LB]!.at).toEqual([30, 118]);
+    expect(moved.frames[0]!.players[LB]!.at).toEqual(at(LB));
     expect(clearArrows(board, 1).frames[0]!.arrows).toHaveLength(1);
   });
 

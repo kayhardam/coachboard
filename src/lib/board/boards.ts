@@ -255,13 +255,15 @@ export function copyFolder(boards: Saved[], from: string, suffix: string, number
 /**
  * Where the attackers of the default lineup stood in each version that could
  * have saved it: LW, LB, CB, RB, RW, P. Since 22 September 2026, 2 October
- * (pivot into the defence, backs wider) and 2 October again (backs at 3.0 m).
+ * (pivot into the defence, backs wider), 2 October again (backs at 3.0 m) and
+ * 3 November (wings in the corners, backs at 1.6 m).
  * The goalkeeper and the six defenders, and the ball, never moved.
  */
 const ATTACK = [
   "8,48,45,118,100,130,155,118,192,48,100,78",
   "8,48,35,118,100,130,165,118,192,48,100,66",
   "8,48,30,118,100,130,170,118,192,48,100,66",
+  "8,16,16,112,100,130,184,112,192,16,100,66",
 ];
 const DEFENCE = "100,8,22,30,48,58,80,66,120,66,152,58,178,30";
 

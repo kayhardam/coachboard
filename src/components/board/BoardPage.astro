@@ -1,27 +1,18 @@
 ---
-// The board page, /<lang>/board/: the editor, its static fallback and the
-// statistics beacon. Shared links and QR codes open the viewer on
-// /<lang>/board/link/ and /<lang>/board/qr/ (ViewerPage.astro).
+// The board page, /<lang>/board/: the editor and its static fallback. Shared
+// links and QR codes open the viewer on /<lang>/board/link/ and
+// /<lang>/board/qr/ (ViewerPage.astro).
 import { getRelativeLocaleUrl } from "astro:i18n";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { boardStrings, t } from "../../i18n/ui";
-import { beaconEndpoint, beaconSrc } from "../../data/analytics";
 import { defaultBoardFor } from "../../lib/board/defaults";
 import { icons } from "../../lib/icons";
 import { nav, sharePaths } from "../../data/nav";
-import Beacon from "../Beacon.astro";
 import BoardEditor from "./BoardEditor.svelte";
 // The editor's styles, linked on the editor's page only (see the file).
 import "./BoardEditor.css";
 import Court from "./Court.svelte";
 
-// Only the board pages (this one and ViewerPage.astro) may load the statistics beacon (Beacon.astro). This runs
-// before BaseLayout writes the CSP <meta>; content pages keep the plain CSP.
-// Astro.csp is undefined in `npm run dev`, which writes no CSP. A resource
-// replaces Astro's default 'self', so 'self' (the editor's files) goes first.
-Astro.csp?.insertScriptResource("'self'");
-Astro.csp?.insertScriptResource(beaconSrc);
-Astro.csp?.insertDirective(`connect-src 'self' ${beaconEndpoint}`);
 const lang = Astro.currentLocale!;
 const home = getRelativeLocaleUrl(lang);
 const lineup = defaultBoardFor(lang);
@@ -55,7 +46,6 @@ const library = nav
     </div>
   </BoardEditor>
   <slot />
-  <Beacon />
 </BaseLayout>
 
 <style>

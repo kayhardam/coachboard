@@ -1,18 +1,15 @@
 ---
 // De tekst van de privacypagina in het Nederlands. Opmaak en stijl staan in
 // src/pages/[lang]/privacy.astro; elke taal heeft hier een eigen bestand.
-import { getRelativeLocaleUrl } from "astro:i18n";
-import { sharePaths } from "../../../data/nav";
 import { contactEmail, owner } from "../../../data/site";
 
-interface Props {
+// The page passes `lang`, like the other page texts; this text needs no link that depends on it.
+export interface Props {
   lang: string;
 }
-
-const { lang } = Astro.props;
 ---
 
-<p class="updated">Laatst bijgewerkt: 9 oktober 2026</p>
+<p class="updated">Laatst bijgewerkt: 3 november 2026</p>
 
 <p class="lead">
   Handball Coachboard zet geen cookies en heeft geen accounts. Je borden blijven op je toestel, tot
@@ -29,7 +26,7 @@ const { lang } = Astro.props;
 <h2>Cookies</h2>
 <p>
   Deze site zet geen cookies, niet van zichzelf en niet van anderen. Er staan ook geen advertenties
-  op. De statistieken hieronder werken zonder cookies. Daarom is er geen cookiemelding.
+  op. Daarom is er geen cookiemelding.
 </p>
 
 <h2>Het bord</h2>
@@ -52,36 +49,10 @@ const { lang } = Astro.props;
     rel="noopener">privacybeleid van Cloudflare</a
   > (Engels).
 </p>
-
-<h2>Statistieken</h2>
 <p>
-  De bordpagina's laden <a href="https://www.cloudflare.com/web-analytics/" rel="noopener"
-    >Cloudflare Web Analytics</a
-  >. Zo weten we of trainers het bord gebruiken, en hoe snel het op hun telefoon is. De andere
-  pagina's laden geen enkel script.
-</p>
-<p>
-  Web Analytics telt paginaweergaven en meet de laadsnelheid. Het werkt zonder cookies, zonder
-  opslag in je browser en zonder fingerprinting. Cloudflare krijgt daarbij:
-</p>
-<ul>
-  <li>
-    het adres van de pagina, zonder het deel na de <code>#</code> of <code>?</code>, dus ook niet
-    je tekening;
-  </li>
-  <li>de pagina waar je vandaan kwam;</li>
-  <li>je browser, besturingssysteem en type toestel;</li>
-  <li>je land;</li>
-  <li>hoe snel de pagina laadde en reageerde.</li>
-</ul>
-<p>
-  Cloudflare laat je IP-adres vallen in het dichtstbijzijnde datacenter en slaat het niet op.
-  Cloudflare bewaart de statistieken zes maanden.
-</p>
-<p>
-  Een gedeelde link opent <code>{getRelativeLocaleUrl(lang, sharePaths.link)}</code>, een
-  QR-code <code>{getRelativeLocaleUrl(lang, sharePaths.qr)}</code>. Zo zien we hoe vaak gedeelde
-  borden worden geopend. Wat erop staat, zien we niet.
+  Wij zien in het dashboard van Cloudflare alleen totalen: hoeveel verzoeken en bezoekers de site
+  krijgt. De site laadt geen statistiekscript en geen enkel ander script van buiten. Wat je tekent,
+  zien we niet.
 </p>
 
 <h2>Wijzigingen</h2>

@@ -157,18 +157,23 @@ describe("isUntouchedDefault", () => {
 
   it("is true for the default lineups of earlier versions", () => {
     expect(isUntouchedDefault(toBoard(v1Default.board)!)).toBe(true);
-    // 2 October: the pivot in the defence, the backs at 3.5 m.
-    const middle = defaultBoardFor("en");
-    middle.frames[0]!.players[1]!.at = [35, 118];
-    middle.frames[0]!.players[3]!.at = [165, 118];
-    expect(isUntouchedDefault(middle)).toBe(true);
+    // Until 3 November the wings stood on the free-throw line; the backs at 3.5 m
+    // (2 October: the pivot into the defence) and then at 3.0 m (2 October again).
+    for (const backs of [[35, 165], [30, 170]]) {
+      const october = defaultBoardFor("nl");
+      october.frames[0]!.players[0]!.at = [8, 48];
+      october.frames[0]!.players[1]!.at = [backs[0]!, 118];
+      october.frames[0]!.players[3]!.at = [backs[1]!, 118];
+      october.frames[0]!.players[4]!.at = [192, 48];
+      expect(isUntouchedDefault(october)).toBe(true);
+    }
   });
 
   it("is false after any change", () => {
     const changes: ((b: Board) => void)[] = [
       (b) => (b.frames[0]!.players[1]!.at = [40, 100]),
       (b) => (b.frames[0]!.balls = []),
-      (b) => b.frames[0]!.arrows.push({ kind: "run", from: 1, pts: [[30, 118], [30, 90]] }),
+      (b) => b.frames[0]!.arrows.push({ kind: "run", from: 1, pts: [b.frames[0]!.players[1]!.at, [30, 90]] }),
       (b) => (b.title = "Kruising"),
       (b) => (b.frames[0]!.text = "Uitleg"),
       (b) => (b.court = "full"),

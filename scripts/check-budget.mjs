@@ -4,9 +4,7 @@
 // - Content pages (every page except the board pages: <lang>/board/ and the
 //   pages for shared boards, <lang>/board/link/ and <lang>/board/qr/) ship no
 //   JavaScript: no <script> other than JSON-LD, no <astro-island>, no modulepreload.
-// - A board page loads JS from another origin only from EXTERNAL_SCRIPTS: the
-//   statistics beacon, at most once. It isn't in dist/, so it has no size here;
-//   docs/metingen.md records it.
+// - No page loads a script from another origin.
 // - The board's JS: the files its page loads plus everything they import
 //   statically. Dynamic imports count as its lazy JS. The editor's page
 //   (<lang>/board/) and the viewer's (the pages for shared boards) each have
@@ -24,30 +22,27 @@ import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { gzipSync } from "node:zlib";
 
-// Raise a budget only on purpose, and give the reason in the pull request.
-// Each is a measured size plus a fixed margin ("How we work" in AGENTS.md).
+// Ceilings with room ("How we work" in AGENTS.md): each is the size measured
+// on Linux (CI) plus about 10% for JS and 15% for CSS and HTML, rounded; two
+// follow a worst case instead. A merge that stays under a ceiling changes
+// nothing here. Raise one only on purpose, with the reason beside it and in
+// the pull request; once a quarter, set each to the measurement plus its room.
 export const BUDGETS = {
-  boardJs: 37_000, // the editor's page: about 36.6 KB on Linux after t6-korter-a (the folder in the notice after Save, +320 B), plus about 0.4 KB for dependency updates (Dependabot's #45 added 142 B)
-  viewerJs: 25_700, // the viewer's pages (shared boards): about 25.25 KB on Linux, plus about 0.4 KB for dependency updates
-  lazyJs: 10_000, // the QR code (qr.ts), about 4.0 KB on the editor's page; the viewer loads none
-  allJs: 44_400, // about 43.4 KB on Linux after t6-korter-a (+320 B), plus about 1 KB for dependency updates: seven times Dependabot's largest so far (+142 B, #45)
-  css: 2_000, // 1.6 KB per page
+  boardJs: 40_000, // the editor's page: 36.6 KB on 3 November 2026
+  viewerJs: 28_000, // the viewer's pages (shared boards): 25.2 KB on 3 November 2026
+  lazyJs: 10_000, // the QR code (qr.ts), 4.0 KB on the editor's page; the viewer loads none
+  allJs: 48_000, // every .js file in _astro/: 43.4 KB on 3 November 2026
+  css: 2_000, // content pages: 1.7 KB
   // The board pages also link the editor's stylesheet (BoardEditor.css). Content
   // pages stay at `css`, which is too small to take that stylesheet as well.
-  boardCss: 5_950, // 5.74 KB plus 0.2 KB, after t6-korter-a (the notice's folder buttons and name field, +75 B; docs/metingen.md)
-  viewerCss: 3_570, // the viewer's pages: 3.37 KB plus 0.2 KB, under phase 15's cap of 3.6 KB (K2)
-  html: 6_760, // 6.56 KB on the board, the largest page, plus 0.2 KB: every text of the board goes along as a prop (about 12 B each), since t6-korter-a also Add to and Saved to (+26 B)
-  // A library item draws every step; the largest the schema allows (8 steps of
-  // 100 characters, 3 related items) was about 7.3 KB in phase 16-1 (L7, docs/metingen.md),
-  // 7.49 KB after the print styles of 16-2, and about 7.51 KB since phase 19-1: the type
-  // in the title and og:title (+18 B); about 7.47 KB since the two-row footer (-35 B).
-  libraryHtml: 7_510,
-  png: 60_000, // about 52.5 KB for the second wave's og.png (en), the largest
+  boardCss: 6_500, // the editor's page: 5.7 KB on 3 November 2026
+  viewerCss: 4_000, // the viewer's pages: 3.4 KB on 3 November 2026
+  html: 7_500, // the board, the largest page: 6.6 KB on 3 November 2026 (every text of the board goes along as a prop)
+  // Worst case: a library item draws every step, and the largest the schema allows
+  // (8 steps of 100 characters, 3 related items) was about 7.5 KB in phase 19-1 (L7, docs/metingen.md).
+  libraryHtml: 8_500,
+  png: 60_000, // worst case: about 52.5 KB for the second wave's og.png (en), the largest, with room for a new one
 };
-
-// The one script from another origin, on the board pages only. The same URL as
-// beaconSrc in src/data/analytics.ts (check-budget.test.mjs compares them).
-export const EXTERNAL_SCRIPTS = ["https://static.cloudflareinsights.com/beacon.min.js"];
 
 const TAG = /<(script|astro-island|link)\b([^>]*)>/gi;
 const ATTR = /([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/g;
@@ -143,7 +138,6 @@ export function checkBudget(dist, budgets = BUDGETS) {
     const html = readFileSync(file, "utf8");
     const board = isBoard(page);
     const scripts = [];
-    const external = [];
     const stylesheets = [];
     const forbid = (found) => {
       contentScripts++;
@@ -156,7 +150,7 @@ export function checkBudget(dist, budgets = BUDGETS) {
       if (name === "script") {
         if (a.type?.toLowerCase() === "application/ld+json") continue;
         if (!board) forbid(`<script${source}>`);
-        if (a.src && isExternal(a.src)) external.push(a.src);
+        if (a.src && isExternal(a.src)) errors.push(`${url}: script from another origin: ${a.src}`);
         else if (a.src) scripts.push(a.src);
       } else if (name === "astro-island") {
         if (!board) forbid("<astro-island>");
@@ -178,10 +172,6 @@ export function checkBudget(dist, budgets = BUDGETS) {
       const { eager, lazy } = importGraph(new Set(entries), url);
       measure("JS (gzip)", url, sum(eager), isViewer(page) ? budgets.viewerJs : budgets.boardJs);
       measure("Lazy JS (gzip)", url, sum(lazy), budgets.lazyJs);
-      for (const src of external) {
-        if (!EXTERNAL_SCRIPTS.includes(src)) errors.push(`${url}: script from another origin: ${src}`);
-      }
-      measure("External scripts", url, external.length, EXTERNAL_SCRIPTS.length, "");
     }
 
     const css = stylesheets.map((href) => resolve(href, url)).filter(Boolean);
@@ -201,7 +191,7 @@ export function checkBudget(dist, budgets = BUDGETS) {
     measure("PNG", url, statSync(file).size, budgets.png);
   }
 
-  const order = ["JS (gzip)", "Lazy JS (gzip)", "All JS (gzip)", "External scripts", "Scripts", "CSS (gzip)", "HTML (gzip)", "PNG"];
+  const order = ["JS (gzip)", "Lazy JS (gzip)", "All JS (gzip)", "Scripts", "CSS (gzip)", "HTML (gzip)", "PNG"];
   rows.sort((a, b) => order.indexOf(a.budget) - order.indexOf(b.budget));
   return { rows, errors };
 }
