@@ -62,7 +62,7 @@ An arrow is one of three shapes, told apart by its kind and length:
 | `[kind, x1, y1, x2, y2]` or `[kind, x1, y1, bx, by, x2, y2]` (odd length) | an arrow of nobody, with its own start |
 | `[4, player, side]` | a shot of a player: `side` `0` = left, `1` = middle, `2` = right of the goal nearest the shooter |
 
-`kind`: `0` = run, `1` = pass, `2` = dribble, `3` = block (a screen, set by an attacker), `4` = shot, `5` = bounce (a pass that touches the floor at its bend).
+`kind`: `0` = run, `1` = pass, `2` = dribble, `3` = block (a screen, set by an attacker), `4` = shot, `5` = bounce (a pass that touches the floor on the way).
 
 **Where an arrow of a player starts.** Runs, dribbles and blocks (`0`, `2`, `3`) take the player along: their next arrow in the same step starts where the previous one ended. So an arrow of a player starts where they stand at the start of the step, or where their last run, dribble or block in that step ended, in drawing order. A shot ends on the goal line (y = 0, or y = 400 on a full court when the shooter is in the far half) at x = 90, 100 or 110.
 
