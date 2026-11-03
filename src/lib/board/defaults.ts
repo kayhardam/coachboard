@@ -1,6 +1,13 @@
 import type { Board } from "./format";
 
-/** Half court: six attackers against a 6-0 defence and its goalkeeper, labelled in English. */
+/**
+ * Half court: six attackers against a 6-0 defence and its goalkeeper, labelled
+ * in English. The wings stand in the corners (0.8 m from the sideline, 1.6 m
+ * from the goal line) and the backs 1.6 m from the sideline (Kay, 3 November
+ * 2026, after drawing with the board: the wings stood on the free-throw line
+ * and the backs too close to the centre back). An earlier lineup stays an
+ * untouched default (ATTACK in boards.ts).
+ */
 export const defaultBoard: Board = {
   v: 2,
   court: "half",
@@ -8,11 +15,11 @@ export const defaultBoard: Board = {
   frames: [
     {
       players: [
-        { team: "a", label: "LW", at: [8, 48] },
-        { team: "a", label: "LB", at: [30, 118] },
+        { team: "a", label: "LW", at: [8, 16] },
+        { team: "a", label: "LB", at: [16, 112] },
         { team: "a", label: "CB", at: [100, 130] },
-        { team: "a", label: "RB", at: [170, 118] },
-        { team: "a", label: "RW", at: [192, 48] },
+        { team: "a", label: "RB", at: [184, 112] },
+        { team: "a", label: "RW", at: [192, 16] },
         { team: "a", label: "P", at: [100, 66] },
         { team: "d", label: "GK", at: [100, 8] },
         { team: "d", at: [22, 30] },
