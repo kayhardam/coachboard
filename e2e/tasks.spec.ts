@@ -148,6 +148,10 @@ function route(page: Page) {
     },
     /** The browser's Back: its button, or the swipe from the edge of the screen. */
     async back() {
+      // The editor writes the link to the address bar 300 ms after a change
+      // (history.replaceState). A Back that starts inside that write is
+      // aborted (net::ERR_ABORTED, the T6 flake on main), so let it pass first.
+      await page.waitForTimeout(400);
       await page.goBack();
       count++;
     },
