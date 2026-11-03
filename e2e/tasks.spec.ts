@@ -14,7 +14,6 @@ import {
   savedBoards,
   STORE_KEY,
   saveOwnBoard,
-  stubBeacon,
   test,
 } from "./helpers";
 
@@ -188,7 +187,6 @@ async function stubShareSheet(page: Page) {
 /** A laptop next to the project's phone: a second device with its own storage, and a stubbed share sheet. */
 async function laptop(browser: Browser, baseURL: string | undefined) {
   const context = await browser.newContext({ baseURL, viewport: { width: 1280, height: 720 } });
-  await stubBeacon(context);
   const page = await context.newPage();
   return { context, page, shared: await stubShareSheet(page) };
 }

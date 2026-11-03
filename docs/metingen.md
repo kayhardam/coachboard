@@ -1018,6 +1018,8 @@ Onderzocht voor besluit 1, niet gekozen.
 
 ### Maandmeting (vanaf 8b)
 
+**Vervallen op 3 november 2026:** de beacon is weg (zie "Beacon weg" onderaan); er is geen Web Analytics-dashboard meer. Het sjabloon blijft staan als geschiedenis.
+
 Elke maand één tabel, gelezen in het Web Analytics-dashboard, gefilterd op host `handballcoachboard.com`.
 
 - **Aantal metingen:** zet bij elke p75 het aantal metingen (n) waarop hij rust. Toont het dashboard dat niet, noteer dan het aantal paginaweergaven met hetzelfde filter, en schrijf erbij dat n dat getal of lager is.
@@ -3637,3 +3639,12 @@ Na Bewaren in Mijn borden blijft de melding staan en biedt hij de map: "Zet in {
 Reden: de margeregel uit "How we work"; de twee knoppen, het naamveld en twee teksten als prop.
 
 Lighthouse, mobiel, `/nl/board/`, productie tegenover de preview, drie runs per modus (beacon geblokkeerd): Performance 100 (gesimuleerd 99), Accessibility en Best Practices 100, CLS 0, TBT 0. Echte vertraging, LCP mediaan: 1,38 → 1,38 s, gelijk; gesimuleerd 1,61 → 1,64 s.
+
+## Beacon weg (3 november 2026)
+
+De Cloudflare Web Analytics-beacon (10,1 KB gzip, op elke bordpagina, sinds Fase 8a) is verwijderd: paginaweergaven van een handvol gebruikers dragen geen besluit, en het eigen sjabloon hierboven trok onder n = 100 geen conclusie. Besluit Kay, 3 november 2026.
+
+- De site laadt nu nergens een script van een ander domein; `scripts/check-budget.mjs` en `e2e/security.spec.ts` laten dat falen op elke pagina. De CSP is op elke pagina gelijk (geen `connect-src`, geen extern `script-src`).
+- Wat overblijft: de totalen van Cloudflare (verzoeken, bezoekers) en Search Console. De maandmeting (8b) vervalt; "Look at production" in How we work noemt wat we wel lezen.
+- De privacypagina heeft geen kopje Statistieken meer; `privacy.description` is korter.
+- Groottes: de bordpagina's verliezen het beacon-script en de CSP-regels ervoor (HTML iets kleiner); de budgetten blijven staan.
