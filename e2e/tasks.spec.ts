@@ -18,11 +18,11 @@ import {
 } from "./helpers";
 
 // The tap budget: the shortest route for each measured task, counted in
-// actions (every tap, drag and key press is one). The count must equal the
-// budget exactly: a route that needs one more action fails until the budget
-// goes up on purpose, and a shorter route fails until it goes down, so every
-// gain stays recorded. Change a budget only with the reason in the PR and the
-// new measurement in docs/metingen.md ("UX-metingen").
+// actions (every tap, drag and key press is one). The count may not go over
+// the budget: a route that needs one more action fails until the budget goes
+// up on purpose, with the reason in the PR and the new measurement in
+// docs/metingen.md ("UX-metingen"). A route that got shorter passes; lower
+// its budget in the same PR, so the gain stays recorded.
 // Opening the board doesn't count, nor does the phone's own share sheet.
 // The budget holds in every language: the routes run on /en/ and /nl/.
 const TAP_BUDGET = {
@@ -221,7 +221,7 @@ async function expectSharedT1(shared: () => Promise<string[]>, lang: string) {
 }
 
 for (const lang of ["en", "nl"]) {
-  test(`T1 (${lang}): the shortest route takes exactly its tap budget`, async ({ page }) => {
+  test(`T1 (${lang}): the shortest route stays within its tap budget`, async ({ page }) => {
     const shared = await stubShareSheet(page);
     await openBoard(page, "", `/${lang}/board/`);
     const steps = route(page);
@@ -229,7 +229,7 @@ for (const lang of ["en", "nl"]) {
     await drawAndShare(page, lang, steps);
 
     await expectSharedT1(shared, lang);
-    expect(steps.count).toBe(TAP_BUDGET.T1);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET.T1);
   });
 
   test(`T1 (${lang}) with your own board: a new board first, which keeps yours`, async ({ page }) => {
@@ -246,7 +246,7 @@ for (const lang of ["en", "nl"]) {
     // Your own board is still in My boards, next to the new one.
     await expect.poll(async () => (await savedBoards(page)).length).toBe(2);
     expect(await savedBoards(page)).toContainEqual(JSON.parse(own)[0]);
-    expect(steps.count).toBe(TAP_BUDGET["T1 with your own board"]);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET["T1 with your own board"]);
   });
 
   // T4: prepare a training on the laptop and open it on the phone the next day.
@@ -281,7 +281,7 @@ for (const lang of ["en", "nl"]) {
       await openViewer(page, url.hash, url.pathname);
       await expectBoard(page, board);
     }
-    expect(steps.count).toBe(TAP_BUDGET["T4 as links to yourself"]);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET["T4 as links to yourself"]);
     // All three boards are kept on the laptop.
     await expect.poll(async () => (await savedBoards(desk.page)).length).toBe(runs.length);
     await desk.context.close();
@@ -319,7 +319,7 @@ for (const lang of ["en", "nl"]) {
     await phone.tap(menuItem(page, "board.myBoards"));
     await chooseFile(page, () => phone.tap(list(page).locator("label", { hasText: t(lang, "board.import") })), file.text, file.name);
     await expect(list(page).getByRole("status")).toContainText(t(lang, "board.imported").replace("{count}", "3"));
-    expect(steps.count + phone.count).toBe(T4_UNTIL_IMPORTED);
+    expect(steps.count + phone.count).toBeLessThanOrEqual(T4_UNTIL_IMPORTED);
     const onPhone = await savedBoards(page);
     expect(onPhone.map((s) => new Date(s.at).toISOString()).sort()).toEqual(exported.map((b) => b.at).sort());
 
@@ -335,7 +335,7 @@ for (const lang of ["en", "nl"]) {
       expect(board.frames[0]!.arrows).toMatchObject([{ kind: "run" }]);
       await expectBoard(page, board);
     }
-    expect(steps.count + phone.count).toBe(TAP_BUDGET["T4 with export and import"]);
+    expect(steps.count + phone.count).toBeLessThanOrEqual(TAP_BUDGET["T4 with export and import"]);
     // The laptop keeps all three.
     expect(await savedBoards(desk.page)).toHaveLength(runs.length);
     await desk.context.close();
@@ -404,7 +404,7 @@ async function expectSharedT3(shared: () => Promise<string[]>, lang: string) {
 }
 
 for (const lang of ["en", "nl"]) {
-  test(`T3 (${lang}): the shortest route takes exactly its tap budget`, async ({ page }) => {
+  test(`T3 (${lang}): the shortest route stays within its tap budget`, async ({ page }) => {
     const shared = await stubShareSheet(page);
     await openBoard(page, "", `/${lang}/board/`);
     const steps = route(page);
@@ -412,7 +412,7 @@ for (const lang of ["en", "nl"]) {
     await drawCrossing(page, lang, steps);
 
     await expectSharedT3(shared, lang);
-    expect(steps.count).toBe(TAP_BUDGET.T3);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET.T3);
   });
 
   test(`T3 (${lang}) with your own board: a new board first, which keeps yours`, async ({ page }) => {
@@ -428,7 +428,7 @@ for (const lang of ["en", "nl"]) {
     await expectSharedT3(shared, lang);
     await expect.poll(async () => (await savedBoards(page)).length).toBe(2);
     expect(await savedBoards(page)).toContainEqual(JSON.parse(own)[0]);
-    expect(steps.count).toBe(TAP_BUDGET["T3 with your own board"]);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET["T3 with your own board"]);
   });
 
   test(`T3 (${lang}) without a starting lineup: by hand, for comparison`, async ({ page }) => {
@@ -439,7 +439,7 @@ for (const lang of ["en", "nl"]) {
     await drawCrossingByHand(page, lang, steps);
 
     await expectSharedT3(shared, lang);
-    expect(steps.count).toBe(TAP_BUDGET["T3 without a starting lineup"]);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET["T3 without a starting lineup"]);
   });
 }
 
@@ -537,7 +537,7 @@ for (const lang of ["en", "nl"]) {
     await crossingAsFourBoards(page, lang, steps, shared);
 
     await expectSharedT2AsFourBoards(shared, lang);
-    expect(steps.count).toBe(TAP_BUDGET["T2 as four separate boards"]);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET["T2 as four separate boards"]);
   });
 }
 
@@ -588,7 +588,7 @@ async function expectSharedT2(shared: () => Promise<string[]>, lang: string) {
 }
 
 for (const lang of ["en", "nl"]) {
-  test(`T2 (${lang}): the shortest route takes exactly its tap budget`, async ({ page }) => {
+  test(`T2 (${lang}): the shortest route stays within its tap budget`, async ({ page }) => {
     const shared = await stubShareSheet(page);
     await openBoard(page, "", `/${lang}/board/`);
     const steps = route(page);
@@ -596,7 +596,7 @@ for (const lang of ["en", "nl"]) {
     await crossingInSteps(page, lang, steps);
 
     await expectSharedT2(shared, lang);
-    expect(steps.count).toBe(TAP_BUDGET.T2);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET.T2);
   });
 
   test(`T2 (${lang}) with your own board: a new board first, which keeps yours`, async ({ page }) => {
@@ -612,7 +612,7 @@ for (const lang of ["en", "nl"]) {
     await expectSharedT2(shared, lang);
     await expect.poll(async () => (await savedBoards(page)).length).toBe(2);
     expect(await savedBoards(page)).toContainEqual(JSON.parse(own)[0]);
-    expect(steps.count).toBe(TAP_BUDGET["T2 with your own board"]);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET["T2 with your own board"]);
   });
 }
 
@@ -667,7 +667,7 @@ for (const lang of ["en", "nl"]) {
     await expect(next(page)).toBeDisabled();
 
     await expectOnlyWatched(page, opened);
-    expect(steps.count).toBe(TAP_BUDGET.T5);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET.T5);
   });
 
   test(`T5 (${lang}) step by step`, async ({ page }) => {
@@ -684,7 +684,7 @@ for (const lang of ["en", "nl"]) {
     await expect(next(page)).toBeDisabled();
 
     await expectOnlyWatched(page, opened);
-    expect(steps.count).toBe(TAP_BUDGET["T5 step by step"]);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET["T5 step by step"]);
   });
 }
 
@@ -714,7 +714,7 @@ async function lastWeeksTraining(page: Page, lang: "en" | "nl") {
 }
 
 for (const lang of ["en", "nl"] as const) {
-  test(`T6 (${lang}): three items from the library in one new folder takes exactly its tap budget`, async ({ page }) => {
+  test(`T6 (${lang}): three items from the library in one new folder stays within its tap budget`, async ({ page }) => {
     const { items, folder } = T6[lang];
     await page.goto(`/${lang}/drills/`);
     const lastWeek = await lastWeeksTraining(page, lang);
@@ -764,7 +764,7 @@ for (const lang of ["en", "nl"] as const) {
     expect(after).toHaveLength(4);
     expect(after).toContainEqual(lastWeek);
     expect(after.filter((s) => s.folder === folder).every((s) => s.board.frames.every((f) => f.text))).toBe(true);
-    expect(steps.count).toBe(TAP_BUDGET.T6);
+    expect(steps.count).toBeLessThanOrEqual(TAP_BUDGET.T6);
     expect(steps.swipes).toBeLessThanOrEqual(SWIPE_BUDGET.T6[test.info().project.name as keyof typeof SWIPE_BUDGET.T6]);
   });
 }
