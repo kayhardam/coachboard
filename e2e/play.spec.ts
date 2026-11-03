@@ -59,7 +59,7 @@ test("Play: each step still, then its players move to where the next starts", as
   // Only to watch: the link, My boards and Undo are as they were.
   expect(await inLink(page)).toEqual(link);
   expect(await page.evaluate((key) => localStorage.getItem(key), STORE_KEY)).toBe(saved);
-  await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Undo", includeHidden: true })).toBeHidden();
 
   // The move ends exactly where step 2 starts.
   await page.clock.runFor(MOVE / 2 + 50);
@@ -146,7 +146,7 @@ test("playing a board of yours changes nothing in My boards", async ({ page }) =
   await page.clock.runFor(STILL);
   await expect(playButton(page)).toHaveAttribute("aria-label", "Play");
   expect(await page.evaluate((key) => localStorage.getItem(key), STORE_KEY)).toBe(saved);
-  await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Undo", includeHidden: true })).toBeHidden();
 });
 
 /** JavaScript errors on the page, collected from now on. */

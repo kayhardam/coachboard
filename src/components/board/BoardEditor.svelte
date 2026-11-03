@@ -150,11 +150,12 @@
    * The bar over the court for what is selected: the kinds for an arrow, the
    * teams for a player, else the starting lineups on a new board. Picking a
    * lineup keeps it as the board as it was opened, so it saves nothing. The
-   * lineups show no heading: it would be the largest text on a first visit,
-   * painted only after this JS (the LCP), and their names say enough.
+   * lineups have a heading and, above it, one line that says what to do on
+   * the board (Kay, 3 November 2026; the hint is smaller than the sentence's
+   * placeholder, so it doesn't become the LCP), as long as the strip shows.
    */
   type Item = { id: string; label: string; on?: boolean; off?: boolean; icon?: string; dash?: boolean; team?: string; run: () => void };
-  const strip = $derived.by((): { title: string; heading?: boolean; items: Item[] } | undefined => {
+  const strip = $derived.by((): { title: string; heading?: boolean; hint?: string; items: Item[] } | undefined => {
     const index = selected?.index ?? 0;
     const arrow = selected?.kind === "arrow" ? frame.arrows[index] : undefined;
     const player = selected?.kind === "player" ? frame.players[index] : undefined;
@@ -189,6 +190,8 @@
     if (isNew && past.length === 0 && !selected) {
       return {
         title: strings["board.setup"],
+        heading: true,
+        hint: strings["board.hint"],
         items: SETUPS.map((id) => ({
           id,
           // A non-breaking hyphen: "Tegen" may wrap above "3-2-1", the defence itself not.
@@ -1063,12 +1066,16 @@
         <span class="label">{strings["board.more"]}</span>
       </summary>
       <div class="menu-panel">
+        <!-- In groups, each with a heading (Kay, 3 November 2026); landscape hides the headings: two columns. -->
+        <p class="group">{strings["board.menu.boards"]}</p>
         <button type="button" onclick={openList}>{strings["board.myBoards"]}</button>
-        <button type="button" class="last" onclick={newBoard}>{strings["board.newBoard"]}</button>
+        <button type="button" onclick={newBoard}>{strings["board.newBoard"]}</button>
         {#if received}
           <button type="button" onclick={saveToList}>{strings["board.save"]}</button>
         {/if}
+        <p class="group">{strings["board.menu.share"]}</p>
         <button type="button" onclick={showQr}>{strings["board.qr"]}</button>
+        <p class="group">{strings["board.menu.thisBoard"]}</p>
         {#if board.frames.length > 1}
           <button type="button" onclick={removeStep}>{strings["board.removeStep"]}</button>
         {/if}
@@ -1079,6 +1086,7 @@
         {#if import.meta.env.DEV}
           <button type="button" onclick={copyJson}>JSON (dev)</button>
         {/if}
+        <p class="group">{strings["board.menu.library"]}</p>
         <!-- Closed on the way out, so More isn't open after Back. -->
         <div class="library">
           {#each library as item (item.href)}
@@ -1155,6 +1163,7 @@
 
   {#if strip}
     <div class="strip" role="toolbar" aria-label={strip.title}>
+      {#if strip.hint}<p class="strip-hint">{strip.hint}</p>{/if}
       {#if strip.heading}<span class="strip-title" aria-hidden="true">{strip.title}</span>{/if}
       <div class="strip-row">
         {#each strip.items as item (item.id)}
