@@ -94,9 +94,9 @@ describe("playing a step", () => {
 
   it("moves a defender moved by hand in the next step in a straight line", () => {
     let board = addStep(lineup(), 0);
-    board = movePiece(board, 1, { kind: "player", index: D }, [68, 78]);
+    board = movePiece(board, 1, { kind: "player", index: D }, [60, 90]);
     expectEnds(board, 0);
-    expect(moment(board, 0, 0.5).players[D]!.at).toEqual([58, 68]);
+    expect(moment(board, 0, 0.5).players[D]!.at).toEqual([54, 74]);
   });
 
   it("leaves a ball nobody has where it lies, and moves it with a pass without a player", () => {

@@ -289,3 +289,44 @@ test.describe("keys 1–6", () => {
     await expect(tool(page, "Cone")).toHaveAttribute("aria-pressed", "true");
   });
 });
+
+test.describe("clear of each other", () => {
+  // The default lineup: 1 LB, 2 CB (100, 130), 3 RB; 9 the defender at (80, 66) who stays.
+  const [LB, CB, D] = [1, 2, 9];
+  const dist = (a: [number, number], b: [number, number]) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+
+  test("a run let go on a defender who stays stops 2 m before him; on a teammate who leaves, it ends on his spot", async ({ page }) => {
+    await openBoard(page);
+    // CB's run, let go on the defender: it ends 20 dm before him, on the way there.
+    await dragTo(page, "player", CB, D);
+    let board = await inLink(page);
+    const run = board.frames[0]!.arrows[0]!;
+    expect(run).toMatchObject({ kind: "run", from: CB });
+    expect(dist(run.pts.at(-1)!, [80, 66])).toBeCloseTo(20, 0);
+    expect(run.pts.at(-1)![1]).toBeGreaterThan(66);
+    // LB runs to where CB stood: CB leaves it this step, so the run ends there.
+    await dragTo(page, "player", LB, CB);
+    board = await inLink(page);
+    expect(board.frames[0]!.arrows[1]).toMatchObject({ kind: "run", from: LB, pts: [expect.anything(), [100, 130]] });
+    // After New step (the court shows step 2, so read the link itself), nobody stands on anyone.
+    await page.getByRole("button", { name: "New step", exact: true }).click();
+    const linked = async () => (await decode(new URL(page.url()).hash.replace(/^#t=/, "")))!;
+    await expect.poll(async () => (await linked()).frames.length).toBe(2);
+    const next = (await linked()).frames[1]!.players.map((p) => p.at);
+    for (let i = 0; i < next.length; i++) for (let j = i + 1; j < next.length; j++) expect(dist(next[i]!, next[j]!)).toBeGreaterThan(17);
+  });
+
+  test("Move never sets a player down on another", async ({ page }) => {
+    await openBoard(page);
+    await tool(page, "Move").click();
+    await dragTo(page, "player", LB, CB);
+    // The link follows the drag 300 ms later; poll until it has the drop.
+    const between = async () => {
+      const f = (await inLink(page)).frames[0]!;
+      expect(f.players[CB]!.at).toEqual([100, 130]);
+      return dist(f.players[LB]!.at, f.players[CB]!.at);
+    };
+    await expect.poll(between).toBeLessThan(20);
+    expect(await between()).toBeGreaterThanOrEqual(17);
+  });
+});
