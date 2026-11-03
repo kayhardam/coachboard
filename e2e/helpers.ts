@@ -1,48 +1,13 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { test as base, expect, type BrowserContext, type Page } from "@playwright/test";
-import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
+import { expect, test, type Page } from "@playwright/test";
 import { STORE_KEY } from "../src/lib/board/boards";
 import { toBoard, type Board, type BoardV1 } from "../src/lib/board/format";
 import { DRILL_LISTS } from "../src/lib/library";
 import { t } from "../src/i18n/ui";
 
-export { expect };
-
-/**
- * Answers the statistics beacon in `context` with an empty script and its
- * endpoint with 204, and collects what reaches the endpoint in `sent`. The
- * `test` below does this for every test's own context; a context a test makes
- * itself (a second device) needs it too.
- */
-export async function stubBeacon(context: BrowserContext, sent: string[] = []) {
-  // A module script from another origin needs CORS, as Cloudflare sends it.
-  await context.route(beaconSrc, (route) =>
-    route.fulfill({ contentType: "text/javascript", headers: { "access-control-allow-origin": "*" }, body: "" }),
-  );
-  await context.route(`${beaconEndpoint}/**`, (route) => {
-    sent.push(route.request().postData() ?? "");
-    return route.fulfill({ status: 204 });
-  });
-}
-
-/**
- * Every test imports `test` from here. It stubs the statistics beacon (see
- * stubBeacon()), so no test (also not one against a deployed site) sends data
- * to the real dashboard. `beacon.sent` collects what reaches the endpoint;
- * analytics.spec.ts runs the real beacon with page.route(), which comes before
- * these context routes.
- */
-export const test = base.extend<{ beacon: { sent: string[] } }>({
-  beacon: [
-    async ({ context }, use) => {
-      const sent: string[] = [];
-      await stubBeacon(context, sent);
-      await use({ sent });
-    },
-    { auto: true },
-  ],
-});
+/** Every spec imports `test` and `expect` from here, so a fixture for every test has one place to go. */
+export { expect, test };
 
 /** My boards in localStorage, and the one board earlier versions kept (src/lib/board/boards.ts). */
 export { OLD_KEY, STORE_KEY } from "../src/lib/board/boards";

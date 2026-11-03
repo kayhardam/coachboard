@@ -3,8 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { gzipSync } from "node:zlib";
 import { afterEach, describe, expect, it } from "vitest";
-import { beaconSrc } from "../src/data/analytics.ts";
-import { BUDGETS, EXTERNAL_SCRIPTS, checkBudget, table } from "./check-budget.mjs";
+import { BUDGETS, checkBudget, table } from "./check-budget.mjs";
 
 let dist;
 
@@ -77,24 +76,19 @@ describe("checkBudget", () => {
     ]);
   });
 
-  it("allows the beacon once on a board page and no other script from another origin", () => {
-    const beacon = `<script type="module" src="${beaconSrc}" data-cf-beacon='{"token":""}'></script>`;
-    const { rows, errors } = build({
-      "en/board/index.html": beacon,
-      "en/board/qr/index.html": `${beacon}${beacon}`,
-      "en/board/link/index.html": `<script src="https://cdn.example.com/x.js"></script>`,
-      "en/about/index.html": beacon,
+  it("fails on a script from another origin, also on a board page", () => {
+    const foreign = `<script type="module" src="https://cdn.example.com/x.js"></script>`;
+    const { errors } = build({
+      "en/board/index.html": foreign,
+      "en/board/link/index.html": `<script src="//static.example.com/y.js"></script>`,
+      "en/about/index.html": foreign,
     });
     expect(errors).toEqual([
       expect.stringMatching(/^\/en\/about\/: content pages ship no JS/),
-      "/en/board/link/: script from another origin: https://cdn.example.com/x.js",
-      "External scripts /en/board/qr/: 2 is over the budget of 1",
+      "/en/about/: script from another origin: https://cdn.example.com/x.js",
+      "/en/board/: script from another origin: https://cdn.example.com/x.js",
+      "/en/board/link/: script from another origin: //static.example.com/y.js",
     ]);
-    expect(row(rows, "External scripts", "/en/board/")).toMatchObject({ measured: 1, limit: 1 });
-  });
-
-  it("allows the same beacon URL as the site loads", () => {
-    expect(EXTERNAL_SCRIPTS).toEqual([beaconSrc]);
   });
 
   it("counts the board's static imports once and its dynamic imports as lazy JS", () => {

@@ -1,24 +1,18 @@
 ---
 // The page a shared board opens on: /<lang>/board/link/ (Share) and
-// /<lang>/board/qr/ (the QR code). The viewer, its static fallback and the
-// statistics beacon. /<lang>/board/ is the editor (BoardPage.astro).
+// /<lang>/board/qr/ (the QR code). The viewer and its static fallback.
+// /<lang>/board/ is the editor (BoardPage.astro).
 import { getRelativeLocaleUrl } from "astro:i18n";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { t, viewerStrings } from "../../i18n/ui";
-import { beaconEndpoint, beaconSrc } from "../../data/analytics";
 import { boardPath } from "../../data/nav";
 import type { Board } from "../../lib/board/format";
 import { viewerIcons as icons } from "../../lib/viewerIcons";
-import Beacon from "../Beacon.astro";
 import BoardViewer from "./BoardViewer.svelte";
 // The viewer's styles, linked on these pages only; the fallback uses them too.
 import "./BoardViewer.css";
 import Court from "./Court.svelte";
 
-// As BoardPage.astro: these pages may load the statistics beacon.
-Astro.csp?.insertScriptResource("'self'");
-Astro.csp?.insertScriptResource(beaconSrc);
-Astro.csp?.insertDirective(`connect-src 'self' ${beaconEndpoint}`);
 const lang = Astro.currentLocale!;
 const home = getRelativeLocaleUrl(lang);
 const editor = getRelativeLocaleUrl(lang, boardPath);
@@ -57,5 +51,4 @@ const empty: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], b
       <noscript><p>{strings["viewer.noscript"]}</p></noscript>
     </div>
   </BoardViewer>
-  <Beacon />
 </BaseLayout>
