@@ -42,7 +42,7 @@ const en = {
   "home.ctaBody": "Open the board in your browser. No account needed.",
   "privacy.title": "Privacy | Handball Coachboard",
   "privacy.description":
-    "Handball Coachboard sets no cookies and has no accounts. Read what happens to your drawing, what Cloudflare sees and what the statistics measure.",
+    "Handball Coachboard sets no cookies and has no accounts. Read what happens to your drawing and what Cloudflare sees.",
   "privacy.heading": "Privacy",
   "about.title": "About | Handball Coachboard",
   "about.description":
@@ -295,7 +295,7 @@ const nl: Record<UiKey, string> = {
   "home.ctaBody": "Open het bord in je browser, zonder account.",
   "privacy.title": "Privacy | Handball Coachboard",
   "privacy.description":
-    "Handball Coachboard zet geen cookies en heeft geen accounts. Lees wat er met je tekening gebeurt, wat Cloudflare ziet en wat de statistieken meten.",
+    "Handball Coachboard zet geen cookies en heeft geen accounts. Lees wat er met je tekening gebeurt en wat Cloudflare ziet.",
   "privacy.heading": "Privacy",
   "about.title": "Over | Handball Coachboard",
   "about.description":

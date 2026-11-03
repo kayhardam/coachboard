@@ -36,7 +36,7 @@ describe("eagerScripts", () => {
   it("follows a module script of this site, not one from another origin or an inline one", () => {
     build({ "_astro/page.js": `import"./board.js";`, "_astro/board.js": "" });
     const html = `${head()}<script type="module" src="/_astro/page.js"></script>
-      <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js"></script>
+      <script type="module" src="https://cdn.example.com/a.js"></script>
       <script type="module" src="//cdn.example.com/x.js"></script><script>x()</script>`;
     expect(eagerScripts(html, dist)).toEqual(["/_astro/page.js", "/_astro/board.js"]);
   });

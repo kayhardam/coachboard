@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-import { beaconEndpoint, beaconSrc } from "../src/data/analytics";
 import { t } from "../src/i18n/ui";
 import { allPages, chooseFile, downloaded, dragPlayer, expect, fromMenu, openBoard, savedBoards, test, watchViolations } from "./helpers";
 
@@ -19,9 +18,6 @@ const headers = {
 /** The viewer's pages need a board in #t=; without one they send you to the editor. */
 const shared = (JSON.parse(readFileSync(new URL("../src/lib/board/fixtures/v2-play.json", import.meta.url), "utf8")) as { link: string }).link;
 const withBoard = (path: string) => (/\/board\/(?:link|qr)\/$/.test(path) ? `${path}#t=${shared}` : path);
-
-/** The board and the pages for shared boards: the only ones with the beacon. */
-const isBoard = (path: string) => /^\/[^/]+\/board\/(?:(?:link|qr)\/)?$/.test(path);
 
 test("every language's board pages are among the pages checked here", () => {
   // allPages() reads dist/. Without this, a language whose pages failed to build
@@ -46,19 +42,17 @@ for (const path of allPages()) {
     const csp = (await page.locator('meta[http-equiv="content-security-policy"]').getAttribute("content"))!;
     expect(csp).toContain("default-src 'self'");
     expect(csp).not.toContain("frame-ancestors");
-    // script-src: 'self', hashes, and only on the board pages the beacon.
+    // script-src: 'self' and hashes, nothing from another origin, on every page.
     const scriptSrc = csp.match(/script-src ([^;]*);/)![1]!.trim().split(/\s+/);
     expect(scriptSrc[0]).toBe("'self'");
     expect(scriptSrc.some((s) => s.startsWith("'sha256-"))).toBe(true);
-    expect(scriptSrc.filter((s) => s !== "'self'" && !s.startsWith("'sha256-"))).toEqual(
-      isBoard(path) ? [beaconSrc] : [],
-    );
-    if (isBoard(path)) expect(csp).toContain(`connect-src 'self' ${beaconEndpoint};`);
-    else expect(csp).not.toContain("connect-src");
+    expect(scriptSrc.filter((s) => s !== "'self'" && !s.startsWith("'sha256-"))).toEqual([]);
+    expect(csp).not.toContain("connect-src");
   });
 
   // The CSP <meta> only covers what comes after it, so it can't stop a script
-  // that Cloudflare injects above it (the RUM auto-setup). This checks the page itself.
+  // that Cloudflare injects above it (Web Analytics on automatic setup, email
+  // obfuscation). This checks the page itself.
   test(`no script from another origin on ${path}`, async ({ page }) => {
     const requested: string[] = [];
     page.on("request", (r) => void (r.resourceType() === "script" && requested.push(r.url())));
@@ -66,7 +60,7 @@ for (const path of allPages()) {
     const inPage = await page.evaluate(() => [...document.scripts].map((s) => s.src).filter(Boolean));
     const origin = new URL(page.url()).origin;
     const foreign = [...new Set([...requested, ...inPage])].filter((url) => new URL(url).origin !== origin);
-    expect(foreign).toEqual(isBoard(path) ? [beaconSrc] : []);
+    expect(foreign).toEqual([]);
   });
 
   test(`no CSP violations on ${path}`, async ({ page }) => {
