@@ -112,7 +112,8 @@ export function clearOf(frame: Frame, at: Pt, from: Pt, self?: number): Pt {
  * it stops CLEAR dm before it, on the way there from `from`. The spot of a
  * player who leaves it this step is free, so a run released on it ends there
  * (a crossing), as a pass ends on its receiver (a pass never uses this).
- * Released elsewhere: `to` as it is.
+ * Released elsewhere, or from within CLEAR of that spot (no room to stop
+ * before it; a wing in the corner next to the outer defender): `to` as it is.
  */
 export function runEnd(frame: Frame, player: number, from: Pt, to: Pt, reach: number): Pt {
   let nearest: { at: Pt; taken: boolean } | undefined;
@@ -130,7 +131,7 @@ export function runEnd(frame: Frame, player: number, from: Pt, to: Pt, reach: nu
   if (!nearest.taken) return [...nearest.at];
   const [dx, dy] = [nearest.at[0] - from[0], nearest.at[1] - from[1]];
   const len = Math.hypot(dx, dy);
-  if (len <= CLEAR) return from;
+  if (len <= CLEAR) return to;
   return [nearest.at[0] - (dx / len) * CLEAR, nearest.at[1] - (dy / len) * CLEAR];
 }
 

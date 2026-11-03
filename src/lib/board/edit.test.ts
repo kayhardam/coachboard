@@ -149,9 +149,9 @@ describe("clear of each other (Kay, 3 November 2026)", () => {
     expect(runEnd(frame(three), 0, [60, 100], [96, 110], 13)).toEqual([100 - CLEAR, 100]);
     const end = runEnd(frame(three), 1, [100, 100], [100, 60], 13);
     expect(end).toEqual([100, 60 + CLEAR]);
-    // Too close to stop before them: the run ends where it starts, so there is none (MIN_ARROW).
+    // From within CLEAR of them there is no room to stop before them: the run ends as released.
     const close: Board = { ...empty, frames: [{ players: [{ team: "a", at: [60, 100] }, { team: "d", at: [75, 100] }], balls: [], arrows: [] }] };
-    expect(runEnd(frame(close), 0, [60, 100], [76, 101], 13)).toEqual([60, 100]);
+    expect(runEnd(frame(close), 0, [60, 100], [76, 101], 13)).toEqual([76, 101]);
     // Released elsewhere: as released.
     expect(runEnd(frame(three), 0, [60, 100], [80, 140], 13)).toEqual([80, 140]);
   });
