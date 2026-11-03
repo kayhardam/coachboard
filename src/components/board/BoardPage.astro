@@ -41,7 +41,12 @@ const library = nav
       </div>
       <!-- The sentence's placeholder, as the editor shows it: larger than the title's, so it too must paint with the HTML (LCP). -->
       <span class="sentence" aria-hidden="true">{t(lang, "board.addText")}</span>
-      <div class="court"><Court board={lineup} label={t(lang, "board.court")} /></div>
+      <div class="court">
+        <Court board={lineup} label={t(lang, "board.court")} />
+        <!-- The hint above the lineups on a new board, where the editor's strip puts it: the largest
+             text of all, so it must paint with the HTML too (LCP). A shared link replaces it. -->
+        <p class="hint" aria-hidden="true">{t(lang, "board.hint")}</p>
+      </div>
       <noscript><p>{t(lang, "board.noscript")}</p></noscript>
     </div>
   </BoardEditor>
@@ -130,6 +135,20 @@ const library = nav
     position: absolute;
     inset: 0;
   }
+  /* Where the editor's strip puts its hint (BoardEditor.css: the strip's padding and border, the
+     lineups' row, the heading, their gaps), the same width and font, so it paints the same size. */
+  .hint {
+    position: absolute;
+    right: 5px;
+    bottom: calc(var(--board-bar) + 26px);
+    left: 5px;
+    margin: 0;
+    padding: 0 4px;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    line-height: 1.35;
+    text-align: left;
+  }
 
   /* Wide: the title bar across, a column on each side of the court (see BoardEditor.css). */
   @media (min-width: 860px) and (min-height: 560px) {
@@ -153,6 +172,10 @@ const library = nav
       align-self: start;
       min-height: var(--tap);
       margin-left: calc(var(--tap) + 6px);
+    }
+    /* The strip sits in the right column there, and the LCP isn't a phone's: the hint comes with the editor. */
+    .court .hint {
+      display: none;
     }
     .fallback > :global(noscript) {
       grid-column: 1 / -1;

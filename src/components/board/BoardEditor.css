@@ -206,11 +206,32 @@
   text-align: left;
   cursor: pointer;
 }
-/* My boards and New board come first, set apart from what changes this board. */
-.editor .menu-panel .last {
+/* The groups' headings (Boards, Share, This board, Library) show on a screen
+   640 px high or more; below that (a small phone, a phone in landscape) More
+   wouldn't fit, so dividers set the groups apart instead. */
+.editor .menu-panel .group {
+  display: none;
+  margin: 6px 12px 0;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.editor .menu-panel > button:nth-of-type(2) {
   margin-bottom: 4px;
   border-bottom: 1px solid var(--color-border);
   border-radius: 6px 6px 0 0;
+}
+@media (min-height: 640px) {
+  .editor .menu-panel .group {
+    display: block;
+  }
+  .editor .menu-panel > button:nth-of-type(2) {
+    margin-bottom: 0;
+    border-bottom: 0;
+    border-radius: 6px;
+  }
 }
 .editor .menu-panel :is(button, a):hover {
   background: var(--color-bg-soft);
@@ -218,7 +239,7 @@
 .editor .menu-panel a {
   text-decoration: none;
 }
-/* The library's overviews leave the board: last, apart, side by side on one row. */
+/* The library's overviews leave the board: last, side by side on one row; apart, where there are no headings. */
 .editor .menu-panel .library {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -226,6 +247,13 @@
   margin-top: 4px;
   padding-top: 4px;
   border-top: 1px solid var(--color-border);
+}
+@media (min-height: 640px) {
+  .editor .menu-panel .library {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
 }
 
 /* Over the top right of the court's box, so the court stays put when it comes and goes. */
@@ -340,6 +368,14 @@
   color: var(--color-text-muted);
   font-size: 0.75rem;
   font-weight: 600;
+}
+/* One line that says what to do on a new board, above the lineups: smaller than the sentence's placeholder (the LCP). */
+.editor .strip-hint {
+  margin: 0 0 2px;
+  padding-inline: 4px;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.35;
 }
 .editor .strip .tool:disabled {
   opacity: 0.4;
@@ -505,7 +541,7 @@
     grid-template-columns: 1fr 1fr;
     min-width: 400px;
   }
-  .editor .menu-panel > :nth-child(-n + 2) {
+  .editor .menu-panel > button:nth-of-type(-n + 2) {
     margin-bottom: 4px;
     border-bottom: 1px solid var(--color-border);
     border-radius: 6px 6px 0 0;
@@ -1231,4 +1267,11 @@
   .editor .line span {
     -webkit-line-clamp: 2;
   }
+}
+
+/* Undo and Play show once there is something to undo or to play (Kay, 3 November 2026).
+   Last, after the layouts: in landscape and wide they'd otherwise show them again. */
+.editor .titlebar > button.icon:disabled,
+.editor .steps > button.play:disabled {
+  display: none;
 }
