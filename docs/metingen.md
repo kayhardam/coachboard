@@ -3648,3 +3648,11 @@ De Cloudflare Web Analytics-beacon (10,1 KB gzip, op elke bordpagina, sinds Fase
 - Wat overblijft: de totalen van Cloudflare (verzoeken, bezoekers) en Search Console. De maandmeting (8b) vervalt; "Look at production" in How we work noemt wat we wel lezen.
 - De privacypagina heeft geen kopje Statistieken meer; `privacy.description` is korter.
 - Groottes: de bordpagina's verliezen het beacon-script en de CSP-regels ervoor (HTML iets kleiner); de budgetten blijven staan.
+
+## Budgetten als plafond, tikbudget als maximum (3 november 2026)
+
+Tot nu toe volgde elk budget de meting plus een vaste marge (0,4 KB JS, 0,2 KB CSS en HTML, 1 KB `allJs`), en eiste `e2e/tasks.spec.ts` dat elke route precies op haar tikbudget uitkwam. Daardoor raakte bijna elke PR de budgetten (met een redenzin en een entry hier), moesten Linux-groottes per PR geschat worden (CI bouwt 0,14 KB groter dan macOS), en brak een toevallig kortere route de CI. Besluit Kay, 3 november 2026, op advies van 3 november:
+
+- **Budgetten zijn plafonds met ruimte:** de meting op Linux plus ongeveer 10% (JS) of 15% (CSS, HTML), afgerond. Gemeten op `main` @ `ee37f7f`: `boardJs` 36,6 → 40,0; `viewerJs` 25,2 → 28,0; `allJs` 43,4 → 48,0; `boardCss` 5,7 → 6,5; `viewerCss` 3,4 → 4,0; `html` 6,6 → 7,5; `libraryHtml` (worst case 7,5) → 8,5. `lazyJs`, `css` en `png` ongewijzigd. Eens per kwartaal, of na een merge die een grootte verkleint, worden de plafonds opnieuw op meting plus ruimte gezet.
+- **Het tikbudget is een maximum:** T1 t/m T6 blijven 4, 16, 5, 20, 1 en 20 (met de varianten), maar een kortere route faalt niet meer; het budget gaat dan in dezelfde PR omlaag. `SWIPE_BUDGET` was al een maximum.
+- Lighthouse alleen nog als een wijziging de tijd tot het bord klaar is kan verschuiven (een verhoogd plafond, de preloads, de fallback, een font); een entry hier alleen als gemeten gedrag verandert. De regels staan in "How we work" in `AGENTS.md`.
