@@ -19,6 +19,8 @@ Static Astro 7 site for handball coaches. The product is the tactics board at `/
 
 Commit only when `npm run verify` exits with code 0. Check the exit code itself, not the output: a pipe through `tail` or `head` hides a failure.
 
+Commit only as `Kay Hardam <102677416+kayhardam@users.noreply.github.com>`, never with a personal address: the repo is public and every commit keeps its author. Check `git config user.email` before the first commit, also in a cloud session, where the account's own address is the default.
+
 Astro needs Node 22.23.4 or newer (`engines` in `package.json`). CI runs on a fixed `ubuntu-24.04`; moving to a newer runner happens on purpose, in its own PR.
 
 When starting the dev server as an agent, use background mode: `npx astro dev --background`, and manage it with `npx astro dev stop`, `npx astro dev status` and `npx astro dev logs`.
@@ -166,6 +168,7 @@ Less process, the same quality: the automatic checks are the safety net.
 - **Budgets are ceilings with room.** Each is the size measured on Linux plus room, rounded: about 10% for JS, 15% for CSS and HTML. Two follow a worst case instead: `libraryHtml` the largest item the schema allows, and `png` the largest share image, with room for a new one. A merge that stays under a ceiling changes nothing: no budget edit, no entry in `docs/metingen.md`. Going over takes a raised ceiling with one sentence of reason, in the comment beside it and in the PR; a change that makes a measured task slower or the board heavier to load still needs Kay's yes first. Once a quarter, or after a merge that cut a size, set each ceiling to the new measurement plus its room, in one PR. Plans estimate no bytes and build no throwaway prototypes; the budget script is the arbiter.
 - **The tap budget is a maximum** (`TAP_BUDGET` in `e2e/tasks.spec.ts`, `e2e/AGENTS.md`): a route that needs one more action fails until the budget goes up on purpose, with the reason in the PR and the new count in `docs/metingen.md`; a route that got shorter passes, and its budget goes down in the same PR.
 - **Dependabot:** merge when CI is green (see Hosting).
+- `docs/optimalisatieplan.md` (Dutch) holds the earlier phases and the checks before a step starts ("Voor je begint"); How we work goes before its rules.
 
 ## Astro documentation
 
