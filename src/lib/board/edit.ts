@@ -31,6 +31,10 @@ export interface Selection {
 export const MIN_ARROW = 10;
 /** A bend closer than this to the straight line snaps back to straight. */
 export const STRAIGHT_SNAP = 5;
+/** A run stops this far before a player who stays: 2 m, the house rule for drawings; the circles (9 dm) don't touch. */
+export const CLEAR = 20;
+/** A player set down never comes within this of another: the circles touch, never overlap (Kay, 3 November 2026). */
+export const TOUCH = 18;
 
 const length = (board: Board) => (board.court === "full" ? 400 : 200);
 
@@ -81,11 +85,62 @@ export function hasBall(frame: Frame, player: number): boolean {
   return has;
 }
 
-/** Adds a player in every step (one lineup), at the same spot. */
+/**
+ * `at`, pushed out to TOUCH dm from the nearest other player in `frame` when
+ * it is closer (so one never hides another): away from that player, or,
+ * right on top of them, away along the way from `from`. The one at `self`
+ * (the player being set down) doesn't count.
+ */
+export function clearOf(frame: Frame, at: Pt, from: Pt, self?: number): Pt {
+  let nearest: Pt | undefined;
+  let least = TOUCH;
+  frame.players.forEach((p, i) => {
+    const d = Math.hypot(p.at[0] - at[0], p.at[1] - at[1]);
+    if (i !== self && d < least) [nearest, least] = [p.at, d];
+  });
+  if (!nearest) return at;
+  let [dx, dy] = least > 0 ? [at[0] - nearest[0], at[1] - nearest[1]] : [from[0] - nearest[0], from[1] - nearest[1]];
+  if (!dx && !dy) [dx, dy] = [1, 0];
+  const len = Math.hypot(dx, dy);
+  return [nearest[0] + (dx / len) * TOUCH, nearest[1] + (dy / len) * TOUCH];
+}
+
+/**
+ * Where a run, dribble or screen of `player`, released at `to`, ends. On or
+ * near (within `reach`) the spot of another player, or where someone's run
+ * ends, it may not end there if that spot is taken at the end of the step:
+ * it stops CLEAR dm before it, on the way there from `from`. The spot of a
+ * player who leaves it this step is free, so a run released on it ends there
+ * (a crossing), as a pass ends on its receiver (a pass never uses this).
+ * Released elsewhere, or from within CLEAR of that spot (no room to stop
+ * before it; a wing in the corner next to the outer defender): `to` as it is.
+ */
+export function runEnd(frame: Frame, player: number, from: Pt, to: Pt, reach: number): Pt {
+  let nearest: { at: Pt; taken: boolean } | undefined;
+  let least = reach;
+  frame.players.forEach((p, i) => {
+    if (i === player) return;
+    const end = endOf(frame, i);
+    const spots: [Pt, boolean][] = same(p.at, end) ? [[p.at, true]] : [[p.at, false], [end, true]];
+    for (const [at, taken] of spots) {
+      const d = Math.hypot(at[0] - to[0], at[1] - to[1]);
+      if (d <= least) [nearest, least] = [{ at, taken }, d];
+    }
+  });
+  if (!nearest) return to;
+  if (!nearest.taken) return [...nearest.at];
+  const [dx, dy] = [nearest.at[0] - from[0], nearest.at[1] - from[1]];
+  const len = Math.hypot(dx, dy);
+  if (len <= CLEAR) return to;
+  return [nearest.at[0] - (dx / len) * CLEAR, nearest.at[1] - (dy / len) * CLEAR];
+}
+
+/** Adds a player in every step (one lineup), at the same spot, clear of the others (clearOf()). */
 export function addPlayer(board: Board, team: Player["team"], at: [number, number]): Board {
   if (board.frames[0]!.players.length >= MAX_PLAYERS) return board;
   const next = structuredClone(board);
-  for (const f of next.frames) f.players.push({ team, at: clampPt(board, at) });
+  const spot = clampPt(board, clearOf(board.frames[0]!, at, at));
+  for (const f of next.frames) f.players.push({ team, at: spot });
   return next;
 }
 
@@ -103,15 +158,18 @@ export function addCone(board: Board, at: [number, number]): Board {
   return { ...structuredClone(board), cones: [...board.cones, clampPt(board, at)] };
 }
 
-/** Moves a player, a ball or a cone to `at`; the arrows of a player go along. */
+/** Moves a player, a ball or a cone to `at`; the arrows of a player go along. A player stays clear of the others (clearOf()). */
 export function movePiece(board: Board, step: number, piece: Selection, at: [number, number]): Board {
   const pt = clampPt(board, at);
   if (piece.kind === "cone") {
     if (!board.cones[piece.index]) return board;
     return { ...structuredClone(board), cones: board.cones.map((c, i) => (i === piece.index ? pt : c)) };
   }
+  const frame = board.frames[step]!;
+  const player = piece.kind === "player" ? frame.players[piece.index] : undefined;
+  const spot = player ? clampPt(board, clearOf(frame, pt, player.at, piece.index)) : pt;
   return withFrame(board, step, (f) => {
-    if (piece.kind === "player" && f.players[piece.index]) f.players[piece.index]!.at = pt;
+    if (piece.kind === "player" && f.players[piece.index]) f.players[piece.index]!.at = spot;
     if (piece.kind === "ball" && f.balls[piece.index]) f.balls[piece.index] = pt;
   });
 }
