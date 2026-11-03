@@ -15,7 +15,6 @@ import {
   saveOwnBoard,
   OLD_KEY,
   savedBoards,
-  stubBeacon,
   test,
 } from "./helpers";
 
@@ -46,7 +45,6 @@ test("a shared link opens the same board in a clean browser", async ({ page, bro
   const link = page.url();
 
   const clean = await browser.newContext({ ...test.info().project.use });
-  await stubBeacon(clean);
   const other = await clean.newPage();
   await openBoard(other, new URL(link).hash);
   await expect.poll(() => pieces(other)).toEqual(drawn);
