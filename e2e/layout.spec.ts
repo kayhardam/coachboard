@@ -215,7 +215,7 @@ for (const lang of ["en", "nl"]) {
       await page.locator('.stage [data-kind="player"][data-index="5"]').click();
       // .label is only shown in landscape; elsewhere it is 1 px, for screen readers.
       const labels = page.locator(".editor :is(.tool, .share, .delete) span, .editor .label");
-      await expect(labels.first()).toBeVisible();
+      await expect(labels.filter({ visible: true }).first()).toBeVisible();
       const cut = await labels.evaluateAll((spans) =>
         spans.filter((s) => s.clientWidth > 1 && s.scrollWidth > s.clientWidth).map((s) => s.textContent),
       );
@@ -276,10 +276,14 @@ test("a long title gets an ellipsis and pushes no button off screen", async ({ p
   await expectEverythingOnScreen(page);
 });
 
-test("on a narrow phone the title bar shows only the pencil, and a wider one shows the title", async ({ page }) => {
+test("on a narrow phone the title bar shows only the pencil once Undo is there, and a wider one shows the title", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await openBoard(page);
   const title = page.getByTitle("Edit title");
+  // Undo shows only with something to undo, so the title has its room until the first change.
+  await expect(title.locator("span")).toBeVisible();
+  await dragPlayer(page, 1, 0, -60);
+  await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
   await expect(title.locator("span")).toBeHidden();
   await expect(title.locator("svg")).toBeInViewport({ ratio: 1 });
   // Still a button with a name, from its title.

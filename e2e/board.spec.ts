@@ -233,7 +233,7 @@ test("Escape leaves the title as it was, and it takes at most MAX_TITLE characte
   await input.pressSequentially("Never mind");
   await input.press("Escape");
   await expect(page.getByRole("button", { name: "Add title" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Undo", includeHidden: true })).toBeHidden();
 
   await page.getByRole("button", { name: "Add title" }).click();
   await input.pressSequentially("x".repeat(MAX_TITLE + 5));
