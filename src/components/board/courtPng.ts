@@ -1,5 +1,5 @@
 // A board as a 1200×630 PNG share image (og:image): the diagram centred on
-// navy, like public/og-default.png. Build time only. The only text is the
+// white, like public/og-default.png. Build time only. The only text is the
 // player labels; without a font they drop out, the image still renders.
 import sharp from "sharp";
 import { render } from "svelte/server";
@@ -8,7 +8,7 @@ import Court from "./Court.svelte";
 
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
-export const OG_BACKGROUND = "#0f172a";
+export const OG_BACKGROUND = "#ffffff";
 const PAD = 32;
 
 export async function courtPng(board: Board, label: string): Promise<Buffer> {
