@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { encode, sameBoard, settle, toBoard, type Board } from "./board/format";
 import { sameDrawing } from "./library";
-import { boardYaml, findLink, importLink, metres, playerName } from "./importLink";
+import { boardYaml, importLink, linkCandidates, metres, playerName } from "./importLink";
 
 const fixtures = new URL("./board/fixtures/", import.meta.url);
 const fixtureFiles = readdirSync(fixtures).filter((f) => f.endsWith(".json"));
@@ -56,7 +56,7 @@ const board = (frame: Partial<Board["frames"][number]> = {}, cones: Board["cones
     ],
   });
 
-describe("findLink", () => {
+describe("linkCandidates", () => {
   const link = "2.abc-_9";
   it.each([
     `https://handballcoachboard.com/nl/board/link/#t=${link}`,
@@ -67,17 +67,26 @@ describe("findLink", () => {
     link,
     `  ${link}\n`,
   ])("takes the link out of %j", (input) => {
-    expect(findLink(input)).toBe(link);
+    expect(linkCandidates(input)).toEqual([link]);
   });
 
   it("drops what a sentence in a mail puts around it", () => {
-    expect(findLink(`(zie https://handballcoachboard.com/nl/board/link/#t=${link}).`)).toBe(link);
-    expect(findLink(`Hier: ${link}.`)).toBe(link);
-    expect(findLink(`<https://handballcoachboard.com/nl/board/#t=${link}>`)).toBe(link);
+    expect(linkCandidates(`(zie https://handballcoachboard.com/nl/board/link/#t=${link}).`)).toEqual([link]);
+    expect(linkCandidates(`Hier: ${link}.`)).toEqual([link]);
+    expect(linkCandidates(`<https://handballcoachboard.com/nl/board/#t=${link}>`)).toEqual([link]);
   });
 
-  it("joins a link a mail broke over two lines", () => {
-    expect(findLink("https://handballcoachboard.com/nl/board/link/#t=2.abc\n-_9")).toBe(link);
+  it("tries the link up to the first space before the words after it", () => {
+    expect(linkCandidates(`Hier is hij: https://handballcoachboard.com/nl/board/link/#t=${link} Groet, Jan`)[0]).toBe(link);
+  });
+
+  it("offers each next piece of a link a mail broke over lines", () => {
+    expect(linkCandidates("https://handballcoachboard.com/nl/board/link/#t=2.abc\n-_9")).toEqual(["2.abc", link]);
+  });
+
+  it("finds nothing without a link", () => {
+    expect(linkCandidates("https://handballcoachboard.com/nl/board/")).toEqual([]);
+    expect(linkCandidates("Mijn bord, versie1.2")).toEqual([]);
   });
 });
 
@@ -96,6 +105,20 @@ describe("importLink", () => {
       const { yaml } = await importLink(fixture(file).link);
       expect(offStyle(yaml), file).toEqual([]);
     }
+  });
+
+  it("reads a link with the words of a mail after it", async () => {
+    const link = await encode(board());
+    const { board: read, errors } = await importLink(`Hier is mijn bord: https://handballcoachboard.com/nl/board/link/#t=${link} Groet, Jan`);
+    expect(errors).toEqual([]);
+    expect(sameBoard(read!, board())).toBe(true);
+  });
+
+  it("joins a link a mail broke over two lines, with words after it", async () => {
+    const link = await encode(board());
+    const cut = Math.floor(link.length / 2);
+    const { board: read } = await importLink(`https://handballcoachboard.com/nl/board/link/#t=${link.slice(0, cut)}\n${link.slice(cut)} Groet`);
+    expect(sameBoard(read!, board())).toBe(true);
   });
 
   it("says when a link is broken", async () => {
@@ -138,7 +161,7 @@ describe("importLink", () => {
       arrows: [{ kind: "pass", from: 1, pts: [[160, 120], [40, 120]] }],
     });
     const { errors } = await importLink(await encode(b));
-    expect(errors).toEqual(["Stap 1 heeft geen zin.", "Stap 1: de pass van RO, maar RO heeft de bal dan niet."]);
+    expect(errors).toEqual(["Stap 1 heeft geen zin.", "Stap 1: RO speelt een pass, maar heeft de bal dan niet."]);
 
     const keeper: Board = settle({
       v: 2,
@@ -155,7 +178,7 @@ describe("importLink", () => {
       ],
     });
     expect((await importLink(await encode(keeper))).errors).toEqual([
-      "Stap 1: de bal in het doel gaat mee met K. Laat hem in de volgende stap in het doel liggen.",
+      "Stap 1: K neemt de bal uit het doel mee. Laat K in deze stap staan; moet hij bewegen, zet dat dan in je mail.",
     ]);
   });
 
@@ -165,7 +188,7 @@ describe("importLink", () => {
     b.frames[0]!.players[3]!.at = [150, 104];
     const { warnings } = await importLink(await encode(b));
     expect(warnings).toEqual([
-      "Stap 1: RO en de eerste verdediger van rechts staan 1,6 m van elkaar (minder dan 2 m).",
+      "Stap 1: RO en de eerste verdediger van rechts staan 1,6 m uit elkaar (minder dan 2 m).",
       "Stap 1: RO staat 0,8 m van een pion (minder dan 1,4 m).",
       "Stap 1: de eerste verdediger van rechts staat 0,8 m van een pion (minder dan 1,4 m).",
     ]);
@@ -180,8 +203,8 @@ describe("importLink", () => {
     ];
     const pass = board({ players, arrows: [{ kind: "pass", from: 0, pts: [[40, 120], [160, 120]] }] }, [[70, 124]]);
     expect((await importLink(await encode(pass))).warnings).toEqual([
-      "Stap 1: de pass van LO komt 0,4 m langs een pion (minder dan 0,8 m).",
-      "Stap 1: de pass van LO komt 0,8 m langs MO (minder dan 1,2 m).",
+      "Stap 1: de pass van LO gaat op 0,4 m langs een pion (minder dan 0,8 m).",
+      "Stap 1: de pass van LO gaat op 0,8 m langs MO (minder dan 1,2 m).",
     ]);
 
     const shot = board({ players, balls: [[100, 120]], arrows: [{ kind: "shot", from: 2, pts: [[100, 128], [100, 0]] }] });
@@ -198,7 +221,7 @@ describe("importLink", () => {
     const { warnings } = await importLink(await encode(b));
     expect(warnings).toEqual([
       "Stap 1: de dribbel van LO is 2,4 m lang (korter dan 3 m).",
-      "Stap 1: een pass zonder speler. Is die per ongeluk losgesleept? Alleen een tweede keuze teken je zo.",
+      "Stap 1: een pass die bij geen speler hoort. Sleep het begin van de pijl op de speler.",
     ]);
   });
 
@@ -233,7 +256,60 @@ describe("playerName", () => {
       ],
       balls: [],
     }).frames[0]!;
-    expect([0, 1, 2].map((i) => playerName(row, i))).toEqual(["de eerste van links", "de tweede van links", "de eerste van rechts"]);
+    expect([0, 1, 2].map((i) => playerName(row, i))).toEqual(["de eerste van links", "de tweede van links", "de derde van links"]);
+  });
+
+  it("counts both rows of Kruisen in tweetallen from the front", () => {
+    const rows = board({
+      players: [
+        { team: "a", at: [70, 118] },
+        { team: "a", at: [70, 140] },
+        { team: "a", at: [70, 162] },
+        { team: "a", at: [130, 118] },
+        { team: "a", at: [130, 140] },
+        { team: "a", at: [130, 162] },
+        { team: "d", label: "K", at: [100, 10] },
+      ],
+      balls: [],
+    }).frames[0]!;
+    expect([0, 1, 2, 3, 4, 5].map((i) => playerName(rows, i))).toEqual([
+      "de eerste van links",
+      "de tweede van links",
+      "de derde van links",
+      "de eerste van rechts",
+      "de tweede van rechts",
+      "de derde van rechts",
+    ]);
+  });
+
+  it("counts a row drawn by hand from the goal out", () => {
+    const row = board({
+      players: [
+        { team: "a", at: [60, 150] },
+        { team: "a", at: [64, 162] },
+        { team: "a", at: [57, 174] },
+      ],
+      balls: [],
+    }).frames[0]!;
+    expect([0, 1, 2].map((i) => playerName(row, i))).toEqual(["de eerste van links", "de tweede van links", "de derde van links"]);
+  });
+
+  it("names a player from the side they stand on", () => {
+    // Step 5 of 5-1-dekking: four defenders on the left, two on the right.
+    const frame = board({
+      players: [
+        { team: "d", at: [22, 30] },
+        { team: "d", at: [36, 92] },
+        { team: "d", at: [72, 66] },
+        { team: "d", at: [130, 62] },
+        { team: "d", at: [160, 44] },
+        { team: "d", at: [70, 122] },
+      ],
+      balls: [],
+    }).frames[0]!;
+    expect(playerName(frame, 2)).toBe("de derde verdediger van links");
+    expect(playerName(frame, 5)).toBe("de vierde verdediger van links");
+    expect(playerName(frame, 3)).toBe("de tweede verdediger van rechts");
   });
 });
 

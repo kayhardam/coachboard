@@ -7,8 +7,8 @@
 // Nothing here changes the drawing: a sentence or the title only gets a
 // no-break space between a number and "meter" (checkMeters()).
 
-import { decode, isBoard, isNewerLink, type Arrow, type ArrowKind, type Board, type Frame, type Pt } from "./board/format";
-import { pointAt } from "./board/geometry";
+import { COURT_WIDTH, decode, isBoard, isNewerLink, type Arrow, type ArrowKind, type Board, type Frame, type Pt } from "./board/format";
+import { PLAYER_R, pointAt } from "./board/geometry";
 import { endOf } from "./board/moves";
 import { ballProblems, breakableMeters, stepsHaveText } from "./library";
 
@@ -38,22 +38,34 @@ export interface Imported {
 }
 
 const NBSP = " ";
-const B64 = /[A-Za-z0-9_-]/;
+/** A link starts with "<version>.", then base64url; what only looks like one is taken too, so a mangled link says it doesn't work. */
+const FIRST = /^\d+\.[A-Za-z0-9_-]*|^[A-Za-z0-9_-]*/;
+const MORE = /^[A-Za-z0-9_-]*/;
+/** At most this many pieces of a link a mail broke over lines. */
+const MAX_PIECES = 200;
 
 /**
- * The link in what was pasted: everything after `#t=` of a board, viewer or
- * QR address, or the link on its own ("2.…"). Spaces and line breaks a mail
- * put in it go, and so does whatever follows it in a sentence (a full stop,
- * a bracket) or comes before it.
+ * What the link in a paste can be, shortest first: everything after `#t=` of
+ * a board, viewer or QR address, or the link on its own ("2.…"), up to the
+ * first space or line break; then with each next piece joined on, for a link
+ * a mail broke over lines. A piece ends at a character no link has (a full
+ * stop, a bracket, a comma). importLink() takes the first one decode() reads,
+ * so the words after a link in a mail never stick to it.
  */
-export function findLink(input: string): string {
-  let s = input.replace(/\s+/g, "");
-  const hash = s.indexOf("#t=");
-  if (hash >= 0) s = s.slice(hash + 3);
-  else s = s.replace(/^[^0-9]+/, "");
-  let end = s.length;
-  while (end > 0 && !B64.test(s[end - 1]!)) end--;
-  return s.slice(0, end);
+export function linkCandidates(input: string): string[] {
+  const hash = input.indexOf("#t=");
+  const start = hash >= 0 ? hash + 3 : input.search(/(?<![A-Za-z0-9_.-])\d+\.[A-Za-z0-9_-]/);
+  if (start < 0) return [];
+  const candidates: string[] = [];
+  let link = "";
+  for (const piece of input.slice(start).trimStart().split(/\s+/).slice(0, MAX_PIECES)) {
+    const run = (link ? MORE : FIRST).exec(piece)![0];
+    if (!run) break;
+    link += run;
+    candidates.push(link);
+    if (run.length < piece.length) break;
+  }
+  return candidates;
 }
 
 /** A number and "meter" with a no-break space between them. */
@@ -61,16 +73,20 @@ const withMeters = (text: string) => text.replace(/\b(\d+) meter/g, `$1${NBSP}me
 
 // ===== Words =====
 
-/** Each kind of arrow with its article, in the words of the board's Dutch tools. */
-const KIND: Record<ArrowKind, [article: string, noun: string]> = {
-  run: ["de", "loop"],
-  pass: ["de", "pass"],
-  dribble: ["de", "dribbel"],
-  block: ["de", "sper"],
-  shot: ["het", "schot"],
-  bounce: ["de", "stuit"],
+/**
+ * Each kind of arrow as a coach says it: the noun with its article, and what
+ * the player does. The board's own tools say Loop, Pass, Dribbel, Sper, Schot
+ * and Stuit.
+ */
+const KIND: Record<ArrowKind, { article: "de" | "het"; noun: string; does: string }> = {
+  run: { article: "de", noun: "loop", does: "loopt" },
+  pass: { article: "de", noun: "pass", does: "speelt een pass" },
+  dribble: { article: "de", noun: "dribbel", does: "dribbelt" },
+  block: { article: "de", noun: "sper", does: "zet een sper" },
+  shot: { article: "het", noun: "schot", does: "schiet" },
+  bounce: { article: "de", noun: "stuitpass", does: "speelt een stuitpass" },
 };
-const kindOf = (kind: ArrowKind) => KIND[kind].join(" ");
+const kindOf = (kind: ArrowKind) => `${KIND[kind].article} ${KIND[kind].noun}`;
 const ORDINAL = ["eerste", "tweede", "derde", "vierde", "vijfde", "zesde", "zevende", "achtste", "negende", "tiende"];
 const ordinal = (n: number) => ORDINAL[n - 1] ?? `${n}e`;
 
@@ -82,21 +98,33 @@ const limit = (dm: number) => `${String(dm / 10).replace(".", ",")} m`;
 /**
  * How a coach names a player in a step: their label, or, without one, their
  * place among the players of their team without a label, counted from the
- * nearer sideline ("de eerste van links", "de tweede verdediger van rechts");
- * players on one line count from the goal out.
+ * sideline they stand nearer to ("de eerste van links", "de tweede verdediger
+ * van rechts"). Players one behind the other (less than a player's radius
+ * apart sideways, as a row drawn by hand stands) count from the goal out, so
+ * "de eerste" is the front of a row on either side. A player on the middle
+ * line counts from the side that gives the lower number.
  */
 export function playerName(frame: Frame, i: number): string {
   const p = frame.players[i]!;
   if (p.label) return p.label;
   const [the, noun] = p.team === "a" ? ["de", "aanvaller"] : p.team === "d" ? ["de", "verdediger"] : ["het", "aanspeelpunt"];
-  const peers = frame.players
-    .map((q, j) => ({ q, j }))
-    .filter(({ q }) => q.team === p.team && !q.label)
-    .sort((a, b) => a.q.at[0] - b.q.at[0] || a.q.at[1] - b.q.at[1]);
+  const peers = frame.players.flatMap((q, j) => (q.team === p.team && !q.label ? [j] : []));
   if (peers.length === 1) return `${the} ${noun}`;
-  const fromLeft = peers.findIndex(({ j }) => j === i) + 1;
-  const fromRight = peers.length + 1 - fromLeft;
-  const [n, side] = fromLeft <= fromRight ? [fromLeft, "links"] : [fromRight, "rechts"];
+  /** Player i's place counted from one sideline: line by line away from it, each line from the goal out. */
+  const place = (side: "links" | "rechts") => {
+    const off = (j: number) => (side === "links" ? frame.players[j]!.at[0] : COURT_WIDTH - frame.players[j]!.at[0]);
+    const lines: number[][] = [];
+    for (const j of [...peers].sort((a, b) => off(a) - off(b))) {
+      const line = lines.at(-1);
+      if (line && off(j) - off(line[0]!) < PLAYER_R) line.push(j);
+      else lines.push([j]);
+    }
+    return lines.flatMap((line) => line.sort((a, b) => frame.players[a]!.at[1] - frame.players[b]!.at[1])).indexOf(i) + 1;
+  };
+  const x = p.at[0];
+  const middle = COURT_WIDTH / 2;
+  const side = x < middle ? "links" : x > middle ? "rechts" : place("links") <= place("rechts") ? "links" : "rechts";
+  const n = place(side);
   // An attacker without a label is just "de eerste van links", as in the items.
   return p.team === "a" ? `de ${ordinal(n)} van ${side}` : `${the} ${ordinal(n)} ${noun} van ${side}`;
 }
@@ -127,8 +155,8 @@ function errorsOf(board: Board): string[] {
     const who = playerName(frame, p.player);
     errors.push(
       p.problem === "noBall"
-        ? `Stap ${p.step + 1}: ${kindOf(p.kind)} van ${who}, maar ${who} heeft de bal dan niet.`
-        : `Stap ${p.step + 1}: de bal in het doel gaat mee met ${who}. Laat hem in de volgende stap in het doel liggen.`,
+        ? `Stap ${p.step + 1}: ${who} ${KIND[p.kind].does}, maar heeft de bal dan niet.`
+        : `Stap ${p.step + 1}: ${who} neemt de bal uit het doel mee. Laat ${who} in deze stap staan; moet hij bewegen, zet dat dan in je mail.`,
     );
   }
   return errors;
@@ -144,7 +172,7 @@ function warningsOf(board: Board): string[] {
         if (!moved(i) && !moved(j)) continue;
         const d = dist(a, at[j]!);
         if (d < PLAYER_GAP) {
-          warnings.push(`${where}: ${playerName(frame, i)} en ${playerName(frame, j)} staan ${metres(d)} van elkaar (minder dan ${limit(PLAYER_GAP)}).`);
+          warnings.push(`${where}: ${playerName(frame, i)} en ${playerName(frame, j)} staan ${metres(d)} uit elkaar (minder dan ${limit(PLAYER_GAP)}).`);
         }
       }
       for (const cone of moved(i) ? board.cones : []) {
@@ -162,14 +190,14 @@ function warningsOf(board: Board): string[] {
     const ends = frame.players.map((_, i) => endOf(frame, i));
     if (s === last) places(frame, ends, `${step}, aan het eind`, (i) => dist(ends[i]!, frame.players[i]!.at) > 0);
     for (const a of frame.arrows) {
-      const kind = KIND[a.kind][1];
+      const { article, noun } = KIND[a.kind];
       const of = `${kindOf(a.kind)} ${a.from === undefined ? "zonder speler" : `van ${playerName(frame, a.from)}`}`;
       if (a.from === undefined) {
-        warnings.push(`${step}: een ${kind} zonder speler. Is die per ongeluk losgesleept? Alleen een tweede keuze teken je zo.`);
+        warnings.push(`${step}: een ${noun} ${article === "het" ? "dat" : "die"} bij geen speler hoort. Sleep het begin van de pijl op de speler.`);
       }
       for (const cone of board.cones) {
         const d = nearest(a, cone);
-        if (d < CONE_GAP) warnings.push(`${step}: ${of} komt ${metres(d)} langs een pion (minder dan ${limit(CONE_GAP)}).`);
+        if (d < CONE_GAP) warnings.push(`${step}: ${of} gaat op ${metres(d)} langs een pion (minder dan ${limit(CONE_GAP)}).`);
       }
       // A shot always goes past the goalkeeper.
       if (a.kind !== "shot") {
@@ -181,7 +209,7 @@ function warningsOf(board: Board): string[] {
           const spots = [p.at, endOf(frame, i)];
           if (spots.some((q) => dist(q, start) < ARROW_GAP || dist(q, end) < ARROW_GAP)) return;
           const d = nearest(a, p.at);
-          if (d < ARROW_GAP) warnings.push(`${step}: ${of} komt ${metres(d)} langs ${playerName(frame, i)} (minder dan ${limit(ARROW_GAP)}).`);
+          if (d < ARROW_GAP) warnings.push(`${step}: ${of} gaat op ${metres(d)} langs ${playerName(frame, i)} (minder dan ${limit(ARROW_GAP)}).`);
         });
       }
       if (a.kind === "dribble") {
@@ -220,14 +248,18 @@ export function boardYaml(board: Board): string {
   return lines.join("\n");
 }
 
-/** Reads a shared link (in any form findLink() takes) into the drawing of an item. */
+/** Reads a shared link (in any form linkCandidates() finds) into the drawing of an item. */
 export async function importLink(input: string): Promise<Imported> {
-  const link = findLink(input);
-  const read = /^\d+\.[A-Za-z0-9_-]+$/.test(link) ? await decode(link) : null;
+  const candidates = linkCandidates(input);
+  let read: Board | null = null;
+  for (const link of candidates) {
+    read = await decode(link);
+    if (read) break;
+  }
   if (!read) {
-    const error = !link
+    const error = !candidates.length
       ? "Geen link gevonden. Plak de link van Delen, of alles na #t=."
-      : isNewerLink(link)
+      : isNewerLink(candidates[0]!)
         ? "Deze link komt van een nieuwere versie van Coachboard. Haal de nieuwste code op en probeer het opnieuw."
         : "Deze link werkt niet. Vraag om een nieuwe.";
     return { board: null, yaml: "", title: "", texts: [], meters: [], errors: [error], warnings: [] };

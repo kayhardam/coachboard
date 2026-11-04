@@ -28,7 +28,7 @@ const item = {
   board: z
     .custom<Board>(
       isBoard,
-      'Not a valid board. Draw it at /en/board/ in `npm run dev`, press "JSON (dev)" and paste the output.',
+      'Not a valid board. Draw it at /<lang>/board/ in `npm run dev` and turn the link in the address bar into the block with `npm run import-link -- "<link>"`.',
     )
     .refine(stepsHaveText, "Every step needs its sentence: tap the sentence on the board and type it.")
     .refine((board) => board.title === undefined, "Leave the board's title out: the page's `title` is the title."),
