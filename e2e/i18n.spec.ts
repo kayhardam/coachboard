@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { allPages, expect, test } from "./helpers";
 
 // English and Dutch: hreflang, the sitemap and the language links. Translations
@@ -39,6 +40,24 @@ for (const lang of languages) {
       expect(alternates(html)).toEqual({});
     });
   }
+}
+
+// The share image per page: a library item its own og.png, the pages for shared
+// boards the viewer's image (with Play), every other page its language's default.
+const dist = new URL("../dist", import.meta.url).pathname;
+for (const path of pages) {
+  // The 404 is one page for the whole site, in English (its text is in every language).
+  const lang = path.includes("does-not-exist") ? "en" : (languages.find((code) => path.startsWith(`/${code}/`)) ?? "en");
+  const suffix = lang === "en" ? "" : `-${lang}`;
+  const image = existsSync(`${dist}${path}og.png`)
+    ? `${path}og.png`
+    : /\/board\/(link|qr)\/$/.test(path)
+      ? `/og-viewer${suffix}.png`
+      : `/og-default${suffix}.png`;
+  test(`${path} has og:image ${image}`, async ({ request }) => {
+    const html = await (await request.get(path)).text();
+    expect([...html.matchAll(/<meta property="og:image" content="([^"]+)"/g)].map((m) => m[1])).toEqual([`${site}${image}`]);
+  });
 }
 
 // Phase 19-1 (Z2): Google takes the site name from one WebSite block per home page.

@@ -43,7 +43,7 @@ const rest = Astro.url.pathname.startsWith(prefix) ? Astro.url.pathname.slice(pr
 const translations = noindex ? [] : languages.map((code) => [code, `/${code}/${rest}`] as const);
 // x-default is the English page, not /: the root redirects to /nl/.
 const xDefault = translations.find(([code]) => code === defaultLocale)?.[1];
-// scripts/og-default.mjs renders one per language; check-links fails on a missing one.
+// scripts/og-default.mjs renders one per language (and the viewer's, which ViewerPage.astro passes); check-links fails on a missing one.
 const ogImage = image ?? (locale === defaultLocale ? "/og-default.png" : `/og-default-${locale}.png`);
 ---
 

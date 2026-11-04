@@ -14,7 +14,7 @@ Static Astro 7 site for handball coaches. The product is the tactics board at `/
 | `npm run e2e` | End-to-end tests (Playwright) in mobile Chromium and WebKit. Builds, then serves `dist/` with `wrangler dev` on port 8787. Outside CI it reuses a server already on that port and skips the build, so stop a `wrangler dev` of your own first. A separate CI job, not part of `verify`. First time: `npx playwright install chromium webkit`. |
 | `npx playwright test e2e/board.spec.ts` | One e2e file; add `-g "<test name>"` for one test, `--project=iphone` or `--project=android` for one browser. |
 | `E2E_BASE_URL=https://handballcoachboard.com npx playwright test e2e/security.spec.ts` | An e2e file against a deployed site instead of `wrangler dev`. Run `npm run build` on the deployed commit first: the page list comes from `dist/`. |
-| `node scripts/og-default.mjs nl` | Re-renders a language's default share image (`public/og-default-nl.png`; `en` is `og-default.png`): the board's own `Court.svelte` with the default lineup, through Vite. One-off, with local fonts; commit the PNG. Re-run both after a change to the default lineup or the court's look. |
+| `node scripts/og-default.mjs nl` | Re-renders a language's two share images: the default (`public/og-default-nl.png`) and the shared board's (`public/og-viewer-nl.png`, with Play); `en` writes `og-default.png` and `og-viewer.png`. The board's own `Court.svelte` with the default lineup, through Vite. One-off, with local fonts; commit the PNGs. Re-run both languages after a change to the default lineup, the court's look or the label of Play. |
 | `node scripts/favicons.mjs` | Renders `public/favicon.ico` and `public/apple-touch-icon.png` from `public/favicon.svg` (the brand mark). One-off; commit the results. |
 
 Commit only when `npm run verify` exits with code 0. Check the exit code itself, not the output: a pipe through `tail` or `head` hides a failure.
@@ -45,7 +45,7 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
 
 - Every page renders through `src/layouts/BaseLayout.astro` with a real `title` and `description`. It owns the whole `<head>`:
   - canonical and `og:url` from `site` + the page path;
-  - absolute `og:image`, always a 1200×630 PNG: the language's default (`/og-default.png` for English, `/og-default-<lang>.png` for the others) or a library item's own `og.png` on its page. Their middle 630×630 square must work on its own: chat apps crop to it;
+  - absolute `og:image`, always a 1200×630 PNG: the language's default (`/og-default.png` for English, `/og-default-<lang>.png` for the others), the shared board's on `board/link/` and `board/qr/` (`/og-viewer.png`, `/og-viewer-<lang>.png`, passed by `ViewerPage.astro`) or a library item's own `og.png` on its page. Chat apps crop to the middle 630×630 square: in the default and the shared board's it shows the court (with Play on the shared board's), and the text sits in the bands either side. `e2e/i18n.spec.ts` checks which page has which;
   - `lang` and `og:locale` from the page's locale;
   - hreflang for each language in `languages` (every language unless the page passes fewer, as library item and category pages do) + `x-default` to the English page. Translations share the path after the prefix. A page in one language (a Dutch-only item) has no hreflang, and `e2e/i18n.spec.ts` expects it that way;
   - `noindex` (the 404, `board/link/`, `board/qr/`) drops canonical, `og:url` and hreflang.

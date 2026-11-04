@@ -129,6 +129,9 @@ const en = {
   "board.description":
     "Tactics board for handball, on your phone. Draw runs, passes and dribbles, and share the play with a link or QR code.",
   "board.heading": "Handball tactics board",
+  // The pages a shared board opens on (ViewerPage.astro); not part of viewerStrings().
+  "shared.title": "Shared tactics board | Handball Coachboard",
+  "shared.description": "Open the board in your browser. Play it or edit a copy. No account or app needed.",
   "board.court": "Handball court",
   "board.noscript": "The board needs JavaScript. Here is the default lineup.",
   "board.tools": "Tools",
@@ -387,6 +390,8 @@ const nl: Record<UiKey, string> = {
   "board.description":
     "Tactiekbord voor handbal op je telefoon. Teken loopacties, passes en dribbels, en deel de aanval met een link of QR-code.",
   "board.heading": "Tactiekbord voor handbal",
+  "shared.title": "Gedeeld tactiekbord | Handball Coachboard",
+  "shared.description": "Open het bord in je browser. Speel het af of bewerk een kopie. Geen account of app nodig.",
   "board.court": "Handbalveld",
   "board.noscript": "Het bord heeft JavaScript nodig. Hier is de standaardopstelling.",
   "board.tools": "Gereedschap",
