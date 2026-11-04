@@ -6,7 +6,7 @@
 // has id "en/6-0-defense-basics". The folder is the language, the file name
 // the slug, and `related` lists full ids. A translation has the same file name
 // in another language folder, so its URL differs only in the prefix.
-import { MOVES, type Board, type Pt } from "./board/format";
+import { MOVES, type ArrowKind, type Board, type Pt } from "./board/format";
 import { POST_LEFT, POST_RIGHT } from "./board/geometry";
 import { ballTrips, same } from "./board/moves";
 
@@ -65,6 +65,16 @@ export function checkMeters(entries: { id: string; data: unknown; body?: string 
 }
 
 /**
+ * What checkBalls() finds, as data, so a message can be written in any
+ * language: a pass, bounce, shot or dribble of a player without the ball
+ * (`noBall`), or a ball in a goal that goes along with the goalkeeper
+ * (`goalBall`). `step` counts from 0, `player` is an index into the lineup.
+ */
+export type BallProblem =
+  | { step: number; problem: "noBall"; kind: ArrowKind; player: number }
+  | { step: number; problem: "goalBall"; player: number };
+
+/**
  * Every ball stays with whoever has it, as the board plays it. A pass, bounce,
  * shot or dribble of a player needs the ball at that moment: they have it at
  * the start of the step, or received it earlier in it, in drawing order.
@@ -74,12 +84,11 @@ export function checkMeters(entries: { id: string; data: unknown; body?: string 
  * keep it there. A pass without a player needs no ball: that is how a step
  * draws another choice.
  */
-export function checkBalls(board: Board): string[] {
-  const errors: string[] = [];
+export function ballProblems(board: Board): BallProblem[] {
+  const problems: BallProblem[] = [];
   const length = board.court === "full" ? 400 : 200;
   const inGoal = ([x, y]: Pt) => x >= POST_LEFT && x <= POST_RIGHT && (y === 0 || y === length);
-  board.frames.forEach((frame, s) => {
-    const who = (i: number) => frame.players[i]!.label ?? `player ${i + 1}`;
+  board.frames.forEach((frame, step) => {
     const trips = ballTrips(frame);
     // Who has each ball, arrow by arrow.
     const holder = trips.map((t) => t.has);
@@ -87,20 +96,28 @@ export function checkBalls(board: Board): string[] {
       if (a.from === undefined) return;
       const b = trips.findIndex((t) => t.passes.some((p) => p.arrow === k));
       if (a.kind === "dribble" ? !holder.includes(a.from) : !MOVES.includes(a.kind) && holder[b] !== a.from) {
-        errors.push(`step ${s + 1}: the ${a.kind} of ${who(a.from)} has no ball`);
+        problems.push({ step, problem: "noBall", kind: a.kind, player: a.from });
       }
       if (b >= 0) holder[b] = trips[b]!.passes.find((p) => p.arrow === k)!.to;
     });
     trips.forEach(({ start, has, passes }, b) => {
       if (has === undefined || passes.length || !inGoal(start)) return;
       if (!frame.arrows.some((a) => a.from === has && MOVES.includes(a.kind))) return;
-      const next = board.frames[s + 1]?.balls[b];
-      if (!next || !same(next, start)) {
-        errors.push(`step ${s + 1}: the ball in the goal goes along with ${who(has)}; keep it in the goal in the next step`);
-      }
+      const next = board.frames[step + 1]?.balls[b];
+      if (!next || !same(next, start)) problems.push({ step, problem: "goalBall", player: has });
     });
   });
-  return errors;
+  return problems;
+}
+
+/** ballProblems() as the build reports them. */
+export function checkBalls(board: Board): string[] {
+  return ballProblems(board).map((p) => {
+    const who = board.frames[p.step]!.players[p.player]!.label ?? `player ${p.player + 1}`;
+    return p.problem === "noBall"
+      ? `step ${p.step + 1}: the ${p.kind} of ${who} has no ball`
+      : `step ${p.step + 1}: the ball in the goal goes along with ${who}; keep it in the goal in the next step`;
+  });
 }
 
 /** The drawing without labels and sentences, with its keys in a fixed order. */
