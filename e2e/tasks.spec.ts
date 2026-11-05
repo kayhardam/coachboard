@@ -77,7 +77,9 @@ const TAP_BUDGET = {
  */
 const SWIPE_BUDGET = {
   // t6-korter-a: no swipe in My boards any more (it was 5 and 4).
-  T6: { iphone: 4, android: 3 },
+  // Eight drills on the Dutch overview: on the iPhone the card of the second item is off screen
+  // after Back, as it already was on the Pixel (it was 4; Kay, 5 November 2026).
+  T6: { iphone: 5, android: 3 },
 };
 /** Of those, the actions until the three boards are in My boards on the phone. */
 const T4_UNTIL_IMPORTED = 13;
