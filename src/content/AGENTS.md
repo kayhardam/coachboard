@@ -10,7 +10,7 @@ Tactics and drills.
 - **The schema** is in `src/content.config.ts` (a `discriminatedUnion` on `type`):
   - `title`: at most `MAX_TITLE`, because "Open in the board" gives it to the board;
   - `category`: one of `categorySlugs`;
-  - `ages`: a run of `AGES` without a gap, youngest first; the page shows the first and the last ("C-jeugd t/m senioren");
+  - `ages`: a run of `AGES` without a gap, youngest first; the page shows their years (`YEARS` in `src/data/categories.ts`, as the Dutch federation counts them): one group "11-12 jaar", a run "11 t/m 16 jaar", a run up to the seniors "13 jaar en ouder";
   - `level`: one of `LEVELS` (basic, intermediate, advanced);
   - `summary`: at least 50 characters, and also the meta description;
   - `coachingPoints`: at most 6 points, like every list (more goes in the Markdown body);
