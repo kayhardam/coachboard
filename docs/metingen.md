@@ -3656,3 +3656,28 @@ Tot nu toe volgde elk budget de meting plus een vaste marge (0,4 KB JS, 0,2 KB C
 - **Budgetten zijn plafonds met ruimte:** de meting op Linux plus ongeveer 10% (JS) of 15% (CSS, HTML), afgerond. Gemeten op `main` @ `ee37f7f`: `boardJs` 36,6 → 40,0; `viewerJs` 25,2 → 28,0; `allJs` 43,4 → 48,0; `boardCss` 5,7 → 6,5; `viewerCss` 3,4 → 4,0; `html` 6,6 → 7,5; `libraryHtml` (worst case 7,5) → 8,5. `lazyJs`, `css` en `png` ongewijzigd. Eens per kwartaal, of na een merge die een grootte verkleint, worden de plafonds opnieuw op meting plus ruimte gezet.
 - **Het tikbudget is een maximum:** T1 t/m T6 blijven 4, 16, 5, 20, 1 en 20 (met de varianten), maar een kortere route faalt niet meer; het budget gaat dan in dezelfde PR omlaag. `SWIPE_BUDGET` was al een maximum.
 - Lighthouse alleen nog als een wijziging de tijd tot het bord klaar is kan verschuiven (een verhoogd plafond, de preloads, de fallback, een font); een entry hier alleen als gemeten gedrag verandert. De regels staan in "How we work" in `AGENTS.md`.
+
+## T6: een veeg meer op de iPhone, in het Nederlands (5 november 2026)
+
+Het Nederlandse oefeningenoverzicht heeft acht kaarten in plaats van drie (vijf nieuwe oefeningen). Op de iPhone staat de kaart van item 2, Uitstappen en meeschuiven, na Terug daardoor niet meer in beeld: één veeg erbij, zoals op de Pixel al was. Besluit Kay, 5 november 2026: het budget gaat mee.
+
+| Telefoon | `en` | `nl` | Welke knoppen |
+|---|--:|--:|---|
+| iPhone 15 | 4 | **5** (was 4) | de kaart van item 1, Open in het bord bij item 1 en 2, de kaart onder "Zie ook"; in `nl` ook de kaart van item 2 (na Terug) |
+| Pixel 7 | 2 | 3 | de kaart van item 1, in `nl` ook die van item 2 (na Terug), de kaart onder "Zie ook" |
+
+- `SWIPE_BUDGET.T6` gaat op de iPhone van 4 naar 5; Android blijft 3. `TAP_BUDGET.T6` blijft 20.
+- Geteld in Chromium met het scherm van elke telefoon (393 × 659 en 412 × 839); de CI telt op de iPhone, in WebKit, ook 5.
+
+## T6: Open in het bord boven Doel (6 november 2026)
+
+Op een oefenpagina staat Open in het bord met zijn hintregel nu direct onder de samenvatting, boven Doel, zoals op een tactiekpagina (besluit Kay, 6 november 2026). Op de iPhone 15 (393 × 659) stond de knop vóór deze wijziging op zeven van de acht Nederlandse oefeningen en op twee Engelse niet helemaal op het eerste scherm (bij Kruisen in tweetallen net wel: hij eindigde op 655 px); op de Pixel 7 (412 × 839) bij één niet, Schot met het verkeerde been voor. Nu staat hij op alle 17 items in beeld; de laagste eindigt op 412 px (was 847 px).
+
+| Telefoon | `en` | `nl` | Welke knoppen |
+|---|--:|--:|---|
+| iPhone 15 | **2** (was 4) | **3** (was 5) | de kaart van item 1, de kaart onder "Zie ook"; in `nl` ook de kaart van item 2 (na Terug) |
+| Pixel 7 | 2 | 3 | dezelfde |
+
+- `SWIPE_BUDGET.T6` gaat op de iPhone van 5 naar 3; Android blijft 3. `TAP_BUDGET.T6` blijft 20.
+- De vegen zijn geteld met de projecten van de test: de iPhone in WebKit, de Pixel in Chromium. De knop is op de iPhone in beide browsers gelijk gemeten.
+- `e2e/library.spec.ts` controleert nu op elk item dat de knop helemaal op het eerste scherm van 393 × 659 staat.

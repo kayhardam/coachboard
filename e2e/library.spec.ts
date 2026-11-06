@@ -99,6 +99,14 @@ test("in portrait the drawing keeps the full width of the column", async ({ page
   }
 });
 
+test("Open in the board is fully on the first screen of every item", async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 659 });
+  for (const { lang, path } of all) {
+    await page.goto(path);
+    await expect(page.getByRole("link", { name: t(lang, "tactic.open"), exact: true }), path).toBeInViewport({ ratio: 1 });
+  }
+});
+
 const listHeading: Record<string, UiKey> = {
   rules: "drill.rules",
   coachingPoints: "tactic.coachingPoints",

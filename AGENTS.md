@@ -72,6 +72,7 @@ New or changed site text is agreed with Kay first. Take it over literally. If a 
 - Tactics and drills: the steps say who does what; the coaching points are what you call out in the sports hall. The home and about pages mention drills (`oefeningen`).
 - Privacy: don't say we collect no personal data. Cloudflare processes IP addresses, and an email is personal data too.
 - Dutch: "6-0-dekking", not "6-0-verdediging". `handbaltrainer` is right in Dutch.
+- Ages are years, in every language: "11-12 jaar", "11 t/m 16 jaar", "13 jaar en ouder" ("Ages 11–16", "Ages 13 and up"). No F-jeugd to A-jeugd and no U12: such a name stands for other years in another country.
 - New library items (tactics and drills) are written in Dutch only. English versions follow once the first user who needs English shows up. UI strings stay in both languages.
 - English follows the Dutch, with American spelling, like the URLs (`/defense/`). A coach is a "coach", never a "trainer". "Teken een aanval" is "draw a play"; overviews and categories say "attack". Balwinst = steal, opbouwers = back court players, cirkelloper = pivot, hoek = wing, de 6 meter = the goal area, de 9 meter = the free-throw line. Sper = screen: the attacking action (an attacker, usually the pivot, sets it); "blok" is defensive (blocking a shot), so the arrow is never "blok". In code it stays `block` (the link format).
 
