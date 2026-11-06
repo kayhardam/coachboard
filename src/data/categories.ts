@@ -52,15 +52,40 @@ export const AGES = ["u8", "u10", "u12", "u14", "u16", "u18", "senior"] as const
 
 export type Age = (typeof AGES)[number];
 
+/**
+ * The years of each age group, youngest and oldest, as the Dutch federation
+ * (NHV) counts them on 31 December of the season. The seniors have no oldest.
+ * The page shows these years, not a group's name: a name such as U12 or
+ * D-jeugd stands for other years in another country.
+ */
+const YEARS: Record<Exclude<Age, "senior">, readonly [number, number]> = {
+  u8: [7, 8],
+  u10: [9, 10],
+  u12: [11, 12],
+  u14: [13, 14],
+  u16: [15, 16],
+  u18: [17, 19],
+};
+
 export const LEVELS = ["basic", "intermediate", "advanced"] as const;
 
 export type Level = (typeof LEVELS)[number];
 
-/** "C-jeugd t/m senioren": the first and the last age group, capitalized. */
+/**
+ * An item's ages in years, capitalized: one group "11-12 jaar"; a run of
+ * groups "11 t/m 16 jaar", from the youngest of the first to the oldest of
+ * the last; a run up to the seniors "13 jaar en ouder"; the seniors alone
+ * "Senioren".
+ */
 export function agesLabel(locale: string, ages: readonly Age[]): string {
-  const first = t(locale, `age.${ages[0]!}`);
-  const last = t(locale, `age.${ages[ages.length - 1]!}`);
-  const label = ages.length === 1 ? first : t(locale, "age.range", { from: first, to: last });
+  const first = ages[0]!;
+  const last = ages[ages.length - 1]!;
+  const label =
+    first === "senior"
+      ? t(locale, "age.senior")
+      : last === "senior"
+        ? t(locale, "age.from", { from: String(YEARS[first][0]) })
+        : t(locale, first === last ? "age.group" : "age.range", { from: String(YEARS[first][0]), to: String(YEARS[last][1]) });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -68,7 +93,7 @@ export function levelLabel(locale: string, level: Level): string {
   return t(locale, `level.${level}`);
 }
 
-/** The line under an item's title: "Verdediging · C-jeugd t/m senioren · Basis". */
+/** The line under an item's title: "Verdediging · 13 jaar en ouder · Basis". */
 export function itemMeta(locale: string, item: { category: Category; ages: readonly Age[]; level: Level }): string {
   return [categoryInfo(locale, item.category).label, agesLabel(locale, item.ages), levelLabel(locale, item.level)].join(" · ");
 }

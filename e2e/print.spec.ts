@@ -16,6 +16,11 @@ const DRILL_PAGES: Record<string, number> = {
   "crossing-in-pairs": 2,
   "step-out-and-shift": 3,
   "goalkeeper-shots-from-three-spots": 3,
+  "catch-the-dragons-tail": 2,
+  "wrong-foot-shot": 3,
+  "sprints-with-turns": 3,
+  "fast-break-1-on-1": 3,
+  "getting-open": 3,
 };
 const tactics = libraryItems().filter((item) => item.type === "tactic");
 const drills = libraryItems().filter((item) => item.type === "drill");
