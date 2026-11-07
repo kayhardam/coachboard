@@ -8,7 +8,9 @@ import {
   deleteBoard,
   exportFile,
   folders,
+  folderMessage,
   importFile,
+  readMessage,
   isUntouchedDefault,
   newOnly,
   OLD_KEY,
@@ -29,8 +31,10 @@ import {
   type Saved,
 } from "./boards";
 import { defaultBoard, defaultBoardFor } from "./defaults";
-import { encode, toBoard, type Board } from "./format";
+import { encode, sameBoard, toBoard, type Board } from "./format";
 import exportV1 from "./fixtures/export/export-1.json";
+import messageEn from "./fixtures/message/share-folder-en.json";
+import messageNl from "./fixtures/message/share-folder-nl.json";
 import v1Default from "./fixtures/v1-default.json";
 import v1FullLineup from "./fixtures/v1-full-lineup.json";
 
@@ -479,3 +483,100 @@ function toV2Json(link: string): unknown {
   const bytes = Buffer.from(link.slice(2), "base64url");
   return JSON.parse(inflateRawSync(bytes).toString());
 }
+
+describe("open a link", () => {
+  const VIEWER = "https://handballcoachboard.com/nl/board/link/#t=";
+  const titled = (title: string): Board => ({ ...edited(), title });
+  const message = () =>
+    folderMessage(
+      "Training dinsdag",
+      [
+        { id: "a", board: titled("Kruising MO–LO"), at: 1 },
+        { id: "b", board: edited("nl"), at: 2 },
+      ],
+      VIEWER,
+      "Zonder titel",
+    );
+
+  it.each([
+    ["nl", messageNl],
+    ["en", messageEn],
+  ])("a message of Share folder already in a chat stays a folder: %s", async (_, fixture) => {
+    const { boards, links, folder } = await readMessage(fixture.message);
+    expect(folder).toBe(fixture.folder);
+    expect(links).toBe(fixture.boards.length);
+    expect(boards.map((s) => s.folder)).toEqual(fixture.boards.map(() => fixture.folder));
+    boards.forEach((s, i) => expect(sameBoard(s.board, fixture.boards[i] as unknown as Board)).toBe(true));
+  });
+
+  it("reads what Share folder writes: the boards in their order, with their titles, in the folder", async () => {
+    const { boards, folder } = await readMessage(await message(), 1234);
+    expect(folder).toBe("Training dinsdag");
+    expect(boards.map((s) => [s.board.title, s.folder, s.at])).toEqual([
+      ["Kruising MO–LO", "Training dinsdag", 1234],
+      [undefined, "Training dinsdag", 1234],
+    ]);
+    expect(new Set(boards.map((s) => s.id)).size).toBe(2);
+  });
+
+  it("a folder is about the form, not about invisible marks", async () => {
+    const plain = await message();
+    const changed = [
+      plain.replace(/\n/g, "\r\n"),
+      plain.replace(/\n/g, " \n"),
+      plain.replace("Training dinsdag", "Training\u00a0dinsdag"),
+      `\u200e${plain}\ufeff\n`,
+      plain.replace("\n\n", "\n \n\n"),
+    ];
+    for (const text of changed) expect((await readMessage(text)).folder).toBe("Training dinsdag");
+  });
+
+  it("anything else in a text is loose links: boards without a folder", async () => {
+    const link = VIEWER + (await encode(edited()));
+    for (const text of [
+      link,
+      `Titel\n${link}`,
+      `Kijk hier eens naar\n\n${link}`,
+      `Eerst deze ${link} en dan deze ${link}`,
+      `${link}\n${link}\n${link}`,
+      `[07-11 08:12] Kay: Training dinsdag\nKruising\n${link}`,
+      `Map\nnog een regel\n\nTitel\n${link}`,
+      `Map\n\nTitel\n${link} kijk maar`,
+    ]) {
+      const { boards, folder } = await readMessage(text);
+      expect(folder).toBeUndefined();
+      expect(boards.length).toBeGreaterThan(0);
+      expect(boards.every((s) => s.folder === undefined)).toBe(true);
+    }
+  });
+
+  it("every link counts: other hosts, paths and older versions read, broken ones only count", async () => {
+    const payload = await encode(edited());
+    const text = [`https://coachboard.hardamkay.workers.dev/en/board/qr/#t=${payload}`, `/nl/board/#t=${v1Default.link}`, "https://x.nl/#t=2.kapot", "#t=3.nieuw"].join("\n");
+    const { boards, links } = await readMessage(text);
+    expect(links).toBe(4);
+    expect(boards).toHaveLength(2);
+    expect(sameBoard(boards[0]!.board, edited())).toBe(true);
+  });
+
+  it("marks from the sentence come off only when the link reads without them", async () => {
+    const payload = await encode(edited());
+    for (const end of [".", ",", ")", "!)", '".', "…", "?!"]) {
+      const { boards, links } = await readMessage(`Hier: ${VIEWER}${payload}${end} Succes`);
+      expect([links, boards.length]).toEqual([1, 1]);
+      expect(sameBoard(boards[0]!.board, edited())).toBe(true);
+    }
+    expect((await readMessage(`${VIEWER}2.kapot.`)).boards).toEqual([]);
+  });
+
+  it("a broken %-sequence is a link that doesn't work, not an error", async () => {
+    for (const text of [`${VIEWER}%E0%A4%A`, `${VIEWER}2.abc%`, "#t=%"]) {
+      await expect(readMessage(text)).resolves.toMatchObject({ boards: [], links: 1 });
+    }
+  });
+
+  it("a text without a link has none", async () => {
+    await expect(readMessage("Tot dinsdag!")).resolves.toEqual({ boards: [], links: 0 });
+    await expect(readMessage("")).resolves.toEqual({ boards: [], links: 0 });
+  });
+});
