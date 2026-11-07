@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { exportFile, type Saved } from "../src/lib/board/boards";
+import { exportFile, folderMessage, type Saved } from "../src/lib/board/boards";
 import { defaultBoardFor } from "../src/lib/board/defaults";
-import { decode, encode, type Board } from "../src/lib/board/format";
+import { decode, encode, sameBoard, type Board } from "../src/lib/board/format";
 import {
   chooseFile,
   downloaded,
@@ -658,5 +658,154 @@ test.describe("export and import", () => {
     await importText(page, await exportFile([{ id: "a", board, at: 1 }], BASE));
     await list(page).getByRole("button", { name: /Kruising MO–LO/ }).click();
     await expectBoard(page, board);
+  });
+});
+
+test.describe("open a link", () => {
+  const VIEWER = "http://localhost/en/board/link/#t=";
+  const field = (page: Page) => list(page).getByRole("textbox", { name: "Open a link" });
+  const notice = (page: Page) => list(page).getByRole("status");
+  /** A board of the default lineup with a run from player `from`. */
+  const withRun = (from: number, title?: string): Board => {
+    const board = defaultBoardFor("en");
+    const at = board.frames[0]!.players[from]!.at;
+    board.frames[0]!.arrows.push({ kind: "run", from, pts: [at, [at[0], at[1] + 40]] });
+    return title ? { ...board, title } : board;
+  };
+  const linkTo = async (board: Board) => VIEWER + (await encode(board));
+  async function paste(page: Page, text: string) {
+    await field(page).fill(text);
+    await list(page).getByRole("button", { name: "Open", exact: true }).click();
+  }
+  /** Opens the editor as from the home screen; `persisted` counts the calls to persist(). */
+  async function asWebApp(page: Page) {
+    await page.addInitScript(() => {
+      const real = window.matchMedia.bind(window);
+      window.matchMedia = (query: string) =>
+        query === "(display-mode: standalone)" ? ({ ...real(query), matches: true, media: query } as MediaQueryList) : real(query);
+      const w = window as unknown as { persisted: number };
+      w.persisted = 0;
+      Object.defineProperty(navigator, "storage", {
+        value: {
+          persist: async () => {
+            w.persisted++;
+            return true;
+          },
+        },
+      });
+    });
+  }
+  const persisted = (page: Page) => page.evaluate(() => (window as unknown as { persisted?: number }).persisted);
+
+  test("one link goes in the list and opens", async ({ page }) => {
+    await openBoard(page);
+    await openList(page);
+    const board = withRun(1, "Cross");
+    await paste(page, await linkTo(board));
+    await expect(list(page)).toBeHidden();
+    await expectBoard(page, board);
+    const saved = await savedBoards(page);
+    expect(saved).toHaveLength(1);
+    expect(sameBoard(saved[0]!.board, board)).toBe(true);
+  });
+
+  test("one link to a board you have opens that board, also from a folder", async ({ page }) => {
+    await saveOwnBoard(page);
+    await openList(page);
+    await list(page).locator("details.actions summary").last().click();
+    await list(page).getByRole("button", { name: "New folder" }).click();
+    await list(page).getByRole("textbox", { name: "Folder name" }).fill("Tuesday");
+    await page.keyboard.press("Enter");
+    const [own] = await savedBoards(page);
+    await list(page).getByRole("button", { name: "New board" }).click();
+    await openList(page);
+    await paste(page, `Look: ${await linkTo(own!.board)}.`);
+    await expect(list(page)).toBeHidden();
+    await expectBoard(page, own!.board);
+    const saved = await savedBoards(page);
+    expect(saved).toHaveLength(1);
+    expect(saved[0]!.folder).toBe("Tuesday");
+  });
+
+  test("a message with three links gives three boards, and you stay in the list", async ({ page }) => {
+    await openBoard(page);
+    await openList(page);
+    await paste(page, `Tonight:\n${await linkTo(withRun(1))}\n${await linkTo(withRun(2))},\n(${await linkTo(withRun(3))})`);
+    await expect(notice(page)).toHaveText(/^3 boards added\./);
+    expect(await savedBoards(page)).toHaveLength(3);
+    await expect(list(page).locator("li")).toHaveCount(3);
+    await expect(field(page)).toHaveValue("");
+    // The same message again adds nothing.
+    await paste(page, `${await linkTo(withRun(1))}\n${await linkTo(withRun(2))}`);
+    await expect(notice(page)).toHaveText(/^These boards are already here\./);
+    expect(await savedBoards(page)).toHaveLength(3);
+  });
+
+  test("a message of Share folder comes back as the folder, in its order, and the notice says so", async ({ page }) => {
+    await openBoard(page);
+    await openList(page);
+    const saved = [withRun(1, "First"), withRun(2, "Second")].map((board, i) => ({ id: String(i), board, at: i }));
+    await paste(page, await folderMessage("Training Tuesday", saved, VIEWER, "Untitled"));
+    await expect(notice(page)).toHaveText(/^2 boards added to the folder Training Tuesday\./);
+    const boards = await savedBoards(page);
+    expect(boards.map((s) => [s.board.title, s.folder])).toEqual([
+      ["First", "Training Tuesday"],
+      ["Second", "Training Tuesday"],
+    ]);
+    await expect(list(page).getByRole("heading", { name: "Training Tuesday" })).toBeVisible();
+  });
+
+  test("a broken link gives the notice, also with a broken %-sequence, and keeps the text", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await openBoard(page);
+    await openList(page);
+    for (const text of [`${VIEWER}2.broken`, `${VIEWER}%E0%A4%A`, "See you on Tuesday"]) {
+      await paste(page, text);
+      await expect(notice(page)).toHaveText(/^This link doesn't work\. Ask for a new one\./);
+      await expect(field(page)).toHaveValue(text);
+      await list(page).getByRole("button", { name: "Dismiss" }).click();
+    }
+    expect(await savedBoards(page)).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+
+  test("some links broken: the notice says what came in, and never 0 boards", async ({ page }) => {
+    await openBoard(page);
+    await openList(page);
+    const broken = `${VIEWER}2.broken`;
+    await paste(page, `${await linkTo(withRun(1))}\n${broken}`);
+    await expect(notice(page)).toHaveText(/^1 board added\. Not every link worked\./);
+    await paste(page, `${await linkTo(withRun(1))}\n${broken}`);
+    await expect(notice(page)).toHaveText(/^No new boards\. Not every link worked\./);
+    expect(await savedBoards(page)).toHaveLength(1);
+  });
+
+  test("in the browser Open a link sits under the list and persist() stays out", async ({ page }) => {
+    await openBoard(page);
+    await openList(page);
+    await expect(list(page).locator(".backup + .paste")).toBeVisible();
+    expect(await persisted(page)).toBeUndefined();
+  });
+
+  test("in the web app Open a link comes first, there is no tip, and it asks for persistent storage", async ({ page }) => {
+    await asWebApp(page);
+    await saveOwnBoard(page);
+    await openList(page);
+    await expect(list(page).locator(".new + .paste")).toBeInViewport();
+    await expect(list(page).locator(".tip")).toHaveCount(0);
+    expect(await persisted(page)).toBe(1);
+  });
+
+  test("the tip shows on an iPhone or iPad only, and only with boards", async ({ page }) => {
+    const ios = test.info().project.name === "iphone";
+    await openBoard(page);
+    await openList(page);
+    await expect(list(page).locator(".tip")).toHaveCount(0);
+    await list(page).getByRole("button", { name: "Close" }).click();
+    await saveOwnBoard(page);
+    await openList(page);
+    await expect(list(page).locator(".tip")).toHaveCount(ios ? 1 : 0);
+    if (ios) await expect(list(page).locator(".tip")).toContainText("Safari can clear your boards");
   });
 });

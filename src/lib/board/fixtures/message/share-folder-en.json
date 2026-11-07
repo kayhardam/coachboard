@@ -1,0 +1,254 @@
+{
+ "message": "Training Tuesday\n\nBack court cross\nhttps://handballcoachboard.com/en/board/link/#t=2.bY6xDsIwDER_pfJ8Q2yaYtYyMMBQsTBEGVBGhkot_D-OQzsh2bmXy8lOCqDxWV5dmT_LuyvLvK6ElMy-PSjDYfzBeYP7Dltmqsqgy9Xhb9thlZKCBy8WcAjgg7X27X4SfzJ7aKIQgSV6RVRo86VJlOrxUS1QV7ANEsn-f_Y5UWwtUc75Cw\n\nUntitled\nhttps://handballcoachboard.com/en/board/link/#t=2.bY2xDoAwCET_hfmGglZx1cFBB-PiQPr_vyGl6mQC3ON6KZZABDOX_aKCgPmB5YXzgzdzVGXQugX8tg8vMwUPUSzglMCdt_ZtnySe3B6aKETgiV6RFdp8aZKlejyqB-oJ9o9E4g5RKeUG",
+ "folder": "Training Tuesday",
+ "boards": [
+  {
+   "v": 2,
+   "court": "half",
+   "cones": [],
+   "frames": [
+    {
+     "players": [
+      {
+       "team": "a",
+       "label": "LW",
+       "at": [
+        8,
+        16
+       ]
+      },
+      {
+       "team": "a",
+       "label": "LB",
+       "at": [
+        16,
+        112
+       ]
+      },
+      {
+       "team": "a",
+       "label": "CB",
+       "at": [
+        100,
+        130
+       ]
+      },
+      {
+       "team": "a",
+       "label": "RB",
+       "at": [
+        184,
+        112
+       ]
+      },
+      {
+       "team": "a",
+       "label": "RW",
+       "at": [
+        192,
+        16
+       ]
+      },
+      {
+       "team": "a",
+       "label": "P",
+       "at": [
+        100,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "label": "GK",
+       "at": [
+        100,
+        8
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        22,
+        30
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        48,
+        58
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        80,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        120,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        152,
+        58
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        178,
+        30
+       ]
+      }
+     ],
+     "balls": [
+      [
+       110,
+       122
+      ]
+     ],
+     "arrows": [
+      {
+       "kind": "run",
+       "from": 1,
+       "pts": [
+        [
+         16,
+         112
+        ],
+        [
+         16,
+         152
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   "title": "Back court cross"
+  },
+  {
+   "v": 2,
+   "court": "half",
+   "cones": [],
+   "frames": [
+    {
+     "players": [
+      {
+       "team": "a",
+       "label": "LW",
+       "at": [
+        8,
+        16
+       ]
+      },
+      {
+       "team": "a",
+       "label": "LB",
+       "at": [
+        16,
+        112
+       ]
+      },
+      {
+       "team": "a",
+       "label": "CB",
+       "at": [
+        100,
+        130
+       ]
+      },
+      {
+       "team": "a",
+       "label": "RB",
+       "at": [
+        184,
+        112
+       ]
+      },
+      {
+       "team": "a",
+       "label": "RW",
+       "at": [
+        192,
+        16
+       ]
+      },
+      {
+       "team": "a",
+       "label": "P",
+       "at": [
+        100,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "label": "GK",
+       "at": [
+        100,
+        8
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        22,
+        30
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        48,
+        58
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        80,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        120,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        152,
+        58
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        178,
+        30
+       ]
+      }
+     ],
+     "balls": [
+      [
+       110,
+       122
+      ]
+     ],
+     "arrows": []
+    }
+   ]
+  }
+ ]
+}

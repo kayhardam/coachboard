@@ -1,0 +1,254 @@
+{
+ "message": "Training dinsdag\n\nKruising MO–LO\nhttps://handballcoachboard.com/nl/board/link/#t=2.bU4xDsIwDPwK8uwhNk0xMwsSqSJ1tTyjLgwgdv7AD3kJjkOZKtm-8-V0jiaEy_25PJbbdTfVz-tdKqCqy-UMhkHqj0wrmf9k9ZxKI-RhgZvtw0tVkMYoYqSUkPbeMvT9yPHk8thBkBndMQhmQek6d8jcNDqIG9oJ8iBmi_9T5GT2swBm9gU\n\nZonder titel\nhttps://handballcoachboard.com/nl/board/link/#t=2.bY2xDoAwCET_hfmGglpxdjFRY-JK-v-_IaXWyQS4x_VSLIEIZi7HRgUB1wtnh_uDnlmPCgzaQ3_bh5eZgnMUCzgl8OCtY9sXiSe3cxOFCDwxKiaFNl-aTFI9ntUD9QT7RyJxh6iU8gA",
+ "folder": "Training dinsdag",
+ "boards": [
+  {
+   "v": 2,
+   "court": "half",
+   "cones": [],
+   "frames": [
+    {
+     "players": [
+      {
+       "team": "a",
+       "label": "LH",
+       "at": [
+        8,
+        16
+       ]
+      },
+      {
+       "team": "a",
+       "label": "LO",
+       "at": [
+        16,
+        112
+       ]
+      },
+      {
+       "team": "a",
+       "label": "MO",
+       "at": [
+        100,
+        130
+       ]
+      },
+      {
+       "team": "a",
+       "label": "RO",
+       "at": [
+        184,
+        112
+       ]
+      },
+      {
+       "team": "a",
+       "label": "RH",
+       "at": [
+        192,
+        16
+       ]
+      },
+      {
+       "team": "a",
+       "label": "CL",
+       "at": [
+        100,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "label": "K",
+       "at": [
+        100,
+        8
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        22,
+        30
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        48,
+        58
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        80,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        120,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        152,
+        58
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        178,
+        30
+       ]
+      }
+     ],
+     "balls": [
+      [
+       110,
+       122
+      ]
+     ],
+     "arrows": [
+      {
+       "kind": "run",
+       "from": 1,
+       "pts": [
+        [
+         16,
+         112
+        ],
+        [
+         16,
+         152
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   "title": "Kruising MO–LO"
+  },
+  {
+   "v": 2,
+   "court": "half",
+   "cones": [],
+   "frames": [
+    {
+     "players": [
+      {
+       "team": "a",
+       "label": "LH",
+       "at": [
+        8,
+        16
+       ]
+      },
+      {
+       "team": "a",
+       "label": "LO",
+       "at": [
+        16,
+        112
+       ]
+      },
+      {
+       "team": "a",
+       "label": "MO",
+       "at": [
+        100,
+        130
+       ]
+      },
+      {
+       "team": "a",
+       "label": "RO",
+       "at": [
+        184,
+        112
+       ]
+      },
+      {
+       "team": "a",
+       "label": "RH",
+       "at": [
+        192,
+        16
+       ]
+      },
+      {
+       "team": "a",
+       "label": "CL",
+       "at": [
+        100,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "label": "K",
+       "at": [
+        100,
+        8
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        22,
+        30
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        48,
+        58
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        80,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        120,
+        66
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        152,
+        58
+       ]
+      },
+      {
+       "team": "d",
+       "at": [
+        178,
+        30
+       ]
+      }
+     ],
+     "balls": [
+      [
+       110,
+       122
+      ]
+     ],
+     "arrows": []
+    }
+   ]
+  }
+ ]
+}
