@@ -106,6 +106,12 @@
   let qrLarge = $state(false);
   let qrDialog: HTMLDialogElement;
   let listDialog: HTMLDialogElement;
+  /** The text in Open a link. */
+  let pasted = $state("");
+  /** Opened from the home screen: its storage is apart from the browser's, and received links don't land here. */
+  const inWebApp = matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
+  /** An iPhone or iPad (iPadOS says it is a Mac): where Safari clears a site's storage after a week. */
+  const onIos = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
   /** A new board (the first visit, New board, the open board deleted): it offers the starting lineups until its first edit. */
   let isNew = $state(false);
   /** My boards is open: notices show there, above the list. */
@@ -356,6 +362,9 @@
   }
 
   onMount(() => {
+    // Costs nothing, and can help against clearing when space runs low. A refusal changes nothing.
+    if (inWebApp) navigator.storage?.persist?.().catch(() => {});
+
     const idle = window.requestIdleCallback ?? ((run: () => void) => setTimeout(run, 500));
     idle(() => loadQr().catch(() => (qrLibrary = undefined)));
 
@@ -623,6 +632,45 @@
     );
   }
 
+  /** The notice after Open a link. Never "0 boards added"; which folder, if the text was a folder's message. */
+  function linksAdded(added: number, broken: boolean, folder?: string) {
+    if (!added) return strings[broken ? "board.linksNoneNew" : "board.linksKnown"];
+    const text = folder
+      ? strings[added === 1 ? "board.addedToFolderOne" : "board.addedToFolder"].replace("{folder}", folder)
+      : strings[added === 1 ? "board.importedOne" : "board.imported"];
+    return text.replace("{count}", String(added)) + (broken ? ` ${strings["board.linksSomeBroken"]}` : "");
+  }
+
+  /**
+   * Open a link: every link in the pasted text becomes a board in the list. A
+   * single link also opens: that board if it is already there, in any folder.
+   */
+  async function openLinks(e: Event) {
+    e.preventDefault();
+    if (!pasted.trim()) return;
+    const { boards: found, links: count, folder } = await store.readMessage(pasted);
+    if (!found.length) return show(strings["board.linkBroken"]);
+    const single = count === 1 && !folder ? found[0] : undefined;
+    const known = single && readList()?.boards.find((s) => sameBoard(s.board, single.board));
+    if (known) {
+      pasted = "";
+      return openSaved(known);
+    }
+    let added: store.Saved[] = [];
+    try {
+      boards = store.update(localStorage, (list) => {
+        const next = store.addImported(list.boards, found);
+        added = next.added;
+        return { ...list, boards: next.boards };
+      }).boards;
+    } catch {
+      return show(strings["board.importFailed"]);
+    }
+    pasted = "";
+    show(linksAdded(added.length, found.length < count, folder));
+    if (single) openSaved(single);
+  }
+
   function openList() {
     menuOpen = false;
     listDialog.showModal();
@@ -692,8 +740,8 @@
     closeMenu(e);
     await saveNow();
     const list = store.inFolder(readList()?.boards ?? boards, folder);
-    const lines = await Promise.all(list.map(async (s) => `${titleOf(s)}\n${location.origin}${links.link}#t=${await encode(s.board)}`));
-    send({ text: [folder, ...lines].join("\n\n") }, strings["board.linksCopied"]);
+    const text = await store.folderMessage(folder, list, `${location.origin}${links.link}#t=`, strings["board.untitled"]);
+    send({ text }, strings["board.linksCopied"]);
   }
 
   /** Duplicate folder: a copy of it with every board, on top of the list, its name ready to change. */
@@ -1269,6 +1317,17 @@
   {/if}
 {/snippet}
 
+{#snippet openLink()}
+  <form class="paste" onsubmit={openLinks}>
+    <label>
+      {strings["board.openLink"]}
+      <!-- A folder's message: an input would drop its line breaks. -->
+      <textarea rows="2" autocapitalize="off" autocomplete="off" spellcheck="false" bind:value={pasted}></textarea>
+    </label>
+    <button type="submit">{strings["board.openLinkButton"]}</button>
+  </form>
+{/snippet}
+
 <dialog
   class="boards"
   bind:this={listDialog}
@@ -1287,6 +1346,10 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.plus} /></svg>
     {strings["board.newBoard"]}
   </button>
+  {#if inWebApp}
+    <!-- First in the web app: the only way in for a received board. -->
+    {@render openLink()}
+  {/if}
   {#if listOpen}
     {@render noticeBar()}
   {/if}
@@ -1382,7 +1445,14 @@
       {strings["board.import"]}
       <input type="file" accept=".json,application/json" onchange={importBoards} />
     </label>
+    <!-- Under the buttons, so it moves nothing that was there. -->
+    {#if boards.length && onIos && !inWebApp}
+      <p class="tip">{strings["board.homeScreenTip"]}</p>
+    {/if}
   </div>
+  {#if !inWebApp}
+    {@render openLink()}
+  {/if}
 </dialog>
 
 <dialog class="qr" bind:this={qrDialog} aria-label={strings["board.qr"]} onclose={() => (qr = null)}>
