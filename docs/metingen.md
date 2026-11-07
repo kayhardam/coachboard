@@ -1336,7 +1336,7 @@ Nagerekend met een eenmalig script (niet in de repo), met dezelfde compressie al
 
 ### Geparkeerd
 
-Testen ligt stil (besluit Kay). Deze punten worden ingehaald vóór de fase die ze nodig heeft:
+Deze punten zijn van Kay (besluit 32), houden geen fase tegen en Claude Code plant ze niet in:
 
 - **De testronde van Fase 5,** op productie. Test 15 (stopwatch) vervalt (besluit Kay, 8 oktober 2026); de rest staat open.
 - ~~**De vier meettaken in seconden,** door Kay en door drie tot vijf trainers. De sessies met trainers vóór Fase 12a. T1 door Kay is gedaan (7 oktober 2026, zie "Per taak en toestel").~~ Vervallen (besluit Kay, 8 oktober 2026): geen seconden. **De sessies met trainers** blijven, ~~vóór Fase 14~~ geparkeerd, ook tijdens Fase 14 (besluit Kay, 10 oktober 2026), zonder stopwatch: drie tot vijf trainers doen elke meettaak één keer zonder hulp, en Kay kijkt alleen waar ze vastlopen.

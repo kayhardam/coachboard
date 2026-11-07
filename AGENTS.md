@@ -19,7 +19,7 @@ Static Astro 7 site for handball coaches. The product is the tactics board at `/
 
 Commit only when `npm run verify` exits with code 0. Check the exit code itself, not the output: a pipe through `tail` or `head` hides a failure.
 
-Commit only as `Kay Hardam <102677416+kayhardam@users.noreply.github.com>`, never with a personal address: the repo is public and every commit keeps its author. Check `git config user.email` before the first commit, also in a cloud session, where the account's own address is the default.
+Commit only as `Kay Hardam <102677416+kayhardam@users.noreply.github.com>`, never with a personal address: the repo is public and every commit keeps its author. Check `git config user.email` before the first commit, also in a cloud session, where the account's own address is the default. CI fails a pull request if any of its commits has an author or committer address outside GitHub's noreply addresses.
 
 Astro needs Node 22.23.4 or newer (`engines` in `package.json`). CI runs on a fixed `ubuntu-24.04`; moving to a newer runner happens on purpose, in its own PR.
 
@@ -158,7 +158,10 @@ Don't add these without a plan:
 
 Less process, the same quality: the automatic checks are the safety net.
 
-- **Done means merged.** A step is done when its PR lands on `main`. Tests on real phones, in the hall or with the team feed the product plan; they never hold a step open.
+- **Before you start:** Run `git fetch`. If local `main` is behind `origin/main`, fast-forward it; if it has diverged (its history has been rewritten before), stop and tell Kay: no merge, no rebase, no force push. Check `git config user.email` (see Commands). Branch from `origin/main`; never work on `main`. How we work goes before any plan in `docs/`; if a plan clashes with the rest of this file, stop and ask Kay which goes first.
+- **While you work:** make small, separate commits. No new dependency without Kay's approval: name, version, size, the reason and the alternative without it. Existing URLs keep working: links and QR codes may already be in team chats. Code, comments, commit messages, `AGENTS.md` and `README.md` are in English; the plans and `docs/metingen.md` in Dutch. Look up version-specific details (Astro, Svelte, Wrangler, Playwright, Cloudflare) in the official docs, not from memory; `package.json` has the versions. A new command, script or convention goes in this file in the same PR.
+- **Finishing:** push the branch and open a PR (with `gh`; without it, give Kay the title and description). The PR says what changed and why, how to test, and open questions; measurements only when a budget or measured behaviour changes. Claude Code waits for CI, not for Kay's tests, and doesn't ask about them.
+- **Done means merged.** A step is done when its PR lands on `main`. Testing (on phones, with the team, with coaches), sharing, links and contact with the federation are Kay's: no step, PR, item or decision waits for them, and Claude Code doesn't plan them, remind Kay of them or ask about them.
 - **Automatic, always:** `npm run verify` (with the size budgets and the content checks in `checkLibrary()`) before every commit, and the e2e tests in CI.
 - **Plans fit on one page:** goal, approach, files, risks, and what Kay decides. Build after Kay's approval.
 - **Lighthouse** runs only when a change can move the time until the board is ready: a raised JS or CSS ceiling for a board page, the preloads, the static fallback, a font. A change that stays under the ceilings needs no run. One run per mode on the PR's preview URL, with the pinned commands in `docs/metingen.md`: simulated throttling (the default) and real throttling (`--throttling-method=devtools`). Real throttling, and the time until the board is ready to use or the shared board is on screen, decide. Compare SEO only on production: preview URLs send `X-Robots-Tag: noindex`.
@@ -169,7 +172,7 @@ Less process, the same quality: the automatic checks are the safety net.
 - **Budgets are ceilings with room.** Each is the size measured on Linux plus room, rounded: about 10% for JS, 15% for CSS and HTML. Two follow a worst case instead: `libraryHtml` the largest item the schema allows, and `png` the largest share image, with room for a new one. A merge that stays under a ceiling changes nothing: no budget edit, no entry in `docs/metingen.md`. Going over takes a raised ceiling with one sentence of reason, in the comment beside it and in the PR; a change that makes a measured task slower or the board heavier to load still needs Kay's yes first. Once a quarter, or after a merge that cut a size, set each ceiling to the new measurement plus its room, in one PR. Plans estimate no bytes and build no throwaway prototypes; the budget script is the arbiter.
 - **The tap budget is a maximum** (`TAP_BUDGET` in `e2e/tasks.spec.ts`, `e2e/AGENTS.md`): a route that needs one more action fails until the budget goes up on purpose, with the reason in the PR and the new count in `docs/metingen.md`; a route that got shorter passes, and its budget goes down in the same PR.
 - **Dependabot:** merge when CI is green (see Hosting).
-- `docs/optimalisatieplan.md` (Dutch) holds the earlier phases and the checks before a step starts ("Voor je begint"); How we work goes before its rules.
+- `docs/optimalisatieplan.md` (Dutch) holds the earlier phases.
 
 ## Astro documentation
 

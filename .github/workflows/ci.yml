@@ -27,6 +27,31 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run verify
+      # Every commit in a pull request carries a noreply address. The checkout's
+      # HEAD is GitHub's own merge commit, so check the PR's range. The logs are
+      # public: name the commit and the role, never the address. Last in the job:
+      # --unshallow gives this run the whole history, which a push run doesn't have.
+      - name: Check commit addresses
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git fetch --quiet --no-tags --unshallow origin "$BASE_SHA" "$HEAD_SHA"
+          git log --format='%H %ae %ce' "$BASE_SHA..$HEAD_SHA" > "$RUNNER_TEMP/commits"
+          bad=0
+          while read -r sha author committer; do
+            case "$author" in
+              *@users.noreply.github.com) ;;
+              *) echo "::error::Commit $sha: the author's address is not a noreply address."; bad=1 ;;
+            esac
+            case "$committer" in
+              *@users.noreply.github.com | noreply@github.com) ;;
+              *) echo "::error::Commit $sha: the committer's address is not a noreply address."; bad=1 ;;
+            esac
+          done < "$RUNNER_TEMP/commits"
+          exit "$bad"
 
   # The board flow in mobile Chromium and WebKit, against `wrangler dev`.
   # Two shards, each with its own build and server: about half the wall time.

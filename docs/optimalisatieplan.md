@@ -36,43 +36,19 @@ Al gevonden bij het doorlezen van de code:
 1. Zet dit bestand in de repo als `docs/optimalisatieplan.md`. Fase 3 commit het mee.
 2. De nummering sluit aan op je eerdere fases (Fase 2 was PR #3). Eén fase is één branch (`fase-3-nulmeting` enzovoort) en één PR. Een fase met delen (4a, 4b) krijgt per deel een eigen PR.
 3. Start elke fase in een nieuwe Claude Code-sessie (of na `/clear`) met de startprompt onderaan. Claude Code onderzoekt eerst en doet een voorstel van één pagina (doel, aanpak, bestanden, risico's, wat jij beslist), en gaat pas bouwen als jij het goedkeurt.
-4. Test elke PR op je eigen telefoon via de preview-URL die Workers Builds per branch maakt, voordat je merget. Een merge naar `main` gaat direct live.
+4. ~~Test elke PR op je eigen telefoon via de preview-URL die Workers Builds per branch maakt, voordat je merget.~~ Vervallen als voorwaarde (besluit 32, Kay, 6 november 2026): testen is van Kay en geen PR wacht erop. Een merge naar `main` gaat direct live.
 5. Een punt met **Beslissing (Kay)** is aan jou. Claude Code legt de opties met hun afweging voor en wacht.
 6. Blijkt tijdens een fase dat het plan niet klopt, dan past Claude Code het plan aan in dezelfde PR en legt uit waarom.
 
 ## Regels voor Claude Code
 
-Deze regels gelden in elke fase. Vanaf 24 oktober 2026 gaat "How we work" in `AGENTS.md` voor: daar staan de lean werkwijze, de budgetten als vangnet, Lighthouse en `docs/metingen.md`.
-
-**Voor je begint**
-
-- `CLAUDE.md` verwijst naar `AGENTS.md`: volg die conventies. Botst dit plan met `AGENTS.md`, stop dan en vraag Kay wat voorgaat.
-- Controleer dat `git config user.email` eindigt op `@users.noreply.github.com`. Zo niet: stop en meld het. Commit nooit met een ander adres.
-- De geschiedenis van deze repo is op 26 september 2026 herschreven. Doe `git fetch` en controleer dat de lokale `main` gelijk is aan `origin/main`. Wijkt hij af, stop dan en meld het: niet mergen, niet rebasen, niet force-pushen.
-- Maak een nieuwe branch vanaf `origin/main`. Werk nooit direct op `main`.
-
-**Tijdens het werk**
-
-- Verandert een budget of gemeten gedrag, noteer dat kort in `docs/metingen.md` (zie "How we work" in `AGENTS.md`).
-- Maak kleine, losse commits. `npm run verify` is groen vóór elke commit.
-- Voeg geen dependency toe zonder akkoord van Kay. Noem naam, versie, grootte, de reden en het alternatief zonder dependency.
-- `src/lib/board/format.ts` is een contract. Links met prefix `1.` moeten altijd blijven werken, en de fixtures in `src/lib/board/fixtures/` pas je nooit aan.
-- Bestaande URL's blijven werken: links en QR-codes kunnen al in teamchats staan.
-- Code, comments, commitberichten, `AGENTS.md` en `README.md` schrijf je in het Engels. Dit plan en `docs/metingen.md` in het Nederlands.
-- Zoek versie-specifieke details (Astro 7, Svelte 5, Wrangler, Playwright, Cloudflare) op in de officiële documentatie, niet uit je geheugen.
-- Voegt een fase een commando, script of conventie toe, werk dan `AGENTS.md` bij in dezelfde PR.
-
-**Afronden**
-
-- Push de branch en open een PR (met `gh` als die beschikbaar is; anders geef je Kay de titel en de beschrijving).
-- De PR-beschrijving bevat: wat er veranderd is en waarom, wat Kay op zijn telefoon moet testen, en open vragen; metingen alleen als een budget of gemeten gedrag verandert. Een PR voor tekst of inhoud houdt het bij wat, waarom, hoe testen (hoogstens 3 regels) en de preview-link.
-- Vink de fase af onder Voortgang, in dezelfde PR.
+Sinds 7 november 2026 staan de regels voor Claude Code op één plek: "How we work" in `AGENTS.md`. "Voor je begint", "Tijdens het werk" en "Afronden" heten daar Before you start, While you work en Finishing.
 
 ## Fase 3: Nulmeting en werkwijze
 
 **Doel:** vastleggen waar de app nu staat, zodat elke volgende stap aantoonbaar iets oplevert. De app zelf verandert niet.
 
-1. Doe de controles uit "Voor je begint" en draai `npm run verify`.
+1. Doe de controles uit "Before you start" in `AGENTS.md` en draai `npm run verify`.
 2. Maak `docs/metingen.md` met:
    - per pagina de grootte van HTML, CSS en JavaScript (raw en gzip), gemeten in `dist/`;
    - Lighthouse mobiel (`npx lighthouse`, headless, met de lokale Chrome) op de productie-URL `https://coachboard.hardamkay.workers.dev` voor `/en/`, `/en/board/` en `/en/tactics/defense/6-0-defense-basics/`: de vier scores plus LCP, CLS en TBT. Draai elke meting drie keer en noteer de mediaan. Latere fases meten op de preview-URL van hun PR, zodat voor en na te vergelijken zijn;
@@ -237,18 +213,18 @@ Elk van deze punten verdient een eigen plan, zoals `AGENTS.md` ook vraagt:
   - [x] 7b: workers.dev doorsturen
 - [ ] Fase 8: Meten in productie
   - [x] 8a: statistieken op de bordpagina's
-  - [ ] 8b: eerste maandmeting (begin november 2026)
+  - [ ] ~~8b: eerste maandmeting (begin november 2026)~~ vervallen (besluit 19, 3 november 2026)
 
 ## Startprompts
 
 Een fase starten (vervang N en de naam):
 
 ```
-/plan Lees docs/optimalisatieplan.md en voer Fase N uit. Doe eerst de controles uit "Voor je begint". Laat me daarna je aanpak zien: welke bestanden je aanraakt, welke dependencies je wilt toevoegen en waarom, hoe je meet, en welke beslissingen je van mij nodig hebt. Werk op branch fase-N-<naam>.
+/plan Lees docs/optimalisatieplan.md en voer Fase N uit. Doe eerst de controles uit "Before you start" in AGENTS.md. Laat me daarna je aanpak zien: welke bestanden je aanraakt, welke dependencies je wilt toevoegen en waarom, hoe je meet, en welke beslissingen je van mij nodig hebt. Werk op branch fase-N-<naam>.
 ```
 
 Een fase afronden:
 
 ```
-Rond Fase N af volgens "Afronden" in docs/optimalisatieplan.md en geef me de testlijst voor mijn telefoon.
+Rond Fase N af volgens "Finishing" in AGENTS.md.
 ```
