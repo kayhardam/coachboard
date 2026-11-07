@@ -76,10 +76,10 @@ board:
       balls: [[58, 114]]
       arrows:
         - { kind: run, from: 9, pts: [[80, 66], [64, 72]] }
-        - { kind: run, from: 10, pts: [[120, 66], [100, 68]] }
+        - { kind: run, from: 10, pts: [[120, 66], [112, 64]] }
         - { kind: run, from: 11, pts: [[152, 58], [132, 64]] }
         - { kind: run, from: 12, pts: [[178, 30], [162, 46]] }
-    - text: "When P runs along the line, their defender passes them on and the next defender picks them up."
+    - text: "LB passes to CB: the one who stepped out drops back and the defender of that zone steps out."
       players:
         - { team: a, label: LW, at: [10, 50] }
         - { team: a, label: LB, at: [48, 122] }
@@ -91,11 +91,73 @@ board:
         - { team: d, at: [22, 30] }
         - { team: d, at: [48, 94] }
         - { team: d, at: [64, 72] }
-        - { team: d, at: [100, 68] }
+        - { team: d, at: [112, 64] }
         - { team: d, at: [132, 64] }
         - { team: d, at: [162, 46] }
       balls: [[58, 114]]
       arrows:
-        - { kind: run, from: 5, pts: [[100, 80], [76, 88]] }
-        - { kind: run, from: 9, pts: [[64, 72], [70, 80]] }
+        - { kind: pass, from: 1, pts: [[48, 122], [100, 132]] }
+        - { kind: run, from: 8, pts: [[48, 94], [52, 62]] }
+        - { kind: run, from: 9, pts: [[64, 72], [92, 108]] }
+        - { kind: run, from: 11, pts: [[132, 64], [146, 60]] }
+        - { kind: run, from: 12, pts: [[162, 46], [176, 32]] }
+    - text: "The same on every pass: CB passes to RB, the one who stepped out drops back, another steps out."
+      players:
+        - { team: a, label: LW, at: [10, 50] }
+        - { team: a, label: LB, at: [48, 122] }
+        - { team: a, label: CB, at: [100, 132] }
+        - { team: a, label: RB, at: [152, 122] }
+        - { team: a, label: RW, at: [190, 50] }
+        - { team: a, label: P, at: [100, 80] }
+        - { team: d, label: GK, at: [92, 8] }
+        - { team: d, at: [22, 30] }
+        - { team: d, at: [52, 62] }
+        - { team: d, at: [92, 108] }
+        - { team: d, at: [112, 64] }
+        - { team: d, at: [146, 60] }
+        - { team: d, at: [176, 32] }
+      balls: [[110, 124]]
+      arrows:
+        - { kind: pass, from: 2, pts: [[100, 132], [152, 122]] }
+        - { kind: run, from: 9, pts: [[92, 108], [84, 64]] }
+        - { kind: run, from: 11, pts: [[146, 60], [150, 98]] }
+    - text: "RB passes to RW: the wing defender steps out and the one who was out drops back."
+      players:
+        - { team: a, label: LW, at: [10, 50] }
+        - { team: a, label: LB, at: [48, 122] }
+        - { team: a, label: CB, at: [100, 132] }
+        - { team: a, label: RB, at: [152, 122] }
+        - { team: a, label: RW, at: [190, 50] }
+        - { team: a, label: P, at: [100, 80] }
+        - { team: d, label: GK, at: [92, 8] }
+        - { team: d, at: [22, 30] }
+        - { team: d, at: [52, 62] }
+        - { team: d, at: [84, 64] }
+        - { team: d, at: [112, 64] }
+        - { team: d, at: [150, 98] }
+        - { team: d, at: [176, 32] }
+      balls: [[162, 114]]
+      arrows:
+        - { kind: pass, from: 3, pts: [[152, 122], [190, 50]] }
+        - { kind: run, from: 11, pts: [[150, 98], [152, 62]] }
+        - { kind: run, from: 12, pts: [[176, 32], [170, 52]] }
+    - text: "When P runs along the line, their defender passes them on and the next defender picks them up."
+      players:
+        - { team: a, label: LW, at: [10, 50] }
+        - { team: a, label: LB, at: [48, 122] }
+        - { team: a, label: CB, at: [100, 132] }
+        - { team: a, label: RB, at: [152, 122] }
+        - { team: a, label: RW, at: [190, 50] }
+        - { team: a, label: P, at: [100, 80] }
+        - { team: d, label: GK, at: [92, 8] }
+        - { team: d, at: [22, 30] }
+        - { team: d, at: [52, 62] }
+        - { team: d, at: [84, 64] }
+        - { team: d, at: [112, 64] }
+        - { team: d, at: [152, 62] }
+        - { team: d, at: [170, 52] }
+      balls: [[200, 42]]
+      arrows:
+        - { kind: run, from: 5, pts: [[100, 80], [124, 88]] }
+        - { kind: run, from: 10, pts: [[112, 64], [130, 68]] }
 ---

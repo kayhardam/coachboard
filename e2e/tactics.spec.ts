@@ -3,7 +3,7 @@ import { t } from "../src/i18n/ui";
 
 // A tactic and a drill: the same link into the board.
 const items = [
-  { path: "/en/tactics/6-0-defense-basics/", title: "6-0 defense: the basics", steps: 4, text: "Each defender stands just outside the goal area" },
+  { path: "/en/tactics/6-0-defense-basics/", title: "6-0 defense: the basics", steps: 7, text: "Each defender stands just outside the goal area" },
   { path: "/en/drills/crossing-in-pairs/", title: "Crossing in pairs", steps: 4, text: "The first on the left runs diagonally to the middle with the ball." },
 ];
 
