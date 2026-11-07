@@ -106,5 +106,5 @@ test("a Dutch tactic opens in the Dutch board, with Dutch labels", async ({ page
   await expect(page).toHaveURL(/\/nl\/board\/#t=/);
   await expect(page.getByRole("toolbar", { name: "Gereedschap" })).toBeVisible();
   const labels = await page.locator(".stage svg [data-kind=player] text").allTextContents();
-  expect(labels).toEqual(["LH", "LO", "MO", "RO", "RH", "CL", "K"]);
+  expect(labels).toEqual(["LH", "LO", "MO", "RO", "RH", "CL", "K", "L1", "L2", "L3", "R3", "R2", "R1"]);
 });

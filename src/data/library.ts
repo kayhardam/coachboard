@@ -25,6 +25,7 @@ async function allItems(): Promise<Item[]> {
       ages: e.data.ages.map((age) => AGES.indexOf(age)),
       board: e.data.board,
       related: e.data.related,
+      zones: e.data.zones,
     })),
     locales,
     categorySlugs,

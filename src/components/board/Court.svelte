@@ -25,12 +25,23 @@
     frame?: number;
     selected?: Selection | null;
     label?: string;
+    /**
+     * Labels of the players who get their zone drawn: two grey arrows from
+     * where they stand, forward and out, the ways they move in it. Library
+     * pages pass a defense's defenders; the board itself never draws them.
+     */
+    zones?: readonly string[];
   }
 
-  let { board, frame = 0, selected = null, label = "Handball court" }: Props = $props();
+  let { board, frame = 0, selected = null, label = "Handball court", zones = [] }: Props = $props();
+
+  /** A zone's arrows reach from the goal area to the free-throw line, 35° either side of forward. */
+  const ZONE_OUT = 21;
+  const ZONE_FORWARD = 30;
 
   const uid = $props.id();
   const current = $derived(board.frames[frame] ?? board.frames[0]!);
+  const zoned = $derived(zones.length ? current.players.filter((p) => p.label !== undefined && zones.includes(p.label)) : []);
   const length = $derived(board.court === "full" ? 400 : 200);
   const goals = $derived(board.court === "full" ? [0, 400] : [0]);
   const viewBox = $derived(`-8 -14 ${COURT_WIDTH + 16} ${length + 14 + (length === 400 ? 14 : 8)}`);
@@ -121,6 +132,11 @@
     >
       <path d="M0,0 L10,5 L0,10 z" fill={colors.ink} />
     </marker>
+    {#if zoned.length}
+      <marker id="{uid}-zone" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill={colors.trail} />
+      </marker>
+    {/if}
   </defs>
 
   <!-- Court -->
@@ -176,6 +192,25 @@
       />
     </g>
   {/each}
+
+  <!-- Zones (library pages only): two grey arrows from each listed player, forward and out. Under everything that moves. -->
+  {#if zoned.length}
+    <g
+      class="zones"
+      clip-path="url(#{uid}-court)"
+      fill="none"
+      stroke={colors.trail}
+      stroke-width="0.8"
+      stroke-linecap="round"
+      marker-start="url(#{uid}-zone)"
+      marker-end="url(#{uid}-zone)"
+      pointer-events="none"
+    >
+      {#each zoned as player, i (i)}
+        <path d="M{player.at[0] - ZONE_OUT},{player.at[1] + ZONE_FORWARD} L{player.at[0]},{player.at[1]} L{player.at[0] + ZONE_OUT},{player.at[1] + ZONE_FORWARD}" />
+      {/each}
+    </g>
+  {/if}
 
   <!-- Where players stood in the step before: under the arrows and players, and not to be tapped. -->
   {#if trails.length}

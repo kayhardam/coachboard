@@ -40,7 +40,9 @@ export const BUDGETS = {
   html: 7_500, // the board, the largest page: 6.6 KB on 3 November 2026 (every text of the board goes along as a prop)
   // Worst case: a library item draws every step, and the largest the schema allows
   // (8 steps of 100 characters, 3 related items) was about 7.5 KB in phase 19-1 (L7, docs/metingen.md).
-  libraryHtml: 8_500,
+  // Raised on 7 November 2026: a defense with numbered defenders and their zones drawn in every step
+  // (6-0-defense-basics, six steps) is 8.6 KB; one of eight steps would be about 9.5 KB.
+  libraryHtml: 10_000,
   png: 60_000, // worst case: the largest share image, 52.9 KB for fast-break-second-wave/og.png on white (4 November 2026), with room for a new one; the four og-default/og-viewer PNGs are about 28 KB each with a palette (og-viewer-nl.png without one: 61.8 KB)
 };
 

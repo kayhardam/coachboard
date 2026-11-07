@@ -90,4 +90,17 @@ describe("Court", () => {
     // Under the arrows and the players.
     expect(body.indexOf('class="trails"')).toBeLessThan(body.indexOf('data-kind="player"'));
   });
+
+  it("draws a zone only for the listed labels: two grey arrows from the player, under everything, not to be tapped", () => {
+    expect(render(Court, { props: { board: defaultBoard } }).body).not.toContain('class="zones"');
+    const body = render(Court, { props: { board: defaultBoard, zones: ["GK", "LW", "nobody"] } }).body;
+    const zones = body.match(/<g class="zones"[^>]*>(.*?)<\/g>/s)!;
+    expect(zones[0]).toContain('pointer-events="none"');
+    expect(zones[0]).toContain('stroke="#94a3b8"');
+    expect(zones[0]).not.toContain("data-kind");
+    // One path per listed player who is on the board: from forward-left, through the player, to forward-right.
+    expect(count(zones[1]!, "<path")).toBe(2);
+    expect(zones[1]).toContain("M-13,46 L8,16 L29,46");
+    expect(body.indexOf('class="zones"')).toBeLessThan(body.indexOf('class="trails"') === -1 ? body.indexOf('data-kind="arrow"') === -1 ? body.indexOf('data-kind="player"') : body.indexOf('data-kind="arrow"') : body.indexOf('class="trails"'));
+  });
 });
