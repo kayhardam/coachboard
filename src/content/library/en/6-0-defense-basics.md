@@ -5,11 +5,13 @@ category: defense
 ages: [u14, u16, u18, senior]
 level: basic
 summary: >-
-  In the 6-0 defense, six defenders form a line just outside the goal area. They shift together with
-  the ball. That forces the attack to shoot from distance.
+  In the 6-0 defense, six defenders form a line just outside the goal area, each in their own zone.
+  Whoever has the ball is always defended. The rest shift with the ball.
 coachingPoints:
-  - "Center defenders: call every shift."
-  - Keep the pivot in front of you, never behind your back.
+  - "Always someone on the ball: step out to whoever can score."
+  - Step out to the side of their throwing arm.
+  - Call every shift and every switch on P.
+  - Keep P in front of you, never behind your back.
   - "Keep your arms up: that way you disrupt the pass, not just the shot."
   - Shift with small, quick steps and don't cross your feet.
 related:
@@ -20,7 +22,7 @@ board:
   court: half
   cones: []
   frames:
-    - text: "Each defender stands just outside the goal area and covers the attacker in front of them."
+    - text: "Each defender stands just outside the goal area and covers their zone, not a fixed attacker."
       players:
         - { team: a, label: LW, at: [10, 50] }
         - { team: a, label: LB, at: [48, 122] }
@@ -37,7 +39,7 @@ board:
         - { team: d, at: [178, 30] }
       balls: [[110, 124]]
       arrows: []
-    - text: "When an attacker gets the ball, their defender steps out to them."
+    - text: "Whoever has the ball can score: the defender whose zone the ball reaches steps out to them."
       players:
         - { team: a, label: LW, at: [10, 50] }
         - { team: a, label: LB, at: [48, 122] }
@@ -56,7 +58,7 @@ board:
       arrows:
         - { kind: pass, from: 2, pts: [[100, 132], [48, 122]] }
         - { kind: run, from: 8, pts: [[48, 58], [48, 94]] }
-    - text: "The rest of the line shifts toward the ball."
+    - text: "The rest of the line shifts toward the ball, so no one gets in behind the one who stepped out."
       players:
         - { team: a, label: LW, at: [10, 50] }
         - { team: a, label: LB, at: [48, 122] }
@@ -77,7 +79,7 @@ board:
         - { kind: run, from: 10, pts: [[120, 66], [100, 68]] }
         - { kind: run, from: 11, pts: [[152, 58], [132, 64]] }
         - { kind: run, from: 12, pts: [[178, 30], [162, 46]] }
-    - text: "When the pivot moves along the line, the next defender picks them up."
+    - text: "When P runs along the line, their defender passes them on and the next defender picks them up."
       players:
         - { team: a, label: LW, at: [10, 50] }
         - { team: a, label: LB, at: [48, 122] }

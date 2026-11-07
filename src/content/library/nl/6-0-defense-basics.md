@@ -5,11 +5,13 @@ category: defense
 ages: [u14, u16, u18, senior]
 level: basic
 summary: >-
-  In de 6-0-dekking staan zes verdedigers op een lijn, net buiten de 6 meter. Ze schuiven samen mee met
-  de bal. Zo moet de aanval van afstand schieten.
+  In de 6-0-dekking staan zes verdedigers op een lijn net buiten de 6 meter, elk in een eigen zone.
+  Wie de bal heeft, wordt altijd verdedigd. De rest schuift mee met de bal.
 coachingPoints:
-  - "Middenverdedigers: roep elke verschuiving."
-  - Houd de cirkelloper voor je, nooit achter je rug.
+  - "Altijd iemand op de bal: stap uit naar wie kan scoren."
+  - Stap uit naar de kant van zijn werparm.
+  - Roep elke verschuiving en elke overname van de CL.
+  - Houd de CL voor je, nooit achter je rug.
   - "Houd je armen omhoog: zo hinder je de pass, niet alleen het schot."
   - Schuif met kleine, snelle passen en kruis je voeten niet.
 related:
@@ -21,7 +23,7 @@ board:
   court: half
   cones: []
   frames:
-    - text: "Elke verdediger staat net buiten de 6 meter en dekt de aanvaller voor zich."
+    - text: "Elke verdediger staat net buiten de 6 meter en dekt zijn zone, niet een vaste aanvaller."
       players:
         - { team: a, label: LH, at: [10, 50] }
         - { team: a, label: LO, at: [48, 122] }
@@ -38,7 +40,7 @@ board:
         - { team: d, at: [178, 30] }
       balls: [[110, 124]]
       arrows: []
-    - text: "Krijgt een aanvaller de bal, dan stapt zijn verdediger naar hem uit."
+    - text: "Wie de bal heeft, kan scoren: de verdediger in wiens zone de bal komt, stapt naar hem uit."
       players:
         - { team: a, label: LH, at: [10, 50] }
         - { team: a, label: LO, at: [48, 122] }
@@ -57,7 +59,7 @@ board:
       arrows:
         - { kind: pass, from: 2, pts: [[100, 132], [48, 122]] }
         - { kind: run, from: 8, pts: [[48, 58], [48, 94]] }
-    - text: "De rest van de lijn schuift mee naar de kant van de bal."
+    - text: "De rest van de lijn schuift mee naar de bal, zodat niemand achter de uitstapper langs komt."
       players:
         - { team: a, label: LH, at: [10, 50] }
         - { team: a, label: LO, at: [48, 122] }
@@ -78,7 +80,7 @@ board:
         - { kind: run, from: 10, pts: [[120, 66], [100, 68]] }
         - { kind: run, from: 11, pts: [[152, 58], [132, 64]] }
         - { kind: run, from: 12, pts: [[178, 30], [162, 46]] }
-    - text: "Loopt de cirkelloper langs de lijn, dan neemt de volgende verdediger hem over."
+    - text: "Loopt de CL langs de lijn, dan geeft zijn verdediger hem door en neemt de buur hem over."
       players:
         - { team: a, label: LH, at: [10, 50] }
         - { team: a, label: LO, at: [48, 122] }
