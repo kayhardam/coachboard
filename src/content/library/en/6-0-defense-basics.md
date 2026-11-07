@@ -121,7 +121,7 @@ board:
         - { kind: pass, from: 2, pts: [[100, 132], [152, 122]] }
         - { kind: run, from: 9, pts: [[92, 108], [84, 64]] }
         - { kind: run, from: 11, pts: [[146, 60], [150, 98]] }
-    - text: "RB passes to RW: the wing defender steps out and the one who was out drops back."
+    - text: "When P runs along the line, their defender passes them on and the next defender picks them up."
       players:
         - { team: a, label: LW, at: [10, 50] }
         - { team: a, label: LB, at: [48, 122] }
@@ -137,26 +137,6 @@ board:
         - { team: d, at: [150, 98] }
         - { team: d, at: [176, 32] }
       balls: [[162, 114]]
-      arrows:
-        - { kind: pass, from: 3, pts: [[152, 122], [190, 50]] }
-        - { kind: run, from: 11, pts: [[150, 98], [152, 62]] }
-        - { kind: run, from: 12, pts: [[176, 32], [170, 52]] }
-    - text: "When P runs along the line, their defender passes them on and the next defender picks them up."
-      players:
-        - { team: a, label: LW, at: [10, 50] }
-        - { team: a, label: LB, at: [48, 122] }
-        - { team: a, label: CB, at: [100, 132] }
-        - { team: a, label: RB, at: [152, 122] }
-        - { team: a, label: RW, at: [190, 50] }
-        - { team: a, label: P, at: [100, 80] }
-        - { team: d, label: GK, at: [92, 8] }
-        - { team: d, at: [22, 30] }
-        - { team: d, at: [52, 62] }
-        - { team: d, at: [84, 64] }
-        - { team: d, at: [112, 64] }
-        - { team: d, at: [152, 62] }
-        - { team: d, at: [170, 52] }
-      balls: [[200, 42]]
       arrows:
         - { kind: run, from: 5, pts: [[100, 80], [124, 88]] }
         - { kind: run, from: 10, pts: [[112, 64], [130, 68]] }
