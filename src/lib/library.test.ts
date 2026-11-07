@@ -249,6 +249,13 @@ describe("checkLibrary", () => {
     expect(checkLibrary([entry("en/a", "en/b")], locales)).toEqual(['"en/a": related "en/b" doesn\'t exist']);
   });
 
+  it("accepts zones of players on the board and rejects a label nobody has", () => {
+    expect(checkLibrary([{ ...entry("en/a"), zones: ["LB"] }], locales)).toEqual([]);
+    expect(checkLibrary([{ ...entry("en/a"), zones: ["LB", "L1"] }], locales)).toEqual([
+      '"en/a": zones names "L1", but no player has that label',
+    ]);
+  });
+
   it("rejects a translation of another type", () => {
     expect(checkLibrary([entry("en/a"), { ...entry("nl/a"), type: "drill" }], locales)).toEqual([
       '"nl/a": is a drill, but "en/a" is a tactic; a translation has the same type',

@@ -18,6 +18,7 @@ related:
   - nl/fast-break-second-wave
   - nl/step-out-and-shift
   - nl/5-1-defense-basics
+zones: [L1, L2, L3, R3, R2, R1]
 board:
   v: 2
   court: half

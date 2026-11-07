@@ -71,7 +71,7 @@ const hasBody = Boolean(item.entry.body?.trim());
 
     <section>
       <h2>{t(lang, text.steps)}</h2>
-      <StepStrip lang={lang} board={data.board} />
+      <StepStrip lang={lang} board={data.board} zones={data.zones} />
     </section>
 
     <slot name="lists" />

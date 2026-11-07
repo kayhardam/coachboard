@@ -17,6 +17,7 @@ coachingPoints:
 related:
   - en/fast-break-second-wave
   - en/step-out-and-shift
+zones: [L1, L2, L3, R3, R2, R1]
 board:
   v: 2
   court: half

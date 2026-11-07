@@ -24,6 +24,8 @@ const item = {
   coachingPoints: points,
   /** Full ids in the same language, e.g. "en/fast-break-second-wave". */
   related: z.array(reference("library")).max(3).default([]),
+  /** Labels of the players whose zone the page draws (two grey arrows, forward and out): a defense's defenders. */
+  zones: z.array(z.string().min(1).max(3)).max(14).default([]),
   /** The same guard as the board, so every drawing opens there too. Each step's sentence is in it. */
   board: z
     .custom<Board>(

@@ -156,6 +156,8 @@ export interface ItemRef {
   ages: number[];
   board: Board;
   related: { id: string }[];
+  /** Labels whose zone the page draws; every one must be a player on the board. */
+  zones?: readonly string[];
 }
 
 /**
@@ -170,7 +172,7 @@ export function checkLibrary(entries: ItemRef[], locales: readonly string[], cat
   const bySlug = new Map<string, ItemRef>();
   const ids = new Set(entries.map((e) => e.id));
   for (const entry of entries) {
-    const { id, type, ages, board, related } = entry;
+    const { id, type, ages, board, related, zones = [] } = entry;
     const { lang, slug } = parseId(id);
     if (!locales.includes(lang)) {
       errors.push(`"${id}": put it in a language folder (${locales.join(", ")})`);
@@ -188,6 +190,9 @@ export function checkLibrary(entries: ItemRef[], locales: readonly string[], cat
       if (r.id === id) errors.push(`"${id}": lists itself as related`);
       else if (parseId(r.id).lang !== lang) errors.push(`"${id}": related "${r.id}" is in another language`);
       else if (!ids.has(r.id)) errors.push(`"${id}": related "${r.id}" doesn't exist`);
+    }
+    for (const label of zones) {
+      if (!board.frames[0]!.players.some((p) => p.label === label)) errors.push(`"${id}": zones names "${label}", but no player has that label`);
     }
     errors.push(...checkBalls(board).map((e) => `"${id}": ${e}`));
     const other = bySlug.get(slug);
