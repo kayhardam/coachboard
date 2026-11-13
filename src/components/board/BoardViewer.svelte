@@ -7,7 +7,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { ViewerStrings } from "../../i18n/ui";
-  import { decode, type Board } from "../../lib/board/format";
+  import { decode, unescapeLink, type Board } from "../../lib/board/format";
   import { reloadForNewer } from "../../lib/board/newer";
   import { moment } from "../../lib/board/play";
   import { legendOf, moveFor, moves, stillFor, type LegendItem } from "../../lib/board/viewer";
@@ -139,9 +139,10 @@
     halt();
     // Nothing to show here: the editor, with your own board.
     if (!location.hash.startsWith("#t=")) return location.replace(editor);
-    link = decodeURIComponent(location.hash.slice(3));
-    const opened = await decode(link);
-    if (!opened && reloadForNewer(link)) return;
+    // A broken %-sequence is a broken link, like any other.
+    link = unescapeLink(location.hash.slice(3)) ?? "";
+    const opened = link ? await decode(link) : null;
+    if (!opened && link && reloadForNewer(link)) return;
     board = opened;
     broken = !opened;
     show(0);

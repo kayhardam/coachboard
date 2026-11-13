@@ -248,6 +248,17 @@ test("a broken link shows the notice on an empty court", async ({ page }) => {
   expect(loads).toBe(1);
 });
 
+test("a link with a broken %-sequence is a broken link: the notice, and no Edit a copy", async ({ page }) => {
+  let loads = 0;
+  page.on("load", () => loads++);
+  await page.goto("/en/board/link/#t=2.%E0%A4%A");
+  await expect(sentence(page)).toHaveText(t("en", "viewer.broken"));
+  await expect(page.locator(".stage [data-kind]")).toHaveCount(0);
+  // As with any broken link: nothing to copy, so no way to #t=null.
+  await expect(page.locator(".viewer .edit")).toHaveCount(0);
+  expect(loads).toBe(1);
+});
+
 test("a link from a newer version reloads once, then shows the notice", async ({ page }) => {
   await page.goto("/en/board/link/#t=3.fromthefuture");
   await expect(sentence(page)).toHaveText(t("en", "viewer.broken"));

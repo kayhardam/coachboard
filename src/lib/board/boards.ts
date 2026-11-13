@@ -9,7 +9,7 @@
 // The order of the list is the order within a folder: a training's boards in
 // the order you run them. Folders, and the boards without one, show by date.
 
-import { decode, encode, MAX_TITLE, sameBoard, toBoard, type Board } from "./format";
+import { decode, encode, MAX_TITLE, sameBoard, toBoard, unescapeLink, type Board } from "./format";
 
 /** A board you keep. `at` is when it last changed (ms since 1970). */
 export interface Saved {
@@ -285,11 +285,8 @@ export function isUntouchedDefault(board: Board): boolean {
 
 /** The board in a link's text after `#t=`, or null: a broken %-sequence is not a link either. */
 async function boardIn(link: string): Promise<Board | null> {
-  try {
-    return await decode(decodeURIComponent(link));
-  } catch {
-    return null;
-  }
+  const text = unescapeLink(link);
+  return text === null ? null : decode(text);
 }
 
 /**

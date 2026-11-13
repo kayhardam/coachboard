@@ -8,7 +8,7 @@
   import type { BoardStrings } from "../../i18n/ui";
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
-  import { decode, encode, MAX_STEPS, MAX_TEXT, MAX_TITLE, sameBoard, toBoard, type Board } from "../../lib/board/format";
+  import { decode, encode, MAX_STEPS, MAX_TEXT, MAX_TITLE, sameBoard, toBoard, unescapeLink, type Board } from "../../lib/board/format";
   import { reloadForNewer } from "../../lib/board/newer";
   import { SETUPS, setup } from "../../lib/board/defaults";
   import { moment } from "../../lib/board/play";
@@ -347,16 +347,30 @@
 
   // ===== Loading and saving =====
 
-  async function fromHash(): Promise<Board | null | undefined> {
+  /** The link in `#t=`: undefined without one, null for a broken %-sequence. */
+  function hashLink(): string | null | undefined {
     if (!location.hash.startsWith("#t=")) return undefined;
-    return decode(decodeURIComponent(location.hash.slice(3)));
+    return unescapeLink(location.hash.slice(3));
+  }
+
+  async function fromHash(): Promise<Board | null | undefined> {
+    const link = hashLink();
+    return link === undefined ? undefined : link === null ? null : decode(link);
+  }
+
+  /** A link from a newer version reloads the page; a broken %-sequence is just broken. */
+  function newer(): boolean {
+    const link = hashLink();
+    return !!link && reloadForNewer(link);
   }
 
   /** The board you had on workers.dev, brought along as #own= by the redirect in board.astro. */
   function movedBoard(): Board | undefined {
     if (!location.hash.startsWith("#own=")) return undefined;
+    const json = unescapeLink(location.hash.slice(5));
+    if (json === null) return undefined;
     try {
-      return toBoard(JSON.parse(decodeURIComponent(location.hash.slice(5)))) ?? undefined;
+      return toBoard(JSON.parse(json)) ?? undefined;
     } catch {
       return undefined;
     }
@@ -383,7 +397,7 @@
     (async () => {
       const shared = await fromHash();
       // Before `loaded`, so the save doesn't replace the link in the address bar.
-      if (shared === null && reloadForNewer(decodeURIComponent(location.hash.slice(3)))) return;
+      if (shared === null && newer()) return;
       const list = readList() ?? { current: null, boards: [] };
       boards = list.boards;
       const find = (id: unknown) => list.boards.find((s) => s.id === id);
@@ -396,7 +410,7 @@
       const last = find(list.current);
       if (!own && last && (!shared || (await encode(last.board)) === (await encode(shared)))) own = last;
       // A copy: the same board in My boards opens; else it is kept at once.
-      const isCopy = !!shared && copy === decodeURIComponent(location.hash.slice(3));
+      const isCopy = !!shared && copy === hashLink();
       if (!own && isCopy) own = list.boards.find((s) => sameBoard(s.board, shared));
       if (own) open(own.board, own.id);
       else if (shared) {
@@ -424,7 +438,7 @@
       const shared = own ? undefined : await fromHash();
       if (own) open(own.board, own.id);
       else if (shared) open(shared, null);
-      else if (shared === null && !reloadForNewer(decodeURIComponent(location.hash.slice(3)))) show(strings["board.invalidLink"], true);
+      else if (shared === null && !newer()) show(strings["board.invalidLink"], true);
       if (own || shared) step = Math.min(was, board.frames.length - 1);
     };
     addEventListener("hashchange", onHash);
