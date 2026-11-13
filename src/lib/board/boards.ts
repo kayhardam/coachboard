@@ -283,6 +283,15 @@ export function isUntouchedDefault(board: Board): boolean {
 
 // ===== Export and import =====
 
+/** The board in a link's text after `#t=`, or null: a broken %-sequence is not a link either. */
+async function boardIn(link: string): Promise<Board | null> {
+  try {
+    return await decode(decodeURIComponent(link));
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Export all boards: one file with each board as its link, and only its
  * folder and date around it, so no second format comes along. The file is a
@@ -328,12 +337,7 @@ export async function importFile(text: string, now = Date.now()): Promise<Saved[
   const read = await Promise.all(
     list.map(async (entry: { link?: unknown; folder?: unknown; at?: unknown } | null) => {
       if (typeof entry?.link !== "string") return [];
-      let board: Board | null = null;
-      try {
-        board = await decode(decodeURIComponent(entry.link.replace(/^[^#]*#t=/, "")));
-      } catch {
-        // Not URI-encoded properly: not a link.
-      }
+      const board = await boardIn(entry.link.replace(/^[^#]*#t=/, ""));
       if (!board) return [];
       const at = typeof entry.at === "string" ? Date.parse(entry.at) : NaN;
       return [withFolder({ id: newId(), board, at: at > 0 ? at : now }, typeof entry.folder === "string" ? entry.folder : "")];
@@ -356,4 +360,61 @@ export function newOnly(boards: Saved[], found: Saved[]): Saved[] {
 export function addImported(boards: Saved[], found: Saved[]) {
   const added = newOnly(boards, found);
   return { added, boards: [...boards, ...added] };
+}
+
+/**
+ * Share folder's message: the folder's name, then each board's title and its
+ * link. Once sent it sits in team chats, so what is sent now must read forever
+ * (readMessage(), fixtures/message/). `base` is the URL up to the link
+ * (…/board/link/#t=), `untitled` the title of a board without one.
+ */
+export async function folderMessage(folder: string, boards: Saved[], base: string, untitled: string): Promise<string> {
+  const blocks = await Promise.all(boards.map(async (s) => `${s.board.title ?? untitled}\n${base}${await encode(s.board)}`));
+  return [folder, ...blocks].join("\n\n");
+}
+
+/** What a chat app can do to a message without changing its form: line endings, spaces at a line's ends, hard spaces, invisible marks. */
+const normalized = (text: string) =>
+  text
+    .replace(/\r\n?|\u2028|\u2029/g, "\n")
+    .replace(/[\u00a0\u2007\u202f]/g, " ")
+    .replace(/[\u200b\u200e\u200f\u2060\ufeff]/g, "")
+    .replace(/^[ \t]+|[ \t]+$/gm, "")
+    .trim();
+
+/** The folder's name if a (normalized) message has the form of folderMessage(): anything else is loose links. */
+function folderOf(text: string): string | undefined {
+  const [name, ...blocks] = text.split(/\n{2,}/);
+  const isBlock = (block: string) => {
+    const lines = block.split("\n");
+    return lines.length === 2 && !lines[0]!.includes("#t=") && /^\S*#t=\S+$/.test(lines[1]!);
+  };
+  return name && !/\n|#t=/.test(name) && blocks.length && blocks.every(isBlock) ? name : undefined;
+}
+
+/**
+ * The board in a link as it stands in a text. It reads as it is first, so a
+ * link ending in such a mark stays whole; only if it doesn't are marks at its
+ * end, from the sentence around it, taken off one by one.
+ */
+async function readLink(link: string): Promise<Board | null> {
+  for (;;) {
+    const board = await boardIn(link);
+    if (board || !/[.,;:!?)\]}>"'’”»…]$/.test(link)) return board;
+    link = link.slice(0, -1);
+  }
+}
+
+/**
+ * Open a link: every link in a pasted text, as a board under a new id, in
+ * order; `links` counts them all, so links minus boards didn't read. A message
+ * of Share folder comes back as its folder.
+ */
+export async function readMessage(text: string, now = Date.now()): Promise<{ boards: Saved[]; links: number; folder?: string }> {
+  const clean = normalized(text);
+  const links = [...clean.matchAll(/#t=(\S+)/g)].map((m) => m[1]!);
+  const folder = folderName(folderOf(clean) ?? "");
+  const read = await Promise.all(links.map(readLink));
+  const boards = read.flatMap((board) => (board ? [withFolder({ id: newId(), board, at: now }, folder)] : []));
+  return { boards, links: links.length, ...(folder ? { folder } : {}) };
 }

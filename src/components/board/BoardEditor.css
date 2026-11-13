@@ -945,7 +945,10 @@
   color: var(--color-text-muted);
   font-size: 0.875rem;
 }
-.boards .backup :is(button, label) {
+.boards .backup p.tip {
+  color: var(--color-text);
+}
+.boards :is(.backup button, .backup label, .paste button) {
   position: relative; /* holds the input, so focusing it doesn't scroll the list */
   display: flex;
   align-items: center;
@@ -960,8 +963,30 @@
   font-weight: 600;
   cursor: pointer;
 }
-.boards .backup :is(button, label):hover {
+.boards :is(.backup button, .backup label, .paste button):hover {
   background: var(--color-bg-soft);
+}
+/* Open a link: the label above the field, as a heading; 16 px, or an iPhone zooms in on focus. */
+.boards .paste {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.boards .paste label {
+  display: grid;
+  gap: 4px;
+  font-weight: 600;
+}
+.boards .paste textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  resize: none;
 }
 /* The focus ring of base.css, on the label: the input is out of sight. */
 .boards .backup label:has(input:focus-visible) {

@@ -406,7 +406,7 @@ for (const lang of ["en", "nl"]) {
         expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
       }
       const cut = await list
-        .locator(":is(h2, h3, .new, .actions-panel button, .backup button, .backup label)")
+        .locator(":is(h2, h3, .new, .actions-panel button, .backup button, .backup label, .paste button)")
         .evaluateAll((els) => els.filter((e) => e.clientWidth > 1 && e.scrollWidth > e.clientWidth).map((e) => e.textContent));
       expect(cut).toEqual([]);
       expect(await list.evaluate((d) => d.scrollWidth - d.clientWidth)).toBe(0);
