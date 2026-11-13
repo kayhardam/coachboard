@@ -163,6 +163,26 @@ test("a broken link without a saved board shows the default lineup, until you di
   await expect(notice).toBeHidden();
 });
 
+// decodeURIComponent throws on this: a %-sequence cut short.
+const brokenSequence = "#t=2.%E0%A4%A";
+
+test("a link with a broken %-sequence is a broken link: the notice, no reload", async ({ page, context }) => {
+  await openBoard(page, brokenSequence);
+  await expect(page.getByRole("status")).toContainText(t("en", "board.invalidLinkDefault"));
+  await expectBoard(page, defaultBoard);
+
+  const own = await saveOwnBoard(page);
+  const drawn = await pieces(page);
+  const other = await context.newPage();
+  const loads = countLoads(other);
+  await openBoard(other, brokenSequence);
+  await expect(other.getByRole("status")).toContainText(t("en", "board.invalidLink"));
+  await expect.poll(() => pieces(other)).toEqual(drawn);
+  await other.waitForTimeout(600);
+  expect(await saved(other)).toBe(own);
+  expect(loads.count).toBe(1);
+});
+
 // No code reads version 3 yet, so after its one reload this link still fails:
 // the reload has to stop there and show the notice for a broken link.
 const newerLink = "#t=3.from-newer-code";

@@ -701,3 +701,43 @@ for (const { name, orientation, size, path } of STAY_PUT) {
     }
   });
 }
+
+// Finding 17: the ⋯ menu of a row in My boards opened downward, so on an iPhone 15 the menu of a
+// bottom row ended below the screen, with New folder and the folders out of reach. With a folder
+// above the boards without one, the bottom row's menu now opens upward, whole on screen.
+for (const lang of ["en", "nl"]) {
+  test(`${lang}, 390×659: the ⋯ menu of the bottom row in My boards is whole on screen`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 659 });
+    await page.goto(`/${lang}/`);
+    const board = (title: string) => ({ ...defaultBoardFor(lang), title });
+    const boards = [
+      { id: "f1", board: board("Warm-up"), folder: "Training", at: 9000 },
+      ...[1, 2, 3, 4, 5, 6].map((n) => ({ id: `b${n}`, board: board(`Board ${n}`), at: 8000 - n })),
+    ];
+    await page.evaluate(([key, value]) => localStorage.setItem(key, value), [STORE_KEY, JSON.stringify({ current: null, boards })] as const);
+    await openBoard(page, "", `/${lang}/board/`);
+    await fromMenu(page, "board.myBoards", lang);
+    const dialog = page.getByRole("dialog", { name: t(lang, "board.myBoards") });
+    const rows = dialog.locator("li");
+    await expect(rows).toHaveCount(7);
+
+    // The top row's menu still opens downward.
+    const first = rows.first();
+    await first.locator("summary").click();
+    await expect(first.locator(".actions-panel")).toBeInViewport({ ratio: 1 });
+    expect(await first.locator(".actions").evaluate((d) => d.classList.contains("up"))).toBe(false);
+    await first.locator("summary").click();
+
+    // The bottom row at the bottom of the screen, as after swiping down the list.
+    const bottom = rows.last();
+    await bottom.evaluate((row) => row.scrollIntoView({ block: "end" }));
+    await expect(bottom.locator("summary")).toBeInViewport({ ratio: 1 });
+    await bottom.locator("summary").click();
+    const panel = bottom.locator(".actions-panel");
+    await expect(panel.getByRole("button", { name: t(lang, "board.newFolder"), exact: true })).toBeVisible();
+    await expect(panel).toBeInViewport({ ratio: 1 });
+    // Not under the sticky bar with the heading either.
+    const bar = (await dialog.locator(".boards-bar").boundingBox())!;
+    expect((await panel.boundingBox())!.y).toBeGreaterThanOrEqual(bar.y + bar.height - 0.5);
+  });
+}

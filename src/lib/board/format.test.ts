@@ -16,6 +16,7 @@ import {
   sameBoard,
   settle,
   toBoard,
+  unescapeLink,
   type Board,
   type BoardV1,
   type Pt,
@@ -292,6 +293,19 @@ describe("sameBoard", () => {
       change(b);
       expect(sameBoard(board(), b)).toBe(false);
     }
+  });
+});
+
+describe("unescapeLink", () => {
+  it("reads the %-sequences of a link", async () => {
+    const link = await encode(defaultBoard);
+    expect(unescapeLink(link)).toBe(link);
+    expect(unescapeLink(encodeURIComponent(link))).toBe(link);
+    expect(unescapeLink("2.a%2Bb")).toBe("2.a+b");
+  });
+
+  it("gives null for a broken %-sequence, without throwing", () => {
+    for (const text of ["2.%E0%A4%A", "2.%", "2.%zz", "2.%C3"]) expect(unescapeLink(text)).toBeNull();
   });
 });
 

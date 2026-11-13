@@ -8,7 +8,7 @@
   import type { BoardStrings } from "../../i18n/ui";
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
-  import { decode, encode, MAX_STEPS, MAX_TEXT, MAX_TITLE, sameBoard, toBoard, type Board } from "../../lib/board/format";
+  import { decode, encode, MAX_STEPS, MAX_TEXT, MAX_TITLE, sameBoard, toBoard, unescapeLink, type Board } from "../../lib/board/format";
   import { reloadForNewer } from "../../lib/board/newer";
   import { SETUPS, setup } from "../../lib/board/defaults";
   import { moment } from "../../lib/board/play";
@@ -347,16 +347,30 @@
 
   // ===== Loading and saving =====
 
-  async function fromHash(): Promise<Board | null | undefined> {
+  /** The link in `#t=`: undefined without one, null for a broken %-sequence. */
+  function hashLink(): string | null | undefined {
     if (!location.hash.startsWith("#t=")) return undefined;
-    return decode(decodeURIComponent(location.hash.slice(3)));
+    return unescapeLink(location.hash.slice(3));
+  }
+
+  async function fromHash(): Promise<Board | null | undefined> {
+    const link = hashLink();
+    return link === undefined ? undefined : link === null ? null : decode(link);
+  }
+
+  /** A link from a newer version reloads the page; a broken %-sequence is just broken. */
+  function newer(): boolean {
+    const link = hashLink();
+    return !!link && reloadForNewer(link);
   }
 
   /** The board you had on workers.dev, brought along as #own= by the redirect in board.astro. */
   function movedBoard(): Board | undefined {
     if (!location.hash.startsWith("#own=")) return undefined;
+    const json = unescapeLink(location.hash.slice(5));
+    if (json === null) return undefined;
     try {
-      return toBoard(JSON.parse(decodeURIComponent(location.hash.slice(5)))) ?? undefined;
+      return toBoard(JSON.parse(json)) ?? undefined;
     } catch {
       return undefined;
     }
@@ -369,13 +383,23 @@
     const idle = window.requestIdleCallback ?? ((run: () => void) => setTimeout(run, 500));
     idle(() => loadQr().catch(() => (qrLibrary = undefined)));
 
-    // "Edit a copy" in the viewer leaves the link it opens here. Removed at
-    // once, whatever it holds: it counts only for this opening, and only for
-    // the link in the address bar, so an old one keeps no other board.
-    let copy: string | null = null;
+    // "Edit a copy" in the viewer leaves the link it opens here, with the step
+    // it showed. Removed at once, whatever it holds: it counts only for this
+    // opening, and only for the link in the address bar, so an old one keeps
+    // no other board.
+    let copy: { link: unknown; step: number } | null = null;
     try {
-      copy = sessionStorage.getItem(COPY_KEY);
+      const raw = sessionStorage.getItem(COPY_KEY);
       sessionStorage.removeItem(COPY_KEY);
+      if (raw !== null) {
+        try {
+          const { link, step } = JSON.parse(raw);
+          copy = { link, step: Number.isInteger(step) && step > 0 ? step : 0 };
+        } catch {
+          // Only the link, as a viewer from before the step came along left it.
+          copy = { link: raw, step: 0 };
+        }
+      }
     } catch {
       // No storage: the board opens as a received one, kept at its first change.
     }
@@ -383,7 +407,7 @@
     (async () => {
       const shared = await fromHash();
       // Before `loaded`, so the save doesn't replace the link in the address bar.
-      if (shared === null && reloadForNewer(decodeURIComponent(location.hash.slice(3)))) return;
+      if (shared === null && newer()) return;
       const list = readList() ?? { current: null, boards: [] };
       boards = list.boards;
       const find = (id: unknown) => list.boards.find((s) => s.id === id);
@@ -391,12 +415,13 @@
       // history, next to the link and not in it. Without that (a browser that
       // lost the tab's history), the link must draw the board you had open.
       let own = find(history.state?.board);
-      // A reload opens the step you were on; a link, a QR code or a board from My boards opens step 1.
-      const was = Number(history.state?.step) || 0;
       const last = find(list.current);
       if (!own && last && (!shared || (await encode(last.board)) === (await encode(shared)))) own = last;
       // A copy: the same board in My boards opens; else it is kept at once.
-      const isCopy = !!shared && copy === decodeURIComponent(location.hash.slice(3));
+      const isCopy = !!shared && copy?.link === hashLink();
+      // A reload opens the step you were on, a copy the step the viewer showed;
+      // a link, a QR code or a board from My boards opens step 1.
+      const was = Number(history.state?.step) || (isCopy ? copy!.step : 0);
       if (!own && isCopy) own = list.boards.find((s) => sameBoard(s.board, shared));
       if (own) open(own.board, own.id);
       else if (shared) {
@@ -424,7 +449,7 @@
       const shared = own ? undefined : await fromHash();
       if (own) open(own.board, own.id);
       else if (shared) open(shared, null);
-      else if (shared === null && !reloadForNewer(decodeURIComponent(location.hash.slice(3)))) show(strings["board.invalidLink"], true);
+      else if (shared === null && !newer()) show(strings["board.invalidLink"], true);
       if (own || shared) step = Math.min(was, board.frames.length - 1);
     };
     addEventListener("hashchange", onHash);
@@ -794,6 +819,21 @@
   );
 
   const titleOf = (s: store.Saved) => s.board.title ?? strings["board.untitled"];
+  /**
+   * A ⋯ menu in My boards opens downward; one that would end below the list's
+   * visible part opens upward, if there is more room above (finding 17).
+   */
+  function placeMenu(e: Event) {
+    const menu = e.currentTarget as HTMLDetailsElement;
+    menu.classList.remove("up");
+    if (!menu.open) return;
+    const panel = menu.querySelector(".actions-panel")!.getBoundingClientRect();
+    const at = menu.getBoundingClientRect();
+    const top = listDialog.querySelector(".boards-bar")!.getBoundingClientRect().bottom;
+    const bottom = Math.min(listDialog.getBoundingClientRect().bottom, innerHeight);
+    if (panel.bottom > bottom && at.top - top > bottom - at.bottom) menu.classList.add("up");
+  }
+
   const moreFor = (title?: string) => (title ? strings["board.moreFor"].replace("{title}", title) : strings["board.moreForUntitled"]);
   const date = (at: number) =>
     new Date(at).toLocaleDateString(document.documentElement.lang, { day: "numeric", month: "short" });
@@ -1382,7 +1422,7 @@
         {/if}
       </h3>
       {#if folder !== undefined && renaming !== folder}
-        <details class="actions">
+        <details class="actions" ontoggle={placeMenu}>
           <summary aria-label={moreFor(folder)} title={moreFor(folder)}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.more} /></svg>
           </summary>
@@ -1401,7 +1441,7 @@
             <span class="name">{titleOf(s)}</span>
             <time datetime={new Date(s.at).toISOString()}>{date(s.at)}</time>
           </button>
-          <details class="actions">
+          <details class="actions" ontoggle={placeMenu}>
             <summary aria-label={moreFor(s.board.title)} title={moreFor(s.board.title)}>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.more} /></svg>
             </summary>

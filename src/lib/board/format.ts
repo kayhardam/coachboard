@@ -423,6 +423,18 @@ export function isNewerLink(link: string): boolean {
   return dot > 0 && /^[1-9]\d*$/.test(version) && Number(version) > LATEST;
 }
 
+/**
+ * The link in the text after `#t=` (or `#own=`), with its %-sequences read;
+ * null for a broken one, which is a link that doesn't read either.
+ */
+export function unescapeLink(text: string): string | null {
+  try {
+    return decodeURIComponent(text);
+  } catch {
+    return null;
+  }
+}
+
 /** The board in a link, or null for anything that isn't a valid one. */
 export async function decode(link: string): Promise<Board | null> {
   try {

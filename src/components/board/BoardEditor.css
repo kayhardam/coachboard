@@ -897,6 +897,11 @@
   background: var(--color-bg);
   box-shadow: var(--shadow);
 }
+/* Too little room below it (placeMenu() in the editor): the menu opens upward. */
+.boards .actions.up .actions-panel {
+  top: auto;
+  bottom: calc(100% + 2px);
+}
 .boards .actions-panel button {
   display: flex;
   align-items: center;

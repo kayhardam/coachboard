@@ -7,7 +7,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { ViewerStrings } from "../../i18n/ui";
-  import { decode, type Board } from "../../lib/board/format";
+  import { decode, unescapeLink, type Board } from "../../lib/board/format";
   import { reloadForNewer } from "../../lib/board/newer";
   import { moment } from "../../lib/board/play";
   import { legendOf, moveFor, moves, stillFor, type LegendItem } from "../../lib/board/viewer";
@@ -20,7 +20,7 @@
    */
   let { strings, home, editor }: { strings: ViewerStrings; home: string; editor: string } = $props();
 
-  /** Where "Edit a copy" leaves the link it opens, for the editor (BoardEditor.svelte). */
+  /** Where "Edit a copy" leaves the link it opens and the step, for the editor (BoardEditor.svelte). */
   const COPY_KEY = "coachboard.copy";
   /** The court of a link that doesn't open: empty, as in the fallback. */
   const EMPTY: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], balls: [], arrows: [] }] };
@@ -139,9 +139,10 @@
     halt();
     // Nothing to show here: the editor, with your own board.
     if (!location.hash.startsWith("#t=")) return location.replace(editor);
-    link = decodeURIComponent(location.hash.slice(3));
-    const opened = await decode(link);
-    if (!opened && reloadForNewer(link)) return;
+    // A broken %-sequence is a broken link, like any other.
+    link = unescapeLink(location.hash.slice(3)) ?? "";
+    const opened = link ? await decode(link) : null;
+    if (!opened && link && reloadForNewer(link)) return;
     board = opened;
     broken = !opened;
     show(0);
@@ -160,10 +161,13 @@
     else if (e.key === "ArrowLeft") prev();
   }
 
-  /** Edit a copy: the editor keeps this link in My boards at once (decision K4). */
+  /**
+   * Edit a copy: the editor keeps this link in My boards at once (decision K4),
+   * and opens the step on the court (after the last move: the last step).
+   */
   function copy() {
     try {
-      sessionStorage.setItem(COPY_KEY, link);
+      sessionStorage.setItem(COPY_KEY, JSON.stringify({ link, step }));
     } catch {
       // No storage: the editor opens it as a received board, kept at its first change.
     }
