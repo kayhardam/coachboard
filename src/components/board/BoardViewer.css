@@ -10,7 +10,8 @@
   /* The legend: three lines (3 × 19.2 px + 2 × 2 px), also when it needs
      fewer, so the court doesn't move when the viewer fills it in (the
      fallback can't know the board). Every item, with Attack and Defense,
-     takes three on a 320 px phone (in Dutch on a 360 px one too). */
+     takes three on a 320 px phone (in Dutch on a 360 px one too). It also
+     holds "Made with Coachboard" (44 px), which takes its place. */
   --viewer-legend: 62px;
   --viewer-controls: 52px; /* Previous, Play, Next */
   --viewer-wide-side: clamp(240px, 100vw - 620px, 340px); /* the column beside the court, wide */
@@ -188,6 +189,25 @@
   stroke-width: 1.6;
 }
 
+/* ===== Made with Coachboard: after the last step, in the legend's place ===== */
+.viewer .made {
+  grid-area: legend;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  place-self: center;
+  min-height: var(--tap);
+  padding: 0 12px;
+  color: var(--color-accent-dark);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+}
+/* On a phone the legend gives way to it, and comes back with Previous. */
+.viewer .legend:has(+ .made) {
+  display: none;
+}
+
 /* ===== Previous, Play, Next: under the thumb ===== */
 .viewer .controls {
   grid-area: controls;
@@ -324,6 +344,10 @@
     flex-wrap: nowrap;
     align-items: start;
   }
+  .viewer .made {
+    align-self: start;
+    padding: 0 4px;
+  }
   .viewer .controls button {
     min-height: 48px;
   }
@@ -353,6 +377,7 @@
       "title title" minmax(var(--board-title), auto)
       "stage text" minmax(0, 1fr)
       "stage legend" auto
+      "stage made" auto
       "stage controls" auto
       / minmax(0, 1fr) var(--viewer-wide-side);
     max-width: none;
@@ -423,6 +448,16 @@
     justify-content: start;
     gap: 6px 14px;
     font-size: 0.875rem;
+  }
+  /* Beside the court there is room for both: the line comes between the
+     legend and Play, from the list of steps, so Play doesn't move. */
+  .viewer .made {
+    grid-area: made;
+    justify-self: start;
+    padding: 0;
+  }
+  .viewer .legend:has(+ .made) {
+    display: flex;
   }
   .viewer .controls {
     grid-template: auto auto / 1fr 1fr;

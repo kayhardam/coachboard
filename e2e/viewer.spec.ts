@@ -31,6 +31,8 @@ const placeOf = async (page: Page, index: number) => {
 const drawn = (board: Board, step: number) =>
   board.frames[step]!.players.map((p, i) => `player:${i}:translate(${p.at[0]} ${p.at[1]})`);
 const players = async (page: Page) => (await pieces(page)).filter((p) => p.startsWith("player:"));
+/** "Made with Coachboard", after the last step. */
+const made = (page: Page, lang = "en") => page.locator(".viewer").getByRole("link", { name: t(lang, "viewer.made"), exact: true });
 
 /** Opens the crossing with Playwright's clock paused, so the test moves time on itself. */
 async function openPaused(page: Page, link = play.link, path = "/en/board/link/") {
@@ -101,13 +103,20 @@ test("on the last step Next plays its move and stays there; Previous goes back t
     await page.clock.runFor(moveFor(play.board.frames[i]!) + 50);
   }
   await expect(count(page)).toHaveText("4/4");
+  // Its move is still to play: no "Made with Coachboard" yet.
+  await expect(made(page)).toHaveCount(0);
   const last = play.board.frames[3]!;
   await button(page, "viewer.next").click();
-  await page.clock.runFor(moveFor(last) + 50);
+  await page.clock.runFor(moveFor(last) / 2);
+  await expect(made(page)).toHaveCount(0);
+  await page.clock.runFor(moveFor(last) / 2 + 50);
   // Everyone where the last step's arrows take them, and Next is off.
   const ends = last.players.map((_, i) => `player:${i}:translate(${endOf(last, i).join(" ")})`);
   expect(await players(page)).toEqual(ends);
   await expect(button(page, "viewer.next")).toBeDisabled();
+  // Nothing left to play: the line takes the legend's place.
+  await expect(made(page)).toBeVisible();
+  await expect(page.locator(".viewer .legend")).toBeHidden();
   // It stays there.
   await page.clock.runFor(5000);
   expect(await players(page)).toEqual(ends);
@@ -116,6 +125,9 @@ test("on the last step Next plays its move and stays there; Previous goes back t
   await expect(count(page)).toHaveText("4/4");
   expect(await players(page)).toEqual(drawn(play.board, 3));
   await expect(button(page, "viewer.next")).toBeEnabled();
+  // Previous takes it away again, and the legend comes back.
+  await expect(made(page)).toHaveCount(0);
+  await expect(page.locator(".viewer .legend")).toBeVisible();
 });
 
 test("Play goes through every step from the first, each still long enough to read, and ends after the last move", async ({ page }) => {
@@ -128,10 +140,13 @@ test("Play goes through every step from the first, each still long enough to rea
     // Still while it can be read.
     await page.clock.runFor(stillFor(f) / 2);
     expect(await players(page)).toEqual(drawn(play.board, i));
+    // Not while there is anything left to play.
+    await expect(made(page)).toHaveCount(0);
     await page.clock.runFor(stillFor(f) / 2 + moveFor(f) + 50);
   }
   await expect(button(page, "board.play")).toBeVisible();
   await expect(button(page, "viewer.next")).toBeDisabled();
+  await expect(made(page)).toBeVisible();
 });
 
 test("Stop, or a tap on the court, stops on the start of the step", async ({ page }) => {
@@ -207,6 +222,8 @@ test("a board of one step without arrows, a lineup, has Play and Next off", asyn
   await expect(button(page, "board.play")).toBeDisabled();
   await expect(button(page, "viewer.next")).toBeDisabled();
   await expect(button(page, "viewer.prev")).toBeDisabled();
+  // Nothing to play at all: no "Made with Coachboard", so the legend stays (Kay, 13 November 2026).
+  await expect(made(page)).toHaveCount(0);
   await expect(page.locator(".viewer .legend")).toBeVisible();
   await expect(page.locator(".viewer .legend li")).toHaveText(["Attack", "Defense"]);
 });
@@ -234,6 +251,23 @@ test("the legend lists what is on the board, in a fixed order (K9)", async ({ pa
   const attackOnly = { ...play.board, frames: play.board.frames.map((f) => ({ ...f, players: f.players.filter((p) => p.team === "a"), arrows: [] })) };
   await openViewer(page, `#t=${await encode(attackOnly)}`, "/en/board/link/");
   expect((await items()).map((s) => s.trim())).toEqual(["Attack"]);
+});
+
+for (const lang of ["en", "nl"]) {
+  test(`${lang}: after the last step, "Made with Coachboard" links to the board, without the board`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await openViewer(page, `#t=${play.link}`, `/${lang}/board/link/`);
+    for (let i = 0; i < play.board.frames.length; i++) await button(page, "viewer.next", lang).click();
+    await expect(made(page, lang)).toBeVisible();
+    await expect(made(page, lang)).toHaveAttribute("href", `/${lang}/board/`);
+  });
+}
+
+test("a broken link has no \"Made with Coachboard\"", async ({ page }) => {
+  await page.goto("/en/board/link/#t=2.broken");
+  await expect(sentence(page)).toHaveText(t("en", "viewer.broken"));
+  await expect(made(page)).toHaveCount(0);
+  await expect(page.locator(".viewer .legend li")).toHaveCount(0);
 });
 
 test("watching keeps nothing and never loads the editor", async ({ page }) => {

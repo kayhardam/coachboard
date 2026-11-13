@@ -61,6 +61,8 @@
   const done = $derived(!board || ended || (step === last && !moving[last]));
   /** Nothing to play at all: one step that doesn't move (a lineup), or no board. */
   const still = $derived(!board || (last === 0 && !moving[0]));
+  /** "Made with Coachboard": once a board that plays has nothing left to play. */
+  const made = $derived(done && !still && !playing);
 
   /** Step `i` at `t` (0 to 1) of its move: the moment of play.ts in place of the step. */
   function at(i: number, t: number): Board {
@@ -236,6 +238,7 @@
       </li>
     {/each}
   </ul>
+  {#if made}<a class="made" href={editor}>{strings["viewer.made"]}</a>{/if}
 
   <div class="controls">
     <button type="button" class="prev" onclick={prev} disabled={!board || (step === 0 && !ended && !playing)}>

@@ -49,3 +49,18 @@ for (const lang of ["en", "nl"]) {
     expect(serious).toEqual([]);
   });
 }
+
+for (const lang of ["en", "nl"]) {
+  test(`axe finds nothing serious in the viewer (${lang}) after the last step, with Made with Coachboard`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await openViewer(page, `#t=${shared}`, `/${lang}/board/link/`);
+    const next = page.locator(".viewer").getByRole("button", { name: t(lang, "viewer.next"), exact: true });
+    while (await next.isEnabled()) await next.click();
+    await expect(page.locator(".viewer").getByRole("link", { name: t(lang, "viewer.made") })).toBeVisible();
+    const { violations } = await new AxeBuilder({ page }).analyze();
+    const serious = violations
+      .filter((v) => v.impact === "serious" || v.impact === "critical")
+      .map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
+    expect(serious).toEqual([]);
+  });
+}

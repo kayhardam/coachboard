@@ -638,6 +638,43 @@ for (const lang of ["en", "nl"]) {
   }
 }
 
+// "Made with Coachboard" after the last step: on screen, big enough to tap, and
+// nothing moves when it appears: not the court, not Previous, Play or Next
+// (wide, where it comes above Play, too).
+for (const lang of ["en", "nl"]) {
+  for (const [name, size] of Object.entries(VIEWER_SIZES)) {
+    test(`viewer, ${lang}, ${name}: Made with Coachboard after the last step, and nothing moves`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.setViewportSize(size);
+      await openViewer(page, `#t=${await fullBoardLink()}`, `/${lang}/board/link/`);
+      const next = page.locator(".viewer .controls .next");
+      for (let i = 1; i < MAX_STEPS; i++) await next.click();
+      await expect(page.locator(".viewer .count [aria-hidden]")).toHaveText(`${MAX_STEPS}/${MAX_STEPS}`);
+      const made = page.locator(".viewer .made");
+      await expect(made).toHaveCount(0);
+      const watched = [".viewer .stage svg > rect:first-of-type", ".viewer .controls .prev", ".viewer .controls .play", ".viewer .controls .next"];
+      const boxes = () => Promise.all(watched.map(async (s) => (await page.locator(s).boundingBox())!));
+      const before = await boxes();
+      // The last step's own move: then there is nothing left to play.
+      await next.click();
+      await expect(next).toBeDisabled();
+      await expect(made).toBeInViewport({ ratio: 1 });
+      expect((await made.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+      const after = await boxes();
+      for (const [i, selector] of watched.entries()) {
+        for (const key of ["x", "y", "width", "height"] as const) {
+          expect(Math.abs(after[i]![key] - before[i]![key]), `${selector} ${key}`).toBeLessThanOrEqual(1);
+        }
+      }
+      const overflow = await page.evaluate(() => ({
+        x: document.documentElement.scrollWidth - innerWidth,
+        y: document.documentElement.scrollHeight - innerHeight,
+      }));
+      expect(overflow).toEqual({ x: 0, y: 0 });
+    });
+  }
+}
+
 // K10: "Edit a copy" keeps its label as long as it fits beside the title: from 360 px.
 for (const lang of ["en", "nl"]) {
   test(`viewer, ${lang}: Edit a copy shows its label from 360 px, below that only the pencil`, async ({ page }) => {
