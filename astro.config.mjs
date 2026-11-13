@@ -4,6 +4,7 @@ import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 import { fileURLToPath } from "node:url";
 import { addModulePreloads } from "./scripts/modulepreload.mjs";
+import { isLibraryPath, libraryShown } from "./src/data/libraryShown.ts";
 
 // URL prefix → hreflang. Adding a language starts here.
 const locales = { en: "en", nl: "nl" };
@@ -61,8 +62,15 @@ export default defineConfig({
     },
   },
   integrations: [
-    // The pages for shared boards (/<lang>/board/link/ and /qr/) are noindex.
-    sitemap({ i18n: { defaultLocale, locales }, filter: (page) => !/\/board\/(link|qr)\/$/.test(page) }),
+    // The pages for shared boards (/<lang>/board/link/ and /qr/) are noindex, and so is
+    // the library while it is out of sight (src/data/libraryShown.ts). `page` is a whole URL.
+    sitemap({
+      i18n: { defaultLocale, locales },
+      filter: (page) => {
+        const path = new URL(page).pathname;
+        return !/\/board\/(link|qr)\/$/.test(path) && (libraryShown || !isLibraryPath(path));
+      },
+    }),
     svelte(),
     // The board pages fetch their JS while the page parses, not after the
     // island's script runs (scripts/modulepreload.mjs).

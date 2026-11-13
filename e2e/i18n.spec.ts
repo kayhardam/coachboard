@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { isLibraryPath, libraryShown } from "../src/data/libraryShown";
 import { allPages, expect, test } from "./helpers";
 
 // English and Dutch: hreflang, the sitemap and the language links. Translations
@@ -6,8 +7,12 @@ import { allPages, expect, test } from "./helpers";
 
 const languages = ["en", "nl"];
 const site = "https://handballcoachboard.com";
-/** The pages for shared boards and the 404: noindex, so no canonical or hreflang. */
-const isNoindex = (path: string) => /\/board\/(link|qr)\/$|does-not-exist/.test(path);
+/**
+ * The pages for shared boards and the 404: noindex, so no canonical or hreflang. So is
+ * every library page while the library is out of sight (decision 34, src/data/libraryShown.ts).
+ */
+const isNoindex = (path: string) =>
+  /\/board\/(link|qr)\/$|does-not-exist/.test(path) || (!libraryShown && isLibraryPath(path));
 
 const alternates = (html: string) =>
   Object.fromEntries([...html.matchAll(/<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"/g)].map((m) => [m[1], m[2]]));
@@ -37,6 +42,27 @@ for (const lang of languages) {
       const html = await (await request.get(`/${lang}/${page}`)).text();
       expect(html).toContain('<meta name="robots" content="noindex">');
       expect(html).not.toContain('rel="canonical"');
+      expect(alternates(html)).toEqual({});
+    });
+  }
+}
+
+// Out of sight, every library page (items, overviews, category pages) stays out of search results.
+if (!libraryShown) {
+  const library = pages.filter(isLibraryPath);
+  test("the library's pages are all checked: items, overviews and category pages, in both languages", () => {
+    for (const lang of languages) {
+      expect(library).toContain(`/${lang}/tactics/`);
+      expect(library).toContain(`/${lang}/drills/`);
+    }
+    expect(library.filter((p) => p.split("/").length > 4).length).toBeGreaterThan(0);
+  });
+  for (const path of library) {
+    test(`${path} is noindex, without canonical or hreflang`, async ({ request }) => {
+      const html = await (await request.get(path)).text();
+      expect(html).toContain('<meta name="robots" content="noindex">');
+      expect(html).not.toContain('rel="canonical"');
+      expect(html).not.toContain('property="og:url"');
       expect(alternates(html)).toEqual({});
     });
   }
@@ -84,6 +110,7 @@ test("the sitemap lists every indexable page, and no shared-board page", async (
   const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]!).pathname).sort();
   const indexable = allPages().filter((p) => p !== "/" && !isNoindex(p));
   expect(locs).toEqual(indexable);
+  if (!libraryShown) expect(locs.filter(isLibraryPath)).toEqual([]);
 });
 
 test("the footer's language link opens the same page in the other language", async ({ page }) => {

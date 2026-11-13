@@ -4,6 +4,7 @@ Read with the root `AGENTS.md`, when a file in this folder is read; `CLAUDE.md` 
 
 Tactics and drills.
 
+- **Out of sight for now** (decision 34, Kay, 13 November 2026): `libraryShown` in `src/data/libraryShown.ts` is `false`, so no menu, home page, about page or More links to the library, and every library page is `noindex` (`BaseLayout`) and out of the sitemap (`astro.config.mjs`). The pages, items, slugs, URLs, share images and redirects stay, and so do the rules below. Showing it again is that one switch; the e2e tests of either state follow it.
 - **One collection, `library`, one Markdown file per item and language:** `src/content/library/<lang>/<slug>.md`, with its `type` (`tactic` or `drill`) in the frontmatter. The entry id is `<lang>/<slug>`; a tactic's page is `/<lang>/tactics/<slug>/`, a drill's `/<lang>/drills/<slug>/`. A translation gets the same file name in another language folder, with the same type. Path segments and slugs are English in every language (`/nl/tactics/<slug>/`).
 - **Only the type is in the URL, not the category,** so an item can change category without moving. Category pages share the level (`/<lang>/tactics/attack/`), so `checkLibrary()` fails the build on a slug that equals a category. The same under `drills/`.
 - **A page that moves keeps its old URL working:** a 301 in `public/_redirects` (with and without the trailing slash, and its `og.png`) and a test in `e2e/routing.spec.ts`, as for the tactic pages that moved from `tactics/<category>/<slug>/`.

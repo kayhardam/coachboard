@@ -48,7 +48,7 @@ When starting the dev server as an agent, use background mode: `npx astro dev --
   - absolute `og:image`, always a 1200×630 PNG: the language's default (`/og-default.png` for English, `/og-default-<lang>.png` for the others), the shared board's on `board/link/` and `board/qr/` (`/og-viewer.png`, `/og-viewer-<lang>.png`, passed by `ViewerPage.astro`) or a library item's own `og.png` on its page. Chat apps crop to the middle 630×630 square: in the default and the shared board's it shows the court (with Play on the shared board's), and the text sits in the bands either side. `e2e/i18n.spec.ts` checks which page has which;
   - `lang` and `og:locale` from the page's locale;
   - hreflang for each language in `languages` (every language unless the page passes fewer, as library item and category pages do) + `x-default` to the English page. Translations share the path after the prefix. A page in one language (a Dutch-only item) has no hreflang, and `e2e/i18n.spec.ts` expects it that way;
-  - `noindex` (the 404, `board/link/`, `board/qr/`) drops canonical, `og:url` and hreflang.
+  - `noindex` (the 404, `board/link/`, `board/qr/`, and every library page while the library is out of sight: see Library content) drops canonical, `og:url` and hreflang.
 - A library item's `<title>` (and so its `og:title`) names its type: `tactic.title` and `drill.title` in `ui.ts` ("{title} – handball tactic | Handball Coachboard" and "{title} – handball drill | Handball Coachboard" in English; the Dutch ones are in `ui.ts`), through `typeText()`. The H1, the cards and the title in the board stay the item's own title. `e2e/library.spec.ts` checks every item.
 - Each home page has one JSON-LD `WebSite` block (`src/pages/[lang]/index.astro`), from which Google takes the site name: `siteName` and `shortName` from `src/data/site.ts`, the root as `url`, `inLanguage`, and the owner as `creator` (a `Person`, the link back from kayhardam.dev). A `<script type="application/ld+json">` with `set:html` and `<` escaped; no `offers`, price or ratings (see Copy). `e2e/i18n.spec.ts` parses it.
 - `BaseLayout` renders `Header`, `<main id="main">` and `Footer`. With `fullscreen` (the board pages) the body fills the viewport and there is no site header or footer: the board has its own title bar. The footer has the language links on every content page; a language the page doesn't exist in links to its home page.
@@ -69,7 +69,7 @@ New or changed site text is agreed with Kay first. Take it over literally. If a 
 - Promise only what exists and what has been measured. No "always" or "never" about what is free, about accounts, or about what we see.
 - "Gratis"/"free" appears in one place: the "Free, without an account" block on the about page (`src/i18n/pages/about/<lang>.astro`). Elsewhere, say what the board does; "no account or app needed" is fine.
 - Text that appears on every board says "the board" (`het bord`), not "the attack": a board can show a defense too.
-- Tactics and drills: the steps say who does what; the coaching points are what you call out in the sports hall. The home and about pages mention drills (`oefeningen`).
+- Tactics and drills: the steps say who does what; the coaching points are what you call out in the sports hall. While the library is out of sight (decision 34, see Library content), the home and about pages don't mention the tactics and drills; once it shows again, they mention drills (`oefeningen`).
 - Privacy: don't say we collect no personal data. Cloudflare processes IP addresses, and an email is personal data too.
 - Dutch: "6-0-dekking", not "6-0-verdediging". `handbaltrainer` is right in Dutch.
 - Ages are years, in every language: "11-12 jaar", "11 t/m 16 jaar", "13 jaar en ouder" ("Ages 11–16", "Ages 13 and up"). No F-jeugd to A-jeugd and no U12: such a name stands for other years in another country.
@@ -117,7 +117,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 - **`Court.svelte` stays pure SVG**, with no browser APIs, so Astro can render it without JS (the home page, the board's fallback, the steps on tactic pages and their thumbnails). Pieces carry `data-kind` and `data-index`; the editor finds them with event delegation. Colours are SVG attributes, not CSS variables, so `courtPng()` can render it to a PNG on the server. From step 2 on (`frame`), it draws where the players who moved stood in the step before: a thin grey dotted line and ring (`.trails`), without a head, so it doesn't look like a pass or a bounce; under the arrows and players, without `data-kind` and with `pointer-events="none"`, so it can't be tapped.
 - **Board pages:** three per language:
   - `/<lang>/board/`: the editor (`src/components/board/BoardPage.astro`, used by `src/pages/[lang]/board.astro`, which adds the workers.dev redirect). Old links to `/board/#t=…` and "Open in the board" from the library open here;
-  - `/<lang>/board/link/` and `/<lang>/board/qr/`: the viewer (`src/components/board/ViewerPage.astro`), where Share and the QR code point: a path per channel, so Cloudflare's request counts can tell opened links from scanned codes. They are `noindex` and left out of the sitemap (`filter` in `astro.config.mjs`);
+  - `/<lang>/board/link/` and `/<lang>/board/qr/`: the viewer (`src/components/board/ViewerPage.astro`), where Share and the QR code point: a path per channel, so Cloudflare's request counts can tell opened links from scanned codes. They are `noindex` and left out of the sitemap (`filter` in `astro.config.mjs`, which also leaves out the library pages while the library is out of sight);
   - these are the only pages that ship JS. `isBoard` in `scripts/check-budget.mjs` and `e2e/security.spec.ts` lists them; `isViewer` gives the viewer's pages their own budgets.
 - **`BoardEditor.svelte`:**
   - it runs `client:only` on the editor's page only;
@@ -137,7 +137,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 
 ## Library content
 
-Tactics and drills: one Markdown file per item and language in `src/content/library/<lang>/<slug>.md`. Every rule for writing, drawing, checking and printing them is in `src/content/AGENTS.md` (read it before touching an item, the schema in `src/content.config.ts`, `src/lib/library.ts` or the item pages).
+Tactics and drills: one Markdown file per item and language in `src/content/library/<lang>/<slug>.md`. For now the library is out of sight (decision 34): one switch, `libraryShown` in `src/data/libraryShown.ts`, takes away every way in (menu, home, about, More) and makes every library page `noindex` and leaves it out of the sitemap; the pages, items and URLs stay. Every rule for writing, drawing, checking and printing them is in `src/content/AGENTS.md` (read it before touching an item, the schema in `src/content.config.ts`, `src/lib/library.ts` or the item pages).
 
 ## Hosting
 

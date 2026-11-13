@@ -2,6 +2,7 @@
 // sentence, and "Open in the board" carries the same steps, sentences and title.
 // Phase 16-3: drills too, with their goal, setup and lists, and an overview.
 import { categorySlugs } from "../src/data/categories";
+import { libraryShown } from "../src/data/libraryShown";
 import { decode } from "../src/lib/board/format";
 import { t, type UiKey } from "../src/i18n/ui";
 import { allPages, expect, libraryItems, test } from "./helpers";
@@ -147,13 +148,47 @@ for (const lang of ["en", "nl"]) {
   });
 }
 
-// Every content page has Drills in its menu, wide and narrow (the board pages have their own title bar).
+// Every content page has Drills in its menu, wide and narrow (the board pages have their own title bar);
+// while the library is out of sight (decision 34), neither Tactics nor Drills.
 for (const path of allPages().filter((p) => /^\/(en|nl)\//.test(p) && !p.includes("/board/") && !p.includes("does-not-exist"))) {
-  test(`${path} has Drills in its menu`, async ({ page }) => {
-    const lang = path.split("/")[1]!;
-    await page.goto(path);
-    const links = page.locator(`.site-header nav a[href="/${lang}/drills/"]`);
-    await expect(links).toHaveCount(2);
-    await expect(links.first()).toHaveText(t(lang, "nav.drills"));
-  });
+  const lang = path.split("/")[1]!;
+  if (libraryShown) {
+    test(`${path} has Drills in its menu`, async ({ page }) => {
+      await page.goto(path);
+      const links = page.locator(`.site-header nav a[href="/${lang}/drills/"]`);
+      await expect(links).toHaveCount(2);
+      await expect(links.first()).toHaveText(t(lang, "nav.drills"));
+    });
+  } else {
+    test(`${path} has no link to the tactics or drills in its menu`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page.locator(".site-header nav a")).toHaveCount(4); // Home and Board, wide and narrow.
+      await expect(page.locator(`.site-header a[href^="/${lang}/tactics/"], .site-header a[href^="/${lang}/drills/"]`)).toHaveCount(0);
+    });
+  }
+}
+
+// Out of sight, an item still opens at its address (old links keep working),
+// with its own share image and Open in the board.
+if (!libraryShown) {
+  for (const { lang, path } of all) {
+    test(`${path} still opens, with its og:image and Open in the board`, async ({ page }) => {
+      const response = await page.goto(path);
+      expect(response?.status()).toBe(200);
+      await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", `https://handballcoachboard.com${path}og.png`);
+      await expect(page.getByRole("link", { name: t(lang, "tactic.open") })).toHaveAttribute("href", new RegExp(`^/${lang}/board/#t=`));
+    });
+  }
+}
+
+// No way in from the home and about pages while the library is out of sight.
+if (!libraryShown) {
+  for (const lang of ["en", "nl"]) {
+    for (const page_ of ["", "about/"]) {
+      test(`/${lang}/${page_} links nowhere into the tactics or drills`, async ({ page }) => {
+        await page.goto(`/${lang}/${page_}`);
+        await expect(page.locator(`a[href^="/${lang}/tactics/"], a[href^="/${lang}/drills/"]`)).toHaveCount(0);
+      });
+    }
+  }
 }

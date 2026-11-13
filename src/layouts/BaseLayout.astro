@@ -6,6 +6,7 @@ import Header from "../components/Header.astro";
 import { ogLocale } from "../i18n/ui";
 import { defaultLocale, locales } from "../i18n/locales";
 import { siteName } from "../data/site";
+import { isLibraryPath, libraryShown } from "../data/libraryShown";
 
 interface Props {
   title: string;
@@ -18,7 +19,10 @@ interface Props {
    * They feed hreflang and the footer's language links.
    */
   languages?: readonly string[];
-  /** Keep the page out of search results (404). Drops canonical and og:url too. */
+  /**
+   * Keep the page out of search results (404). Drops canonical, og:url and hreflang too.
+   * Every library page is noindex while the library is out of sight (src/data/libraryShown.ts).
+   */
   noindex?: boolean;
   /** An app page (the board): no site header or footer, and <main> fills the screen. The board has its own title bar. */
   fullscreen?: boolean;
@@ -29,9 +33,10 @@ const {
   description,
   image,
   languages = locales,
-  noindex = false,
+  noindex: noindexProp = false,
   fullscreen = false,
 } = Astro.props;
+const noindex = noindexProp || (!libraryShown && isLibraryPath(Astro.url.pathname));
 
 const locale = Astro.currentLocale ?? defaultLocale;
 const abs = (path: string) => new URL(path, Astro.site).href;

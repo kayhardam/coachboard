@@ -7,7 +7,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { boardStrings, t } from "../../i18n/ui";
 import { defaultBoardFor } from "../../lib/board/defaults";
 import { icons } from "../../lib/icons";
-import { nav, sharePaths } from "../../data/nav";
+import { libraryNav, sharePaths } from "../../data/nav";
 import BoardEditor from "./BoardEditor.svelte";
 // The editor's styles, linked on the editor's page only (see the file).
 import "./BoardEditor.css";
@@ -20,10 +20,9 @@ const links = {
   link: getRelativeLocaleUrl(lang, sharePaths.link),
   qr: getRelativeLocaleUrl(lang, sharePaths.qr),
 };
-// The library's overviews, with the site menu's labels, at the bottom of More.
-const library = nav
-  .filter((item) => item.path === "tactics/" || item.path === "drills/")
-  .map((item) => ({ href: getRelativeLocaleUrl(lang, item.path), label: t(lang, item.label) }));
+// The library's overviews, with the site menu's labels, at the bottom of More;
+// none while the library is out of sight (src/data/libraryShown.ts).
+const library = libraryNav.map((item) => ({ href: getRelativeLocaleUrl(lang, item.path), label: t(lang, item.label) }));
 ---
 
 <BaseLayout title={t(lang, "board.title")} description={t(lang, "board.description")} fullscreen>
