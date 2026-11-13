@@ -819,6 +819,21 @@
   );
 
   const titleOf = (s: store.Saved) => s.board.title ?? strings["board.untitled"];
+  /**
+   * A ⋯ menu in My boards opens downward; one that would end below the list's
+   * visible part opens upward, if there is more room above (finding 17).
+   */
+  function placeMenu(e: Event) {
+    const menu = e.currentTarget as HTMLDetailsElement;
+    menu.classList.remove("up");
+    if (!menu.open) return;
+    const panel = menu.querySelector(".actions-panel")!.getBoundingClientRect();
+    const at = menu.getBoundingClientRect();
+    const top = listDialog.querySelector(".boards-bar")!.getBoundingClientRect().bottom;
+    const bottom = Math.min(listDialog.getBoundingClientRect().bottom, innerHeight);
+    if (panel.bottom > bottom && at.top - top > bottom - at.bottom) menu.classList.add("up");
+  }
+
   const moreFor = (title?: string) => (title ? strings["board.moreFor"].replace("{title}", title) : strings["board.moreForUntitled"]);
   const date = (at: number) =>
     new Date(at).toLocaleDateString(document.documentElement.lang, { day: "numeric", month: "short" });
@@ -1407,7 +1422,7 @@
         {/if}
       </h3>
       {#if folder !== undefined && renaming !== folder}
-        <details class="actions">
+        <details class="actions" ontoggle={placeMenu}>
           <summary aria-label={moreFor(folder)} title={moreFor(folder)}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.more} /></svg>
           </summary>
@@ -1426,7 +1441,7 @@
             <span class="name">{titleOf(s)}</span>
             <time datetime={new Date(s.at).toISOString()}>{date(s.at)}</time>
           </button>
-          <details class="actions">
+          <details class="actions" ontoggle={placeMenu}>
             <summary aria-label={moreFor(s.board.title)} title={moreFor(s.board.title)}>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.more} /></svg>
             </summary>
