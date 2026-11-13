@@ -4,6 +4,7 @@ import { defaultBoard, defaultBoardFor } from "../src/lib/board/defaults";
 import { MAX_FOLDER } from "../src/lib/board/boards";
 import { encode, MAX_STEPS, MAX_TEXT, MAX_TITLE } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
+import { libraryShown } from "../src/data/libraryShown";
 import { dragPlayer, expect, fromMenu, moreButton, OLD_KEY, openBoard, openViewer, STORE_KEY, test } from "./helpers";
 
 // Finding 1 and 2 in docs/metingen.md: the court scaled to the screen's width
@@ -153,13 +154,15 @@ for (const orientation of ORIENTATIONS) {
     for (const name of ["My boards", "New board", "QR code", "Full court", "Clear arrows and ball", "Default lineup", "Empty court"]) {
       await expect(page.getByRole("button", { name, exact: true })).toBeInViewport({ ratio: 1 });
     }
-    for (const name of ["Tactics", "Drills"]) await expect(page.getByRole("link", { name, exact: true })).toBeInViewport({ ratio: 1 });
+    if (libraryShown) {
+      for (const name of ["Tactics", "Drills"]) await expect(page.getByRole("link", { name, exact: true })).toBeInViewport({ ratio: 1 });
+    }
     await expectEverythingOnScreen(page);
   });
 
   test(`${orientation}: More opens on screen for a received board with steps, with Save to My boards and Delete step`, async ({ page }) => {
     await orient(page, orientation);
-    // The smallest phone: More holds the most there (nine buttons and two links).
+    // The smallest phone: More holds the most there (nine buttons, and two links while the library shows).
     if (orientation === "landscape") await page.setViewportSize({ width: 568, height: 320 });
     if (orientation === "portrait") await page.setViewportSize({ width: 320, height: 568 });
     const board = defaultBoardFor("en");
@@ -171,7 +174,7 @@ for (const orientation of ORIENTATIONS) {
     for (const button of await panel.getByRole("button").all()) await expect(button).toBeInViewport({ ratio: 1 });
     await expect(panel.getByRole("button", { name: "Save to My boards" })).toBeVisible();
     await expect(panel.getByRole("button", { name: "Delete step" })).toBeVisible();
-    await expect(panel.getByRole("link")).toHaveCount(2);
+    await expect(panel.getByRole("link")).toHaveCount(libraryShown ? 2 : 0);
     await expectEverythingOnScreen(page);
   });
 

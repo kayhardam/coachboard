@@ -3,6 +3,7 @@ import type { Page } from "@playwright/test";
 import { defaultBoard } from "../src/lib/board/defaults";
 import { decode, MAX_TITLE, toBoard, type Board, type BoardV1 } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
+import { libraryShown } from "../src/data/libraryShown";
 import {
   dragPlayer,
   expect,
@@ -241,8 +242,21 @@ test("Escape leaves the title as it was, and it takes at most MAX_TITLE characte
 });
 
 // More's links are the board's only way to the library. scripts/check-links.mjs doesn't
-// see them (they are an island's props), so this checks that they open.
+// see them (they are an island's props), so this checks that they open. While the
+// library is out of sight (decision 34), More has no Library group and no link there.
 for (const lang of ["en", "nl"]) {
+  if (!libraryShown) {
+    test(`${lang}: More has no Library group and no link to the tactics or drills`, async ({ page }) => {
+      await openBoard(page, "", `/${lang}/board/`);
+      await moreButton(page, lang).click();
+      const panel = page.locator(".menu-panel");
+      await expect(panel.getByRole("button", { name: t(lang, "board.newBoard"), exact: true })).toBeVisible();
+      await expect(panel.getByText(t(lang, "board.menu.library"), { exact: true })).toHaveCount(0);
+      await expect(panel.locator(".group")).toHaveText([t(lang, "board.menu.boards"), t(lang, "board.menu.share"), t(lang, "board.menu.thisBoard")]);
+      await expect(panel.locator(`a[href^="/${lang}/tactics/"], a[href^="/${lang}/drills/"]`)).toHaveCount(0);
+    });
+    continue;
+  }
   test(`${lang}: More links to the tactics and drills, and is closed after Back`, async ({ page }) => {
     for (const [key, path] of [["nav.tactics", "tactics/"], ["nav.drills", "drills/"]] as const) {
       await openBoard(page, "", `/${lang}/board/`);
