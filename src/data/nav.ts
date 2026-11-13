@@ -1,4 +1,5 @@
 import type { UiKey } from "../i18n/ui";
+import { libraryShown } from "./libraryShown";
 
 export interface NavItem {
   /** Path after the locale prefix, e.g. "privacy/". Empty for the home page. */
@@ -10,12 +11,19 @@ export interface NavItem {
 
 // Only pages that exist: scripts/check-links.mjs fails the build otherwise.
 
+/** The library's overviews: in the header menu and in More on the board, only while the library shows. */
+export const libraryNav: NavItem[] = libraryShown
+  ? [
+      { path: "tactics/", label: "nav.tactics" },
+      { path: "drills/", label: "nav.drills" },
+    ]
+  : [];
+
 /** Header menu. */
 export const nav: NavItem[] = [
   { path: "", label: "nav.home" },
   { path: "board/", label: "nav.board" },
-  { path: "tactics/", label: "nav.tactics" },
-  { path: "drills/", label: "nav.drills" },
+  ...libraryNav,
 ];
 
 /** The header's call to action. */

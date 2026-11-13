@@ -3,6 +3,7 @@
 // src/pages/[lang]/about.astro; every language needs its own file here.
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { boardPath } from "../../../data/nav";
+import { libraryShown } from "../../../data/libraryShown";
 import { contactEmail, owner, ownerUrl } from "../../../data/site";
 
 interface Props {
@@ -25,11 +26,15 @@ const { lang } = Astro.props;
     Share your drawing with your team, as a link or QR code. Your players see it on their own phone,
     without an app or account.
   </li>
-  <li>
-    Browse the <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactics</a> and <a
-      href={getRelativeLocaleUrl(lang, "drills/")}>drills</a>. Open one in the board and adapt it for
-    your team.
-  </li>
+  {
+    libraryShown && (
+      <li>
+        Browse the <a href={getRelativeLocaleUrl(lang, "tactics/")}>tactics</a> and <a
+          href={getRelativeLocaleUrl(lang, "drills/")}>drills</a>. Open one in the board and adapt it for
+        your team.
+      </li>
+    )
+  }
 </ul>
 
 <h2>What the board can do</h2>

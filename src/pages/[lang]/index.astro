@@ -4,6 +4,7 @@ import CategoryCards from "../../components/CategoryCards.astro";
 import Icon from "../../components/Icon.astro";
 import Court from "../../components/board/Court.svelte";
 import { boardPath } from "../../data/nav";
+import { libraryShown } from "../../data/libraryShown";
 import { owner, ownerUrl, shortName, siteName } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { localeParams } from "../../i18n/locales";
@@ -44,7 +45,7 @@ const jsonLd = JSON.stringify(webSite).replace(/</g, "\\u003c");
       <p class="lead">{t(lang, "home.lead")}</p>
       <div class="actions">
         <a class="btn btn-primary" href={boardHref}>{t(lang, "cta.board")}</a>
-        <a class="btn btn-secondary" href={getRelativeLocaleUrl(lang, "tactics/")}>{t(lang, "home.browse")}</a>
+        {libraryShown && <a class="btn btn-secondary" href={getRelativeLocaleUrl(lang, "tactics/")}>{t(lang, "home.browse")}</a>}
       </div>
       <p class="note">{t(lang, "home.note")}</p>
       <a class="preview" href={boardHref} tabindex="-1" aria-hidden="true">
@@ -73,17 +74,21 @@ const jsonLd = JSON.stringify(webSite).replace(/</g, "\\u003c");
     </div>
   </section>
 
-  <section class="section soft">
-    <div class="container">
-      <h2>{t(lang, "home.libraryTitle")}</h2>
-      <p class="sub">{t(lang, "home.libraryLead")}</p>
-      <CategoryCards lang={lang} type="tactic" />
-      <p class="more">
-        <a href={getRelativeLocaleUrl(lang, "tactics/")}>{t(lang, "home.allTactics")}<Icon name="arrowRight" /></a>
-        <a href={getRelativeLocaleUrl(lang, "drills/")}>{t(lang, "drills.all")}<Icon name="arrowRight" /></a>
-      </p>
-    </div>
-  </section>
+  {
+    libraryShown && (
+      <section class="section soft">
+        <div class="container">
+          <h2>{t(lang, "home.libraryTitle")}</h2>
+          <p class="sub">{t(lang, "home.libraryLead")}</p>
+          <CategoryCards lang={lang} type="tactic" />
+          <p class="more">
+            <a href={getRelativeLocaleUrl(lang, "tactics/")}>{t(lang, "home.allTactics")}<Icon name="arrowRight" /></a>
+            <a href={getRelativeLocaleUrl(lang, "drills/")}>{t(lang, "drills.all")}<Icon name="arrowRight" /></a>
+          </p>
+        </div>
+      </section>
+    )
+  }
 
   <section class="section cta">
     <div class="container">
