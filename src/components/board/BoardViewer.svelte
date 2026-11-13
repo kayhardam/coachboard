@@ -20,7 +20,7 @@
    */
   let { strings, home, editor }: { strings: ViewerStrings; home: string; editor: string } = $props();
 
-  /** Where "Edit a copy" leaves the link it opens, for the editor (BoardEditor.svelte). */
+  /** Where "Edit a copy" leaves the link it opens and the step, for the editor (BoardEditor.svelte). */
   const COPY_KEY = "coachboard.copy";
   /** The court of a link that doesn't open: empty, as in the fallback. */
   const EMPTY: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], balls: [], arrows: [] }] };
@@ -161,10 +161,13 @@
     else if (e.key === "ArrowLeft") prev();
   }
 
-  /** Edit a copy: the editor keeps this link in My boards at once (decision K4). */
+  /**
+   * Edit a copy: the editor keeps this link in My boards at once (decision K4),
+   * and opens the step on the court (after the last move: the last step).
+   */
   function copy() {
     try {
-      sessionStorage.setItem(COPY_KEY, link);
+      sessionStorage.setItem(COPY_KEY, JSON.stringify({ link, step }));
     } catch {
       // No storage: the editor opens it as a received board, kept at its first change.
     }

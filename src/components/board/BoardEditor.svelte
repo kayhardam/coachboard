@@ -383,13 +383,23 @@
     const idle = window.requestIdleCallback ?? ((run: () => void) => setTimeout(run, 500));
     idle(() => loadQr().catch(() => (qrLibrary = undefined)));
 
-    // "Edit a copy" in the viewer leaves the link it opens here. Removed at
-    // once, whatever it holds: it counts only for this opening, and only for
-    // the link in the address bar, so an old one keeps no other board.
-    let copy: string | null = null;
+    // "Edit a copy" in the viewer leaves the link it opens here, with the step
+    // it showed. Removed at once, whatever it holds: it counts only for this
+    // opening, and only for the link in the address bar, so an old one keeps
+    // no other board.
+    let copy: { link: unknown; step: number } | null = null;
     try {
-      copy = sessionStorage.getItem(COPY_KEY);
+      const raw = sessionStorage.getItem(COPY_KEY);
       sessionStorage.removeItem(COPY_KEY);
+      if (raw !== null) {
+        try {
+          const { link, step } = JSON.parse(raw);
+          copy = { link, step: Number.isInteger(step) && step > 0 ? step : 0 };
+        } catch {
+          // Only the link, as a viewer from before the step came along left it.
+          copy = { link: raw, step: 0 };
+        }
+      }
     } catch {
       // No storage: the board opens as a received one, kept at its first change.
     }
@@ -405,12 +415,13 @@
       // history, next to the link and not in it. Without that (a browser that
       // lost the tab's history), the link must draw the board you had open.
       let own = find(history.state?.board);
-      // A reload opens the step you were on; a link, a QR code or a board from My boards opens step 1.
-      const was = Number(history.state?.step) || 0;
       const last = find(list.current);
       if (!own && last && (!shared || (await encode(last.board)) === (await encode(shared)))) own = last;
       // A copy: the same board in My boards opens; else it is kept at once.
-      const isCopy = !!shared && copy === hashLink();
+      const isCopy = !!shared && copy?.link === hashLink();
+      // A reload opens the step you were on, a copy the step the viewer showed;
+      // a link, a QR code or a board from My boards opens step 1.
+      const was = Number(history.state?.step) || (isCopy ? copy!.step : 0);
       if (!own && isCopy) own = list.boards.find((s) => sameBoard(s.board, shared));
       if (own) open(own.board, own.id);
       else if (shared) {

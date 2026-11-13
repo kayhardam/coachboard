@@ -302,6 +302,38 @@ test.describe("Edit a copy (K4)", () => {
     expect(await savedBoards(page)).toHaveLength(1);
   });
 
+  /** The step on the editor's court: the step button that is pressed (1-based). */
+  const editorStep = async (page: Page) =>
+    Number(await page.getByRole("toolbar", { name: t("en", "board.steps") }).locator('.chip[aria-pressed="true"]').textContent());
+
+  test("opens the step the viewer showed, and a reload keeps it", async ({ page }) => {
+    // Without motion, Next goes straight to the next step.
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await openViewer(page, `#t=${play.link}`);
+    await button(page, "viewer.next").click();
+    await button(page, "viewer.next").click();
+    await expect(count(page)).toHaveText("3/4");
+    await edit(page).click();
+    await expect(tools(page)).toBeVisible();
+    expect(await editorStep(page)).toBe(3);
+    await expect.poll(async () => (await savedBoards(page)).length).toBe(1);
+    await page.waitForTimeout(600);
+    await page.reload();
+    await expect(tools(page)).toBeVisible();
+    expect(await editorStep(page)).toBe(3);
+    expect(await savedBoards(page)).toHaveLength(1);
+  });
+
+  test("after the last move it opens the last step", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await openViewer(page, `#t=${play.link}`);
+    for (let i = 0; i < 4; i++) await button(page, "viewer.next").click();
+    await expect(button(page, "viewer.next")).toBeDisabled();
+    await edit(page).click();
+    await expect(tools(page)).toBeVisible();
+    expect(await editorStep(page)).toBe(4);
+  });
+
   test("a board that is already in My boards opens; no second one", async ({ page }) => {
     await openViewer(page, `#t=${play.link}`);
     await edit(page).click();
@@ -332,12 +364,16 @@ test.describe("Edit a copy (K4)", () => {
       };
       Object.defineProperty(window, "sessionStorage", { get: blocked });
     });
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await openViewer(page, `#t=${play.link}`);
+    await button(page, "viewer.next").click();
+    await expect(count(page)).toHaveText("2/4");
     await edit(page).click();
     await expect(tools(page)).toBeVisible();
     await page.waitForTimeout(600);
-    // Not kept: My boards stays empty until the first change.
+    // Not kept: My boards stays empty until the first change, and it opens step 1.
     expect(await savedBoards(page)).toEqual([]);
+    expect(await editorStep(page)).toBe(1);
     await expectBoard(page, toBoard(play.board)!);
   });
 });
