@@ -18,6 +18,9 @@
   import { boardIcons as icons } from "../../lib/icons";
   import * as store from "../../lib/board/boards";
   import Court from "./Court.svelte";
+  import BoardList from "./BoardList.svelte";
+  import OpenLink from "./OpenLink.svelte";
+  import { focusField } from "./focus";
 
   /**
    * `home`: the home page, linked from the title bar (the board has no site header).
@@ -107,19 +110,13 @@
   let qrLarge = $state(false);
   let qrDialog: HTMLDialogElement;
   let listDialog: HTMLDialogElement;
-  /** The text in Open a link. */
-  let pasted = $state("");
   /** Opened from the home screen: its storage is apart from the browser's, and received links don't land here. */
   const inWebApp = matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
-  /** An iPhone or iPad (iPadOS says it is a Mac): where Safari clears a site's storage after a week. */
-  const onIos = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
   /** A new board (the first visit, New board, the open board deleted): it offers the starting lineups until its first edit. */
   let isNew = $state(false);
   /** My boards is open: notices show there, above the list. */
   let listOpen = $state(false);
-  /** The board whose new folder is being named, or the folder being renamed. */
-  let naming = $state<string | null>(null);
-  let renaming = $state<string | null>(null);
+  let boardList: BoardList;
   let loaded = $state(false);
   let stage: HTMLDivElement;
   let drag: Drag | null = null;
@@ -617,86 +614,6 @@
     }
   }
 
-  /** Export all boards: one file of links, downloaded. The board on the court goes in with its latest change. */
-  async function exportAll() {
-    await saveNow();
-    const editor = new URL("..", location.origin + links.link);
-    const text = await store.exportFile(readList()?.boards ?? boards, `${editor}#t=`);
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
-    // Swedish writes the date as 2026-10-09, in local time.
-    a.download = strings["board.exportFile"].replace("{date}", new Date().toLocaleDateString("sv"));
-    a.click();
-    // Safari on the iPhone asks first whether to download; revoke late, as FileSaver.js does.
-    setTimeout(() => URL.revokeObjectURL(a.href), 40_000);
-  }
-
-  /** Adds the boards in an exported file to My boards, leaving out those already there; nothing is overwritten. */
-  async function importBoards(e: Event) {
-    const input = e.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = ""; // so the same file can be chosen again
-    if (!file) return;
-    const found = await store.importFile(await file.text());
-    if (!found.length) return show(strings["board.importNone"]);
-    let added: store.Saved[] = [];
-    try {
-      boards = store.update(localStorage, (list) => {
-        const next = store.addImported(list.boards, found);
-        added = next.added;
-        return { ...list, boards: next.boards };
-      }).boards;
-    } catch {
-      return show(strings["board.importFailed"]);
-    }
-    show(
-      added.length === 0
-        ? strings["board.importKnown"]
-        : added.length === 1
-          ? strings["board.importedOne"]
-          : strings["board.imported"].replace("{count}", String(added.length)),
-    );
-  }
-
-  /** The notice after Open a link. Never "0 boards added"; which folder, if the text was a folder's message. */
-  function linksAdded(added: number, broken: boolean, folder?: string) {
-    if (!added) return strings[broken ? "board.linksNoneNew" : "board.linksKnown"];
-    const text = folder
-      ? strings[added === 1 ? "board.addedToFolderOne" : "board.addedToFolder"].replace("{folder}", folder)
-      : strings[added === 1 ? "board.importedOne" : "board.imported"];
-    return text.replace("{count}", String(added)) + (broken ? ` ${strings["board.linksSomeBroken"]}` : "");
-  }
-
-  /**
-   * Open a link: every link in the pasted text becomes a board in the list. A
-   * single link also opens: that board if it is already there, in any folder.
-   */
-  async function openLinks(e: Event) {
-    e.preventDefault();
-    if (!pasted.trim()) return;
-    const { boards: found, links: count, folder } = await store.readMessage(pasted);
-    if (!found.length) return show(strings["board.linkBroken"]);
-    const single = count === 1 && !folder ? found[0] : undefined;
-    const known = single && readList()?.boards.find((s) => sameBoard(s.board, single.board));
-    if (known) {
-      pasted = "";
-      return openSaved(known);
-    }
-    let added: store.Saved[] = [];
-    try {
-      boards = store.update(localStorage, (list) => {
-        const next = store.addImported(list.boards, found);
-        added = next.added;
-        return { ...list, boards: next.boards };
-      }).boards;
-    } catch {
-      return show(strings["board.importFailed"]);
-    }
-    pasted = "";
-    show(linksAdded(added.length, found.length < count, folder));
-    if (single) openSaved(single);
-  }
-
   function openList() {
     menuOpen = false;
     listDialog.showModal();
@@ -714,26 +631,7 @@
     open(s.board, s.id);
   }
 
-  /** Closes the ⋯ menu a button or field sits in. */
-  function closeMenu(e?: Event) {
-    const menu = (e?.currentTarget as Element | undefined)?.closest("details");
-    if (menu) menu.open = false;
-  }
-
-  function duplicate(s: store.Saved, e: Event) {
-    closeMenu(e);
-    const copy = store.copyOf(s, strings["board.copySuffix"]);
-    change((storage) => store.update(storage, (list) => ({ ...list, boards: store.putAfter(list.boards, s.id, copy) })));
-  }
-
-  /** Move up or Move down in its folder. */
-  function shift(s: store.Saved, by: -1 | 1, e: Event) {
-    closeMenu(e);
-    change((storage) => store.update(storage, (list) => ({ ...list, boards: store.shift(list.boards, s.id, by) })));
-  }
-
-  function deleteSaved(s: store.Saved, e: Event) {
-    closeMenu(e);
+  function deleteSaved(s: store.Saved) {
     const wasOpen = s.id === current;
     const index = boards.findIndex((b) => b.id === s.id);
     change((storage) => store.deleteBoard(storage, s.id));
@@ -750,93 +648,8 @@
     });
   }
 
-  function moveTo(s: store.Saved, folder: string, e?: Event) {
-    closeMenu(e);
-    change((storage) =>
-      store.update(storage, (list) => ({ ...list, boards: store.toFolder(list.boards, s.id, folder) })),
-    );
-  }
-
-  /**
-   * Share folder: one message with the folder's name, then each board's
-   * title and its link, in the folder's order. The board on the court goes
-   * in with its latest change.
-   */
-  async function shareFolder(folder: string, e: Event) {
-    closeMenu(e);
-    await saveNow();
-    const list = store.inFolder(readList()?.boards ?? boards, folder);
-    const text = await store.folderMessage(folder, list, `${location.origin}${links.link}#t=`, strings["board.untitled"]);
-    send({ text }, strings["board.linksCopied"]);
-  }
-
-  /** Duplicate folder: a copy of it with every board, on top of the list, its name ready to change. */
-  async function duplicateFolder(folder: string, e: Event) {
-    closeMenu(e);
-    await saveNow();
-    let name = "";
-    const copied = change((storage) =>
-      store.update(storage, (list) => {
-        const copy = store.copyFolder(list.boards, folder, strings["board.copySuffix"], strings["board.copySuffixN"]);
-        name = copy.name;
-        return { ...list, boards: copy.boards };
-      }),
-    );
-    if (copied) renaming = name;
-  }
-
-  /** Enter or leaving the field keeps a folder name; Escape drops it (and keeps the list open). */
-  function finishFolder(e: Event, keepName: boolean) {
-    const name = (e.currentTarget as HTMLInputElement).value;
-    const s = boards.find((b) => b.id === naming);
-    const from = renaming;
-    naming = renaming = null;
-    if (!keepName) return;
-    if (s) moveTo(s, name, e);
-    else if (from !== null) {
-      change((storage) => store.update(storage, (list) => ({ ...list, boards: store.renameFolder(list.boards, from, name) })));
-    }
-  }
-
-  function folderKey(e: KeyboardEvent) {
-    if (e.key === "Enter") finishFolder(e, true);
-    else if (e.key === "Escape") {
-      e.preventDefault();
-      finishFolder(e, false);
-    }
-  }
-
-  /**
-   * Folders first, the most recently changed first, each in its own order;
-   * then the boards without one, the most recently changed first.
-   */
+  /** The folders, the most recently changed first. */
   const folders = $derived(store.folders(boards));
-  const groups = $derived(
-    [
-      ...folders.map((folder) => [folder, store.inFolder(boards, folder)] as const),
-      [undefined, store.byDate(store.inFolder(boards, undefined))] as const,
-    ].filter(([, list]) => list.length > 0),
-  );
-
-  const titleOf = (s: store.Saved) => s.board.title ?? strings["board.untitled"];
-  /**
-   * A ⋯ menu in My boards opens downward; one that would end below the list's
-   * visible part opens upward, if there is more room above (finding 17).
-   */
-  function placeMenu(e: Event) {
-    const menu = e.currentTarget as HTMLDetailsElement;
-    menu.classList.remove("up");
-    if (!menu.open) return;
-    const panel = menu.querySelector(".actions-panel")!.getBoundingClientRect();
-    const at = menu.getBoundingClientRect();
-    const top = listDialog.querySelector(".boards-bar")!.getBoundingClientRect().bottom;
-    const bottom = Math.min(listDialog.getBoundingClientRect().bottom, innerHeight);
-    if (panel.bottom > bottom && at.top - top > bottom - at.bottom) menu.classList.add("up");
-  }
-
-  const moreFor = (title?: string) => (title ? strings["board.moreFor"].replace("{title}", title) : strings["board.moreForUntitled"]);
-  const date = (at: number) =>
-    new Date(at).toLocaleDateString(document.documentElement.lang, { day: "numeric", month: "short" });
 
   // ===== Pointer input =====
 
@@ -1051,11 +864,6 @@
     else if (e.key === "Escape") editingTitle = false;
   }
 
-  function focusTitle(input: HTMLInputElement) {
-    input.focus();
-    input.select();
-  }
-
   // ===== Sharing =====
 
   async function shareUrl(via: "link" | "qr") {
@@ -1131,7 +939,7 @@
         maxlength={MAX_TITLE}
         enterkeyhint="done"
         aria-label={strings["board.editTitle"]}
-        use:focusTitle
+        use:focusField
         onkeydown={titleKey}
         onblur={saveTitle}
       />
@@ -1304,7 +1112,7 @@
       maxlength={MAX_TEXT}
       enterkeyhint="done"
       aria-label={strings["board.editText"]}
-      use:focusTitle
+      use:focusField
       oninput={(e) => (typed = e.currentTarget.value)}
       onkeydown={textKey}
       onblur={keepText}
@@ -1338,7 +1146,7 @@
           maxlength={store.MAX_FOLDER}
           enterkeyhint="done"
           aria-label={strings["board.folderName"]}
-          use:focusTitle
+          use:focusField
           onkeydown={filingKey}
           onblur={(e) => finishFiling(e, true)}
         />
@@ -1360,24 +1168,13 @@
   {/if}
 {/snippet}
 
-{#snippet openLink()}
-  <form class="paste" onsubmit={openLinks}>
-    <label>
-      {strings["board.openLink"]}
-      <!-- A folder's message: an input would drop its line breaks. -->
-      <textarea rows="2" autocapitalize="off" autocomplete="off" spellcheck="false" bind:value={pasted}></textarea>
-    </label>
-    <button type="submit">{strings["board.openLinkButton"]}</button>
-  </form>
-{/snippet}
-
 <dialog
   class="boards"
   bind:this={listDialog}
   aria-labelledby="boards-title"
   onclose={() => {
     listOpen = false;
-    naming = renaming = null;
+    boardList.reset();
   }}
 >
   <div class="boards-bar">
@@ -1391,110 +1188,29 @@
   </button>
   {#if inWebApp}
     <!-- First in the web app: the only way in for a received board. -->
-    {@render openLink()}
+    <OpenLink {strings} {change} {readList} {show} onopen={openSaved} />
   {/if}
   {#if listOpen}
     {@render noticeBar()}
   {/if}
-  {#if boards.length === 0}
-    <p class="empty">{strings["board.noBoards"]}</p>
-  {/if}
-  {#each groups as [folder, list] (folder ?? "")}
-    <!-- ⋯ beside the heading, not in it: a <details> can't sit in a heading. -->
-    <div class="folder">
-      <h3>
-        {#if folder === undefined}
-          {strings["board.noFolder"]}
-        {:else if renaming === folder}
-          <input
-            value={folder}
-            maxlength={store.MAX_FOLDER}
-            aria-label={strings["board.folderName"]}
-            use:focusTitle
-            onkeydown={folderKey}
-            onblur={(e) => renaming !== null && finishFolder(e, true)}
-          />
-        {:else}
-          <button type="button" title={strings["board.renameFolder"]} onclick={() => (renaming = folder)}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.folder} /></svg>
-            <span>{folder}</span>
-          </button>
-        {/if}
-      </h3>
-      {#if folder !== undefined && renaming !== folder}
-        <details class="actions" ontoggle={placeMenu}>
-          <summary aria-label={moreFor(folder)} title={moreFor(folder)}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.more} /></svg>
-          </summary>
-          <div class="actions-panel">
-            <button type="button" onclick={(e) => shareFolder(folder, e)}>{strings["board.shareFolder"]}</button>
-            <button type="button" onclick={(e) => duplicateFolder(folder, e)}>{strings["board.duplicateFolder"]}</button>
-          </div>
-        </details>
-      {/if}
-    </div>
-    <ul>
-      {#each list as s, i (s.id)}
-        <li class:current={s.id === current}>
-          <button type="button" class="open" onclick={() => openSaved(s)}>
-            <span class="thumb" aria-hidden="true"><Court board={s.board} label={titleOf(s)} /></span>
-            <span class="name">{titleOf(s)}</span>
-            <time datetime={new Date(s.at).toISOString()}>{date(s.at)}</time>
-          </button>
-          <details class="actions" ontoggle={placeMenu}>
-            <summary aria-label={moreFor(s.board.title)} title={moreFor(s.board.title)}>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.more} /></svg>
-            </summary>
-            <div class="actions-panel">
-              <button type="button" onclick={(e) => duplicate(s, e)}>{strings["board.duplicate"]}</button>
-              {#if folder !== undefined && i > 0}
-                <button type="button" onclick={(e) => shift(s, -1, e)}>{strings["board.moveUp"]}</button>
-              {/if}
-              {#if folder !== undefined && i < list.length - 1}
-                <button type="button" onclick={(e) => shift(s, 1, e)}>{strings["board.moveDown"]}</button>
-              {/if}
-              <p>{strings["board.folder"]}</p>
-              {#each ["", ...folders] as f (f)}
-                <button type="button" aria-pressed={(s.folder ?? "") === f} onclick={(e) => moveTo(s, f, e)}>
-                  {#if (s.folder ?? "") === f}<svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.check} /></svg>{/if}
-                  {f || strings["board.noFolder"]}
-                </button>
-              {/each}
-              {#if naming === s.id}
-                <input
-                  maxlength={store.MAX_FOLDER}
-                  aria-label={strings["board.folderName"]}
-                  use:focusTitle
-                  onkeydown={folderKey}
-                  onblur={(e) => naming !== null && finishFolder(e, true)}
-                />
-              {:else}
-                <button type="button" onclick={() => (naming = s.id)}>{strings["board.newFolder"]}</button>
-              {/if}
-              <button type="button" class="delete-board" onclick={(e) => deleteSaved(s, e)}>{strings["board.delete"]}</button>
-            </div>
-          </details>
-        </li>
-      {/each}
-    </ul>
-  {/each}
-  <!-- After the list: you use it now and then, the list every training. -->
-  <div class="backup">
-    {#if boards.length}
-      <p>{strings["board.exportHint"]}</p>
-      <button type="button" onclick={exportAll}>{strings["board.exportAll"]}</button>
-    {/if}
-    <label>
-      {strings["board.import"]}
-      <input type="file" accept=".json,application/json" onchange={importBoards} />
-    </label>
-    <!-- Under the buttons, so it moves nothing that was there. -->
-    {#if boards.length && onIos && !inWebApp}
-      <p class="tip">{strings["board.homeScreenTip"]}</p>
-    {/if}
-  </div>
+  <BoardList
+    bind:this={boardList}
+    {strings}
+    {boards}
+    {folders}
+    {current}
+    {links}
+    {inWebApp}
+    {change}
+    {readList}
+    {show}
+    {send}
+    {saveNow}
+    onopen={openSaved}
+    ondelete={deleteSaved}
+  />
   {#if !inWebApp}
-    {@render openLink()}
+    <OpenLink {strings} {change} {readList} {show} onopen={openSaved} />
   {/if}
 </dialog>
 

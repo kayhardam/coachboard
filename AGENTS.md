@@ -89,11 +89,11 @@ New or changed site text is agreed with Kay first. Take it over literally. If a 
 - **Green behind or as text** uses `--color-accent-dark` (5.0:1 on white). `--color-accent` is for fills and icons only (3.3:1).
 - **Touch targets** are at least `var(--tap)` (44px) high.
 - **The narrow-screen menu** is a `<details>` element, without JavaScript. Content pages ship no JS: `scripts/check-budget.mjs` fails on any `<script>` (JSON-LD excepted), `<astro-island>` or modulepreload outside the board pages (see "Board pages" under The board), and on any script from another origin, on every page.
-- **Icons** come from one set in `src/lib/icons.ts` (24×24, 2-unit stroke, round caps, `currentColor`), drawn with `Icon.astro` on content pages and inline in `BoardEditor`. No emoji anywhere in the UI.
+- **Icons** come from one set in `src/lib/icons.ts` (24×24, 2-unit stroke, round caps, `currentColor`), drawn with `Icon.astro` on content pages and inline in `BoardEditor` and its components. No emoji anywhere in the UI.
   - An icon next to visible text is decorative (`aria-hidden`, which `Icon.astro` sets). An icon-only button needs `aria-label` and `title`.
   - Icons take their colour from the text: `--color-accent-dark` when they carry meaning. In cards they sit on a 44×44 tile with `--color-accent-soft` behind them.
   - Size an icon with `font-size` on its wrapper; it is 1.25em.
-  - `BoardEditor` imports only `boardIcons`, so the board's JS carries only those (a bundle keeps every key of an object it imports). A new icon for the board goes in `boardIcons`; `icons` spreads it for `Icon.astro`.
+  - `BoardEditor` and its components import only `boardIcons`, so the board's JS carries only those (a bundle keeps every key of an object it imports). A new icon for the board goes in `boardIcons`; `icons` spreads it for `Icon.astro`.
 
 ## The board
 
@@ -119,7 +119,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
   - `/<lang>/board/`: the editor (`src/components/board/BoardPage.astro`, used by `src/pages/[lang]/board.astro`, which adds the workers.dev redirect). Old links to `/board/#t=…` and "Open in the board" from the library open here;
   - `/<lang>/board/link/` and `/<lang>/board/qr/`: the viewer (`src/components/board/ViewerPage.astro`), where Share and the QR code point: a path per channel, so Cloudflare's request counts can tell opened links from scanned codes. They are `noindex` and left out of the sitemap (`filter` in `astro.config.mjs`, which also leaves out the library pages while the library is out of sight);
   - these are the only pages that ship JS. `isBoard` in `scripts/check-budget.mjs` and `e2e/security.spec.ts` lists them; `isViewer` gives the viewer's pages their own budgets.
-- **`BoardEditor.svelte`:**
+- **`BoardEditor.svelte`** (with its components, `BoardList.svelte` and `OpenLink.svelte`, which only it imports):
   - it runs `client:only` on the editor's page only;
   - its JS is its own entry chunk plus the chunk it shares with the viewer: the `board` group in `codeSplitting` in `astro.config.mjs` (client build only) holds the Svelte runtime, Astro's Svelte renderer, `Court.svelte` and what reads and plays a board (`format`, `geometry`, `moves`, `play`, `newer`, `viewerIcons`). The editor's own modules stay out of it, so the viewer never loads them. A module both use must fall in the group, or it becomes a chunk of its own and costs a request and import lists. What must load later stays out of it;
   - every board page preloads the JS it loads at once: Astro writes no `modulepreload` for an island, so the `modulepreload` integration in `astro.config.mjs` (`scripts/modulepreload.mjs`) adds one per file to the `<head>` after the build, and `e2e/layout.spec.ts` checks it. Without them the board's JS starts a round trip or two later;
