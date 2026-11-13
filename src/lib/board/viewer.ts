@@ -35,16 +35,25 @@ export const moves = (board: Board, step: number) => places(moment(board, step, 
 /** The legend's order: the kinds of arrow as the editor's kind bar lists them. */
 const KINDS: readonly ArrowKind[] = ["run", "pass", "bounce", "dribble", "shot", "block"];
 
-export type LegendItem = ArrowKind | "passer" | "cone";
+export type LegendItem = ArrowKind | "attack" | "defense" | "passer" | "cone";
+
+/** The teams the legend can list, in its order, with the team in the link. */
+const TEAMS = [
+  ["attack", "a"],
+  ["defense", "d"],
+  ["passer", "p"],
+] as const;
 
 /**
- * What the legend lists for `board`: a passer and a cone if the board has
- * one, then the kinds of arrow it has in any step, in a fixed order.
+ * What the legend lists for `board`: attack, defense and a passer if the
+ * board has players of that team (every step has the same lineup), a cone if
+ * it has one, then the kinds of arrow it has in any step, in a fixed order.
  */
 export function legendOf(board: Board): LegendItem[] {
   const kinds = new Set(board.frames.flatMap((f) => f.arrows.map((a) => a.kind)));
+  const teams = new Set(board.frames[0]!.players.map((p) => p.team));
   return [
-    ...(board.frames[0]!.players.some((p) => p.team === "p") ? (["passer"] as const) : []),
+    ...TEAMS.filter(([, team]) => teams.has(team)).map(([item]) => item),
     ...(board.cones.length ? (["cone"] as const) : []),
     ...KINDS.filter((k) => kinds.has(k)),
   ];

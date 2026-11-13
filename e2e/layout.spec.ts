@@ -623,6 +623,8 @@ for (const lang of ["en", "nl"]) {
       }
       await expect(page.locator(".viewer .stage svg")).toBeInViewport({ ratio: 1 });
       await expect(page.locator(".viewer .legend")).toBeInViewport({ ratio: 1 });
+      // Every item fits in the legend's own box, so none overlaps Previous or the court.
+      expect(await page.locator(".viewer .legend").evaluate((l) => l.scrollHeight - l.clientHeight)).toBeLessThanOrEqual(1);
       const cut = await page
         .locator(".viewer :is(.controls, .edit) span:visible")
         .evaluateAll((spans) => spans.filter((s) => s.scrollWidth > s.clientWidth).map((s) => s.textContent));

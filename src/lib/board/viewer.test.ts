@@ -56,14 +56,23 @@ describe("moves", () => {
 
 describe("legendOf", () => {
   it("lists the kinds of arrow on the board in every step, in a fixed order", () => {
-    expect(legendOf(crossing)).toEqual(["run", "pass", "dribble", "shot", "block"]);
+    expect(legendOf(crossing).slice(2)).toEqual(["run", "pass", "dribble", "shot", "block"]);
   });
 
-  it("adds a passer and a cone when the board has them", () => {
-    expect(legendOf(pairs).slice(0, 2)).toEqual(["passer", "cone"]);
+  it("starts with attack and defense, each only when the board has players of that team", () => {
+    expect(legendOf(crossing).slice(0, 2)).toEqual(["attack", "defense"]);
+    expect(legendOf(defaultBoard)).toEqual(["attack", "defense"]);
+    const frame = defaultBoard.frames[0]!;
+    const only = (team: string): Board => ({ ...defaultBoard, frames: [{ ...frame, players: frame.players.filter((p) => p.team === team) }] });
+    expect(legendOf(only("a"))).toEqual(["attack"]);
+    expect(legendOf(only("d"))).toEqual(["defense"]);
   });
 
-  it("is empty for a board without arrows, passers or cones", () => {
-    expect(legendOf(defaultBoard)).toEqual([]);
+  it("adds a passer and a cone when the board has them, after the teams", () => {
+    expect(legendOf(pairs).slice(0, 4)).toEqual(["attack", "defense", "passer", "cone"]);
+  });
+
+  it("is empty for a board without players, arrows or cones", () => {
+    expect(legendOf({ v: 2, court: "half", cones: [], frames: [empty] })).toEqual([]);
   });
 });

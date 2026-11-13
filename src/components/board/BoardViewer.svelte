@@ -26,6 +26,8 @@
   const EMPTY: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], balls: [], arrows: [] }] };
 
   const labels: Record<LegendItem, keyof ViewerStrings> = {
+    attack: "viewer.attack",
+    defense: "viewer.defense",
     passer: "board.team.passer",
     cone: "board.tool.cone",
     run: "board.tool.run",
@@ -57,6 +59,8 @@
   const moving = $derived(board ? board.frames.map((_, i) => moves(board!, i)) : []);
   /** Next has nothing left to play: past the last move, or on a last step that doesn't move. */
   const done = $derived(!board || ended || (step === last && !moving[last]));
+  /** Nothing to play at all: one step that doesn't move (a lineup), or no board. */
+  const still = $derived(!board || (last === 0 && !moving[0]));
 
   /** Step `i` at `t` (0 to 1) of its move: the moment of play.ts in place of the step. */
   function at(i: number, t: number): Board {
@@ -219,8 +223,9 @@
     {#each legend as item (item)}
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true">
-          {#if item === "passer"}
-            <circle cx="12" cy="12" r="7" fill="#2563eb" stroke="none" />
+          {#if item === "attack" || item === "defense" || item === "passer"}
+            <!-- The colours of Court.svelte. -->
+            <circle cx="12" cy="12" r="7" fill={item === "attack" ? "#15803d" : item === "defense" ? "#0f172a" : "#2563eb"} stroke="none" />
           {:else if item === "cone"}
             <path d="M12 5 19 18H5z" fill="#dc2626" stroke="none" />
           {:else}
@@ -237,7 +242,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.prev} /></svg>
       <span>{strings["viewer.prev"]}</span>
     </button>
-    <button type="button" class="play" onclick={play} disabled={!board || (last === 0 && !moving[0])}>
+    <button type="button" class="play" onclick={play} disabled={still}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d={playing === "all" ? icons.stop : icons.play} /></svg>
       <span>{strings[playing === "all" ? "board.stop" : "board.play"]}</span>
     </button>

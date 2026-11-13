@@ -207,6 +207,8 @@ test("a board of one step without arrows, a lineup, has Play and Next off", asyn
   await expect(button(page, "board.play")).toBeDisabled();
   await expect(button(page, "viewer.next")).toBeDisabled();
   await expect(button(page, "viewer.prev")).toBeDisabled();
+  await expect(page.locator(".viewer .legend")).toBeVisible();
+  await expect(page.locator(".viewer .legend li")).toHaveText(["Attack", "Defense"]);
 });
 
 test("the arrow keys go to the next and the previous step", async ({ page }) => {
@@ -221,9 +223,17 @@ test("the arrow keys go to the next and the previous step", async ({ page }) => 
 test("the legend lists what is on the board, in a fixed order (K9)", async ({ page }) => {
   const items = () => page.locator(".viewer .legend li").allTextContents();
   await openViewer(page, `#t=${play.link}`, "/nl/board/link/");
-  expect((await items()).map((s) => s.trim())).toEqual(["Loop", "Pass", "Dribbel", "Schot", "Sper"]);
+  expect((await items()).map((s) => s.trim())).toEqual(["Aanval", "Verdediging", "Loop", "Pass", "Dribbel", "Schot", "Sper"]);
   await openViewer(page, `#t=${drill.link}`, "/en/board/qr/");
-  expect((await items()).map((s) => s.trim())).toEqual(["Passer", "Cone", "Run", "Pass", "Bounce", "Shot"]);
+  expect((await items()).map((s) => s.trim())).toEqual(["Attack", "Defense", "Passer", "Cone", "Run", "Pass", "Bounce", "Shot"]);
+  // The teams in the court's colours.
+  const dots = page.locator(".viewer .legend li circle");
+  await expect(dots.nth(0)).toHaveAttribute("fill", "#15803d");
+  await expect(dots.nth(1)).toHaveAttribute("fill", "#0f172a");
+  // Only the teams the board has.
+  const attackOnly = { ...play.board, frames: play.board.frames.map((f) => ({ ...f, players: f.players.filter((p) => p.team === "a"), arrows: [] })) };
+  await openViewer(page, `#t=${await encode(attackOnly)}`, "/en/board/link/");
+  expect((await items()).map((s) => s.trim())).toEqual(["Attack"]);
 });
 
 test("watching keeps nothing and never loads the editor", async ({ page }) => {
