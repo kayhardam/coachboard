@@ -45,8 +45,13 @@
     ondelete: (s: store.Saved) => void;
   } = $props();
 
-  /** An iPhone or iPad (iPadOS says it is a Mac): where Safari clears a site's storage after a week. */
-  const onIos = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  const ua = navigator.userAgent;
+  /** An iPad says it is a Mac, but has touch. */
+  const iPad = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+  /** An iPhone or iPad: where Safari clears a site's storage after a week. */
+  const onIos = /iPhone|iPad|iPod/.test(ua) || iPad;
+  /** Safari on a Mac (Chrome and Edge have no "Version/", Firefox no "Safari/"): the same rule. */
+  const onMacSafari = !iPad && /Macintosh/.test(ua) && /Version\/[\d.]+.*Safari\//.test(ua);
 
   /** The board whose new folder is being named, or the folder being renamed. */
   let naming = $state<string | null>(null);
@@ -302,7 +307,8 @@
     <input type="file" accept=".json,application/json" onchange={importBoards} />
   </label>
   <!-- Under the buttons, so it moves nothing that was there. -->
-  {#if boards.length && onIos && !inWebApp}
-    <p class="tip">{strings["board.homeScreenTip"]}</p>
+  <!-- On a Mac also in a web app in the Dock: whether the rule applies there isn't documented. -->
+  {#if boards.length && ((onIos && !inWebApp) || onMacSafari)}
+    <p class="tip">{strings[onIos ? "board.homeScreenTip" : "board.macSafariTip"]}</p>
   {/if}
 </div>

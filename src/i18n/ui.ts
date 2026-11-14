@@ -233,6 +233,7 @@ const en = {
   "board.addedToFolder": "{count} boards added to the folder {folder}.",
   "board.homeScreenTip":
     "Safari can clear your boards if you don't open this site for a week. Put Coachboard on your home screen. Take your boards with you: export them here and import them in the app.",
+  "board.macSafariTip": "Safari can clear your boards if you don't open this site for a week.",
   "board.steps": "Steps",
   "board.step": "Step {n}",
   "board.newStep": "New step",
@@ -513,6 +514,7 @@ const nl: Record<UiKey, string> = {
   "board.addedToFolder": "{count} borden toegevoegd aan de map {folder}.",
   "board.homeScreenTip":
     "Safari kan je borden wissen als je deze site een week niet opent. Zet Coachboard op je beginscherm. Neem je borden mee: exporteer ze hier en importeer ze in de app.",
+  "board.macSafariTip": "Safari kan je borden wissen als je deze site een week niet opent.",
   "board.steps": "Stappen",
   "board.step": "Stap {n}",
   "board.newStep": "Nieuwe stap",
