@@ -7,6 +7,7 @@ import {
   MAX_ARROWS,
   MAX_BALLS,
   MAX_CONES,
+  MAX_LABEL,
   MAX_PLAYERS,
   MAX_STEPS,
   MAX_TEXT,
@@ -203,6 +204,25 @@ export function setTeam(board: Board, index: number, team: Player["team"]): Boar
     if (team === "p") delete p.label;
   }
   return settle(next);
+}
+
+/**
+ * A player's label as typed (a number, a position, initials), in every step:
+ * the lineup is one. One line, at most MAX_LABEL characters, spaces trimmed (as
+ * setTitle()); an empty one removes it. A passer has no label, so a passer, or
+ * the same label, returns the same board.
+ */
+export function setLabel(board: Board, index: number, text: string): Board {
+  const player = board.frames[0]!.players[index];
+  const label = oneLine(text, MAX_LABEL);
+  if (!player || player.team === "p" || (player.label ?? "") === label) return board;
+  const next = structuredClone(board);
+  for (const f of next.frames) {
+    const p = f.players[index]!;
+    if (label) p.label = label;
+    else delete p.label;
+  }
+  return next;
 }
 
 /**

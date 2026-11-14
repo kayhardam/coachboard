@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { decode, type Board } from "../src/lib/board/format";
 import { t } from "../src/i18n/ui";
-import { dragPlayer, expect, fromMenu, moveTool, openBoard, pieces, savedBoards, saveOwnBoard, test } from "./helpers";
+import { dragPlayer, expect, fromMenu, linkInAddressBar, moveTool, openBoard, openViewer, pieces, savedBoards, saveOwnBoard, test } from "./helpers";
 
 // Phase 13-2: Arrow is the tool on opening and picks what a tap is on; a bar
 // over the court changes what is picked (the kind of an arrow, the team of a
@@ -173,6 +173,95 @@ test.describe("Arrow", () => {
     await expect(teams(page).getByRole("button", { name: "Passer" })).toHaveAttribute("aria-pressed", "true");
     await expect(player(page, 0).locator("text")).toHaveCount(0);
     await expect.poll(async () => (await savedBoards(page))[0]?.board.frames[0]!.players[0]).toEqual({ team: "p", at: [8, 16] });
+  });
+});
+
+// A number or position on a player (Kay, 14 November 2026): in the team bar's
+// heading row, tap to edit, as the title. The lineup is one, so every step.
+test.describe("number or position", () => {
+  const tag = (page: Page) => teams(page).getByRole("button", { name: /^Number or position/ });
+  const field = (page: Page) => teams(page).getByRole("textbox", { name: "Number or position" });
+  const labels = async (page: Page) => (await inLink(page)).frames.map((f) => f.players[0]!.label);
+
+  test("a tap gives a player a number in every step; Undo puts the old label back", async ({ page }) => {
+    await openBoard(page);
+    await page.getByRole("button", { name: "New step" }).click();
+    await player(page, 0).click();
+    // Selecting shows the label, and never opens the keyboard.
+    await expect(tag(page)).toHaveAccessibleName("Number or position LW");
+    await expect(field(page)).toHaveCount(0);
+    expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe("INPUT");
+
+    await tag(page).click();
+    await expect(field(page)).toBeFocused();
+    await expect(field(page)).toHaveValue("LW");
+    await field(page).fill(" 7 ");
+    await field(page).press("Enter");
+    await expect(tag(page)).toHaveAccessibleName("Number or position 7");
+    await expect(player(page, 0).locator("text")).toHaveText("7");
+    await expect.poll(() => labels(page)).toEqual(["7", "7"]);
+    await expect.poll(async () => (await savedBoards(page))[0]?.board.frames.map((f) => f.players[0]!.label)).toEqual(["7", "7"]);
+
+    await page.getByRole("button", { name: "Undo" }).click();
+    await player(page, 0).click();
+    await expect(tag(page)).toHaveAccessibleName("Number or position LW");
+    await expect(player(page, 0).locator("text")).toHaveText("LW");
+    await expect.poll(() => labels(page)).toEqual(["LW", "LW"]);
+  });
+
+  test("Backspace in the field takes a character, not the player; Escape and an empty label", async ({ page }) => {
+    await openBoard(page);
+    const count = await page.locator(".stage [data-kind=player]").count();
+    await player(page, 0).click();
+    await tag(page).click();
+    // The cursor at the end (focusField() selects the label; End doesn't move it in WebKit).
+    await field(page).evaluate((f: HTMLInputElement) => f.setSelectionRange(2, 2));
+    await field(page).press("Backspace");
+    await expect(field(page)).toHaveValue("L");
+    await field(page).blur();
+    await expect(page.locator(".stage [data-kind=player]")).toHaveCount(count);
+    await expect(player(page, 0).locator("text")).toHaveText("L");
+
+    // Escape drops what was typed; at most three characters.
+    await tag(page).click();
+    await field(page).pressSequentially("1234");
+    await expect(field(page)).toHaveValue("123");
+    await field(page).press("Escape");
+    await expect(tag(page)).toHaveAccessibleName("Number or position L");
+
+    // Empty: no label, only the pencil.
+    await tag(page).click();
+    await field(page).fill("");
+    await field(page).press("Enter");
+    await expect(tag(page)).toHaveAccessibleName("Number or position");
+    await expect(player(page, 0).locator("text")).toHaveCount(0);
+    await expect.poll(() => labels(page)).toEqual([undefined]);
+
+    // A passer has no label, and no field for one.
+    await teams(page).getByRole("button", { name: "Passer" }).click();
+    await expect(tag(page)).toHaveCount(0);
+  });
+
+  test("a tap on the court keeps the label for the player it was typed for", async ({ page }) => {
+    await openBoard(page);
+    await player(page, 0).click();
+    await tag(page).click();
+    await field(page).fill("9");
+    await player(page, 1).click();
+    await expect(player(page, 0).locator("text")).toHaveText("9");
+    await expect(tag(page)).toHaveAccessibleName("Number or position LB");
+  });
+
+  test("the shared link shows the number in the viewer", async ({ page }) => {
+    await openBoard(page);
+    await player(page, 0).click();
+    await tag(page).click();
+    await field(page).fill("11");
+    await field(page).press("Enter");
+    await expect.poll(() => labels(page)).toEqual(["11"]);
+    const link = new URL(await linkInAddressBar(page)).hash;
+    await openViewer(page, link);
+    await expect(page.locator('[data-kind="player"][data-index="0"] text')).toHaveText("11");
   });
 });
 

@@ -64,3 +64,20 @@ for (const lang of ["en", "nl"]) {
     expect(serious).toEqual([]);
   });
 }
+
+for (const lang of ["en", "nl"]) {
+  test(`axe finds nothing serious with a player selected (${lang}), their number or position open and closed`, async ({ page }) => {
+    await openBoard(page, "", `/${lang}/board/`);
+    await page.locator('.stage [data-kind="player"][data-index="0"]').click();
+    const bar = page.getByRole("toolbar", { name: t(lang, "board.team") });
+    for (const open of [false, true]) {
+      if (open) await bar.getByRole("button", { name: new RegExp(`^${t(lang, "board.label")}`) }).click();
+      await expect(bar.getByRole("textbox")).toHaveCount(open ? 1 : 0);
+      const { violations } = await new AxeBuilder({ page }).analyze();
+      const serious = violations
+        .filter((v) => v.impact === "serious" || v.impact === "critical")
+        .map((v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
+      expect(serious).toEqual([]);
+    }
+  });
+}

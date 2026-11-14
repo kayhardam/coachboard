@@ -227,6 +227,42 @@ for (const lang of ["en", "nl"]) {
   }
 }
 
+// A number or position (Kay, 14 November 2026): in the team bar's heading row,
+// right of "Team". On screen, 44 px high and nothing cut off, on the smallest
+// phones too, in every layout and language.
+const SIZES = {
+  "portrait 320": { width: 320, height: 568 },
+  "portrait 360": { width: 360, height: 740 },
+  "landscape 568": { width: 568, height: 320 },
+  landscape: undefined,
+  "wide 860": { width: 860, height: 560 },
+  wide: WIDE,
+} as const;
+for (const lang of ["en", "nl"]) {
+  for (const [name, size] of Object.entries(SIZES)) {
+    test(`${lang}, ${name}: a player's number or position fits in the team bar`, async ({ page }) => {
+      await page.setViewportSize(size ?? landscape());
+      await openBoard(page, "", `/${lang}/board/`);
+      await page.locator('.stage [data-kind="player"][data-index="0"]').click();
+      const bar = page.getByRole("toolbar", { name: t(lang, "board.team") });
+      const tag = bar.getByRole("button", { name: new RegExp(`^${t(lang, "board.label")}`) });
+      await expect(tag).toBeInViewport({ ratio: 1 });
+      expect((await tag.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+      const cut = await bar.locator("span").evaluateAll((spans) =>
+        spans.filter((s) => s.scrollWidth > s.clientWidth).map((s) => s.textContent),
+      );
+      expect(cut).toEqual([]);
+      await expectEverythingOnScreen(page);
+      // The open field, with the longest label, in the same place.
+      await tag.click();
+      const field = bar.getByRole("textbox", { name: t(lang, "board.label") });
+      await field.fill("WWW");
+      await expect(field).toBeInViewport({ ratio: 1 });
+      expect(await field.evaluate((f: HTMLInputElement) => f.scrollWidth <= f.clientWidth)).toBe(true);
+    });
+  }
+}
+
 // The bar over the court (phase 13-2): the starting lineups on a new board, the
 // kinds for an arrow, the teams for a player. In portrait and landscape it sits
 // over the bottom of the court's box, above the tools; wide, at the top of the

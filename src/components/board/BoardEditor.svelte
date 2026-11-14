@@ -8,7 +8,7 @@
   import type { BoardStrings } from "../../i18n/ui";
   import * as edit from "../../lib/board/edit";
   import type { Selection } from "../../lib/board/edit";
-  import { decode, encode, MAX_STEPS, MAX_TEXT, MAX_TITLE, sameBoard, toBoard, unescapeLink, type Board } from "../../lib/board/format";
+  import { decode, encode, MAX_LABEL, MAX_STEPS, MAX_TEXT, MAX_TITLE, sameBoard, toBoard, unescapeLink, type Board } from "../../lib/board/format";
   import { reloadForNewer } from "../../lib/board/newer";
   import { SETUPS, setup } from "../../lib/board/defaults";
   import { moment } from "../../lib/board/play";
@@ -93,6 +93,9 @@
   /** The sentence of the step on the court is being typed; `typed` is what it says so far. */
   let editingText = $state(false);
   let typed = $state("");
+  /** The player whose label is being typed (the one selected when the field opened), and what it says so far. */
+  let labeling = $state<number | null>(null);
+  let labelTyped = "";
   let draft = $state.raw<Board | null>(null);
   let tool = $state<Tool>("arrow");
   let selected = $state<Selection | null>(null);
@@ -159,7 +162,7 @@
    * placeholder, so it doesn't become the LCP), as long as the strip shows.
    */
   type Item = { id: string; label: string; on?: boolean; off?: boolean; icon?: string; dash?: boolean; team?: string; run: () => void };
-  const strip = $derived.by((): { title: string; heading?: boolean; hint?: string; items: Item[] } | undefined => {
+  const strip = $derived.by((): { title: string; heading?: boolean; hint?: string; label?: string; items: Item[] } | undefined => {
     const index = selected?.index ?? 0;
     const arrow = selected?.kind === "arrow" ? frame.arrows[index] : undefined;
     const player = selected?.kind === "player" ? frame.players[index] : undefined;
@@ -182,6 +185,8 @@
       return {
         title: strings["board.team"],
         heading: true,
+        // A passer has no label.
+        label: player.team === "p" ? undefined : (player.label ?? ""),
         items: teams.map(([id, key, team]) => ({
           id,
           label: strings[key],
@@ -293,12 +298,18 @@
   /** A tap on the sentence stops playing first, so the sentence stays with its step. */
   function editText() {
     stopPlaying();
+    keepLabel();
     typed = frame.text ?? "";
     editingText = true;
   }
 
-  /** Keeps the sentence being typed, as leaving the field does: before New step, another step, Share or Undo. */
+  /** Keeps the sentence or label being typed, as leaving the field does: before New step, another step, Share or Undo. */
   function keepText() {
+    keepLabel();
+    keepSentence();
+  }
+
+  function keepSentence() {
     if (!editingText) return;
     editingText = false;
     commit(edit.setText(board, step, typed));
@@ -306,8 +317,28 @@
 
   /** Enter keeps the sentence; Escape drops what was typed, and the blur after it keeps nothing. */
   function textKey(e: KeyboardEvent) {
-    if (e.key === "Enter") keepText();
+    if (e.key === "Enter") keepSentence();
     else if (e.key === "Escape") editingText = false;
+  }
+
+  /** The label of the selected player: a tap opens its field, never a selection. */
+  function editLabel(index: number, label: string) {
+    keepText();
+    labelTyped = label;
+    labeling = index;
+  }
+
+  /** Keeps the label being typed for the player it was opened for (setLabel()). */
+  function keepLabel() {
+    if (labeling === null) return;
+    const index = labeling;
+    labeling = null;
+    commit(edit.setLabel(board, index, labelTyped));
+  }
+
+  function labelKey(e: KeyboardEvent) {
+    if (e.key === "Enter") keepLabel();
+    else if (e.key === "Escape") labeling = null;
   }
 
   /** Shows a notice for six seconds, or with `lasting` until it is dismissed or the board is edited. */
@@ -828,6 +859,7 @@
 
   function remove() {
     if (!selected) return;
+    keepText();
     commit(edit.removeSelected(board, step, selected));
     selected = null;
   }
@@ -1063,7 +1095,35 @@
   {#if strip}
     <div class="strip" role="toolbar" aria-label={strip.title}>
       {#if strip.hint}<p class="strip-hint">{strip.hint}</p>{/if}
-      {#if strip.heading}<span class="strip-title" aria-hidden="true">{strip.title}</span>{/if}
+      {#if strip.heading}
+        <div class="strip-head">
+          <span class="strip-title" aria-hidden="true">{strip.title}</span>
+          {#if strip.label !== undefined && selected}
+            {#if labeling === selected.index}
+              <label class="tag">
+                <span class="strip-title">{strings["board.label"]}</span>
+                <input
+                  value={strip.label}
+                  maxlength={MAX_LABEL}
+                  enterkeyhint="done"
+                  autocapitalize="characters"
+                  autocomplete="off"
+                  spellcheck="false"
+                  use:focusField
+                  oninput={(e) => (labelTyped = e.currentTarget.value)}
+                  onkeydown={labelKey}
+                  onblur={keepLabel}
+                />
+              </label>
+            {:else}
+              <button type="button" class="tag" onclick={() => editLabel(selected!.index, strip.label!)}>
+                <span class="strip-title">{strings["board.label"]}</span>
+                <b>{strip.label}<svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons.draw} /></svg></b>
+              </button>
+            {/if}
+          {/if}
+        </div>
+      {/if}
       <div class="strip-row">
         {#each strip.items as item (item.id)}
           <button type="button" class="tool" class:setup={item.on === undefined} aria-pressed={item.on} disabled={item.off} onclick={item.run}>
@@ -1115,7 +1175,7 @@
       use:focusField
       oninput={(e) => (typed = e.currentTarget.value)}
       onkeydown={textKey}
-      onblur={keepText}
+      onblur={keepSentence}
     />
   {:else}
     <button type="button" class="line" class:empty={!frame.text} title={strings["board.editText"]} onclick={editText}>
