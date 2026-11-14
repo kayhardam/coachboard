@@ -377,6 +377,63 @@
   font-size: 0.875rem;
   line-height: 1.35;
 }
+/* The heading row: "Team", and for a player who isn't a passer, on its right,
+   "Number or position" and the label with a pencil (tap to edit, as the title).
+   In a narrow column (wide at 860 px) it wraps under "Team", its name on two lines. */
+.editor .strip-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
+}
+.editor .tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin-left: auto;
+  text-align: right;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+.editor .tag :is(b, input) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 72px;
+  height: var(--tap);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  /* 16px or more, or iOS zooms in on the field. */
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+}
+.editor .tag input {
+  padding: 0 4px;
+  cursor: text;
+}
+.editor .tag svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--color-text-muted);
+}
 .editor .strip .tool:disabled {
   opacity: 0.4;
   cursor: default;
