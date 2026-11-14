@@ -13,6 +13,7 @@ const en = {
   "nav.privacy": "Privacy",
   "nav.about": "About",
   "nav.contact": "Contact",
+  "nav.howItWorks": "How the board works",
   "footer.tagline":
     "Tactics board for handball coaches.",
   "footer.site": "Site",
@@ -40,6 +41,7 @@ const en = {
   "home.allTactics": "All tactics",
   "home.ctaTitle": "Draw your first play.",
   "home.ctaBody": "Open the board in your browser. No account needed.",
+  "home.allFeatures": "Everything the board can do",
   "privacy.title": "Privacy | Handball Coachboard",
   "privacy.description":
     "Handball Coachboard sets no cookies and has no accounts. Read what happens to your drawing and what Cloudflare sees.",
@@ -48,6 +50,12 @@ const en = {
   "about.description":
     "Handball Coachboard is a tactics board for handball coaches, made by a handball coach. What it does, and how to get in touch.",
   "about.heading": "About Handball Coachboard",
+  "howItWorks.title": "How the handball tactics board works | Handball Coachboard",
+  "howItWorks.description":
+    "How the online tactics board for handball works: pick a lineup, draw in steps and share the board with your team. No account or app needed.",
+  "howItWorks.heading": "How the board works",
+  "howItWorks.lead":
+    "An online tactics board for handball, on your phone or laptop. This is what the board can do, in the order you use it.",
   "category.attack.label": "Attack",
   "category.attack.desc": "Fast break, second wave",
   "category.attack.intro":
@@ -159,6 +167,7 @@ const en = {
   "board.menu.share": "Share",
   "board.menu.thisBoard": "This board",
   "board.menu.library": "Library",
+  "board.menu.help": "Help",
   "board.undo": "Undo",
   "board.delete": "Delete",
   "board.more": "More",
@@ -249,7 +258,8 @@ const en = {
 
 export type UiKey = keyof typeof en;
 /** The board page's own texts: the page shows them, the editor doesn't, so they stay out of its prop. */
-const pageKeys = ["board.title", "board.description", "board.heading", "board.noscript"] as const;
+// board.menu.help: the heading of More's last group while the library is out of sight, passed as board.menu.library (BoardPage.astro).
+const pageKeys = ["board.title", "board.description", "board.heading", "board.noscript", "board.menu.help"] as const;
 export type BoardKey = Exclude<Extract<UiKey, `board.${string}`>, (typeof pageKeys)[number]>;
 export type BoardStrings = Record<BoardKey, string>;
 
@@ -284,6 +294,7 @@ const nl: Record<UiKey, string> = {
   "nav.privacy": "Privacy",
   "nav.about": "Over",
   "nav.contact": "Contact",
+  "nav.howItWorks": "Zo werkt het bord",
   "footer.tagline":
     "Tactiekbord voor handbaltrainers.",
   "footer.site": "Site",
@@ -311,6 +322,7 @@ const nl: Record<UiKey, string> = {
   "home.allTactics": "Alle tactieken",
   "home.ctaTitle": "Teken je eerste aanval.",
   "home.ctaBody": "Open het bord in je browser, zonder account.",
+  "home.allFeatures": "Alles wat het bord kan",
   "privacy.title": "Privacy | Handball Coachboard",
   "privacy.description":
     "Handball Coachboard zet geen cookies en heeft geen accounts. Lees wat er met je tekening gebeurt en wat Cloudflare ziet.",
@@ -319,6 +331,12 @@ const nl: Record<UiKey, string> = {
   "about.description":
     "Handball Coachboard is een tactiekbord voor handbaltrainers, gemaakt door een handbaltrainer. Wat het doet, en hoe je contact opneemt.",
   "about.heading": "Over Handball Coachboard",
+  "howItWorks.title": "Zo werkt het coachbord voor handbal | Handball Coachboard",
+  "howItWorks.description":
+    "Zo werkt het online coachbord voor handbal: kies een opstelling, teken in stappen en deel het bord met je team. Geen account of app nodig.",
+  "howItWorks.heading": "Zo werkt het bord",
+  "howItWorks.lead":
+    "Een online coachbord voor handbal, op je telefoon of laptop. Dit is wat het bord kan, in de volgorde waarin je het gebruikt.",
   "category.attack.label": "Aanval",
   "category.attack.desc": "Tweede golf, kruising MO–LO",
   "category.attack.intro":
@@ -429,6 +447,7 @@ const nl: Record<UiKey, string> = {
   "board.menu.share": "Delen",
   "board.menu.thisBoard": "Dit bord",
   "board.menu.library": "Bibliotheek",
+  "board.menu.help": "Uitleg",
   "board.undo": "Ongedaan maken",
   "board.delete": "Verwijderen",
   "board.more": "Meer",

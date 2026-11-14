@@ -1,0 +1,78 @@
+---
+// How the board works: what the board can do, in the order you use it, each
+// feature with its sentence and an image. Static, without JavaScript. The text
+// is per language in src/i18n/pages/how-it-works/; each feature is
+// src/components/HowFeature.astro.
+import type { AstroComponentFactory } from "astro/runtime/server/index.js";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { boardPath } from "../../data/nav";
+import { localeParams } from "../../i18n/locales";
+import { t } from "../../i18n/ui";
+import { pageText } from "../../i18n/pages";
+
+export const getStaticPaths = localeParams;
+
+const { lang } = Astro.params;
+const Text = pageText(
+  import.meta.glob<AstroComponentFactory>("../../i18n/pages/how-it-works/*.astro", { eager: true, import: "default" }),
+  lang,
+);
+---
+
+<BaseLayout title={t(lang, "howItWorks.title")} description={t(lang, "howItWorks.description")}>
+  <article class="container">
+    <h1>{t(lang, "howItWorks.heading")}</h1>
+    <p class="lead">{t(lang, "howItWorks.lead")}</p>
+    <ol class="features">
+      <Text />
+    </ol>
+  </article>
+
+  <section class="cta">
+    <div class="container">
+      <h2>{t(lang, "home.ctaTitle")}</h2>
+      <p class="sub">{t(lang, "home.ctaBody")}</p>
+      <a class="btn btn-primary" href={getRelativeLocaleUrl(lang, boardPath)}>{t(lang, "cta.board")}</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  article {
+    max-width: 960px;
+    padding-block: 48px 0;
+  }
+
+  h1 {
+    margin-bottom: 12px;
+    font-size: clamp(2rem, 5vw, 2.5rem);
+  }
+
+  .lead {
+    max-width: 720px;
+    margin-bottom: 16px;
+    font-size: 1.125rem;
+    color: var(--color-text-muted);
+  }
+
+  .features {
+    padding: 0;
+    list-style: none;
+  }
+
+  .cta {
+    padding-block: 48px 0;
+    text-align: center;
+  }
+
+  .cta h2 {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+  }
+
+  .sub {
+    max-width: 560px;
+    margin: 8px auto 24px;
+    color: var(--color-text-muted);
+  }
+</style>

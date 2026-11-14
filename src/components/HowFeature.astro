@@ -1,0 +1,107 @@
+---
+// One feature on How the board works: its heading, its sentence (the slot) and
+// its image. Features 1–6 draw a board from src/data/howItWorks.ts with Court
+// (6, the steps, with StepStrip); 7–10 are screenshots of the board
+// (npm run screenshots), with fixed sizes so the page doesn't move while they load.
+import { drawing, shotPath, shots, type DrawingName, type ShotName } from "../data/howItWorks";
+import { defaultLocale } from "../i18n/locales";
+import Court from "./board/Court.svelte";
+import StepStrip from "./StepStrip.astro";
+
+interface Props {
+  title: string;
+  image: DrawingName | ShotName;
+  /** What the image shows. The steps take StepStrip's own label per step instead. */
+  alt?: string;
+}
+
+const { title, image, alt = "" } = Astro.props;
+const lang = Astro.currentLocale ?? defaultLocale;
+const shot = image in shots ? shots[image as ShotName] : null;
+const board = shot ? null : await drawing(lang, image as DrawingName);
+---
+
+<li class="feature">
+  <div class="text">
+    <h2>{title}</h2>
+    <p><slot /></p>
+  </div>
+  {
+    shot ? (
+      <img
+        class:list={["shot", { tall: shot.height > shot.width }]}
+        src={shotPath(lang, image as ShotName)}
+        width={shot.width}
+        height={shot.height}
+        {alt}
+        loading="lazy"
+        decoding="async"
+      />
+    ) : image === "steps" ? (
+      <div class="steps">
+        <StepStrip {lang} board={board!} />
+      </div>
+    ) : (
+      <div class="court">
+        <Court board={board!} label={alt} />
+      </div>
+    )
+  }
+</li>
+
+<style>
+  .feature {
+    display: grid;
+    gap: 16px;
+    padding-block: 32px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  h2 {
+    margin-bottom: 8px;
+    font-size: 1.25rem;
+  }
+
+  p {
+    color: var(--color-text-muted);
+  }
+
+  .court,
+  .shot {
+    width: 100%;
+    max-width: 360px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-bg);
+  }
+
+  .court {
+    padding: 8px;
+  }
+
+  .shot {
+    height: auto;
+  }
+
+  /* A phone's whole screen: narrower, so it doesn't fill a phone twice over. */
+  .shot.tall {
+    max-width: 280px;
+  }
+
+  /* Step 1 and step 2 side by side, also on a phone. */
+  .steps {
+    max-width: 440px;
+  }
+  .steps :global(.strip) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  @media (min-width: 860px) {
+    .feature {
+      grid-template-columns: 1fr 440px;
+      gap: 32px;
+      align-items: start;
+    }
+  }
+</style>
