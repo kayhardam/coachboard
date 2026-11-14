@@ -808,4 +808,47 @@ test.describe("open a link", () => {
     await expect(list(page).locator(".tip")).toHaveCount(ios ? 1 : 0);
     if (ios) await expect(list(page).locator(".tip")).toContainText("Safari can clear your boards");
   });
+
+  /** A Mac without touch, with this user agent; `standalone` as a web app in the Dock. */
+  async function asMac(page: Page, userAgent: string, standalone = false) {
+    await page.addInitScript(
+      ([ua, standalone]) => {
+        Object.defineProperty(navigator, "userAgent", { get: () => ua });
+        Object.defineProperty(navigator, "maxTouchPoints", { get: () => 0 });
+        if (standalone) Object.defineProperty(navigator, "standalone", { get: () => true });
+      },
+      [userAgent, standalone] as const,
+    );
+  }
+  const MAC_SAFARI =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15";
+  const MAC_CHROME =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36";
+  const MAC_TIP = "Safari can clear your boards if you don't open this site for a week.";
+
+  test("Safari on a Mac shows the warning, only with boards", async ({ page }) => {
+    await asMac(page, MAC_SAFARI);
+    await openBoard(page);
+    await openList(page);
+    await expect(list(page).locator(".tip")).toHaveCount(0);
+    await list(page).getByRole("button", { name: "Close" }).click();
+    await saveOwnBoard(page);
+    await openList(page);
+    await expect(list(page).locator(".tip")).toHaveText(MAC_TIP);
+  });
+
+  test("Safari on a Mac in a web app in the Dock still shows the warning", async ({ page }) => {
+    await asMac(page, MAC_SAFARI, true);
+    await saveOwnBoard(page);
+    await openList(page);
+    await expect(list(page).locator(".new + .paste")).toBeVisible();
+    await expect(list(page).locator(".tip")).toHaveText(MAC_TIP);
+  });
+
+  test("Chrome on a Mac shows no warning", async ({ page }) => {
+    await asMac(page, MAC_CHROME);
+    await saveOwnBoard(page);
+    await openList(page);
+    await expect(list(page).locator(".tip")).toHaveCount(0);
+  });
 });
