@@ -57,7 +57,7 @@ export async function drawing(lang: string, name: DrawingName): Promise<Board> {
 export const shots = {
   play: { width: 720, height: 224 },
   viewer: { width: 720, height: 1280 },
-  "my-boards": { width: 720, height: 1280 },
+  "my-boards": { width: 720, height: 1000 },
   "open-link": { width: 720, height: 680 },
 } as const;
 

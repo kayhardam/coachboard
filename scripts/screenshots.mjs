@@ -140,7 +140,8 @@ try {
     await page.reload();
     await ready();
     await myBoards();
-    images["my-boards"] = await page.screenshot();
+    // From the top down to the end of the last folder (the height in `shots`).
+    images["my-boards"] = await page.screenshot({ clip: { x: 0, y: 0, width: phone.width, height: shots["my-boards"].height / scale } });
 
     // 10: Open a link on a device without boards, with Share folder's message pasted.
     await editor(false);
