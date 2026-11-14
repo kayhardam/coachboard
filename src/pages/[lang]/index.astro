@@ -3,7 +3,7 @@ import { getRelativeLocaleUrl } from "astro:i18n";
 import CategoryCards from "../../components/CategoryCards.astro";
 import Icon from "../../components/Icon.astro";
 import Court from "../../components/board/Court.svelte";
-import { boardPath } from "../../data/nav";
+import { boardPath, howItWorks } from "../../data/nav";
 import { libraryShown } from "../../data/libraryShown";
 import { owner, ownerUrl, shortName, siteName } from "../../data/site";
 import BaseLayout from "../../layouts/BaseLayout.astro";
@@ -71,6 +71,9 @@ const jsonLd = JSON.stringify(webSite).replace(/</g, "\\u003c");
           ))
         }
       </ol>
+      <p class="more">
+        <a href={getRelativeLocaleUrl(lang, howItWorks.path)}>{t(lang, "home.allFeatures")}<Icon name="arrowRight" /></a>
+      </p>
     </div>
   </section>
 

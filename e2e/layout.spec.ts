@@ -162,7 +162,7 @@ for (const orientation of ORIENTATIONS) {
 
   test(`${orientation}: More opens on screen for a received board with steps, with Save to My boards and Delete step`, async ({ page }) => {
     await orient(page, orientation);
-    // The smallest phone: More holds the most there (nine buttons, and two links while the library shows).
+    // The smallest phone: More holds the most there (nine buttons, How the board works, and two links more while the library shows).
     if (orientation === "landscape") await page.setViewportSize({ width: 568, height: 320 });
     if (orientation === "portrait") await page.setViewportSize({ width: 320, height: 568 });
     const board = defaultBoardFor("en");
@@ -174,7 +174,7 @@ for (const orientation of ORIENTATIONS) {
     for (const button of await panel.getByRole("button").all()) await expect(button).toBeInViewport({ ratio: 1 });
     await expect(panel.getByRole("button", { name: "Save to My boards" })).toBeVisible();
     await expect(panel.getByRole("button", { name: "Delete step" })).toBeVisible();
-    await expect(panel.getByRole("link")).toHaveCount(libraryShown ? 2 : 0);
+    await expect(panel.getByRole("link")).toHaveCount(libraryShown ? 3 : 1);
     await expectEverythingOnScreen(page);
   });
 

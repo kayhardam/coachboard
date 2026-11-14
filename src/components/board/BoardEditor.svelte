@@ -26,8 +26,8 @@
    * `home`: the home page, linked from the title bar (the board has no site header).
    * `links`: the pages a shared link and a QR code open, so statistics can count them apart.
    * `lineup`: the default lineup, labelled in the page's language.
-   * `library`: the tactics and drills overviews, at the bottom of More: the board's only way to the library.
-   * Empty while the library is out of sight (`src/data/libraryShown.ts`): then More has no Library group.
+   * `library`: the links of More's last group, with the heading `board.menu.library` (both from the page):
+   * the tactics and drills overviews while the library shows (`src/data/libraryShown.ts`), and How the board works.
    */
   let {
     strings,

@@ -35,8 +35,12 @@ export const sharePaths = {
   qr: "board/qr/",
 };
 
+/** The page that explains the board: in the footer, on the home and about pages, and at the bottom of More on the board. */
+export const howItWorks: NavItem = { path: "how-it-works/", label: "nav.howItWorks" };
+
 /** Footer only. */
 export const footerOnly: NavItem[] = [
+  howItWorks,
   { path: "about/", label: "nav.about" },
   { path: "about/", label: "nav.contact", hash: "contact" },
   { path: "privacy/", label: "nav.privacy" },

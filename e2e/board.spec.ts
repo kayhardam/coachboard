@@ -261,30 +261,32 @@ test("Escape leaves the title as it was, and it takes at most MAX_TITLE characte
   await expect(input).toHaveValue("x".repeat(MAX_TITLE));
 });
 
-// More's links are the board's only way to the library. scripts/check-links.mjs doesn't
-// see them (they are an island's props), so this checks that they open. While the
-// library is out of sight (decision 34), More has no Library group and no link there.
+// More's last group: the board's only way to the library (while it shows) and to How the
+// board works. scripts/check-links.mjs doesn't see these links (they are an island's
+// props), so this checks that they open. While the library is out of sight (decision 34),
+// the group is Help, with How the board works only.
 for (const lang of ["en", "nl"]) {
-  if (!libraryShown) {
-    test(`${lang}: More has no Library group and no link to the tactics or drills`, async ({ page }) => {
-      await openBoard(page, "", `/${lang}/board/`);
-      await moreButton(page, lang).click();
-      const panel = page.locator(".menu-panel");
-      await expect(panel.getByRole("button", { name: t(lang, "board.newBoard"), exact: true })).toBeVisible();
-      await expect(panel.getByText(t(lang, "board.menu.library"), { exact: true })).toHaveCount(0);
-      await expect(panel.locator(".group")).toHaveText([t(lang, "board.menu.boards"), t(lang, "board.menu.share"), t(lang, "board.menu.thisBoard")]);
-      await expect(panel.locator(`a[href^="/${lang}/tactics/"], a[href^="/${lang}/drills/"]`)).toHaveCount(0);
-    });
-    continue;
-  }
-  test(`${lang}: More links to the tactics and drills, and is closed after Back`, async ({ page }) => {
-    for (const [key, path] of [["nav.tactics", "tactics/"], ["nav.drills", "drills/"]] as const) {
+  const links = [...(libraryShown ? (["nav.tactics", "nav.drills"] as const) : []), "nav.howItWorks"] as const;
+  const paths: Record<(typeof links)[number], string> = { "nav.tactics": "tactics/", "nav.drills": "drills/", "nav.howItWorks": "how-it-works/" };
+  test(`${lang}: More's last group links to How the board works, and More is closed after Back`, async ({ page }) => {
+    await openBoard(page, "", `/${lang}/board/`);
+    await moreButton(page, lang).click();
+    const panel = page.locator(".menu-panel");
+    await expect(panel.locator(".group")).toHaveText([
+      t(lang, "board.menu.boards"),
+      t(lang, "board.menu.share"),
+      t(lang, "board.menu.thisBoard"),
+      t(lang, libraryShown ? "board.menu.library" : "board.menu.help"),
+    ]);
+    await expect(panel.getByRole("link")).toHaveText(links.map((key) => t(lang, key)));
+    if (!libraryShown) await expect(panel.locator(`a[href^="/${lang}/tactics/"], a[href^="/${lang}/drills/"]`)).toHaveCount(0);
+    for (const key of links) {
       await openBoard(page, "", `/${lang}/board/`);
       await moreButton(page, lang).click();
       const link = page.locator(".menu-panel").getByRole("link", { name: t(lang, key), exact: true });
-      await expect(link).toHaveAttribute("href", `/${lang}/${path}`);
+      await expect(link).toHaveAttribute("href", `/${lang}/${paths[key]}`);
       await link.click();
-      await expect(page).toHaveURL(`/${lang}/${path}`);
+      await expect(page).toHaveURL(`/${lang}/${paths[key]}`);
       await expect(page.locator("h1")).toBeVisible();
       await page.goBack();
       await expect(page.getByRole("toolbar", { name: t(lang, "board.tools") })).toBeVisible();
