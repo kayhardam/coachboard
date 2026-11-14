@@ -22,12 +22,13 @@ import {
   resetLineup,
   setCourt,
   setKind,
+  setLabel,
   setTeam,
   setText,
   setTitle,
 } from "./edit";
 import { ballsAfter, endOf } from "./moves";
-import { isBoard, MAX_BALLS, MAX_CONES, MAX_PLAYERS, MAX_STEPS, MAX_TEXT, MAX_TITLE, type Board } from "./format";
+import { isBoard, MAX_BALLS, MAX_LABEL, MAX_CONES, MAX_PLAYERS, MAX_STEPS, MAX_TEXT, MAX_TITLE, type Board } from "./format";
 
 const empty: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], balls: [], arrows: [] }] };
 const frame = (b: Board) => b.frames[0]!;
@@ -380,6 +381,51 @@ describe("setKind", () => {
     const board = owned();
     expect(setKind(board, 0, 0, "run")).toBe(board);
     expect(setKind(board, 0, 5, "pass")).toBe(board);
+  });
+});
+
+describe("setLabel", () => {
+  const board = () =>
+    twoSteps({ ...owned(), frames: [{ ...frame(owned()), players: [{ team: "a", label: "LB", at: [20, 100] }, { team: "p", at: [80, 100] }] }] });
+  const labels = (b: Board, i = 0) => b.frames.map((f) => f.players[i]!.label);
+
+  it("gives a player a label in every step, the rest of the board as it was", () => {
+    const next = setLabel(board(), 0, "7");
+    expect(labels(next)).toEqual(["7", "7"]);
+    expect(next.frames.map((f) => f.players[0]!.at)).toEqual([[20, 100], [20, 100]]);
+    expect(next.frames.map((f) => f.arrows)).toEqual(board().frames.map((f) => f.arrows));
+    expect(isBoard(next)).toBe(true);
+  });
+
+  it("trims what was typed and keeps it to one line of MAX_LABEL characters", () => {
+    expect(MAX_LABEL).toBe(3);
+    expect(labels(setLabel(board(), 0, "  12 "))).toEqual(["12", "12"]);
+    expect(labels(setLabel(board(), 0, "RW1"))).toEqual(["RW1", "RW1"]);
+    expect(labels(setLabel(board(), 0, "RW12"))).toEqual(["RW1", "RW1"]);
+    expect(labels(setLabel(board(), 0, "a\nb"))).toEqual(["a b", "a b"]);
+    // An emoji takes two of the three code units; half of a second one is dropped.
+    const emoji = setLabel(board(), 0, "😀😀");
+    expect(labels(emoji)).toEqual(["😀", "😀"]);
+    expect(isBoard(emoji)).toBe(true);
+  });
+
+  it("removes the label for an empty text", () => {
+    for (const text of ["", "   "]) {
+      const next = setLabel(board(), 0, text);
+      expect(labels(next)).toEqual([undefined, undefined]);
+      expect(next.frames.every((f) => !("label" in f.players[0]!))).toBe(true);
+      expect(isBoard(next)).toBe(true);
+    }
+  });
+
+  it("returns the same board for the same label, a passer or no player", () => {
+    const b = board();
+    expect(setLabel(b, 0, "LB")).toBe(b);
+    expect(setLabel(b, 0, " LB ")).toBe(b);
+    expect(setLabel(b, 1, "9")).toBe(b);
+    expect(setLabel(b, 5, "9")).toBe(b);
+    const none = setLabel(b, 0, "");
+    expect(setLabel(none, 0, " ")).toBe(none);
   });
 });
 

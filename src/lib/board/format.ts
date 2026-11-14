@@ -81,7 +81,8 @@ export const MAX_TEXT = 100;
 export const MAX_TITLE = 40;
 export const MAX_BALLS = 4;
 export const MAX_CONES = 16;
-const MAX_LABEL = 3;
+/** A player's label ("7", "LB"): 1 to 3 characters, counted as UTF-16 code units. */
+export const MAX_LABEL = 3;
 // Characters of base64url. Up to phase 14 it was 4000, enough for one step;
 // the largest board within the limits above, eight steps of noise, is about
 // 8000 (format.test.ts). Reading more never breaks an older link.
