@@ -7,10 +7,12 @@
 .viewer {
   /* The rows over and under the court, portrait. */
   --viewer-text: 62px; /* the sentence: three lines */
-  /* The legend: two lines (2 × 19.2 px + 2 px), also when it needs one, so
-     the court doesn't move when the viewer fills it in (the fallback can't
-     know the board). Every item on a 320 px phone takes two. */
-  --viewer-legend: 41px;
+  /* The legend: three lines (3 × 19.2 px + 2 × 2 px), also when it needs
+     fewer, so the court doesn't move when the viewer fills it in (the
+     fallback can't know the board). Every item, with Attack and Defense,
+     takes three on a 320 px phone (in Dutch on a 360 px one too). It also
+     holds "Made with Coachboard" (44 px), which takes its place. */
+  --viewer-legend: 62px;
   --viewer-controls: 52px; /* Previous, Play, Next */
   --viewer-wide-side: clamp(240px, 100vw - 620px, 340px); /* the column beside the court, wide */
 
@@ -187,6 +189,25 @@
   stroke-width: 1.6;
 }
 
+/* ===== Made with Coachboard: after the last step, in the legend's place ===== */
+.viewer .made {
+  grid-area: legend;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  place-self: center;
+  min-height: var(--tap);
+  padding: 0 12px;
+  color: var(--color-accent-dark);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+}
+/* On a phone the legend gives way to it, and comes back with Previous. */
+.viewer .legend:has(+ .made) {
+  display: none;
+}
+
 /* ===== Previous, Play, Next: under the thumb ===== */
 .viewer .controls {
   grid-area: controls;
@@ -273,7 +294,6 @@
   .viewer {
     grid-template:
       "home   stage title" auto
-      "edit   stage text" auto
       "legend stage text" minmax(0, 1fr)
       "legend stage play" auto
       "prev   stage next" auto
@@ -284,22 +304,32 @@
   .viewer :is(.titlebar, .controls) {
     display: contents;
   }
-  .viewer .home {
-    grid-area: home;
-  }
   .viewer .title {
     grid-area: title;
     align-self: start;
     padding-top: 4px;
   }
+  /* Home and Edit a copy share the top row, Edit a copy with only its
+     pencil (its aria-label and title name it), so the legend with every
+     item fits on a 320 px high screen. */
+  .viewer .home {
+    grid-area: home;
+    justify-self: start;
+  }
   .viewer .edit {
-    grid-area: edit;
+    grid-area: home;
+    justify-self: end;
     justify-content: center;
+    width: var(--tap);
     margin: 0;
-    padding: 0 6px;
-    font-size: 0.8125rem;
-    line-height: 1.1;
-    white-space: normal;
+    padding: 0;
+  }
+  .viewer .edit span {
+    display: none;
+  }
+  .viewer .edit svg {
+    width: 20px;
+    height: 20px;
   }
   .viewer .text {
     flex-direction: column;
@@ -313,6 +343,10 @@
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: start;
+  }
+  .viewer .made {
+    align-self: start;
+    padding: 0 4px;
   }
   .viewer .controls button {
     min-height: 48px;
@@ -343,6 +377,7 @@
       "title title" minmax(var(--board-title), auto)
       "stage text" minmax(0, 1fr)
       "stage legend" auto
+      "stage made" auto
       "stage controls" auto
       / minmax(0, 1fr) var(--viewer-wide-side);
     max-width: none;
@@ -413,6 +448,16 @@
     justify-content: start;
     gap: 6px 14px;
     font-size: 0.875rem;
+  }
+  /* Beside the court there is room for both: the line comes between the
+     legend and Play, from the list of steps, so Play doesn't move. */
+  .viewer .made {
+    grid-area: made;
+    justify-self: start;
+    padding: 0;
+  }
+  .viewer .legend:has(+ .made) {
+    display: flex;
   }
   .viewer .controls {
     grid-template: auto auto / 1fr 1fr;

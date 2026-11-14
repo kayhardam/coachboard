@@ -623,10 +623,49 @@ for (const lang of ["en", "nl"]) {
       }
       await expect(page.locator(".viewer .stage svg")).toBeInViewport({ ratio: 1 });
       await expect(page.locator(".viewer .legend")).toBeInViewport({ ratio: 1 });
+      // Every item fits in the legend's own box, so none overlaps Previous or the court.
+      expect(await page.locator(".viewer .legend").evaluate((l) => l.scrollHeight - l.clientHeight)).toBeLessThanOrEqual(1);
       const cut = await page
         .locator(".viewer :is(.controls, .edit) span:visible")
         .evaluateAll((spans) => spans.filter((s) => s.scrollWidth > s.clientWidth).map((s) => s.textContent));
       expect(cut).toEqual([]);
+      const overflow = await page.evaluate(() => ({
+        x: document.documentElement.scrollWidth - innerWidth,
+        y: document.documentElement.scrollHeight - innerHeight,
+      }));
+      expect(overflow).toEqual({ x: 0, y: 0 });
+    });
+  }
+}
+
+// "Made with Coachboard" after the last step: on screen, big enough to tap, and
+// nothing moves when it appears: not the court, not Previous, Play or Next
+// (wide, where it comes above Play, too).
+for (const lang of ["en", "nl"]) {
+  for (const [name, size] of Object.entries(VIEWER_SIZES)) {
+    test(`viewer, ${lang}, ${name}: Made with Coachboard after the last step, and nothing moves`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.setViewportSize(size);
+      await openViewer(page, `#t=${await fullBoardLink()}`, `/${lang}/board/link/`);
+      const next = page.locator(".viewer .controls .next");
+      for (let i = 1; i < MAX_STEPS; i++) await next.click();
+      await expect(page.locator(".viewer .count [aria-hidden]")).toHaveText(`${MAX_STEPS}/${MAX_STEPS}`);
+      const made = page.locator(".viewer .made");
+      await expect(made).toHaveCount(0);
+      const watched = [".viewer .stage svg > rect:first-of-type", ".viewer .controls .prev", ".viewer .controls .play", ".viewer .controls .next"];
+      const boxes = () => Promise.all(watched.map(async (s) => (await page.locator(s).boundingBox())!));
+      const before = await boxes();
+      // The last step's own move: then there is nothing left to play.
+      await next.click();
+      await expect(next).toBeDisabled();
+      await expect(made).toBeInViewport({ ratio: 1 });
+      expect((await made.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+      const after = await boxes();
+      for (const [i, selector] of watched.entries()) {
+        for (const key of ["x", "y", "width", "height"] as const) {
+          expect(Math.abs(after[i]![key] - before[i]![key]), `${selector} ${key}`).toBeLessThanOrEqual(1);
+        }
+      }
       const overflow = await page.evaluate(() => ({
         x: document.documentElement.scrollWidth - innerWidth,
         y: document.documentElement.scrollHeight - innerHeight,

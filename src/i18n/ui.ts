@@ -239,6 +239,9 @@ const en = {
   "viewer.next": "Next",
   "viewer.step": "Step {n} of {count}",
   "viewer.legend": "Legend",
+  "viewer.attack": "Attack",
+  "viewer.defense": "Defense",
+  "viewer.made": "Made with Coachboard",
   "viewer.broken": "This link doesn't work. Ask for a new one.",
   "viewer.noscript": "Turn on JavaScript to view this board.",
 } as const;
@@ -504,6 +507,9 @@ const nl: Record<UiKey, string> = {
   "viewer.next": "Volgende",
   "viewer.step": "Stap {n} van {count}",
   "viewer.legend": "Legenda",
+  "viewer.attack": "Aanval",
+  "viewer.defense": "Verdediging",
+  "viewer.made": "Gemaakt met Coachboard",
   "viewer.broken": "Deze link werkt niet. Vraag om een nieuwe.",
   "viewer.noscript": "Zet JavaScript aan om dit bord te bekijken.",
 };
