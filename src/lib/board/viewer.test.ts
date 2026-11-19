@@ -3,7 +3,7 @@ import play from "./fixtures/v2-play.json";
 import drill from "./fixtures/v2-drill.json";
 import { defaultBoard } from "./defaults";
 import type { Board, Frame } from "./format";
-import { legendOf, moveFor, MOVE, moves, READ, STILL, stillFor, TURN } from "./viewer";
+import { followable, followArrows, legendOf, moveFor, MOVE, moves, READ, STILL, stillFor, TURN } from "./viewer";
 
 const empty: Frame = { players: [], balls: [], arrows: [] };
 // The fixtures as boards: JSON imports type their strings as string, not as a kind.
@@ -74,5 +74,46 @@ describe("legendOf", () => {
 
   it("is empty for a board without players, arrows or cones", () => {
     expect(legendOf({ v: 2, court: "half", cones: [], frames: [empty] })).toEqual([]);
+  });
+});
+
+describe("followable", () => {
+  it("lists the players with a label, by index: the crossing's six attackers and its keeper", () => {
+    expect(followable(crossing)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  });
+
+  it("lists only the keeper in the drill, whose lines have no labels", () => {
+    expect(followable(pairs)).toEqual([8]);
+  });
+
+  it("lists nobody on a board without labels", () => {
+    const unlabelled = { ...crossing, frames: crossing.frames.map((f) => ({ ...f, players: f.players.map(({ label: _, ...p }) => p) })) };
+    expect(followable(unlabelled)).toEqual([]);
+  });
+});
+
+describe("followArrows", () => {
+  const LO = 1;
+  const MO = 2;
+
+  it("gives LO in the crossing their run, the pass they get, then their run and shot", () => {
+    expect(crossing.frames.map((f) => followArrows(f, LO))).toEqual([[1], [0, 1], [1, 2], []]);
+  });
+
+  it("gives MO their dribble, their pass to LO and their run back, never the pass they don't get", () => {
+    expect(crossing.frames.map((f) => followArrows(f, MO))).toEqual([[0], [1], [], [0]]);
+  });
+
+  it("gives a player who neither moves nor gets the ball nothing: the keeper", () => {
+    expect(crossing.frames.map((f) => followArrows(f, 6))).toEqual([[], [], [], []]);
+  });
+
+  it("gives a pass to whoever stands at its end by then, as ballTrips() does: the passers in the drill", () => {
+    const [first, second] = pairs.frames;
+    expect(followArrows(first!, 6)).toEqual([0]);
+    expect(followArrows(first!, 7)).toEqual([2]);
+    // A bounce drawn before the run that takes a player to its end reaches nobody (ballTrips()).
+    expect(followArrows(second!, 0)).toEqual([2, 4]);
+    expect(followArrows(second!, 6)).toEqual([0]);
   });
 });
