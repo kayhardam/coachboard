@@ -26,12 +26,14 @@
   width: 100%;
   min-height: 0;
   max-width: 720px;
+  /* Follow a player shows only its icon under 344 px of viewer, as Edit a copy does. */
+  container: viewer / inline-size;
   margin-inline: auto;
   padding: 0 8px max(8px, env(safe-area-inset-bottom));
   gap: var(--board-gap);
 }
 
-.viewer :is(.titlebar, .controls, .legend) svg {
+.viewer :is(.titlebar, .controls, .legend, .follow) svg {
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -161,6 +163,105 @@
 .viewer .stage > svg {
   position: absolute;
   inset: 0;
+}
+
+/* ===== Follow a player: over the court's bottom left, so nothing moves ===== */
+.viewer .follow {
+  grid-area: stage;
+  place-self: end start;
+  position: relative;
+  z-index: 1;
+}
+.viewer .follow summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  list-style: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.viewer .follow summary::-webkit-details-marker {
+  display: none;
+}
+.viewer .follow svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.viewer .follow[data-on] summary {
+  border-color: var(--color-accent-dark);
+  background: var(--color-accent-soft);
+}
+/* The team's dot, in the colours of Court.svelte (a passer has no label). */
+.viewer .follow .dot {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #15803d;
+}
+.viewer .follow .dot[data-team="d"] {
+  background: #0f172a;
+}
+/* The players, above the button. */
+.viewer .follow ul {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.15);
+}
+.viewer .follow li button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.viewer .follow [aria-pressed="true"] {
+  border-color: var(--color-accent-dark);
+  background: var(--color-accent-soft);
+}
+/* Below a 360 px phone only the icon, or the chosen player; its aria-label and title name it. */
+@container viewer (max-width: 343px) {
+  .viewer .follow summary {
+    padding: 0 10px;
+  }
+  .viewer .follow:not([data-on]) summary span {
+    display: none;
+  }
+}
+/* The rest of the court fades, each piece in its own colour; the ball stays. */
+.viewer .following [data-kind]:not([data-lit], [data-kind="ball"]) {
+  opacity: 0.3;
 }
 
 /* ===== Legend: what is on this board ===== */
@@ -348,6 +449,13 @@
     align-self: start;
     padding: 0 4px;
   }
+  /* Only the icon, or the chosen player, as Edit a copy. */
+  .viewer .follow summary {
+    padding: 0 10px;
+  }
+  .viewer .follow:not([data-on]) summary span {
+    display: none;
+  }
   .viewer .controls button {
     min-height: 48px;
   }
@@ -376,6 +484,7 @@
     grid-template:
       "title title" minmax(var(--board-title), auto)
       "stage text" minmax(0, 1fr)
+      "stage follow" auto
       "stage legend" auto
       "stage made" auto
       "stage controls" auto
@@ -448,6 +557,11 @@
     justify-content: start;
     gap: 6px 14px;
     font-size: 0.875rem;
+  }
+  /* Beside the court, above the legend: its room comes from the list of steps. */
+  .viewer .follow {
+    grid-area: follow;
+    place-self: start;
   }
   /* Beside the court there is room for both: the line comes between the
      legend and Play, from the list of steps, so Play doesn't move. */

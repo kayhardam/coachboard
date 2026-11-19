@@ -1,8 +1,9 @@
 <!--
   The viewer, loaded with client:only on /[lang]/board/link/ and
   /[lang]/board/qr/, where a shared link and a QR code open. It shows the
-  board in #t= step by step: Previous, Play and Next, a legend, and "Edit a
-  copy", which opens the editor. It changes nothing: no link, no My boards.
+  board in #t= step by step: Previous, Play and Next, a legend, "Follow a
+  player", and "Edit a copy", which opens the editor. It changes nothing: no
+  link, no My boards.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -10,7 +11,7 @@
   import { decode, unescapeLink, type Board } from "../../lib/board/format";
   import { reloadForNewer } from "../../lib/board/newer";
   import { moment } from "../../lib/board/play";
-  import { legendOf, moveFor, moves, stillFor, type LegendItem } from "../../lib/board/viewer";
+  import { followable, followArrows, legendOf, moveFor, moves, stillFor, type LegendItem } from "../../lib/board/viewer";
   import { viewerIcons as icons } from "../../lib/viewerIcons";
   import Court from "./Court.svelte";
 
@@ -24,6 +25,11 @@
   const COPY_KEY = "coachboard.copy";
   /** The court of a link that doesn't open: empty, as in the fallback. */
   const EMPTY: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], balls: [], arrows: [] }] };
+  /**
+   * The icon of "Follow a player": a person. Here, not in viewerIcons, which
+   * sits in the chunk the editor shares, so the editor stays as it is.
+   */
+  const PERSON = "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 20a7 7 0 0 1 14 0";
 
   const labels: Record<LegendItem, keyof ViewerStrings> = {
     attack: "viewer.attack",
@@ -51,6 +57,10 @@
   /** Playing every step ("all"), or the move to the next step ("next"). */
   let playing = $state<"all" | "next" | null>(null);
   let frameRequest = 0;
+  /** The player who follows themselves (an index in the lineup), or null. */
+  let followed = $state<number | null>(null);
+  let menu = $state<HTMLDetailsElement>();
+  let stage = $state<HTMLDivElement>();
 
   const last = $derived((board?.frames.length ?? 1) - 1);
   const frame = $derived(board?.frames[step]);
@@ -63,6 +73,28 @@
   const still = $derived(!board || (last === 0 && !moving[0]));
   /** "Made with Coachboard": once a board that plays has nothing left to play. */
   const made = $derived(done && !still && !playing);
+  /** Who can be followed: the players with a label. Without any, no button. */
+  const choices = $derived(board ? followable(board) : []);
+  const lineup = $derived(board?.frames[0]!.players ?? []);
+
+  /**
+   * Lights up the followed player, their arrows and the pass they get on the
+   * court (data-lit; BoardViewer.css fades the rest). Court.svelte draws only;
+   * this marks its pieces by data-kind and data-index after it draws a step.
+   */
+  $effect(() => {
+    if (followed === null || !board || !stage) return;
+    const lit = new Set([`player ${followed}`, ...followArrows(board.frames[step]!, followed).map((i) => `arrow ${i}`)]);
+    for (const piece of stage.querySelectorAll<SVGElement>("[data-kind]")) {
+      piece.toggleAttribute("data-lit", lit.has(`${piece.dataset.kind} ${piece.dataset.index}`));
+    }
+  });
+
+  /** Follows `player`, or stops following when they are chosen again (or null: None). */
+  function follow(player: number | null) {
+    followed = player === followed ? null : player;
+    menu!.open = false;
+  }
 
   /** Step `i` at `t` (0 to 1) of its move: the moment of play.ts in place of the step. */
   function at(i: number, t: number): Board {
@@ -151,6 +183,7 @@
     if (!opened && link && reloadForNewer(link)) return;
     board = opened;
     broken = !opened;
+    followed = null;
     show(0);
   }
 
@@ -163,7 +196,8 @@
 
   function onkeydown(e: KeyboardEvent) {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (e.key === "ArrowRight") next();
+    if (e.key === "Escape" && menu?.open) menu.open = false;
+    else if (e.key === "ArrowRight") next();
     else if (e.key === "ArrowLeft") prev();
   }
 
@@ -180,7 +214,8 @@
   }
 </script>
 
-<svelte:window {onkeydown} />
+<!-- A tap outside the list of players closes it. -->
+<svelte:window {onkeydown} onpointerdown={(e) => menu?.open && !menu.contains(e.target as Node) && (menu.open = false)} />
 
 <div class="viewer">
   <div class="titlebar">
@@ -217,9 +252,40 @@
   </div>
 
   <!-- A tap on the court while something moves stops it. -->
-  <div class="stage" role="presentation" onpointerdown={() => playing && show(step)}>
-    <Court board={shown ?? board ?? EMPTY} frame={step} label={strings["board.court"]} />
+  <div class="stage {followed === null ? '' : 'following'}" role="presentation" bind:this={stage} onpointerdown={() => playing && show(step)}>
+    <Court
+      board={shown ?? board ?? EMPTY}
+      frame={step}
+      selected={followed === null ? null : { kind: "player", index: followed }}
+      label={strings["board.court"]}
+    />
   </div>
+
+  <!-- Follow a player: beside the court, not in it, so a tap on it doesn't stop Play. -->
+  {#if choices.length}
+    {@const name = followed === null ? strings["viewer.follow"] : `${strings["viewer.follow"]}: ${lineup[followed]!.label}`}
+    <details class="follow" bind:this={menu} data-on={followed === null ? undefined : ""}>
+      <summary aria-label={name} title={name}>
+        {#if followed === null}
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={PERSON} /></svg>
+          <span>{strings["viewer.follow"]}</span>
+        {:else}
+          <i class="dot" data-team={lineup[followed]!.team}></i>
+          <span>{lineup[followed]!.label}</span>
+        {/if}
+      </summary>
+      <ul aria-label={strings["viewer.follow"]}>
+        {#each choices as i (i)}
+          <li>
+            <button type="button" aria-pressed={followed === i} onclick={() => follow(i)}>
+              <i class="dot" data-team={lineup[i]!.team}></i>{lineup[i]!.label}
+            </button>
+          </li>
+        {/each}
+        <li><button type="button" aria-pressed={followed === null} onclick={() => follow(null)}>{strings["viewer.none"]}</button></li>
+      </ul>
+    </details>
+  {/if}
 
   <ul class="legend" aria-label={strings["viewer.legend"]}>
     {#each legend as item (item)}
