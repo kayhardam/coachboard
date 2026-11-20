@@ -255,6 +255,12 @@
     border-top: 0;
   }
 }
+/* A third link (How the board works, after Tactics and Drills while the
+   library shows) has the next row to itself: in half a row its label breaks
+   in two, and More then runs off a small phone. */
+.editor .menu-panel .library > :nth-child(3) {
+  grid-column: 1 / -1;
+}
 
 /* Over the top right of the court's box, so the court stays put when it comes and goes. */
 .editor .delete {
@@ -588,7 +594,7 @@
   /* The menu opens to the left of the title panel, from the bottom of the
      screen up, so it stays on screen. Eleven items under each other don't fit
      in 320 px of height: two columns, My boards and New board on the first
-     row, Tactics and Drills on the last. Fixed: from More up, the six rows
+     row, the links that leave the board on the last. Fixed: from More up, the six rows
      would run off the top. */
   .editor .menu-panel {
     position: fixed;
@@ -602,6 +608,13 @@
     margin-bottom: 4px;
     border-bottom: 1px solid var(--color-border);
     border-radius: 6px 6px 0 0;
+  }
+  /* Three links share the last row: a seventh row would run off the top. */
+  .editor .menu-panel .library:has(> :nth-child(3)) {
+    grid-template-columns: auto auto 1fr;
+  }
+  .editor .menu-panel .library > :nth-child(3) {
+    grid-column: auto;
   }
   .editor .delete {
     grid-area: delete;
