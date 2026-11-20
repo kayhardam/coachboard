@@ -106,7 +106,7 @@
   let qr = $state<string | null>(null);
   /**
    * The longest link in a QR code of version 30 (error correction L): the
-   * largest the scan test read from phone to phone (docs/metingen.md, phase 11).
+   * largest the scan test read from phone to phone (the measurement log, phase 11).
    * A larger code still shows, with a note.
    */
   const QR_SCANNED = 1732;

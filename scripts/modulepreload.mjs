@@ -6,7 +6,7 @@
 // Astro writes none for islands. Without them the browser finds the board's
 // JS only when the island's inline script runs, after the CSS, and then its
 // imports one round trip later. With them it fetches all of it while the page
-// parses (docs/metingen.md, phase 15-1). Content pages load no JS, so they
+// parses (the measurement log, phase 15-1). Content pages load no JS, so they
 // stay as they are; dynamic imports (the QR code) still load later.
 import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";

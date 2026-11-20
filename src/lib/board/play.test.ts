@@ -8,7 +8,7 @@ import { moment } from "./play";
 
 // The default lineup: 1 LB, 2 CB (100, 130) with the ball (110, 122) beside
 // him, 3 RB, 5 P (100, 66), 8 a defender (48, 58). LB and RB by at(): their
-// spots have moved before (docs/metingen.md) and may again.
+// spots have moved before (the measurement log) and may again.
 const [LB, CB, RB, P, D] = [1, 2, 3, 5, 8];
 
 const lineup = () => structuredClone(defaultBoard);

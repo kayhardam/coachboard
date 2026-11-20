@@ -18,7 +18,7 @@ const lang = Astro.currentLocale!;
 const home = getRelativeLocaleUrl(lang);
 const editor = getRelativeLocaleUrl(lang, boardPath);
 const strings = viewerStrings(lang);
-// No default lineup before the shared board appears (test 16 in docs/metingen.md): an empty court.
+// No default lineup before the shared board appears (test 16 in the measurement log): an empty court.
 const empty: Board = { v: 2, court: "half", cones: [], frames: [{ players: [], balls: [], arrows: [] }] };
 // Their own share image, with Play (scripts/og-default.mjs): the #t= of a link never reaches a server.
 const image = lang === defaultLocale ? "/og-viewer.png" : `/og-viewer-${lang}.png`;

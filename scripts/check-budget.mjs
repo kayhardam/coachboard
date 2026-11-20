@@ -16,7 +16,7 @@
 //   budget: it draws every step.
 //
 // Sizes are in KB of 1000 bytes; JS, CSS and HTML are gzipped (zlib default
-// level), as in the baseline in docs/metingen.md. PNGs are counted raw.
+// level), as in the baseline in the measurement log. PNGs are counted raw.
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -39,7 +39,7 @@ export const BUDGETS = {
   viewerCss: 4_000, // the viewer's pages: 3.4 KB on 3 November 2026
   html: 7_500, // the board, the largest page: 6.6 KB on 3 November 2026 (every text of the board goes along as a prop)
   // Worst case: a library item draws every step, and the largest the schema allows
-  // (8 steps of 100 characters, 3 related items) was about 7.5 KB in phase 19-1 (L7, docs/metingen.md).
+  // (8 steps of 100 characters, 3 related items) was about 7.5 KB in phase 19-1 (L7, the measurement log).
   libraryHtml: 8_500,
   png: 60_000, // worst case: the largest share image, 52.9 KB for fast-break-second-wave/og.png on white (4 November 2026), with room for a new one; the four og-default/og-viewer PNGs are about 28 KB each with a palette (og-viewer-nl.png without one: 61.8 KB)
 };

@@ -7,7 +7,7 @@ import { t } from "../src/i18n/ui";
 import { libraryShown } from "../src/data/libraryShown";
 import { dragPlayer, expect, fromMenu, moreButton, OLD_KEY, openBoard, openViewer, STORE_KEY, test } from "./helpers";
 
-// Finding 1 and 2 in docs/metingen.md: the court scaled to the screen's width
+// Finding 1 and 2 in the measurement log: the court scaled to the screen's width
 // only, so the full court (and, in landscape, the half court too) pushed both
 // bars below the screen, where nothing could reach them.
 // Don't click to check this: Playwright scrolls a button into view first.
@@ -107,11 +107,11 @@ test("wide, the title bar runs across the top and the tools stand beside the cou
   expect(bar.width).toBe(WIDE.width);
   expect(bar.y + bar.height).toBeLessThanOrEqual(tools.y);
   expect(tools.x + tools.width).toBeLessThanOrEqual(court.x);
-  // Larger than the portrait layout gave a laptop (478 px, docs/metingen.md).
+  // Larger than the portrait layout gave a laptop (478 px, the measurement log).
   expect((await surface(page))!.width).toBeGreaterThan(520);
 });
 
-// Finding 14 in docs/metingen.md: the static fallback didn't reserve the bars'
+// Finding 14 in the measurement log: the static fallback didn't reserve the bars'
 // space, so the court jumped when the editor replaced it.
 for (const orientation of ORIENTATIONS) {
   test(`${orientation}: the court stays put when the editor loads`, async ({ page }) => {
@@ -335,7 +335,7 @@ test("on a narrow phone the title bar shows only the pencil once Undo is there, 
 
 // Without the site header, the largest text on the board was the editor's
 // title, which comes with the JS: on a slow phone the LCP waited for it (2.5 s
-// in Lighthouse with real throttling, phase 12a in docs/metingen.md). The
+// in Lighthouse with real throttling, phase 12a in the measurement log). The
 // fallback shows the same placeholder, so the LCP paints with the HTML.
 test("the largest text paints with the HTML, not after the editor's JS", async ({ page }) => {
   test.skip(test.info().project.name === "iphone", "WebKit has no largest-contentful-paint entries");
@@ -369,7 +369,7 @@ test("the largest text paints with the HTML, not after the editor's JS", async (
 // Astro writes no modulepreload for an island, so the board's JS used to start
 // only after the island's script ran, and its chunk one round trip later.
 // scripts/modulepreload.mjs puts every file a board page loads at once in the
-// head (phase 15-1 in docs/metingen.md); the QR code still loads later.
+// head (phase 15-1 in the measurement log); the QR code still loads later.
 // A shared board, for the viewer's pages: the crossing in four steps.
 const crossingLink = (JSON.parse(readFileSync(new URL("../src/lib/board/fixtures/v2-play.json", import.meta.url), "utf8")) as { link: string }).link;
 
