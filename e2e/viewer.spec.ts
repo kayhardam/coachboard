@@ -346,7 +346,7 @@ test.describe("Follow a player", () => {
   const opacity = (page: Page, kind: string, index: number) =>
     page.locator(`.viewer .stage [data-kind="${kind}"][data-index="${index}"]`).evaluate((e) => getComputedStyle(e).opacity);
 
-  async function choose(page: Page, label: string, lang = "en") {
+  async function choose(page: Page, label: string) {
     await follow(page).click();
     await choice(page, label).click();
     await expect(page.locator(".viewer .follow ul")).toBeHidden();
@@ -445,6 +445,53 @@ test.describe("Follow a player", () => {
     const before = await boxes();
     await choose(page, "LO");
     expect(await boxes()).toEqual(before);
+  });
+
+  test("wide, the step on the court stays in sight in the list of steps, with a player chosen and after the last move", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.setViewportSize({ width: 860, height: 560 });
+    await openViewer(page, `#t=${play.link}`, "/nl/board/link/");
+    await choose(page, "LO");
+    /** Whether the step's button in the list lies wholly inside the list's box. */
+    const inSight = (step: number) =>
+      page.locator(".viewer .text").evaluate((box, i) => {
+        const room = box.getBoundingClientRect();
+        const item = box.querySelectorAll(".all button")[i]!.getBoundingClientRect();
+        return item.top >= room.top - 1 && item.bottom <= room.bottom + 1;
+      }, step);
+    for (let i = 0; i < play.board.frames.length; i++) {
+      await expect(count(page)).toHaveText(`${i + 1}/4`);
+      await expect.poll(() => inSight(i)).toBe(true);
+      await button(page, "viewer.next", "nl").click();
+    }
+    await expect(made(page, "nl")).toBeVisible();
+    await expect.poll(() => inSight(3)).toBe(true);
+    // Back to step 1 with ← (the first goes to step 4 before its move), then to step 4 with →: the list follows both ways.
+    for (const i of [3, 2, 1, 0]) {
+      await page.keyboard.press("ArrowLeft");
+      await expect(count(page)).toHaveText(`${i + 1}/4`);
+      await expect.poll(() => inSight(i)).toBe(true);
+    }
+    for (const i of [1, 2, 3]) {
+      await page.keyboard.press("ArrowRight");
+      await expect(count(page)).toHaveText(`${i + 1}/4`);
+      await expect.poll(() => inSight(i)).toBe(true);
+    }
+  });
+
+  test("wide, a board without a player with a label keeps its list of steps: no row for the button", async ({ page }) => {
+    await page.setViewportSize({ width: 860, height: 560 });
+    const unlabelled = { ...play.board, frames: play.board.frames.map((f) => ({ ...f, players: f.players.map(({ label: _, ...p }) => p) })) };
+    const gap = async () => {
+      const text = (await page.locator(".viewer .text").boundingBox())!;
+      const legend = (await page.locator(".viewer .legend").boundingBox())!;
+      return Math.round(legend.y - (text.y + text.height));
+    };
+    await openViewer(page, `#t=${await encode(unlabelled)}`);
+    expect(await gap()).toBe(12);
+    await openViewer(page, `#t=${play.link}`);
+    const follow = (await page.locator(".viewer .follow").boundingBox())!;
+    expect(await gap()).toBe(Math.round(follow.height) + 24);
   });
 
   test("a board without a player with a label has no button; the drill has only its keeper", async ({ page }) => {

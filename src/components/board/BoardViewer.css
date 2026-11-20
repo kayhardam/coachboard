@@ -484,7 +484,6 @@
     grid-template:
       "title title" minmax(var(--board-title), auto)
       "stage text" minmax(0, 1fr)
-      "stage follow" auto
       "stage legend" auto
       "stage made" auto
       "stage controls" auto
@@ -492,6 +491,18 @@
     max-width: none;
     padding: 0 16px 16px;
     gap: 12px;
+  }
+  /* Follow a player gets its row only on a board with a labelled player, so
+     a board without one keeps its list of steps as it was. */
+  .viewer:has(> .follow) {
+    grid-template:
+      "title title" minmax(var(--board-title), auto)
+      "stage text" minmax(0, 1fr)
+      "stage follow" auto
+      "stage legend" auto
+      "stage made" auto
+      "stage controls" auto
+      / minmax(0, 1fr) var(--viewer-wide-side);
   }
   .viewer .titlebar {
     margin-inline: -16px;

@@ -61,6 +61,7 @@
   let followed = $state<number | null>(null);
   let menu = $state<HTMLDetailsElement>();
   let stage = $state<HTMLDivElement>();
+  let text = $state<HTMLDivElement>();
 
   const last = $derived((board?.frames.length ?? 1) - 1);
   const frame = $derived(board?.frames[step]);
@@ -88,6 +89,29 @@
     for (const piece of stage.querySelectorAll<SVGElement>("[data-kind]")) {
       piece.toggleAttribute("data-lit", lit.has(`${piece.dataset.kind} ${piece.dataset.index}`));
     }
+  });
+
+  /**
+   * Keeps the step on the court in sight in the list of steps (wide): when the
+   * step changes, and when the list gets less room ("Made with Coachboard", a
+   * smaller window). Scrolls the list only, not the page.
+   */
+  $effect(() => {
+    void step;
+    const box = text;
+    if (!box) return;
+    const reveal = () => {
+      const item = box.querySelector<HTMLElement>(".all [aria-current]");
+      if (!item?.offsetParent) return;
+      const room = box.getBoundingClientRect();
+      const spot = item.getBoundingClientRect();
+      if (spot.top < room.top) box.scrollTop += Math.floor(spot.top - room.top);
+      else if (spot.bottom > room.bottom) box.scrollTop += Math.ceil(spot.bottom - room.bottom);
+    };
+    reveal();
+    const watch = new ResizeObserver(reveal);
+    watch.observe(box);
+    return () => watch.disconnect();
   });
 
   /** Follows `player`, or stops following when they are chosen again (or null: None). */
@@ -231,7 +255,7 @@
     {/if}
   </div>
 
-  <div class="text">
+  <div class="text" bind:this={text}>
     {#if board && last > 0}
       {@const where = strings["viewer.step"].replace("{n}", String(step + 1)).replace("{count}", String(last + 1))}
       <span class="count" title={where}><span aria-hidden="true">{step + 1}/{last + 1}</span><span class="visually-hidden">{where}</span></span>
