@@ -72,7 +72,7 @@ New or changed site text is agreed with Kay first. Take it over literally. If a 
 - "Gratis"/"free" appears in one place: the "Free, without an account" block on the about page (`src/i18n/pages/about/<lang>.astro`). Elsewhere, say what the board does; "no account or app needed" is fine.
 - What the board can do is on How the board works (`src/i18n/pages/how-it-works/<lang>.astro`), not on About: About keeps one line that links there. Its headings have no full stop; its sentences, the alt texts and the texts in its drawings and screenshots (the boards' titles and sentences, the folders) are agreed texts like any other.
 - Text that appears on every board says "the board" (`het bord`), not "the attack": a board can show a defense too.
-- Tactics and drills: the steps say who does what; the coaching points are what you call out in the sports hall. While the library is out of sight (decision 34, see Library content), the home and about pages don't mention the tactics and drills; once it shows again, they mention drills (`oefeningen`).
+- Tactics and drills: the steps say who does what; the coaching points are what you call out in the sports hall. The home and about pages mention drills (`oefeningen`); while the library is out of sight (see Library content), they don't mention the tactics and drills.
 - Privacy: don't say we collect no personal data. Cloudflare processes IP addresses, and an email is personal data too.
 - Dutch: "6-0-dekking", not "6-0-verdediging". `handbaltrainer` is right in Dutch.
 - Ages are years, in every language: "11-12 jaar", "11 t/m 16 jaar", "13 jaar en ouder" ("Ages 11–16", "Ages 13 and up"). No F-jeugd to A-jeugd and no U12: such a name stands for other years in another country.
@@ -141,7 +141,7 @@ Code: `src/lib/board/` (plain TypeScript, unit-tested) and `src/components/board
 
 ## Library content
 
-Tactics and drills: one Markdown file per item and language in `src/content/library/<lang>/<slug>.md`. For now the library is out of sight (decision 34): one switch, `libraryShown` in `src/data/libraryShown.ts`, takes away every way in (menu, home, about, More) and makes every library page `noindex` and leaves it out of the sitemap; the pages, items and URLs stay. Every rule for writing, drawing, checking and printing them is in `src/content/AGENTS.md` (read it before touching an item, the schema in `src/content.config.ts`, `src/lib/library.ts` or the item pages).
+Tactics and drills: one Markdown file per item and language in `src/content/library/<lang>/<slug>.md`. The library shows. One switch, `libraryShown` in `src/data/libraryShown.ts`, can put it out of sight (as decision 34 did, 13 November 2026, until the items were checked): off, it takes away every way in (menu, home, about, More) and makes every library page `noindex` and leaves it out of the sitemap; the pages, items and URLs stay. Every rule for writing, drawing, checking and printing them is in `src/content/AGENTS.md` (read it before touching an item, the schema in `src/content.config.ts`, `src/lib/library.ts` or the item pages).
 
 ## Hosting
 
