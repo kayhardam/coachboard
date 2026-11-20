@@ -253,6 +253,8 @@ const en = {
   "viewer.attack": "Attack",
   "viewer.defense": "Defense",
   "viewer.made": "Made with Coachboard",
+  "viewer.follow": "Follow a player",
+  "viewer.none": "None",
   "viewer.broken": "This link doesn't work. Ask for a new one.",
   "viewer.noscript": "Turn on JavaScript to view this board.",
 } as const;
@@ -533,6 +535,8 @@ const nl: Record<UiKey, string> = {
   "viewer.attack": "Aanval",
   "viewer.defense": "Verdediging",
   "viewer.made": "Gemaakt met Coachboard",
+  "viewer.follow": "Volg een speler",
+  "viewer.none": "Geen",
   "viewer.broken": "Deze link werkt niet. Vraag om een nieuwe.",
   "viewer.noscript": "Zet JavaScript aan om dit bord te bekijken.",
 };

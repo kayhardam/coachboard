@@ -653,7 +653,7 @@ for (const lang of ["en", "nl"]) {
     test(`viewer, ${lang}, ${name}: every button on screen and big enough, no label cut off`, async ({ page }) => {
       await page.setViewportSize(size);
       await openViewer(page, `#t=${await fullBoardLink()}`, `/${lang}/board/link/`);
-      for (const target of await page.locator(".viewer :is(.controls button, .edit, .home):visible").all()) {
+      for (const target of await page.locator(".viewer :is(.controls button, .edit, .home, .follow summary):visible").all()) {
         await expect(target).toBeInViewport({ ratio: 1 });
         expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
       }

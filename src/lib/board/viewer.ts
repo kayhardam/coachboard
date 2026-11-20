@@ -1,8 +1,9 @@
 // The viewer's choices about a board (phase 15): how long a step shows still
-// and moves when it plays (K7), and what the legend lists (K9). Pure, so it is
-// tested without a browser.
+// and moves when it plays (K7), what the legend lists (K9), and what lights up
+// for a player who follows themselves. Pure, so it is tested without a browser.
 
 import type { ArrowKind, Board, Frame } from "./format";
+import { ballTrips } from "./moves";
 import { moment, turnsIn } from "./play";
 
 /** A step shows still at least this long (ms), as in the editor. */
@@ -57,4 +58,18 @@ export function legendOf(board: Board): LegendItem[] {
     ...(board.cones.length ? (["cone"] as const) : []),
     ...KINDS.filter((k) => kinds.has(k)),
   ];
+}
+
+/** The players a viewer can follow: those with a label (every step has the same lineup), by index. */
+export const followable = (board: Board) => board.frames[0]!.players.flatMap((p, i) => (p.label ? [i] : []));
+
+/**
+ * The arrows of `frame` that light up for `player` when they follow
+ * themselves: their own (`from`), and each pass, bounce or shot that ends
+ * with them (`to` in ballTrips()). From the step itself, not from a moment of
+ * its move, so nothing changes while it plays.
+ */
+export function followArrows(frame: Frame, player: number): number[] {
+  const received = new Set(ballTrips(frame).flatMap(({ passes }) => passes.filter((p) => p.to === player).map((p) => p.arrow)));
+  return frame.arrows.flatMap((a, i) => (a.from === player || received.has(i) ? [i] : []));
 }

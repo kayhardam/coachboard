@@ -327,6 +327,192 @@ test("a link pasted in the address bar of an open viewer opens there", async ({ 
   await expect(page.locator(".viewer .title")).toHaveText(drill.board.title!);
 });
 
+// Follow a player (Kay): a player picks themselves; in every step they, their
+// arrows and the pass they get light up, and the rest of the court fades.
+test.describe("Follow a player", () => {
+  const LO = 1;
+  /** What lights up for LO in each step of the crossing: their run, the pass they get, their run and shot. */
+  const LIT = [
+    ["arrow:1", "player:1"],
+    ["arrow:0", "arrow:1", "player:1"],
+    ["arrow:1", "arrow:2", "player:1"],
+    ["player:1"],
+  ];
+  const follow = (page: Page) => page.locator(".viewer .follow summary");
+  const choice = (page: Page, name: string) => page.locator(".viewer .follow ul").getByRole("button", { name, exact: true });
+  /** The pieces lit on the court, as kind:index, sorted. */
+  const lit = (page: Page) =>
+    page.locator(".viewer .stage [data-lit]").evaluateAll((els) => els.map((e) => `${e.getAttribute("data-kind")}:${e.getAttribute("data-index")}`).sort());
+  const opacity = (page: Page, kind: string, index: number) =>
+    page.locator(`.viewer .stage [data-kind="${kind}"][data-index="${index}"]`).evaluate((e) => getComputedStyle(e).opacity);
+
+  async function choose(page: Page, label: string) {
+    await follow(page).click();
+    await choice(page, label).click();
+    await expect(page.locator(".viewer .follow ul")).toBeHidden();
+  }
+
+  for (const lang of ["en", "nl"]) {
+    test(`${lang}: the chosen player, their arrows and the pass they get light up in every step; the rest fades`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await openViewer(page, `#t=${play.link}`, `/${lang}/board/link/`);
+      await expect(follow(page)).toHaveAttribute("aria-label", t(lang, "viewer.follow"));
+      await follow(page).click();
+      // Every player with a label, in the lineup's order, then None.
+      await expect(page.locator(".viewer .follow ul button")).toHaveText(["LH", "LO", "MO", "RO", "RH", "CL", "K", t(lang, "viewer.none")]);
+      await choice(page, "LO").click();
+      await expect(follow(page)).toHaveAttribute("aria-label", `${t(lang, "viewer.follow")}: LO`);
+      await expect(follow(page)).toHaveText("LO");
+      for (const [i, expected] of LIT.entries()) {
+        await expect(count(page)).toHaveText(`${i + 1}/4`);
+        await expect.poll(() => lit(page)).toEqual(expected);
+        // LO with the ring of a selection; another player and an arrow of theirs faded, the ball not.
+        await expect(page.locator(`.viewer .stage [data-kind="player"][data-index="${LO}"] circle`)).toHaveCount(3);
+        expect(await opacity(page, "player", LO)).toBe("1");
+        expect(await opacity(page, "player", 6)).toBe("0.3");
+        if (play.board.frames[i]!.balls.length) expect(await opacity(page, "ball", 0)).toBe("1");
+        await button(page, "viewer.next", lang).click();
+      }
+      // After the last move it stays.
+      await expect(made(page, lang)).toBeVisible();
+      expect(await lit(page)).toEqual(LIT.at(-1));
+    });
+  }
+
+  test("choosing the player again, or None, turns it off", async ({ page }) => {
+    await openViewer(page, `#t=${play.link}`);
+    await choose(page, "LO");
+    await choose(page, "LO");
+    await expect(follow(page)).toHaveText(t("en", "viewer.follow"));
+    await expect(page.locator(".viewer .stage")).not.toHaveClass(/following/);
+    expect(await opacity(page, "player", 6)).toBe("1");
+    await choose(page, "MO");
+    await expect(follow(page)).toHaveText("MO");
+    await choose(page, t("en", "viewer.none"));
+    await expect(follow(page)).toHaveText(t("en", "viewer.follow"));
+    await expect(page.locator(".viewer .stage")).not.toHaveClass(/following/);
+  });
+
+  test("it stays through Play, and a tap on the button doesn't stop Play", async ({ page }) => {
+    await openPaused(page);
+    await choose(page, "LO");
+    await button(page, "board.play").click();
+    for (const [i, expected] of LIT.entries()) {
+      const f = play.board.frames[i]!;
+      // Halfway through the step's move.
+      await page.clock.runFor(stillFor(f) + moveFor(f) / 2);
+      await expect(count(page)).toHaveText(`${i + 1}/4`);
+      expect(await lit(page)).toEqual(expected);
+      if (i === 1) {
+        // Open and close the list while it plays: Play goes on.
+        await follow(page).click();
+        await follow(page).click();
+        await expect(button(page, "board.stop")).toBeVisible();
+      }
+      await page.clock.runFor(moveFor(f) / 2 + 50);
+    }
+    await expect(button(page, "board.play")).toBeVisible();
+    await expect(made(page)).toBeVisible();
+    expect(await lit(page)).toEqual(LIT.at(-1));
+  });
+
+  test("Escape or a tap beside the list closes it; ← and → still go between steps", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await openViewer(page, `#t=${play.link}`);
+    const list = page.locator(".viewer .follow ul");
+    await follow(page).click();
+    await expect(list).toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    await expect(count(page)).toHaveText("2/4");
+    await page.keyboard.press("Escape");
+    await expect(list).toBeHidden();
+    await follow(page).click();
+    await page.locator(".viewer .text").click();
+    await expect(list).toBeHidden();
+    await choose(page, "LO");
+    await page.keyboard.press("ArrowRight");
+    await expect(count(page)).toHaveText("3/4");
+    await page.keyboard.press("ArrowLeft");
+    await page.keyboard.press("ArrowLeft");
+    await expect(count(page)).toHaveText("1/4");
+    expect(await lit(page)).toEqual(LIT[0]);
+  });
+
+  test("choosing moves neither the court nor Previous, Play and Next", async ({ page }) => {
+    await openViewer(page, `#t=${play.link}`);
+    const watched = [".viewer .stage svg > rect:first-of-type", ".viewer .controls .prev", ".viewer .controls .play", ".viewer .controls .next"];
+    const boxes = () => Promise.all(watched.map(async (s) => (await page.locator(s).boundingBox())!));
+    const before = await boxes();
+    await choose(page, "LO");
+    expect(await boxes()).toEqual(before);
+  });
+
+  test("wide, the step on the court stays in sight in the list of steps, with a player chosen and after the last move", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.setViewportSize({ width: 860, height: 560 });
+    await openViewer(page, `#t=${play.link}`, "/nl/board/link/");
+    await choose(page, "LO");
+    /** Whether the step's button in the list lies wholly inside the list's box. */
+    const inSight = (step: number) =>
+      page.locator(".viewer .text").evaluate((box, i) => {
+        const room = box.getBoundingClientRect();
+        const item = box.querySelectorAll(".all button")[i]!.getBoundingClientRect();
+        return item.top >= room.top - 1 && item.bottom <= room.bottom + 1;
+      }, step);
+    for (let i = 0; i < play.board.frames.length; i++) {
+      await expect(count(page)).toHaveText(`${i + 1}/4`);
+      await expect.poll(() => inSight(i)).toBe(true);
+      await button(page, "viewer.next", "nl").click();
+    }
+    await expect(made(page, "nl")).toBeVisible();
+    await expect.poll(() => inSight(3)).toBe(true);
+    // Back to step 1 with ← (the first goes to step 4 before its move), then to step 4 with →: the list follows both ways.
+    for (const i of [3, 2, 1, 0]) {
+      await page.keyboard.press("ArrowLeft");
+      await expect(count(page)).toHaveText(`${i + 1}/4`);
+      await expect.poll(() => inSight(i)).toBe(true);
+    }
+    for (const i of [1, 2, 3]) {
+      await page.keyboard.press("ArrowRight");
+      await expect(count(page)).toHaveText(`${i + 1}/4`);
+      await expect.poll(() => inSight(i)).toBe(true);
+    }
+  });
+
+  test("wide, a board without a player with a label keeps its list of steps: no row for the button", async ({ page }) => {
+    await page.setViewportSize({ width: 860, height: 560 });
+    const unlabelled = { ...play.board, frames: play.board.frames.map((f) => ({ ...f, players: f.players.map(({ label: _, ...p }) => p) })) };
+    const gap = async () => {
+      const text = (await page.locator(".viewer .text").boundingBox())!;
+      const legend = (await page.locator(".viewer .legend").boundingBox())!;
+      return Math.round(legend.y - (text.y + text.height));
+    };
+    await openViewer(page, `#t=${await encode(unlabelled)}`);
+    expect(await gap()).toBe(12);
+    await openViewer(page, `#t=${play.link}`);
+    const follow = (await page.locator(".viewer .follow").boundingBox())!;
+    expect(await gap()).toBe(Math.round(follow.height) + 24);
+  });
+
+  test("a board without a player with a label has no button; the drill has only its keeper", async ({ page }) => {
+    const unlabelled = { ...play.board, frames: play.board.frames.map((f) => ({ ...f, players: f.players.map(({ label: _, ...p }) => p) })) };
+    await openViewer(page, `#t=${await encode(unlabelled)}`);
+    await expect(page.locator(".viewer .follow")).toHaveCount(0);
+    await openViewer(page, `#t=${drill.link}`);
+    await follow(page).click();
+    await expect(page.locator(".viewer .follow ul button")).toHaveText(["K", t("en", "viewer.none")]);
+  });
+
+  test("another link in the same tab starts without a choice", async ({ page }) => {
+    await openViewer(page, `#t=${play.link}`);
+    await choose(page, "LO");
+    await page.evaluate((link) => (location.hash = `#t=${link}`), drill.link);
+    await expectBoard(page, drill.board);
+    await expect(follow(page)).toHaveText(t("en", "viewer.follow"));
+    await expect(page.locator(".viewer .stage")).not.toHaveClass(/following/);
+  });
+});
+
 test.describe("Edit a copy (K4)", () => {
   const edit = (page: Page) => page.getByRole("link", { name: t("en", "viewer.edit") });
   const tools = (page: Page) => page.getByRole("toolbar", { name: t("en", "board.tools") });

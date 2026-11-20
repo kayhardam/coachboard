@@ -88,7 +88,7 @@ New or changed site text is agreed with Kay first. Take it over literally. If a 
 - **Mobile-first.** Base styles are for phones. Wider layouts go in `@media (min-width: 560px)` or `@media (min-width: 860px)`, and only those two. The exceptions are on the board (`BoardEditor.css`, `BoardPage.astro` and the viewer's `BoardViewer.css`):
   - a phone in landscape: `@media (orientation: landscape) and (max-height: 559px)`;
   - wide screens: `@media (min-width: 860px) and (min-height: 560px)`, so a large phone in landscape (863 px wide) keeps the landscape layout;
-  - container queries where a bar's own width decides, not the screen's: the title shows only its pencil below 60 px of room (on the title button); New step shows only its plus in a step bar under 340 px with four steps, or under 420 px with six (`.steps`, inside `@media not` the wide layout); the viewer's Edit a copy under 344 px of title bar, and its controls drop their arrows under 420 px and tighten under 345 px. One height query: `@container editor (max-height: 334px)` gives a landscape sentence two lines.
+  - container queries where a bar's own width decides, not the screen's: the title shows only its pencil below 60 px of room (on the title button); New step shows only its plus in a step bar under 340 px with four steps, or under 420 px with six (`.steps`, inside `@media not` the wide layout); the viewer's Edit a copy under 344 px of title bar and its Follow a player under 344 px of viewer (`.viewer` is the container `viewer`), and its controls drop their arrows under 420 px and tighten under 345 px. One height query: `@container editor (max-height: 334px)` gives a landscape sentence two lines.
 - **Green behind or as text** uses `--color-accent-dark` (5.0:1 on white). `--color-accent` is for fills and icons only (3.3:1).
 - **Touch targets** are at least `var(--tap)` (44px) high.
 - **The narrow-screen menu** is a `<details>` element, without JavaScript. Content pages ship no JS: `scripts/check-budget.mjs` fails on any `<script>` (JSON-LD excepted), `<astro-island>` or modulepreload outside the board pages (see "Board pages" under The board), and on any script from another origin, on every page.
@@ -97,6 +97,7 @@ New or changed site text is agreed with Kay first. Take it over literally. If a 
   - Icons take their colour from the text: `--color-accent-dark` when they carry meaning. In cards they sit on a 44×44 tile with `--color-accent-soft` behind them.
   - Size an icon with `font-size` on its wrapper; it is 1.25em.
   - `BoardEditor` and its components import only `boardIcons`, so the board's JS carries only those (a bundle keeps every key of an object it imports). A new icon for the board goes in `boardIcons`; `icons` spreads it for `Icon.astro`.
+  - An icon only the viewer draws goes in `BoardViewer.svelte` itself, not in `viewerIcons`: that module sits in the chunk the viewer shares with the editor, so the editor would carry it too (the person of Follow a player).
 
 ## The board
 
