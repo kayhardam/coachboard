@@ -6,7 +6,8 @@ import { decode, unescapeLink, type Board } from "../lib/board/format";
  * Features 1–6 draw these boards with Court (6 with StepStrip), at build time.
  * To replace one: open it in the board, change it, tap Share and paste the
  * whole link over the old one. The board in `steps` is also the one in the
- * screenshots of 7 and 8 (scripts/screenshots.mjs).
+ * screenshots of 7 and 8, and `crossing` the one of 9: its step 2 in the viewer
+ * with LO (LB) followed (scripts/screenshots.mjs).
  */
 export const drawings = {
   nl: {
@@ -21,6 +22,8 @@ export const drawings = {
       "https://handballcoachboard.com/nl/board/#t=2.bY07DsAwCEPvwuwhpj86d6nUSpW6otz_GiW_rRLwjGMFTxCBe-A-JaOIrZPs4n2GGJHjLoKQq_K3Y0S5G7jWooIpgVO0zW3ftT6FvTYYVBGJ2bAYrPnasGjxuFkEygnGR6r1jkjO-QM",
     steps:
       "https://handballcoachboard.com/nl/board/#t=2.rVBND4IwDP0rzc6N2SrgPHvRCCHxuuyAShQlYID4--068OTRpN1769de5zSqQzdO1TDVHbCNl3tTM1foHOfyvfIopJxJsZDTlyw1uzwQg-oo-NP5YHPOosnEDKHRGs2a3SbxviVJcTiLYJEIuSKxmFq0MU4RUgoxs7FcEJ4wPIjIi36DKTdbUUUz92EZkJWhkZ2fQ_O4TXCt4Vy18K46KMpVWCGqlLb_isy4OqDjWagXSfL10L_g2tctC_D-Aw",
+    crossing:
+      "https://handballcoachboard.com/nl/board/#t=2.rVJBTsMwEPzKqucVit2mdc5ckGhViWuUQ9qaxCQkleNy4MQf-CEvYdYOiANIICEl9nrXHs_Musx4cesvbnJDQ7v928vrdr_gskR6e7OoOAb7Odh9BHefwcee660ECmBx_vbHgK8sDa8MLzNWyrDKMEu8mdeFlqqk1-s4GdZadiObGzYpr9OUa8mpjcDJFZmU1nKJZs0GJaU5IutIU_FKrstBBWLo5N3hYPtA07G9uIGGuvbUu6GbyA4UvO0CPbuHgU6266ynR2uvRF5SkKBm-F8L2Kx4o38SgKLKTBX9VxFZGy5yAEd50DQvKukKddK4QPWxDWAHQX09NJH7k6_rJoA3HeqenCigfhzPX-gnpH-lXxQ4Ee1fcj57P_sekXIsoJC18L_e0rMNZMF2OlvPBEEHb8Xz0zh6UYG2OGxpx7GZNbSj7b5oSKg_aZh7_zcNyXwYjZNFYr9ML7SItu_cRA-W6VQPcPQMlvAd4x2ek_P2GAi9uDTpLYGxdQ2qre3vA4hX1Ts",
   },
   en: {
     lineup:
@@ -34,6 +37,8 @@ export const drawings = {
       "https://handballcoachboard.com/en/board/#t=2.bY2xDoAwCET_hfmGHlrF1cVBB-PiQPr_vyFtdTMB3nG9FE8QgXvguKWgivkl-Ypr_cQXOSsJ2fYmfjtGlLuBUysqmBI4RNvY90XbU9hTh0EVkRgN2WDd146s1eNsEagnGB-ptjsipZQH",
     steps:
       "https://handballcoachboard.com/en/board/#t=2.rVCxDsIgEP2VC_PFwNlWXNvBQQfj4kAYUKs1qSWx9P89oHVyNOF4j-Pd8Q4jUTRTgOcAbrjB2HkfBBrD6cNZWEyknkmzkNOXLJpjRIVit0_kZ_DGyxiNqkpLESopUa05dJHPW0pXnK4yaCRCVhQaS4065ylDSTGnNpoF8QnFjYhs8q-w5GKdbNHMbRwGrlMYl4EfLfPQtXBxfQ_3t39BU6_iDNlmqvuvy4rVEQ33Qjl7Sh8_ggvw8K5nA9Z-AA",
+    crossing:
+      "https://handballcoachboard.com/en/board/#t=2.rZLBbuMgEIZfZZTzaGVInOBrcqiq9lD10oPlA45xjOKCBFTV3vYd9g37JDsDZNXDVtqVVrLNMIOH_-Onb3BzCj5G6y5wOn78-Pl43GDfU_rxZTNgDo41ON2C59_Bbc0TjwI3dw85-ONLH3r6XuFO4bZBIRSKhkaOD3XeSa5yer_Pg0IpeTVlW4Wq5GUZWsk5ceB2vEXDpT1vIlGiopKQmDvLLFPgjrdrSQrBwBTsOK4mwmT1xTu9rt8heUiLgdXMCbSbIOkrLaCUDTCZ2bjJBHi3aeHc6zemLUClc93tr3kOOzzIr3ioKBo1ZDtE7iwVdi01zrSEWCcDmwRn9pHEjmaxpJwAGUDHa4TZh4w1EiN4l-Pw5j7JL53-q_yuoz-yG1tsqxXVhtyppQkRomT9TxBNiqAhnoMxDoGAxmD0lQ8_-LfLkmni4j0tWyzNratmnX1wJnyCKe2_gql34t9gigt04vRnVzC25eZ2-fzv5yyF9CV4tewD3hx4PvJZQ0xBk-xEJpyv9Z7RpfLvDha9ziR_GH4B",
   },
 } as const;
 
@@ -49,7 +54,7 @@ export async function drawing(lang: string, name: DrawingName): Promise<Board> {
 }
 
 /**
- * Features 7–10 are screenshots of the board, made by `npm run screenshots`
+ * Features 7–11 are screenshots of the board, made by `npm run screenshots`
  * (scripts/screenshots.mjs) into public/how-it-works/<lang>/<name>.png: a
  * 360 px wide phone at 2×. The page gives each image these sizes, so nothing
  * moves while it loads; the script fails on a PNG of another size.
@@ -57,6 +62,7 @@ export async function drawing(lang: string, name: DrawingName): Promise<Board> {
 export const shots = {
   play: { width: 720, height: 224 },
   viewer: { width: 720, height: 1280 },
+  follow: { width: 720, height: 1280 },
   "my-boards": { width: 720, height: 1000 },
   "open-link": { width: 720, height: 680 },
 } as const;

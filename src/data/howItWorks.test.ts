@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isBoard } from "../lib/board/format";
+import { followArrows } from "../lib/board/viewer";
 import { drawing, drawings, type DrawingName } from "./howItWorks";
 
 const names = Object.keys(drawings.nl) as DrawingName[];
@@ -41,6 +42,16 @@ describe("the drawings of How the board works", () => {
       expect(board.frames).toHaveLength(2);
       for (const frame of board.frames) expect(frame.text).toBeTruthy();
       expect(board.title).toBeTruthy();
+    });
+
+    // The image of Follow a player: step 2 with LO (LB) chosen, whose run and the pass from MO (CB) light up.
+    it(`${lang} crossing: in step 2, LO's run and the pass from MO light up for LO`, async () => {
+      const [lo, mo] = lang === "nl" ? ["LO", "MO"] : ["LB", "CB"];
+      const frame = (await drawing(lang, "crossing")).frames[1]!;
+      const player = frame.players.findIndex((p) => p.label === lo);
+      const lit = followArrows(frame, player).map((i) => frame.arrows[i]!);
+      expect(lit.map((a) => a.kind).sort()).toEqual(["pass", "run"]);
+      expect(lit.find((a) => a.kind === "pass")!.from).toBe(frame.players.findIndex((p) => p.label === mo));
     });
   }
 

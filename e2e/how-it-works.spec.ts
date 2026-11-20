@@ -1,7 +1,7 @@
 import { t } from "../src/i18n/ui";
 import { allPages, expect, test } from "./helpers";
 
-// How the board works (/<lang>/how-it-works/): its heading, the ten features in
+// How the board works (/<lang>/how-it-works/): its heading, the eleven features in
 // the order you use the board, each with an image that says what it shows; and
 // the ways in: the footer of every content page, the home page and About.
 
@@ -15,6 +15,7 @@ const features: Record<string, string[]> = {
     "Stappen",
     "Afspelen",
     "Delen",
+    "Volg een speler",
     "Mijn borden",
     "Op een ander toestel",
   ],
@@ -27,6 +28,7 @@ const features: Record<string, string[]> = {
     "Steps",
     "Play",
     "Sharing",
+    "Follow a player",
     "My boards",
     "On another device",
   ],
@@ -41,7 +43,7 @@ const aboutLines: Record<string, string[]> = {
 for (const lang of ["nl", "en"]) {
   const page_ = `/${lang}/how-it-works/`;
 
-  test(`${page_} has its heading and the ten features in order, each with an image that says what it shows`, async ({ page }) => {
+  test(`${page_} has its heading and the eleven features in order, each with an image that says what it shows`, async ({ page }) => {
     await page.goto(page_);
     await expect(page.locator("h1")).toHaveText(t(lang, "howItWorks.heading"));
     const items = page.locator(".features > li");

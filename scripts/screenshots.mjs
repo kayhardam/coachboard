@@ -1,4 +1,4 @@
-// The screenshots of features 7–10 on How the board works, in every language:
+// The screenshots of features 7–11 on How the board works, in every language:
 //   npm run screenshots              (builds first)
 //   npm run screenshots -- --no-build (uses the dist/ there is)
 // Serves dist/ itself (a small static server, so nothing keeps running
@@ -7,8 +7,9 @@
 // PNG with a palette (sharp) to public/how-it-works/<lang>/<name>.png. The
 // sizes come from `shots` in src/data/howItWorks.ts, which the page uses too;
 // an image of another size fails the script. The boards are the drawing
-// `steps` of src/data/howItWorks.ts (two steps, its title) and, in My boards,
-// two folders. Run it again when the board's look changes, and commit the PNGs.
+// `steps` of src/data/howItWorks.ts (two steps, its title), the drawing
+// `crossing` (step 2 in the viewer, with LO followed; LB in English) and, in
+// My boards, two folders. Run it again when the board's look changes, and commit the PNGs.
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import { createServer as createHttpServer } from "node:http";
@@ -21,7 +22,7 @@ import { createServer } from "vite";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const port = 4329;
 const origin = `http://127.0.0.1:${port}`;
-/** The address the pasted message in feature 10 shows. */
+/** The address the pasted message in feature 11 shows. */
 const site = "https://handballcoachboard.com";
 const phone = { width: 360, height: 640 };
 const scale = 2;
@@ -30,6 +31,9 @@ const now = new Date("2026-11-10T19:00:00Z").getTime();
 const day = 24 * 60 * 60 * 1000;
 
 /** The folders in My boards, per language: a folder with its boards (a title and a drawing). */
+/** The player Follow a player picks on the crossing, per language. */
+const followed = { nl: "LO", en: "LB" };
+
 const folders = {
   nl: [
     ["Dinsdag", [["Instarten en schieten", "steps"], ["Tegen 6-0", "lineup"]]],
@@ -135,7 +139,18 @@ try {
     await page.locator(".viewer .edit").waitFor();
     images.viewer = await page.screenshot();
 
-    // 9: My boards with two folders.
+    // 9: the crossing in the viewer, step 2, with a player followed.
+    await page.goto(`${origin}/${lang}/board/link/#t=${await encode(await drawing(lang, "crossing"))}`);
+    await page.locator(".viewer .edit").waitFor();
+    await page.getByRole("button", { name: t(lang, "viewer.next"), exact: true }).click();
+    await page.locator(".viewer .count").filter({ hasText: "2/" }).waitFor();
+    await page.locator(".viewer .follow summary").click();
+    await page.locator(".viewer .follow ul").getByRole("button", { name: followed[lang], exact: true }).click();
+    await page.locator(".viewer .follow ul").waitFor({ state: "hidden" });
+    await page.locator(".viewer .stage [data-lit]").first().waitFor();
+    images.follow = await page.screenshot();
+
+    // 10: My boards with two folders.
     await editor(true);
     await page.reload();
     await ready();
@@ -143,7 +158,7 @@ try {
     // From the top down to the end of the last folder (the height in `shots`).
     images["my-boards"] = await page.screenshot({ clip: { x: 0, y: 0, width: phone.width, height: shots["my-boards"].height / scale } });
 
-    // 10: Open a link on a device without boards, with Share folder's message pasted.
+    // 11: Open a link on a device without boards, with Share folder's message pasted.
     await editor(false);
     await page.reload();
     await ready();
