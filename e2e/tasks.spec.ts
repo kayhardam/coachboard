@@ -20,9 +20,9 @@ import {
 // The tap budget: the shortest route for each measured task, counted in
 // actions (every tap, drag and key press is one). The count may not go over
 // the budget: a route that needs one more action fails until the budget goes
-// up on purpose, with the reason in the PR and the new measurement in
-// docs/metingen.md ("UX-metingen"). A route that got shorter passes; lower
-// its budget in the same PR, so the gain stays recorded.
+// up on purpose, with the reason and the new count in the PR. A route that
+// got shorter passes; lower its budget in the same PR, so the gain stays
+// recorded.
 // Opening the board doesn't count, nor does the phone's own share sheet.
 // The budget holds in every language: the routes run on /en/ and /nl/.
 const TAP_BUDGET = {
@@ -35,11 +35,11 @@ const TAP_BUDGET = {
   // Kept for comparison; T4's goal is set on the route below.
   "T4 as links to yourself": 10,
   // T4, the route that counts: the boards moved as one exported file, until each has been on
-  // the phone's court. Goal 20 (docs/metingen.md), reached in phase 13-2: no tap on Run.
+  // the phone's court. Goal 20 (the measurement log), reached in phase 13-2: no tap on Run.
   "T4 with export and import": 20,
   // T3: the drill "crossing in pairs": two lines of three, a goalkeeper, two cones, a ball and the
   // crossing, shared. Phase 13-3: the starting lineup "2 lines" sets out the drill, so only the
-  // crossing is drawn. Goal 5 (docs/metingen.md), reached.
+  // crossing is drawn. Goal 5 (the measurement log), reached.
   T3: 5,
   // T3 for a returning coach: their own board is on the court first.
   "T3 with your own board": 7,
@@ -73,7 +73,7 @@ const TAP_BUDGET = {
  * Swipes to a button off screen, on a content page or in My boards, counted apart: how many a
  * route needs depends on the phone's height and the length of the texts, so it differs per phone
  * and language. The most each phone may need, in every language (Kay, 30 October 2026); fewer
- * passes. The buttons each one costs are in docs/metingen.md ("UX-metingen", T6).
+ * passes. The buttons each one costs are in the measurement log ("UX-metingen", T6).
  */
 const SWIPE_BUDGET = {
   // t6-korter-a: no swipe in My boards any more (it was 5 and 4).
@@ -132,7 +132,7 @@ function route(page: Page) {
     },
     /**
      * Taps a link or button on a content page or in My boards, which scroll. When it isn't wholly
-     * on screen, one swipe to it comes first, however far (docs/metingen.md, "Meetmethode"). The
+     * on screen, one swipe to it comes first, however far (the measurement log, "Meetmethode"). The
      * court, the bars and More never ask for a swipe: use tap() there.
      */
     async tapOnPage(target: Locator) {
@@ -157,7 +157,7 @@ function route(page: Page) {
       await page.goBack();
       count++;
     },
-    /** Types a whole sentence: one action, however long (docs/metingen.md, "Meetmethode"). */
+    /** Types a whole sentence: one action, however long (the measurement log, "Meetmethode"). */
     async type(text: string) {
       await page.keyboard.type(text);
       count++;

@@ -65,12 +65,12 @@ for (const via of ["link", "qr"]) {
 test("the QR code still opens after going offline", async ({ page, context }) => {
   // WebKit's emulated offline mode also fails reading a Blob, which encode()
   // uses (NotReadableError), so the link can't be made there at all. A real
-  // iPhone in airplane mode is test 14 in Kay's test round (docs/metingen.md).
+  // iPhone in airplane mode is test 14 in Kay's test round (the measurement log).
   test.skip(test.info().project.name === "iphone", "WebKit's offline emulation blocks Blob reads");
   await openBoard(page);
   // Wait until the QR chunk itself (_astro/qr.*.js, from src/lib/board/qr.ts) has loaded. Not just
   // any other JS file: the board's own chunk (board.*.js) is there as soon as the board is, so
-  // the test went offline before the QR chunk came, now and then (docs/metingen.md, "De wankele QR-test").
+  // the test went offline before the QR chunk came, now and then (the measurement log, "De wankele QR-test").
   const qrChunkLoaded = () =>
     page.evaluate(() => performance.getEntriesByType("resource").some((r) => /\/_astro\/qr\.[^/]+\.js$/.test(r.name)));
   await expect.poll(qrChunkLoaded).toBe(true);

@@ -342,14 +342,14 @@ describe("isNewerLink", () => {
 
 /**
  * The QR version the largest board within the limits must fit in (decision 3;
- * docs/metingen.md, phase 11). The scan test read every code up to version 30
+ * the measurement log, phase 11). The scan test read every code up to version 30
  * from phone to phone; the room above 24 is margin for busy boards and older
  * phones.
  */
 const QR_VERSION = 24;
 
 // Words for sentences that don't repeat, so compression finds no help between
-// steps: about as long a link as real Dutch sentences (docs/metingen.md, phase 9).
+// steps: about as long a link as real Dutch sentences (the measurement log, phase 9).
 const WORDS = (
   "bal pass loop schot blok stuit hoek cirkel paal doel lijn veld rij pion speler verdediger aanval " +
   "opbouwer midden links rechts snel kort lang breed diep terug vooruit draai dreig kruis vang speel " +
