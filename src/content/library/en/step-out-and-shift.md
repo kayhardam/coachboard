@@ -57,21 +57,21 @@ board:
         - { team: p, at: [100, 162] }
       balls: [[110, 112]]
       arrows:
-        - { kind: dribble, from: 0, pts: [[100, 120], [76, 114]] }
+        - { kind: dribble, from: 0, pts: [[100, 120], [70, 112]] }
     - text: "The defender shifts along and stays between the attacker and the goal."
       players:
-        - { team: a, at: [76, 114] }
+        - { team: a, at: [70, 112] }
         - { team: d, at: [106, 92] }
         - { team: p, at: [100, 162] }
-      balls: [[86, 106]]
+      balls: [[80, 104]]
       arrows:
-        - { kind: run, from: 1, pts: [[106, 92], [87, 90]] }
+        - { kind: run, from: 1, pts: [[106, 92], [85, 90]] }
     - text: "If the attacker can't get through, they pass back to the passer."
       players:
-        - { team: a, at: [76, 114] }
-        - { team: d, at: [87, 90] }
+        - { team: a, at: [70, 112] }
+        - { team: d, at: [85, 90] }
         - { team: p, at: [100, 162] }
-      balls: [[86, 106]]
+      balls: [[80, 104]]
       arrows:
-        - { kind: pass, from: 0, pts: [[76, 114], [100, 162]] }
+        - { kind: pass, from: 0, pts: [[70, 112], [100, 162]] }
 ---

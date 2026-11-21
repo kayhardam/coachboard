@@ -58,11 +58,11 @@ board:
       balls: [[54, 142]]
       arrows:
         - { kind: dribble, from: 0, pts: [[66, 142], [76, 98]] }
-        - { kind: run, from: 1, pts: [[88, 138], [95, 94]] }
+        - { kind: run, from: 1, pts: [[88, 138], [96, 94]] }
     - text: "A1 schiet binnen 5 tellen na de start. Daarna start het volgende tweetal."
       players:
         - { team: a, label: A1, at: [76, 98] }
-        - { team: d, label: V1, at: [95, 94] }
+        - { team: d, label: V1, at: [96, 94] }
         - { team: d, label: K, at: [100, 10] }
       balls: [[64, 98]]
       arrows:

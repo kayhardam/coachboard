@@ -78,7 +78,7 @@ board:
         - { team: d, at: [136, 146] }
       balls: [[68, 184]]
       arrows:
-        - { kind: run, from: 2, pts: [[58, 192], [38, 122]] }
+        - { kind: dribble, from: 2, pts: [[58, 192], [38, 122]] }
         - { kind: run, from: 3, pts: [[100, 194], [100, 128]] }
         - { kind: run, from: 4, pts: [[142, 192], [162, 122]] }
     - text: "The pivot runs through the retreating defenders and posts up in the middle."

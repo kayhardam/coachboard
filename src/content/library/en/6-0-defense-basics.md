@@ -27,7 +27,7 @@ board:
         - { team: a, label: CB, at: [100, 132] }
         - { team: a, label: RB, at: [152, 122] }
         - { team: a, label: RW, at: [190, 50] }
-        - { team: a, label: P, at: [100, 80] }
+        - { team: a, label: P, at: [100, 84] }
         - { team: d, label: GK, at: [92, 8] }
         - { team: d, at: [22, 30] }
         - { team: d, at: [48, 58] }
@@ -44,7 +44,7 @@ board:
         - { team: a, label: CB, at: [100, 132] }
         - { team: a, label: RB, at: [152, 122] }
         - { team: a, label: RW, at: [190, 50] }
-        - { team: a, label: P, at: [100, 80] }
+        - { team: a, label: P, at: [100, 84] }
         - { team: d, label: GK, at: [92, 8] }
         - { team: d, at: [22, 30] }
         - { team: d, at: [48, 58] }
@@ -63,7 +63,7 @@ board:
         - { team: a, label: CB, at: [100, 132] }
         - { team: a, label: RB, at: [152, 122] }
         - { team: a, label: RW, at: [190, 50] }
-        - { team: a, label: P, at: [100, 80] }
+        - { team: a, label: P, at: [100, 84] }
         - { team: d, label: GK, at: [92, 8] }
         - { team: d, at: [22, 30] }
         - { team: d, at: [48, 94] }
@@ -73,8 +73,8 @@ board:
         - { team: d, at: [178, 30] }
       balls: [[58, 114]]
       arrows:
-        - { kind: run, from: 9, pts: [[80, 66], [64, 72]] }
-        - { kind: run, from: 10, pts: [[120, 66], [100, 68]] }
+        - { kind: run, from: 9, pts: [[80, 66], [60, 62]] }
+        - { kind: run, from: 10, pts: [[120, 66], [98, 64]] }
         - { kind: run, from: 11, pts: [[152, 58], [132, 64]] }
         - { kind: run, from: 12, pts: [[178, 30], [162, 46]] }
     - text: "When the pivot moves along the line, the next defender picks them up."
@@ -84,16 +84,16 @@ board:
         - { team: a, label: CB, at: [100, 132] }
         - { team: a, label: RB, at: [152, 122] }
         - { team: a, label: RW, at: [190, 50] }
-        - { team: a, label: P, at: [100, 80] }
+        - { team: a, label: P, at: [100, 84] }
         - { team: d, label: GK, at: [92, 8] }
         - { team: d, at: [22, 30] }
         - { team: d, at: [48, 94] }
-        - { team: d, at: [64, 72] }
-        - { team: d, at: [100, 68] }
+        - { team: d, at: [60, 62] }
+        - { team: d, at: [98, 64] }
         - { team: d, at: [132, 64] }
         - { team: d, at: [162, 46] }
       balls: [[58, 114]]
       arrows:
-        - { kind: run, from: 5, pts: [[100, 80], [76, 88]] }
-        - { kind: run, from: 9, pts: [[64, 72], [70, 80]] }
+        - { kind: run, from: 5, pts: [[100, 84], [82, 92]] }
+        - { kind: run, from: 9, pts: [[60, 62], [70, 76]] }
 ---

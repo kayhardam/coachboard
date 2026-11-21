@@ -34,7 +34,7 @@ board:
         - { team: d, at: [178, 30] }
       balls: [[180, 110]]
       arrows:
-        - { kind: run, from: 5, pts: [[100, 66], [126, 86], [136, 60]] }
+        - { kind: run, from: 5, pts: [[100, 66], [124, 88], [138, 76]] }
         - { kind: run, from: 2, pts: [[100, 130], [66, 94]] }
         - { kind: pass, from: 3, pts: [[170, 118], [66, 94]] }
     - text: "LO kruist achter MO langs."
@@ -44,7 +44,7 @@ board:
         - { team: a, label: MO, at: [66, 94] }
         - { team: a, label: RO, at: [170, 118] }
         - { team: a, label: RH, at: [192, 48] }
-        - { team: a, label: CL, at: [136, 60] }
+        - { team: a, label: CL, at: [138, 76] }
         - { team: d, label: K, at: [100, 8] }
         - { team: d, at: [22, 30] }
         - { team: d, at: [48, 58] }
@@ -62,7 +62,7 @@ board:
         - { team: a, label: MO, at: [66, 94] }
         - { team: a, label: RO, at: [170, 118] }
         - { team: a, label: RH, at: [192, 48] }
-        - { team: a, label: CL, at: [136, 60] }
+        - { team: a, label: CL, at: [138, 76] }
         - { team: d, label: K, at: [100, 8] }
         - { team: d, at: [22, 30] }
         - { team: d, at: [48, 58] }
@@ -80,7 +80,7 @@ board:
         - { team: a, label: MO, at: [66, 94] }
         - { team: a, label: RO, at: [170, 118] }
         - { team: a, label: RH, at: [192, 48] }
-        - { team: a, label: CL, at: [136, 60] }
+        - { team: a, label: CL, at: [138, 76] }
         - { team: d, label: K, at: [100, 8] }
         - { team: d, at: [22, 30] }
         - { team: d, at: [48, 58] }
